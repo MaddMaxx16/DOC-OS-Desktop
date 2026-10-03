@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { drivers } from '../data/drivers.js'
+import { driverPlans, loads, locations } from '../data/operationsSeed.js'
 import { SHELL_CONFIG } from '../config/shellConfig.js'
+import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import DesktopShell from '../shell/DesktopShell.jsx'
+
+const driverDays = buildDriverDays(drivers, loads, driverPlans, locations)
 
 export default function App() {
   const [leftOpen, setLeftOpen] = useState(SHELL_CONFIG.leftDrawerDefaultOpen)
@@ -18,6 +22,7 @@ export default function App() {
   return (
     <DesktopShell
       drivers={drivers}
+      driverDays={driverDays}
       selection={selection}
       leftOpen={leftOpen}
       rightOpen={rightOpen}

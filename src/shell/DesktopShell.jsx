@@ -1,5 +1,5 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
-import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
+import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
 import OperationsMap from '../map/OperationsMap.jsx'
 import AppDock from './AppDock.jsx'
 import DriverDrawer from './DriverDrawer.jsx'
@@ -9,6 +9,7 @@ import './shell.css'
 
 export default function DesktopShell({
   drivers,
+  driverDays,
   selection,
   leftOpen,
   rightOpen,
@@ -18,9 +19,11 @@ export default function DesktopShell({
   onCloseRight,
   onSelectSubject,
 }) {
-  const selectedDriver = isSelection(selection, SELECTION_TYPES.DRIVER)
-    ? drivers.find((driver) => driver.id === selection.id) ?? null
-    : null
+  const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
+    selection,
+    drivers,
+    driverDays,
+  )
 
   const selectedDriverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
   const operationsHandleStyle = selectedDriverIdentity
@@ -34,6 +37,9 @@ export default function DesktopShell({
       <section className="operations-canvas" aria-label="DOC OS operations workstation">
         <OperationsMap
           drivers={drivers}
+          driverDay={driverDay}
+          selectedDriver={selectedDriver}
+          selectedStop={selectedStop}
           selection={selection}
           onSelectSubject={onSelectSubject}
         />
@@ -65,7 +71,7 @@ export default function DesktopShell({
 
         <DriverDrawer
           drivers={drivers}
-          selection={selection}
+          activeDriverId={selectedDriver?.id ?? null}
           open={leftOpen}
           onClose={onCloseLeft}
           onSelectSubject={onSelectSubject}
@@ -74,8 +80,11 @@ export default function DesktopShell({
         <OperationsDrawer
           selection={selection}
           driver={selectedDriver}
+          driverDay={driverDay}
+          selectedStop={selectedStop}
           open={rightOpen}
           onClose={onCloseRight}
+          onSelectSubject={onSelectSubject}
         />
 
         <AppDock />

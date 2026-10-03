@@ -1,7 +1,7 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
-import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
+import { SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 
-export default function DriverDrawer({ drivers, selection, open, onClose, onSelectSubject }) {
+export default function DriverDrawer({ drivers, activeDriverId, open, onClose, onSelectSubject }) {
   return (
     <aside id="driver-drawer" className={`side-drawer driver-drawer ${open ? 'open' : ''}`} aria-hidden={!open}>
       <header className="drawer-header">
@@ -16,7 +16,7 @@ export default function DriverDrawer({ drivers, selection, open, onClose, onSele
       <div className="driver-list">
         {drivers.map((driver) => {
           const identity = getDriverIdentity(driver.id)
-          const selected = isSelection(selection, SELECTION_TYPES.DRIVER, driver.id)
+          const selected = driver.id === activeDriverId
 
           return (
             <button
@@ -31,7 +31,7 @@ export default function DriverDrawer({ drivers, selection, open, onClose, onSele
               <span>
                 <strong>{driver.name}</strong>
                 <small>{driver.status}</small>
-                <em>{driver.locationLabel}</em>
+                <em>{driver.nextStop}</em>
               </span>
               <mark aria-label={`${identity.colorName} driver identity`} title={`${identity.colorName} driver identity`} />
             </button>
