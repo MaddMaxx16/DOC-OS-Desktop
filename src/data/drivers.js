@@ -1,0 +1,32 @@
+export const drivers = [
+  {
+    id: 'marcus-reed',
+    name: 'Marcus Reed',
+    initials: 'MR',
+    status: 'READY',
+    locationLabel: 'Newark, NJ',
+    coordinates: [-74.1724, 40.7357],
+    nextStop: 'No assigned stop',
+    hos: { drive: '11:00', duty: '14:00' },
+  },
+  {
+    id: 'taylor-brooks',
+    name: 'Taylor Brooks',
+    initials: 'TB',
+    status: 'AVAILABLE',
+    locationLabel: 'Bronx, NY',
+    coordinates: [-73.8648, 40.8448],
+    nextStop: 'No assigned stop',
+    hos: { drive: '10:32', duty: '13:14' },
+  },
+  {
+    id: 'derrick-cole',
+    name: 'Derrick Cole',
+    initials: 'DC',
+    status: 'AVAILABLE',
+    locationLabel: 'Brooklyn, NY',
+    coordinates: [-73.9442, 40.6782],
+    nextStop: 'No assigned stop',
+    hos: { drive: '09:48', duty: '12:37' },
+  },
+]
