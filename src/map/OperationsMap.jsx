@@ -75,7 +75,7 @@ export default function OperationsMap({
       const selected = selectedDriver?.id === driver.id
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `driver-marker ${selected ? 'selected' : ''}`
+      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''}`
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
       element.setAttribute('aria-label', `Select ${driver.name}, ${identity.colorName} driver`)
@@ -104,9 +104,10 @@ export default function OperationsMap({
           (pickup.coordinates[1] + delivery.coordinates[1]) / 2,
         ]
         const selected = isSelection(selection, SELECTION_TYPES.LOAD, lane.id)
+        const anotherLaneSelected = isSelection(selection, SELECTION_TYPES.LOAD) && !selected
         const element = document.createElement('button')
         element.type = 'button'
-        element.className = `market-lane-marker ${selected ? 'selected' : ''}`
+        element.className = `market-lane-marker ${selected ? 'selected' : ''} ${anotherLaneSelected ? 'muted' : ''}`
         element.setAttribute('aria-label', `Preview ${lane.laneRef}: ${pickup.label} to ${delivery.label}`)
         element.innerHTML = `<span>${lane.laneRef}</span><small>${pickup.label} → ${delivery.label}</small>`
         element.addEventListener('click', (event) => {
