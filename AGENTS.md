@@ -32,19 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.2 Shared Selection + Driver Identity
+## Current packet — V2.3 Driver Day / Manifest
 
-V2.1 is structurally locked. Visual polish is deferred until real systems occupy the shell.
+V2.1 and V2.2 are structurally locked. Visual polish remains deferred.
 
-V2.2 establishes one desktop selection contract and persistent driver identity.
+V2.3 ports the proven manifest invariants into a new desktop-native Driver Day surface.
 
 Guardrails:
-- selection is one shared subject object, not separate screen-specific selected IDs,
-- supported subject types are driver, load, stop, facility, and route leg,
-- only drivers are selectable in the clean build until their owning systems are ported,
-- driver colors are stable by driver ID and live outside raw operational data,
-- color reinforces identity but initials/names remain visible for accessibility,
-- do not begin the V2.3 manifest workspace inside V2.2.
+- manifest stop order is authoritative for freight sequence,
+- pickup and delivery stops may interleave across loads,
+- trailer capacity is calculated from actual onboard freight after each stop,
+- lunch and staging are timeline events, not freight stops,
+- stop selection uses the shared V2.2 selection contract,
+- selecting a manifest stop must resolve back to its owning driver without creating a second selected-driver state,
+- do not port legacy manifest UI or the old driver scheduler,
+- do not begin FreightLink insertion/evaluation UI until V2.4.
 
 ## Verification
 
