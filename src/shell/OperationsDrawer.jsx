@@ -1,5 +1,5 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
-import { getSelectionKey, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
+import { getSelectionKey } from '../domain/selection/selectionModel.js'
 
 function GenericSelectionContext({ selection }) {
   return (
