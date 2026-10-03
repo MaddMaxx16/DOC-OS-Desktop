@@ -62,7 +62,7 @@ export default function FreightLinkWorkspace({
   const selectedLane = isSelection(selection, SELECTION_TYPES.LOAD)
     ? lanes.find((lane) => lane.id === selection.id) ?? null
     : null
-  const routeKey = selectedLane && driver ? `${selectedLane.id}:${driver.id}` : null
+  const routeKey = selectedLane && candidateDriver ? `${selectedLane.id}:${candidateDriver.id}` : null
   const routeState = routeResult?.key === routeKey
     ? routeResult
     : { status: routeKey ? 'routing' : 'idle', deadhead: null, loaded: null }
@@ -90,7 +90,6 @@ export default function FreightLinkWorkspace({
 
   useEffect(() => {
     if (!selectedLane || !selectedEvaluation || !candidateDriver) {
-      setRouteState({ status: 'idle', deadhead: null, loaded: null })
       onRoutePreviewChange(null)
       return undefined
     }
@@ -100,7 +99,6 @@ export default function FreightLinkWorkspace({
     const originCoordinates = selectedEvaluation.insertion.originCoordinates
 
     if (!pickup?.coordinates || !delivery?.coordinates || !originCoordinates) {
-      setRouteState({ status: 'estimate', deadhead: null, loaded: null })
       onRoutePreviewChange({
         lane: selectedLane,
         driver: candidateDriver,
@@ -148,7 +146,7 @@ export default function FreightLinkWorkspace({
     return () => {
       active = false
     }
-  }, [candidateDriver, locations, onRoutePreviewChange, selectedEvaluation, selectedLane])
+  }, [candidateDriver, locations, onRoutePreviewChange, routeKey, selectedEvaluation, selectedLane])
 
   const candidateIdentity = candidateDriver ? getDriverIdentity(candidateDriver.id) : null
 
