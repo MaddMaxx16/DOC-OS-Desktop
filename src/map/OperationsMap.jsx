@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { Map, Marker, NavigationControl } from 'maplibre-gl'
+import { Map as MapLibreMap, Marker, NavigationControl } from 'maplibre-gl'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
 export default function OperationsMap({ drivers, selectedDriver, onSelectDriver }) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
-  const markerRefs = useRef(new Map())
+  const markerRefs = useRef(new globalThis.Map())
   const onSelectDriverRef = useRef(onSelectDriver)
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function OperationsMap({ drivers, selectedDriver, onSelectDriver 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return undefined
 
-    const map = new Map({
+    const map = new MapLibreMap({
       container: mapContainerRef.current,
       style: mapStyle,
       center: [-74.02, 40.755],
