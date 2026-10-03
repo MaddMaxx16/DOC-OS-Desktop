@@ -10,7 +10,7 @@ export default function TopBar() {
         <span className="status-dot" />
         <strong>NO ALERTS</strong>
         <span className="status-divider" />
-        <small>DESKTOP V2.1 · CLEAN SHELL</small>
+        <small>DESKTOP V2.3 · DRIVER DAY</small>
       </div>
 
       <div className="clock-block">
