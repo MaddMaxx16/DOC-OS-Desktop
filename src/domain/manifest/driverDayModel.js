@@ -77,6 +77,7 @@ export function applyCapacitySnapshots(stops = [], trailer = {}) {
 function timelineStart(driver, plan) {
   return {
     id: `${driver.id}:shift-start`,
+    driverId: driver.id,
     kind: 'shift-start',
     label: 'SHIFT START',
     projectedArrivalMinutes: plan.shift.startMinutes,
@@ -90,6 +91,7 @@ function timelineLunch(driver, plan, locations) {
   const location = locations[plan.lunch.locationId]
   return {
     id: `${driver.id}:lunch`,
+    driverId: driver.id,
     kind: 'lunch',
     label: 'LUNCH',
     projectedArrivalMinutes: plan.lunch.startMinutes,
@@ -106,6 +108,7 @@ function timelineStaging(driver, plan, locations) {
   const location = locations[plan.staging.locationId]
   return {
     id: `${driver.id}:staging`,
+    driverId: driver.id,
     kind: 'staging',
     label: 'STAGING',
     projectedArrivalMinutes: plan.staging.arrivalMinutes,
@@ -166,7 +169,7 @@ export function buildDriverDays(drivers = [], loads = [], driverPlans = {}, loca
 
 export function getStopById(driverDays = [], stopId) {
   for (const day of driverDays) {
-    const stop = day.freightStops.find((item) => item.id === stopId)
+    const stop = day.timeline.find((item) => item.id === stopId)
     if (stop) return stop
   }
   return null

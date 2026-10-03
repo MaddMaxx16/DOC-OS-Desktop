@@ -101,6 +101,25 @@ export default function OperationsMap({
 
       markerRefs.current.set(`stop:${stop.id}`, marker)
     }
+
+    if (
+      selectedStop?.coordinates
+      && driverIdentity
+      && ['lunch', 'staging'].includes(selectedStop.kind)
+    ) {
+      const element = document.createElement('button')
+      element.type = 'button'
+      element.className = `operational-event-marker ${selectedStop.kind} selected`
+      element.style.setProperty('--driver-color', driverIdentity.color)
+      element.setAttribute('aria-label', `${selectedStop.label} at ${selectedStop.locationLabel}`)
+      element.innerHTML = `<span>${selectedStop.kind === 'lunch' ? 'LUNCH' : 'STAGE'}</span><small>${selectedStop.locationLabel}</small>`
+
+      const marker = new Marker({ element, anchor: 'bottom' })
+        .setLngLat(selectedStop.coordinates)
+        .addTo(map)
+
+      markerRefs.current.set(`event:${selectedStop.id}`, marker)
+    }
   }, [driverDay, drivers, selectedDriver, selection])
 
   useEffect(() => {

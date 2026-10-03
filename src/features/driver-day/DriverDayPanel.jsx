@@ -63,7 +63,7 @@ export default function DriverDayPanel({ driver, day, selection, onSelectSubject
 
       <div className="driver-day-timeline">
         {day.timeline.map((item, index) => {
-          const selectable = item.kind === 'freight-stop'
+          const selectable = ['freight-stop', 'lunch', 'staging'].includes(item.kind)
           const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
 
           const content = (
@@ -108,7 +108,7 @@ export default function DriverDayPanel({ driver, day, selection, onSelectSubject
             <button
               type="button"
               key={item.id}
-              className={`driver-day-row selectable ${selected ? 'selected' : ''}`}
+              className={`driver-day-row selectable ${item.kind} ${selected ? 'selected' : ''}`}
               onClick={() => onSelectSubject(SELECTION_TYPES.STOP, item.id)}
               aria-pressed={selected}
             >

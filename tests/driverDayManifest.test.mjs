@@ -73,3 +73,30 @@ test('clock formatting remains readable for the desktop manifest', () => {
   assert.equal(formatClock(420), '7:00 AM')
   assert.equal(formatClock(780), '1:00 PM')
 })
+
+test('lunch and staging retain explicit operational locations', () => {
+  const lunch = marcus.timeline.find((item) => item.kind === 'lunch')
+  const staging = marcus.timeline.find((item) => item.kind === 'staging')
+
+  assert.equal(lunch.locationId, 'meadowlands-staging')
+  assert.equal(lunch.locationLabel, 'Meadowlands Staging')
+  assert.deepEqual(lunch.coordinates, locations['meadowlands-staging'].coordinates)
+
+  assert.equal(staging.locationId, 'meadowlands-staging')
+  assert.equal(staging.locationLabel, 'Meadowlands Staging')
+  assert.deepEqual(staging.coordinates, locations['meadowlands-staging'].coordinates)
+})
+
+test('lunch and staging selection resolve back to Marcus and the saved location', () => {
+  for (const stopId of ['marcus-reed:lunch', 'marcus-reed:staging']) {
+    const context = resolveSelectionContext(
+      createSelection(SELECTION_TYPES.STOP, stopId),
+      drivers,
+      days,
+    )
+    assert.equal(context.driver?.id, 'marcus-reed')
+    assert.equal(context.driverDay?.driverId, 'marcus-reed')
+    assert.equal(context.stop?.locationId, 'meadowlands-staging')
+    assert.equal(context.stop?.locationLabel, 'Meadowlands Staging')
+  }
+})
