@@ -25,7 +25,9 @@ export default function OperationsDrawer({
   const style = driverIdentity ? { '--selected-driver-color': driverIdentity.color } : undefined
   const selectionKey = getSelectionKey(selection)
   const headerLabel = selectedStop
-    ? `${selectedStop.role.toUpperCase()} · ${selectedStop.loadRef}`
+    ? selectedStop.kind === 'freight-stop'
+      ? `${selectedStop.role.toUpperCase()} · ${selectedStop.loadRef}`
+      : selectedStop.label
     : driver ? 'DRIVER DAY' : 'OPERATIONS'
 
   return (
@@ -42,7 +44,9 @@ export default function OperationsDrawer({
           <strong>{driver ? driver.name : selection ? selection.id : 'No selection'}</strong>
           <small>
             {selectedStop
-              ? `${selectedStop.locationLabel} · ${selectedStop.loadRef}`
+              ? selectedStop.kind === 'freight-stop'
+                ? `${selectedStop.locationLabel} · ${selectedStop.loadRef}`
+                : selectedStop.locationLabel
               : driver ? driver.locationLabel : selection ? selection.type : 'Select a subject from the map or roster'}
           </small>
         </div>
