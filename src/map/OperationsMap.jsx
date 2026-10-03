@@ -18,6 +18,8 @@ export default function OperationsMap({
   selection,
   freightRoutePreview,
   workspaceOpen,
+  marketLanes = [],
+  locations = {},
   onSelectSubject,
 }) {
   const mapContainerRef = useRef(null)
@@ -91,6 +93,36 @@ export default function OperationsMap({
       markerRefs.current.set(`driver:${driver.id}`, marker)
     })
 
+    if (workspaceOpen) {
+      for (const lane of marketLanes) {
+        const pickup = locations[lane.pickupLocationId]
+        const delivery = locations[lane.deliveryLocationId]
+        if (!pickup?.coordinates || !delivery?.coordinates) continue
+
+        const midpoint = [
+          (pickup.coordinates[0] + delivery.coordinates[0]) / 2,
+          (pickup.coordinates[1] + delivery.coordinates[1]) / 2,
+        ]
+        const selected = isSelection(selection, SELECTION_TYPES.LOAD, lane.id)
+        const element = document.createElement('button')
+        element.type = 'button'
+        element.className = `market-lane-marker ${selected ? 'selected' : ''}`
+        element.setAttribute('aria-label', `Preview ${lane.laneRef}: ${pickup.label} to ${delivery.label}`)
+        element.innerHTML = `<span>${lane.laneRef}</span><small>${pickup.label} → ${delivery.label}</small>`
+        element.addEventListener('click', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onSelectSubjectRef.current?.(SELECTION_TYPES.LOAD, lane.id)
+        })
+
+        const marker = new Marker({ element, anchor: 'bottom' })
+          .setLngLat(midpoint)
+          .addTo(map)
+
+        markerRefs.current.set(`market:${lane.id}`, marker)
+      }
+    }
+
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
     for (const stop of driverDay?.freightStops ?? []) {
       if (!stop.coordinates || !driverIdentity) continue
@@ -132,7 +164,7 @@ export default function OperationsMap({
 
       markerRefs.current.set(`event:${selectedStop.id}`, marker)
     }
-  }, [driverDay, drivers, selectedDriver, selection, selectedStop])
+  }, [driverDay, drivers, locations, marketLanes, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     const map = mapRef.current
@@ -207,9 +239,9 @@ export default function OperationsMap({
         {
           padding: {
             top: 54,
-            right: 80,
-            bottom: 110,
-            left: workspaceOpen ? Math.min(980, window.innerWidth * .56) : 80,
+            right: 64,
+            bottom: 64,
+            left: 64,
           },
           maxZoom: 11.5,
           duration: 450,
@@ -227,7 +259,37 @@ export default function OperationsMap({
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || freightRoutePreview) return
+    if (!mapReady || !map || !workspaceOpen || freightRoutePreview) return
+
+    const points = []
+    for (const lane of marketLanes) {
+      const pickup = locations[lane.pickupLocationId]?.coordinates
+      const delivery = locations[lane.deliveryLocationId]?.coordinates
+      if (pickup) points.push(pickup)
+      if (delivery) points.push(delivery)
+    }
+    for (const driver of drivers) {
+      if (Array.isArray(driver.coordinates)) points.push(driver.coordinates)
+    }
+
+    if (points.length < 2) return
+
+    const lngs = points.map((point) => point[0])
+    const lats = points.map((point) => point[1])
+    map.resize()
+    map.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      {
+        padding: { top: 48, right: 56, bottom: 56, left: 56 },
+        maxZoom: 10.1,
+        duration: 450,
+      },
+    )
+  }, [drivers, freightRoutePreview, locations, mapReady, marketLanes, workspaceOpen])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || freightRoutePreview || workspaceOpen) return
 
     if (selectedStop?.coordinates) {
       map.easeTo({ center: selectedStop.coordinates, zoom: Math.max(map.getZoom(), 10.7), duration: 450 })

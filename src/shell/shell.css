@@ -162,3 +162,63 @@
   opacity:.46;
 }
 .workspace-open .app-dock { border-color:#3a3341; }
+
+
+/* V2.4.1 shared desktop app drawer
+   Map, app workspace, and app bar are separate vertical regions. */
+.operations-canvas {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 64px;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #05080d;
+}
+.operations-canvas.workspace-open {
+  grid-template-rows: minmax(0, 1fr) clamp(320px, 40vh, 460px) 64px;
+}
+.map-workspace {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #071019;
+}
+.desktop-app-drawer {
+  position: relative;
+  z-index: 28;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid #2a3d4a;
+  background: #071019;
+  box-shadow: 0 -16px 40px rgba(0, 0, 0, .28);
+}
+.side-drawer {
+  bottom: 12px;
+}
+.app-dock {
+  position: relative;
+  z-index: 40;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  transform: none;
+  border: 0;
+  border-top: 1px solid #263945;
+  border-radius: 0;
+  background: #070d13;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.dock-brand {
+  flex-basis: 96px;
+}
+.workspace-open .app-dock {
+  border-color: #3a3341;
+}

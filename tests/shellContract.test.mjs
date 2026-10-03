@@ -35,3 +35,35 @@ test('MapLibre map class does not shadow the native Map registry', async () => {
   assert.match(source, /new globalThis\.Map\(\)/)
   assert.match(source, /new MapLibreMap\(\{/)
 })
+
+
+test('V2.4.1 shared app drawer owns the bottom workstation region', async () => {
+  assert.equal(SHELL_CONFIG.dockHeight, 64)
+  assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.40)
+  assert.equal(SHELL_CONFIG.appDrawerMinHeight, 320)
+  assert.equal(SHELL_CONFIG.appDrawerMaxHeight, 460)
+
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const drawer = await readFile(new URL('../src/shell/DesktopAppDrawer.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.match(shell, /<div className="map-workspace">/)
+  assert.match(shell, /<DesktopAppDrawer activeApp=\{activeApp\}>/)
+  assert.match(drawer, /className="desktop-app-drawer"/)
+  assert.match(css, /grid-template-rows: minmax\(0, 1fr\) clamp\(320px, 40vh, 460px\) 64px/)
+  assert.match(css, /width: 100%/)
+})
+
+test('FreightLink uses the shared drawer instead of floating over the map', async () => {
+  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+  assert.match(css, /\.freightlink-workspace\{position:relative/)
+  assert.doesNotMatch(css, /\.freightlink-workspace\{position:absolute/)
+})
+
+test('FreightLink marketplace mode exposes map-selectable lane markers', async () => {
+  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  assert.match(source, /market-lane-marker/)
+  assert.match(source, /SELECTION_TYPES\.LOAD/)
+  assert.match(source, /marketLanes = \[\]/)
+  assert.match(source, /workspaceOpen \|\| freightRoutePreview/)
+})

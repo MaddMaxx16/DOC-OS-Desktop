@@ -32,21 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4 FreightLink Desktop
+## Current packet — V2.4.1 Shared Bottom App Drawer
 
-V2.1 through V2.3 are structurally locked. Visual polish remains deferred.
+V2.1 through V2.4 are structurally locked. Visual polish remains deferred.
 
-V2.4 rebuilds FreightLink as a map-aware desktop workspace.
+V2.4.1 promotes the bottom app workspace into a shared shell primitive.
 
 Guardrails:
-- FreightLink overlays the workstation; it must not replace or shrink the main map,
-- lane selection uses the shared LOAD selection type,
-- fit is evaluated against the selected driver's actual Driver Day,
-- fit must explain appointments, manifest insertion, HOS, and trailer capacity,
-- map preview shows selected lane geography and driver deadhead when route data is available,
-- route provider failure must degrade to an estimate rather than blanking the map,
-- V2.4 is evaluation only; booking, approval, and Rate Confirmation remain V2.5,
-- do not copy the legacy phone FreightLink screens.
+- every dock app opens inside the same `DesktopAppDrawer`,
+- the app drawer spans the full workstation width,
+- the bottom app bar spans the full workstation width,
+- default app drawer height targets about 40% of the viewport, bounded to a practical desktop range,
+- opening an app resizes the map above the drawer instead of covering it,
+- closing the app restores the map to the reclaimed space,
+- app-specific views own their internal content but not shell placement,
+- FreightLink marketplace mode shows available lanes on the map before a lane is selected,
+- selecting a FreightLink lane keeps board selection and map selection synchronized,
+- focused document/task modes may still expand beyond the shared drawer in later packets,
+- Drivers and Ops remain map-context drawers rather than dock apps.
 
 ## Verification
 

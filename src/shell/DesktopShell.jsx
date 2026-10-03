@@ -3,6 +3,7 @@ import { resolveSelectionContext } from '../domain/selection/selectionContext.js
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
 import AppDock from './AppDock.jsx'
+import DesktopAppDrawer from './DesktopAppDrawer.jsx'
 import DriverDrawer from './DriverDrawer.jsx'
 import OperationsDrawer from './OperationsDrawer.jsx'
 import TopBar from './TopBar.jsx'
@@ -44,83 +45,92 @@ export default function DesktopShell({
     ? { '--selected-driver-color': selectedDriverIdentity.color }
     : undefined
 
-  const workspaceOpen = activeApp === 'freightlink'
+  const workspaceOpen = Boolean(activeApp)
 
   return (
     <main className="desktop-shell">
       <TopBar />
 
-      <section className={`operations-canvas ${workspaceOpen ? 'workspace-open' : ''}`} aria-label="DOC OS operations workstation">
-        <OperationsMap
-          drivers={drivers}
-          driverDay={mapDriverDay}
-          selectedDriver={mapDriver}
-          selectedStop={selectedStop}
-          selection={selection}
-          freightRoutePreview={freightRoutePreview}
-          workspaceOpen={workspaceOpen}
-          onSelectSubject={onSelectSubject}
-        />
-
-        {!workspaceOpen && (
-          <>
-            <button
-              type="button"
-              className={`drawer-handle drawer-handle-left ${leftOpen ? 'open' : ''}`}
-              onClick={onToggleLeft}
-              aria-expanded={leftOpen}
-              aria-controls="driver-drawer"
-            >
-              <span className="handle-icon" aria-hidden="true">☷</span>
-              <span>DRIVERS</span>
-              <b>{drivers.length}</b>
-            </button>
-
-            <button
-              type="button"
-              className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''} ${selectedDriver ? 'has-driver-selection' : ''}`}
-              style={operationsHandleStyle}
-              onClick={onToggleRight}
-              aria-expanded={rightOpen}
-              aria-controls="operations-drawer"
-            >
-              <span className="handle-icon" aria-hidden="true">⌁</span>
-              <span>OPS</span>
-              <b>{selectedDriver?.initials ?? '—'}</b>
-            </button>
-
-            <DriverDrawer
-              drivers={drivers}
-              activeDriverId={selectedDriver?.id ?? null}
-              open={leftOpen}
-              onClose={onCloseLeft}
-              onSelectSubject={onSelectSubject}
-            />
-
-            <OperationsDrawer
-              selection={selection}
-              driver={selectedDriver}
-              driverDay={driverDay}
-              selectedStop={selectedStop}
-              open={rightOpen}
-              onClose={onCloseRight}
-              onSelectSubject={onSelectSubject}
-            />
-          </>
-        )}
-
-        {workspaceOpen && (
-          <FreightLinkWorkspace
+      <section
+        className={`operations-canvas ${workspaceOpen ? 'workspace-open' : ''}`}
+        aria-label="DOC OS operations workstation"
+      >
+        <div className="map-workspace">
+          <OperationsMap
             drivers={drivers}
-            driverDays={driverDays}
-            lanes={marketLanes}
-            locations={locations}
+            driverDay={mapDriverDay}
+            selectedDriver={mapDriver}
+            selectedStop={selectedStop}
             selection={selection}
+            freightRoutePreview={freightRoutePreview}
+            workspaceOpen={workspaceOpen}
+            marketLanes={marketLanes}
+            locations={locations}
             onSelectSubject={onSelectSubject}
-            onClose={onCloseActiveApp}
-            onRoutePreviewChange={onRoutePreviewChange}
           />
-        )}
+
+          {!workspaceOpen && (
+            <>
+              <button
+                type="button"
+                className={`drawer-handle drawer-handle-left ${leftOpen ? 'open' : ''}`}
+                onClick={onToggleLeft}
+                aria-expanded={leftOpen}
+                aria-controls="driver-drawer"
+              >
+                <span className="handle-icon" aria-hidden="true">☷</span>
+                <span>DRIVERS</span>
+                <b>{drivers.length}</b>
+              </button>
+
+              <button
+                type="button"
+                className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''} ${selectedDriver ? 'has-driver-selection' : ''}`}
+                style={operationsHandleStyle}
+                onClick={onToggleRight}
+                aria-expanded={rightOpen}
+                aria-controls="operations-drawer"
+              >
+                <span className="handle-icon" aria-hidden="true">⌁</span>
+                <span>OPS</span>
+                <b>{selectedDriver?.initials ?? '—'}</b>
+              </button>
+
+              <DriverDrawer
+                drivers={drivers}
+                activeDriverId={selectedDriver?.id ?? null}
+                open={leftOpen}
+                onClose={onCloseLeft}
+                onSelectSubject={onSelectSubject}
+              />
+
+              <OperationsDrawer
+                selection={selection}
+                driver={selectedDriver}
+                driverDay={driverDay}
+                selectedStop={selectedStop}
+                open={rightOpen}
+                onClose={onCloseRight}
+                onSelectSubject={onSelectSubject}
+              />
+            </>
+          )}
+        </div>
+
+        <DesktopAppDrawer activeApp={activeApp}>
+          {activeApp === 'freightlink' && (
+            <FreightLinkWorkspace
+              drivers={drivers}
+              driverDays={driverDays}
+              lanes={marketLanes}
+              locations={locations}
+              selection={selection}
+              onSelectSubject={onSelectSubject}
+              onClose={onCloseActiveApp}
+              onRoutePreviewChange={onRoutePreviewChange}
+            />
+          )}
+        </DesktopAppDrawer>
 
         <AppDock activeApp={activeApp} onToggleApp={onToggleApp} />
       </section>
