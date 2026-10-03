@@ -1,5 +1,6 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
+import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
 import AppDock from './AppDock.jsx'
 import DriverDrawer from './DriverDrawer.jsx'
@@ -10,13 +11,20 @@ import './shell.css'
 export default function DesktopShell({
   drivers,
   driverDays,
+  marketLanes,
+  locations,
   selection,
+  activeApp,
+  freightRoutePreview,
   leftOpen,
   rightOpen,
   onToggleLeft,
   onToggleRight,
   onCloseLeft,
   onCloseRight,
+  onToggleApp,
+  onCloseActiveApp,
+  onRoutePreviewChange,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -25,69 +33,96 @@ export default function DesktopShell({
     driverDays,
   )
 
-  const selectedDriverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
+  const freightDriver = freightRoutePreview?.driver ?? null
+  const mapDriver = selectedDriver ?? freightDriver
+  const mapDriverDay = driverDay ?? (
+    freightDriver ? driverDays.find((day) => day.driverId === freightDriver.id) ?? null : null
+  )
+
+  const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
   const operationsHandleStyle = selectedDriverIdentity
     ? { '--selected-driver-color': selectedDriverIdentity.color }
     : undefined
+
+  const workspaceOpen = activeApp === 'freightlink'
 
   return (
     <main className="desktop-shell">
       <TopBar />
 
-      <section className="operations-canvas" aria-label="DOC OS operations workstation">
+      <section className={`operations-canvas ${workspaceOpen ? 'workspace-open' : ''}`} aria-label="DOC OS operations workstation">
         <OperationsMap
           drivers={drivers}
-          driverDay={driverDay}
-          selectedDriver={selectedDriver}
+          driverDay={mapDriverDay}
+          selectedDriver={mapDriver}
           selectedStop={selectedStop}
           selection={selection}
+          freightRoutePreview={freightRoutePreview}
+          workspaceOpen={workspaceOpen}
           onSelectSubject={onSelectSubject}
         />
 
-        <button
-          type="button"
-          className={`drawer-handle drawer-handle-left ${leftOpen ? 'open' : ''}`}
-          onClick={onToggleLeft}
-          aria-expanded={leftOpen}
-          aria-controls="driver-drawer"
-        >
-          <span className="handle-icon" aria-hidden="true">☷</span>
-          <span>DRIVERS</span>
-          <b>{drivers.length}</b>
-        </button>
+        {!workspaceOpen && (
+          <>
+            <button
+              type="button"
+              className={`drawer-handle drawer-handle-left ${leftOpen ? 'open' : ''}`}
+              onClick={onToggleLeft}
+              aria-expanded={leftOpen}
+              aria-controls="driver-drawer"
+            >
+              <span className="handle-icon" aria-hidden="true">☷</span>
+              <span>DRIVERS</span>
+              <b>{drivers.length}</b>
+            </button>
 
-        <button
-          type="button"
-          className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''} ${selectedDriver ? 'has-driver-selection' : ''}`}
-          style={operationsHandleStyle}
-          onClick={onToggleRight}
-          aria-expanded={rightOpen}
-          aria-controls="operations-drawer"
-        >
-          <span className="handle-icon" aria-hidden="true">⌁</span>
-          <span>OPS</span>
-          <b>{selectedDriver?.initials ?? '—'}</b>
-        </button>
+            <button
+              type="button"
+              className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''} ${selectedDriver ? 'has-driver-selection' : ''}`}
+              style={operationsHandleStyle}
+              onClick={onToggleRight}
+              aria-expanded={rightOpen}
+              aria-controls="operations-drawer"
+            >
+              <span className="handle-icon" aria-hidden="true">⌁</span>
+              <span>OPS</span>
+              <b>{selectedDriver?.initials ?? '—'}</b>
+            </button>
 
-        <DriverDrawer
-          drivers={drivers}
-          activeDriverId={selectedDriver?.id ?? null}
-          open={leftOpen}
-          onClose={onCloseLeft}
-          onSelectSubject={onSelectSubject}
-        />
+            <DriverDrawer
+              drivers={drivers}
+              activeDriverId={selectedDriver?.id ?? null}
+              open={leftOpen}
+              onClose={onCloseLeft}
+              onSelectSubject={onSelectSubject}
+            />
 
-        <OperationsDrawer
-          selection={selection}
-          driver={selectedDriver}
-          driverDay={driverDay}
-          selectedStop={selectedStop}
-          open={rightOpen}
-          onClose={onCloseRight}
-          onSelectSubject={onSelectSubject}
-        />
+            <OperationsDrawer
+              selection={selection}
+              driver={selectedDriver}
+              driverDay={driverDay}
+              selectedStop={selectedStop}
+              open={rightOpen}
+              onClose={onCloseRight}
+              onSelectSubject={onSelectSubject}
+            />
+          </>
+        )}
 
-        <AppDock />
+        {workspaceOpen && (
+          <FreightLinkWorkspace
+            drivers={drivers}
+            driverDays={driverDays}
+            lanes={marketLanes}
+            locations={locations}
+            selection={selection}
+            onSelectSubject={onSelectSubject}
+            onClose={onCloseActiveApp}
+            onRoutePreviewChange={onRoutePreviewChange}
+          />
+        )}
+
+        <AppDock activeApp={activeApp} onToggleApp={onToggleApp} />
       </section>
     </main>
   )

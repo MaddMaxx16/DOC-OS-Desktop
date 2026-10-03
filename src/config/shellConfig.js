@@ -9,7 +9,7 @@ export const SHELL_CONFIG = Object.freeze({
 })
 
 export const DOCK_APPS = Object.freeze([
-  { id: 'freightlink', label: 'FreightLink', phase: 'V2.4' },
+  { id: 'freightlink', label: 'FreightLink', phase: 'LIVE' },
   { id: 'email', label: 'Email', phase: 'V2.9' },
   { id: 'documents', label: 'Documents', phase: 'V2.8' },
   { id: 'messages', label: 'Messages', phase: 'V2.9' },
