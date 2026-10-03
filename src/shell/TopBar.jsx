@@ -10,7 +10,7 @@ export default function TopBar() {
         <span className="status-dot" />
         <strong>NO ALERTS</strong>
         <span className="status-divider" />
-        <small>DESKTOP V2.4.1 · APP DRAWER</small>
+        <small>DESKTOP V2.4.2 · FREIGHTLINK</small>
       </div>
 
       <div className="clock-block">
