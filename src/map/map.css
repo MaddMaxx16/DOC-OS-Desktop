@@ -96,3 +96,44 @@
   box-shadow: 0 8px 24px rgba(0,0,0,.28) !important;
 }
 .maplibregl-ctrl-group button { filter: invert(.85); }
+
+.manifest-stop-marker {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #d7e2ea;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.manifest-stop-marker > span {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 5px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--driver-color);
+  border-radius: 7px;
+  background: #0a151d;
+  color: var(--driver-color);
+  box-shadow: 0 7px 18px rgba(0,0,0,.45);
+  font-size: 8px;
+  font-weight: 950;
+}
+.manifest-stop-marker.delivery > span { border-radius: 50%; }
+.manifest-stop-marker > small {
+  padding: 2px 5px;
+  border: 1px solid #263b4a;
+  background: rgba(6,12,18,.92);
+  color: #9dafbc;
+  font-size: 7px;
+  font-weight: 850;
+}
+.manifest-stop-marker.selected > span {
+  background: var(--driver-color);
+  color: #071019;
+  border-color: #ecf5fa;
+  box-shadow: 0 0 0 4px rgba(235,244,250,.16), 0 8px 24px rgba(0,0,0,.55);
+}
