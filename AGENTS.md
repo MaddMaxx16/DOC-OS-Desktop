@@ -32,21 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.3 Driver Day / Manifest
+## Current packet — V2.4 FreightLink Desktop
 
-V2.1 and V2.2 are structurally locked. Visual polish remains deferred.
+V2.1 through V2.3 are structurally locked. Visual polish remains deferred.
 
-V2.3 ports the proven manifest invariants into a new desktop-native Driver Day surface.
+V2.4 rebuilds FreightLink as a map-aware desktop workspace.
 
 Guardrails:
-- manifest stop order is authoritative for freight sequence,
-- pickup and delivery stops may interleave across loads,
-- trailer capacity is calculated from actual onboard freight after each stop,
-- lunch and staging are timeline events, not freight stops,
-- stop selection uses the shared V2.2 selection contract,
-- selecting a manifest stop must resolve back to its owning driver without creating a second selected-driver state,
-- do not port legacy manifest UI or the old driver scheduler,
-- do not begin FreightLink insertion/evaluation UI until V2.4.
+- FreightLink overlays the workstation; it must not replace or shrink the main map,
+- lane selection uses the shared LOAD selection type,
+- fit is evaluated against the selected driver's actual Driver Day,
+- fit must explain appointments, manifest insertion, HOS, and trailer capacity,
+- map preview shows selected lane geography and driver deadhead when route data is available,
+- route provider failure must degrade to an estimate rather than blanking the map,
+- V2.4 is evaluation only; booking, approval, and Rate Confirmation remain V2.5,
+- do not copy the legacy phone FreightLink screens.
 
 ## Verification
 
