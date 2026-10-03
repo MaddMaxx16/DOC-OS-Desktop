@@ -1,27 +1,42 @@
-import TopBar from './TopBar.jsx'
+import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
+import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
+import OperationsMap from '../map/OperationsMap.jsx'
+import AppDock from './AppDock.jsx'
 import DriverDrawer from './DriverDrawer.jsx'
 import OperationsDrawer from './OperationsDrawer.jsx'
-import AppDock from './AppDock.jsx'
-import OperationsMap from '../map/OperationsMap.jsx'
+import TopBar from './TopBar.jsx'
 import './shell.css'
 
 export default function DesktopShell({
   drivers,
-  selectedDriver,
+  selection,
   leftOpen,
   rightOpen,
   onToggleLeft,
   onToggleRight,
   onCloseLeft,
   onCloseRight,
-  onSelectDriver,
+  onSelectSubject,
 }) {
+  const selectedDriver = isSelection(selection, SELECTION_TYPES.DRIVER)
+    ? drivers.find((driver) => driver.id === selection.id) ?? null
+    : null
+
+  const selectedDriverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
+  const operationsHandleStyle = selectedDriverIdentity
+    ? { '--selected-driver-color': selectedDriverIdentity.color }
+    : undefined
+
   return (
     <main className="desktop-shell">
       <TopBar />
 
       <section className="operations-canvas" aria-label="DOC OS operations workstation">
-        <OperationsMap drivers={drivers} selectedDriver={selectedDriver} onSelectDriver={onSelectDriver} />
+        <OperationsMap
+          drivers={drivers}
+          selection={selection}
+          onSelectSubject={onSelectSubject}
+        />
 
         <button
           type="button"
@@ -37,7 +52,8 @@ export default function DesktopShell({
 
         <button
           type="button"
-          className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''}`}
+          className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''} ${selectedDriver ? 'has-driver-selection' : ''}`}
+          style={operationsHandleStyle}
           onClick={onToggleRight}
           aria-expanded={rightOpen}
           aria-controls="operations-drawer"
@@ -49,13 +65,14 @@ export default function DesktopShell({
 
         <DriverDrawer
           drivers={drivers}
-          selectedDriverId={selectedDriver?.id ?? null}
+          selection={selection}
           open={leftOpen}
           onClose={onCloseLeft}
-          onSelectDriver={onSelectDriver}
+          onSelectSubject={onSelectSubject}
         />
 
         <OperationsDrawer
+          selection={selection}
           driver={selectedDriver}
           open={rightOpen}
           onClose={onCloseRight}

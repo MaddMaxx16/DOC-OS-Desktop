@@ -51,13 +51,18 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 2px solid #9ab8cc;
-  background: #29445b;
+  border: 2px solid var(--driver-color);
+  background: #14222d;
+  color: var(--driver-color);
   box-shadow: 0 7px 20px rgba(0, 0, 0, .5);
   font-size: 9px;
   font-weight: 950;
+  transition: transform .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
 }
 .driver-marker > small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   padding: 3px 6px;
   border: 1px solid #263b4a;
   background: rgba(6, 12, 18, .9);
@@ -66,7 +71,24 @@
   font-size: 8px;
   font-weight: 800;
 }
-.driver-marker.selected > span { border-color: #d6e8f5; background: #4a7494; box-shadow: 0 0 0 4px rgba(112, 154, 187, .18), 0 8px 24px rgba(0, 0, 0, .55); }
+.driver-marker > small i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--driver-color);
+}
+.driver-marker:hover > span { transform: translateY(-2px); }
+.driver-marker.selected > span {
+  transform: translateY(-2px) scale(1.08);
+  border-color: #e5f0f6;
+  background: var(--driver-color);
+  color: #071019;
+  box-shadow: 0 0 0 4px rgba(235, 244, 250, .16), 0 9px 28px rgba(0, 0, 0, .6);
+}
+.driver-marker.selected > small {
+  border-color: var(--driver-color);
+  color: #eef5fa;
+}
 
 .maplibregl-ctrl-group {
   border: 1px solid #263a49 !important;
