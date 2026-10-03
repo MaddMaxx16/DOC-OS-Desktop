@@ -1,9 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Map as MapLibreMap, Marker, NavigationControl } from 'maplibre-gl'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
+
+const DEADHEAD_SOURCE = 'freightlink-deadhead-source'
+const DEADHEAD_LAYER = 'freightlink-deadhead-layer'
+const LOADED_SOURCE = 'freightlink-loaded-source'
+const LOADED_LAYER = 'freightlink-loaded-layer'
 
 export default function OperationsMap({
   drivers,
@@ -11,12 +16,16 @@ export default function OperationsMap({
   selectedDriver,
   selectedStop,
   selection,
+  freightRoutePreview,
+  workspaceOpen,
   onSelectSubject,
 }) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markerRefs = useRef(new globalThis.Map())
+  const previewMarkerRefs = useRef([])
   const onSelectSubjectRef = useRef(onSelectSubject)
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -35,6 +44,7 @@ export default function OperationsMap({
     })
 
     map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right')
+    map.on('load', () => setMapReady(true))
     mapRef.current = map
 
     const observer = new ResizeObserver(() => map.resize())
@@ -44,6 +54,8 @@ export default function OperationsMap({
       observer.disconnect()
       markerRefs.current.forEach((marker) => marker.remove())
       markerRefs.current.clear()
+      previewMarkerRefs.current.forEach((marker) => marker.remove())
+      previewMarkerRefs.current = []
       map.remove()
       mapRef.current = null
     }
@@ -120,11 +132,102 @@ export default function OperationsMap({
 
       markerRefs.current.set(`event:${selectedStop.id}`, marker)
     }
-  }, [driverDay, drivers, selectedDriver, selection])
+  }, [driverDay, drivers, selectedDriver, selection, selectedStop])
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map) return
+    if (!mapReady || !map) return
+
+    const clearLayer = (layerId, sourceId) => {
+      if (map.getLayer(layerId)) map.removeLayer(layerId)
+      if (map.getSource(sourceId)) map.removeSource(sourceId)
+    }
+    clearLayer(DEADHEAD_LAYER, DEADHEAD_SOURCE)
+    clearLayer(LOADED_LAYER, LOADED_SOURCE)
+    previewMarkerRefs.current.forEach((marker) => marker.remove())
+    previewMarkerRefs.current = []
+
+    if (!freightRoutePreview) return
+
+    const identity = getDriverIdentity(freightRoutePreview.driver.id)
+    const addLine = (sourceId, layerId, route, color, dashed = false) => {
+      if (!Array.isArray(route?.routeShape) || route.routeShape.length < 2) return
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'LineString', coordinates: route.routeShape },
+        },
+      })
+      map.addLayer({
+        id: layerId,
+        type: 'line',
+        source: sourceId,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': color,
+          'line-width': dashed ? 3 : 5,
+          'line-opacity': dashed ? .72 : .94,
+          ...(dashed ? { 'line-dasharray': [2, 2] } : {}),
+        },
+      })
+    }
+
+    addLine(DEADHEAD_SOURCE, DEADHEAD_LAYER, freightRoutePreview.deadheadRoute, identity.color, true)
+    addLine(LOADED_SOURCE, LOADED_LAYER, freightRoutePreview.loadedRoute, '#9b82ad')
+
+    const addPreviewMarker = (coordinates, role, label) => {
+      if (!coordinates) return
+      const element = document.createElement('div')
+      element.className = `freight-preview-marker ${role}`
+      element.innerHTML = `<span>${role === 'pickup' ? 'P' : 'D'}</span><small>${label}</small>`
+      previewMarkerRefs.current.push(
+        new Marker({ element, anchor: 'bottom' }).setLngLat(coordinates).addTo(map),
+      )
+    }
+
+    addPreviewMarker(freightRoutePreview.pickup?.coordinates, 'pickup', freightRoutePreview.pickup?.label)
+    addPreviewMarker(freightRoutePreview.delivery?.coordinates, 'delivery', freightRoutePreview.delivery?.label)
+
+    const points = []
+    for (const route of [freightRoutePreview.deadheadRoute, freightRoutePreview.loadedRoute]) {
+      if (Array.isArray(route?.routeShape)) points.push(...route.routeShape)
+    }
+    if (!points.length) {
+      if (freightRoutePreview.pickup?.coordinates) points.push(freightRoutePreview.pickup.coordinates)
+      if (freightRoutePreview.delivery?.coordinates) points.push(freightRoutePreview.delivery.coordinates)
+    }
+
+    if (points.length >= 2) {
+      const lngs = points.map((point) => point[0])
+      const lats = points.map((point) => point[1])
+      map.fitBounds(
+        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+        {
+          padding: {
+            top: 54,
+            right: 80,
+            bottom: 110,
+            left: workspaceOpen ? Math.min(980, window.innerWidth * .56) : 80,
+          },
+          maxZoom: 11.5,
+          duration: 450,
+        },
+      )
+    }
+
+    return () => {
+      clearLayer(DEADHEAD_LAYER, DEADHEAD_SOURCE)
+      clearLayer(LOADED_LAYER, LOADED_SOURCE)
+      previewMarkerRefs.current.forEach((marker) => marker.remove())
+      previewMarkerRefs.current = []
+    }
+  }, [freightRoutePreview, mapReady, workspaceOpen])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || freightRoutePreview) return
 
     if (selectedStop?.coordinates) {
       map.easeTo({ center: selectedStop.coordinates, zoom: Math.max(map.getZoom(), 10.7), duration: 450 })
@@ -134,7 +237,7 @@ export default function OperationsMap({
     if (selectedDriver) {
       map.easeTo({ center: selectedDriver.coordinates, zoom: Math.max(map.getZoom(), 10), duration: 500 })
     }
-  }, [selectedDriver, selectedStop])
+  }, [freightRoutePreview, selectedDriver, selectedStop])
 
   return (
     <div className="map-stage">
