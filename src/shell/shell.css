@@ -92,7 +92,7 @@
   transition: transform .25s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
 }
 .driver-drawer { left: 12px; width: 300px; transform: translateX(calc(-100% - 26px)); }
-.operations-drawer { right: 12px; width: 390px; padding: 16px; transform: translateX(calc(100% + 26px)); }
+.operations-drawer { right: 12px; width: 420px; padding: 16px; transform: translateX(calc(100% + 26px)); }
 .side-drawer.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
 
 .drawer-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; border-bottom: 1px solid #1b2c37; }
@@ -122,13 +122,10 @@
 .driver-identity-strip i { width: 8px; height: 8px; border-radius: 50%; background: var(--selected-driver-color); }
 .driver-identity-strip span { color: #cbd8e1; font-size: 9px; font-weight: 850; }
 .driver-identity-strip small { margin-left: auto; color: var(--selected-driver-color); font-size: 7px; font-weight: 900; letter-spacing: .1em; }
-.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.metric-grid > div { min-height: 76px; display: flex; flex-direction: column; gap: 7px; padding: 12px; border: 1px solid #1f3340; background: #0d1821; }
-.metric-grid span, .placeholder-card span, .empty-context span { color: #718697; font-size: 8px; font-weight: 900; letter-spacing: .13em; }
-.metric-grid strong { font-size: 13px; }
-.placeholder-card, .empty-context { margin-top: 12px; padding: 14px; border: 1px solid #1f3340; background: #0c161f; }
-.placeholder-card strong, .empty-context strong { display: block; margin-top: 6px; font-size: 13px; }
-.placeholder-card p, .empty-context p { margin: 8px 0 0; color: #788a99; font-size: 10px; line-height: 1.55; }
+.empty-context { margin-top: 12px; padding: 14px; border: 1px solid #1f3340; background: #0c161f; }
+.empty-context span { color: #718697; font-size: 8px; font-weight: 900; letter-spacing: .13em; }
+.empty-context strong { display: block; margin-top: 6px; font-size: 13px; }
+.empty-context p { margin: 8px 0 0; color: #788a99; font-size: 10px; line-height: 1.55; }
 
 .app-dock {
   position: absolute;
