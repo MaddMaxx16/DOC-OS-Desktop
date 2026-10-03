@@ -11,10 +11,10 @@ function eventCode(item) {
   if (item.kind === 'lunch') return 'LUNCH'
   if (item.kind === 'staging') return 'STAGE'
   const prefix = item.role === 'pickup' ? 'P' : 'D'
-  return `${prefix}${item.manifestOrder + 1}`
+  return `${prefix}${item.loadOrdinal}`
 }
 
-function FreightMeta({ item }) {
+function FreightMeta({ item, capacityPallets }) {
   const capacity = item.capacityAfter
   return (
     <>
@@ -24,7 +24,7 @@ function FreightMeta({ item }) {
         <em>{formatClock(item.appointmentStartMinutes)}–{formatClock(item.appointmentEndMinutes)}</em>
       </div>
       <div className="capacity-after">
-        <span>{capacity.palletsUsed}/26 pallets</span>
+        <span>{capacity.palletsUsed}/{capacityPallets} pallets</span>
         <span>{formatWeight(capacity.weightUsedLbs)}</span>
         <span>{capacity.onboardLoadIds.length} onboard</span>
       </div>
@@ -78,7 +78,7 @@ export default function DriverDayPanel({ driver, day, selection, onSelectSubject
                   <b>{eventCode(item)}</b>
                   <strong>{item.locationLabel}</strong>
                 </div>
-                {item.kind === 'freight-stop' && <FreightMeta item={item} />}
+                {item.kind === 'freight-stop' && <FreightMeta item={item} capacityPallets={day.trailer.capacityPallets} />}
                 {item.kind === 'lunch' && (
                   <div className="day-row-meta">
                     <span>OFF DUTY</span>
