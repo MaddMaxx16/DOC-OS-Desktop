@@ -1,20 +1,32 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { getSelectionKey } from '../domain/selection/selectionModel.js'
+import DriverDayPanel from '../features/driver-day/DriverDayPanel.jsx'
 
 function GenericSelectionContext({ selection }) {
   return (
     <div className="empty-context">
       <span>{selection.type.toUpperCase()}</span>
       <strong>{selection.id}</strong>
-      <p>This subject is already part of the shared V2.2 selection contract. Its desktop context arrives with the system that owns it.</p>
+      <p>This subject is part of the shared selection contract but its owning desktop system has not been ported yet.</p>
     </div>
   )
 }
 
-export default function OperationsDrawer({ selection, driver, open, onClose }) {
+export default function OperationsDrawer({
+  selection,
+  driver,
+  driverDay,
+  selectedStop,
+  open,
+  onClose,
+  onSelectSubject,
+}) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
   const style = driverIdentity ? { '--selected-driver-color': driverIdentity.color } : undefined
   const selectionKey = getSelectionKey(selection)
+  const headerLabel = selectedStop
+    ? `${selectedStop.role.toUpperCase()} · ${selectedStop.loadRef}`
+    : driver ? 'DRIVER DAY' : 'OPERATIONS'
 
   return (
     <aside
@@ -26,14 +38,18 @@ export default function OperationsDrawer({ selection, driver, open, onClose }) {
     >
       <header className="drawer-header">
         <div>
-          <span>{driver ? 'SELECTED DRIVER' : 'OPERATIONS'}</span>
+          <span>{headerLabel}</span>
           <strong>{driver ? driver.name : selection ? selection.id : 'No selection'}</strong>
-          <small>{driver ? driver.locationLabel : selection ? selection.type : 'Select a subject from the map or roster'}</small>
+          <small>
+            {selectedStop
+              ? `${selectedStop.locationLabel} · ${selectedStop.loadRef}`
+              : driver ? driver.locationLabel : selection ? selection.type : 'Select a subject from the map or roster'}
+          </small>
         </div>
         <button type="button" onClick={onClose} aria-label="Close operations drawer">×</button>
       </header>
 
-      {driver ? (
+      {driver && driverDay ? (
         <div className="operations-content">
           <div className="driver-identity-strip">
             <i aria-hidden="true" />
@@ -41,18 +57,12 @@ export default function OperationsDrawer({ selection, driver, open, onClose }) {
             <small>{driverIdentity.colorName.toUpperCase()} IDENTITY</small>
           </div>
 
-          <section className="metric-grid">
-            <div><span>STATUS</span><strong>{driver.status}</strong></div>
-            <div><span>NEXT STOP</span><strong>{driver.nextStop}</strong></div>
-            <div><span>DRIVE</span><strong>{driver.hos.drive}</strong></div>
-            <div><span>DUTY</span><strong>{driver.hos.duty}</strong></div>
-          </section>
-
-          <section className="placeholder-card">
-            <span>V2.2 SELECTION FOUNDATION</span>
-            <strong>Driver Day comes in V2.3</strong>
-            <p>The selected driver now owns one persistent identity across the map, roster, and operations context. Manifest and route ownership will inherit this same identity.</p>
-          </section>
+          <DriverDayPanel
+            driver={driver}
+            day={driverDay}
+            selection={selection}
+            onSelectSubject={onSelectSubject}
+          />
         </div>
       ) : selection ? (
         <GenericSelectionContext selection={selection} />
@@ -60,7 +70,7 @@ export default function OperationsDrawer({ selection, driver, open, onClose }) {
         <div className="empty-context">
           <span>CONTEXT</span>
           <strong>Nothing selected</strong>
-          <p>Open Drivers or click a map marker. One shared selection state drives every desktop surface.</p>
+          <p>Open Drivers or click a map marker. Driver Day appears here without replacing the map.</p>
         </div>
       )}
     </aside>
