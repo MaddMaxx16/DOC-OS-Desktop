@@ -1,0 +1,148 @@
+export const locations = Object.freeze({
+  'metroline-yard': Object.freeze({ id: 'metroline-yard', label: 'Metroline Yard', coordinates: [-74.1695, 40.7311] }),
+  'empire-freight-terminal': Object.freeze({ id: 'empire-freight-terminal', label: 'Empire Freight Terminal', coordinates: [-74.1890, 40.6758] }),
+  'queens-freight-center': Object.freeze({ id: 'queens-freight-center', label: 'Queens Freight Center', coordinates: [-73.9171, 40.7282] }),
+  'harborline-logistics': Object.freeze({ id: 'harborline-logistics', label: 'Harborline Logistics', coordinates: [-74.0107, 40.6562] }),
+  'brooklyn-industrial-terminal': Object.freeze({ id: 'brooklyn-industrial-terminal', label: 'Brooklyn Industrial Terminal', coordinates: [-74.0170, 40.6470] }),
+  'freshway-grocery-dc': Object.freeze({ id: 'freshway-grocery-dc', label: 'Freshway Grocery DC', coordinates: [-73.8781, 40.8368] }),
+  'bronx-commerce-terminal': Object.freeze({ id: 'bronx-commerce-terminal', label: 'Bronx Commerce Terminal', coordinates: [-73.8862, 40.8205] }),
+  'meadowlands-staging': Object.freeze({ id: 'meadowlands-staging', label: 'Meadowlands Staging', coordinates: [-74.0732, 40.7901] }),
+  'huntspoint-terminal': Object.freeze({ id: 'huntspoint-terminal', label: 'Hunts Point Terminal', coordinates: [-73.8852, 40.8101] }),
+  'jersey-city-crossdock': Object.freeze({ id: 'jersey-city-crossdock', label: 'Jersey City Crossdock', coordinates: [-74.0799, 40.7178] }),
+})
+
+export const loads = Object.freeze([
+  Object.freeze({
+    id: 'M-101',
+    loadRef: 'M-101',
+    assignedDriverId: 'marcus-reed',
+    freight: Object.freeze({ pallets: 8, weightLbs: 12000 }),
+    pickup: Object.freeze({
+      locationId: 'empire-freight-terminal',
+      appointmentStartMinutes: 480,
+      appointmentEndMinutes: 510,
+      projectedArrivalMinutes: 485,
+      manifestOrder: 0,
+    }),
+    delivery: Object.freeze({
+      locationId: 'harborline-logistics',
+      appointmentStartMinutes: 690,
+      appointmentEndMinutes: 735,
+      projectedArrivalMinutes: 700,
+      manifestOrder: 2,
+    }),
+  }),
+  Object.freeze({
+    id: 'M-202',
+    loadRef: 'M-202',
+    assignedDriverId: 'marcus-reed',
+    freight: Object.freeze({ pallets: 6, weightLbs: 9000 }),
+    pickup: Object.freeze({
+      locationId: 'queens-freight-center',
+      appointmentStartMinutes: 555,
+      appointmentEndMinutes: 585,
+      projectedArrivalMinutes: 560,
+      manifestOrder: 1,
+    }),
+    delivery: Object.freeze({
+      locationId: 'freshway-grocery-dc',
+      appointmentStartMinutes: 825,
+      appointmentEndMinutes: 870,
+      projectedArrivalMinutes: 835,
+      manifestOrder: 4,
+    }),
+  }),
+  Object.freeze({
+    id: 'M-303',
+    loadRef: 'M-303',
+    assignedDriverId: 'marcus-reed',
+    freight: Object.freeze({ pallets: 10, weightLbs: 14000 }),
+    pickup: Object.freeze({
+      locationId: 'brooklyn-industrial-terminal',
+      appointmentStartMinutes: 750,
+      appointmentEndMinutes: 780,
+      projectedArrivalMinutes: 758,
+      manifestOrder: 3,
+    }),
+    delivery: Object.freeze({
+      locationId: 'bronx-commerce-terminal',
+      appointmentStartMinutes: 915,
+      appointmentEndMinutes: 960,
+      projectedArrivalMinutes: 925,
+      manifestOrder: 5,
+    }),
+  }),
+  Object.freeze({
+    id: 'T-110',
+    loadRef: 'T-110',
+    assignedDriverId: 'taylor-brooks',
+    freight: Object.freeze({ pallets: 12, weightLbs: 18000 }),
+    pickup: Object.freeze({
+      locationId: 'huntspoint-terminal',
+      appointmentStartMinutes: 510,
+      appointmentEndMinutes: 550,
+      projectedArrivalMinutes: 520,
+      manifestOrder: 0,
+    }),
+    delivery: Object.freeze({
+      locationId: 'jersey-city-crossdock',
+      appointmentStartMinutes: 660,
+      appointmentEndMinutes: 720,
+      projectedArrivalMinutes: 680,
+      manifestOrder: 1,
+    }),
+  }),
+  Object.freeze({
+    id: 'D-210',
+    loadRef: 'D-210',
+    assignedDriverId: 'derrick-cole',
+    freight: Object.freeze({ pallets: 7, weightLbs: 10500 }),
+    pickup: Object.freeze({
+      locationId: 'brooklyn-industrial-terminal',
+      appointmentStartMinutes: 540,
+      appointmentEndMinutes: 585,
+      projectedArrivalMinutes: 548,
+      manifestOrder: 0,
+    }),
+    delivery: Object.freeze({
+      locationId: 'empire-freight-terminal',
+      appointmentStartMinutes: 720,
+      appointmentEndMinutes: 765,
+      projectedArrivalMinutes: 738,
+      manifestOrder: 1,
+    }),
+  }),
+])
+
+export const driverPlans = Object.freeze({
+  'marcus-reed': Object.freeze({
+    shift: Object.freeze({ startMinutes: 420, endMinutes: 1020 }),
+    lunch: Object.freeze({
+      startMinutes: 630,
+      endMinutes: 660,
+      locationId: 'meadowlands-staging',
+      afterManifestOrder: 1,
+    }),
+    staging: Object.freeze({ arrivalMinutes: 1000, locationId: 'meadowlands-staging' }),
+  }),
+  'taylor-brooks': Object.freeze({
+    shift: Object.freeze({ startMinutes: 450, endMinutes: 1020 }),
+    lunch: Object.freeze({
+      startMinutes: 735,
+      endMinutes: 765,
+      locationId: 'meadowlands-staging',
+      afterManifestOrder: 0,
+    }),
+    staging: Object.freeze({ arrivalMinutes: 900, locationId: 'meadowlands-staging' }),
+  }),
+  'derrick-cole': Object.freeze({
+    shift: Object.freeze({ startMinutes: 480, endMinutes: 1020 }),
+    lunch: Object.freeze({
+      startMinutes: 690,
+      endMinutes: 720,
+      locationId: 'meadowlands-staging',
+      afterManifestOrder: 0,
+    }),
+    staging: Object.freeze({ arrivalMinutes: 870, locationId: 'meadowlands-staging' }),
+  }),
+})
