@@ -1,17 +1,23 @@
 import { useEffect, useRef } from 'react'
 import { Map as MapLibreMap, Marker, NavigationControl } from 'maplibre-gl'
+import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
+import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
-export default function OperationsMap({ drivers, selectedDriver, onSelectDriver }) {
+export default function OperationsMap({ drivers, selection, onSelectSubject }) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markerRefs = useRef(new globalThis.Map())
-  const onSelectDriverRef = useRef(onSelectDriver)
+  const onSelectSubjectRef = useRef(onSelectSubject)
+
+  const selectedDriver = isSelection(selection, SELECTION_TYPES.DRIVER)
+    ? drivers.find((driver) => driver.id === selection.id) ?? null
+    : null
 
   useEffect(() => {
-    onSelectDriverRef.current = onSelectDriver
-  }, [onSelectDriver])
+    onSelectSubjectRef.current = onSelectSubject
+  }, [onSelectSubject])
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return undefined
@@ -48,14 +54,19 @@ export default function OperationsMap({ drivers, selectedDriver, onSelectDriver 
     markerRefs.current.clear()
 
     drivers.forEach((driver) => {
+      const identity = getDriverIdentity(driver.id)
+      const selected = isSelection(selection, SELECTION_TYPES.DRIVER, driver.id)
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `driver-marker ${selectedDriver?.id === driver.id ? 'selected' : ''}`
-      element.innerHTML = `<span>${driver.initials}</span><small>${driver.name}</small>`
+      element.className = `driver-marker ${selected ? 'selected' : ''}`
+      element.style.setProperty('--driver-color', identity.color)
+      element.dataset.driverId = driver.id
+      element.setAttribute('aria-label', `Select ${driver.name}, ${identity.colorName} driver`)
+      element.innerHTML = `<span>${driver.initials}</span><small><i></i>${driver.name}</small>`
       element.addEventListener('click', (event) => {
         event.preventDefault()
         event.stopPropagation()
-        onSelectDriverRef.current?.(driver.id)
+        onSelectSubjectRef.current?.(SELECTION_TYPES.DRIVER, driver.id)
       })
 
       const marker = new Marker({ element, anchor: 'bottom' })
@@ -64,7 +75,7 @@ export default function OperationsMap({ drivers, selectedDriver, onSelectDriver 
 
       markerRefs.current.set(driver.id, marker)
     })
-  }, [drivers, selectedDriver])
+  }, [drivers, selection])
 
   useEffect(() => {
     const map = mapRef.current

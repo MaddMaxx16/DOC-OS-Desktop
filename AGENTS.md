@@ -32,17 +32,19 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## V2.1 guardrail
+## Current packet — V2.2 Shared Selection + Driver Identity
 
-V2.1 is shell only. Do not port gameplay systems yet.
+V2.1 is structurally locked. Visual polish is deferred until real systems occupy the shell.
 
-Acceptance:
-- map dominates the workstation,
-- left and right drawers start closed,
-- drawers overlay instead of resizing the map,
-- dock stays compact,
-- no tutorial interruption,
-- no mobile UI exists in the runtime.
+V2.2 establishes one desktop selection contract and persistent driver identity.
+
+Guardrails:
+- selection is one shared subject object, not separate screen-specific selected IDs,
+- supported subject types are driver, load, stop, facility, and route leg,
+- only drivers are selectable in the clean build until their owning systems are ported,
+- driver colors are stable by driver ID and live outside raw operational data,
+- color reinforces identity but initials/names remain visible for accessibility,
+- do not begin the V2.3 manifest workspace inside V2.2.
 
 ## Verification
 
