@@ -1,0 +1,58 @@
+const ROUTER_URL = 'https://router.project-osrm.org/route/v1/driving'
+const REQUEST_TIMEOUT_MS = 6500
+const routeCache = new Map()
+
+function fallbackRoute(origin, destination) {
+  const [originLon, originLat] = origin
+  const [destinationLon, destinationLat] = destination
+  const radians = (value) => value * (Math.PI / 180)
+  const earthRadiusMiles = 3958.7613
+  const phi1 = radians(originLat)
+  const phi2 = radians(destinationLat)
+  const deltaPhi = radians(destinationLat - originLat)
+  const deltaLambda = radians(destinationLon - originLon)
+  const a = Math.sin(deltaPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) ** 2
+  const straightMiles = earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  const distanceMiles = straightMiles * 1.18
+  const durationMinutes = Math.max(1, Math.round((distanceMiles / 38) * 60))
+  return {
+    distanceMiles,
+    durationMinutes,
+    routeShape: [origin, destination],
+    source: 'estimate',
+  }
+}
+
+export async function calculateRoadRoute(origin, destination) {
+  if (!Array.isArray(origin) || !Array.isArray(destination)) throw new Error('Route endpoints are required')
+  const key = `${origin.join(',')}:${destination.join(',')}`
+  if (routeCache.has(key)) return routeCache.get(key)
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    const coordinates = `${origin[0]},${origin[1]};${destination[0]},${destination[1]}`
+    const response = await fetch(
+      `${ROUTER_URL}/${coordinates}?overview=full&geometries=geojson&steps=false`,
+      { headers: { Accept: 'application/json' }, signal: controller.signal },
+    )
+    if (!response.ok) throw new Error(`Road route failed (${response.status})`)
+    const data = await response.json()
+    const route = data.routes?.[0]
+    if (!route?.geometry?.coordinates?.length) throw new Error('Road route missing geometry')
+    const result = {
+      distanceMiles: route.distance / 1609.344,
+      durationMinutes: Math.max(1, Math.round(route.duration / 60)),
+      routeShape: route.geometry.coordinates,
+      source: 'road',
+    }
+    routeCache.set(key, result)
+    return result
+  } catch {
+    const result = fallbackRoute(origin, destination)
+    routeCache.set(key, result)
+    return result
+  } finally {
+    clearTimeout(timeout)
+  }
+}
