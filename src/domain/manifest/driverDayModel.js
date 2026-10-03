@@ -21,6 +21,7 @@ function freightStop(load, role, locations) {
     role,
     loadId: load.id,
     loadRef: load.loadRef,
+    loadOrdinal: finite(load.dayLoadOrder, 1),
     driverId: load.assignedDriverId,
     manifestOrder: finite(spec.manifestOrder),
     projectedArrivalMinutes: finite(spec.projectedArrivalMinutes),
