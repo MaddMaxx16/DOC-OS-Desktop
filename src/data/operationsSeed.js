@@ -136,7 +136,7 @@ export const driverPlans = Object.freeze({
       startMinutes: 735,
       endMinutes: 765,
       locationId: 'meadowlands-staging',
-      afterManifestOrder: 0,
+      afterManifestOrder: 1,
     }),
     staging: Object.freeze({ arrivalMinutes: 900, locationId: 'meadowlands-staging' }),
   }),
