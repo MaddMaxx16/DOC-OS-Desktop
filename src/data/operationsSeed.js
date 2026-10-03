@@ -15,6 +15,7 @@ export const loads = Object.freeze([
   Object.freeze({
     id: 'M-101',
     loadRef: 'M-101',
+    dayLoadOrder: 1,
     assignedDriverId: 'marcus-reed',
     freight: Object.freeze({ pallets: 8, weightLbs: 12000 }),
     pickup: Object.freeze({
@@ -35,6 +36,7 @@ export const loads = Object.freeze([
   Object.freeze({
     id: 'M-202',
     loadRef: 'M-202',
+    dayLoadOrder: 2,
     assignedDriverId: 'marcus-reed',
     freight: Object.freeze({ pallets: 6, weightLbs: 9000 }),
     pickup: Object.freeze({
@@ -55,6 +57,7 @@ export const loads = Object.freeze([
   Object.freeze({
     id: 'M-303',
     loadRef: 'M-303',
+    dayLoadOrder: 3,
     assignedDriverId: 'marcus-reed',
     freight: Object.freeze({ pallets: 10, weightLbs: 14000 }),
     pickup: Object.freeze({
@@ -75,6 +78,7 @@ export const loads = Object.freeze([
   Object.freeze({
     id: 'T-110',
     loadRef: 'T-110',
+    dayLoadOrder: 1,
     assignedDriverId: 'taylor-brooks',
     freight: Object.freeze({ pallets: 12, weightLbs: 18000 }),
     pickup: Object.freeze({
@@ -95,6 +99,7 @@ export const loads = Object.freeze([
   Object.freeze({
     id: 'D-210',
     loadRef: 'D-210',
+    dayLoadOrder: 1,
     assignedDriverId: 'derrick-cole',
     freight: Object.freeze({ pallets: 7, weightLbs: 10500 }),
     pickup: Object.freeze({
