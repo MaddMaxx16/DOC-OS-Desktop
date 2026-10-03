@@ -177,3 +177,38 @@
   font-size: 7px;
   font-weight: 850;
 }
+
+.freight-preview-marker {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  color:#dce6ed;
+  pointer-events:none;
+}
+.freight-preview-marker>span {
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  border:2px solid #9b82ad;
+  background:#211a29;
+  color:#d8c5e6;
+  box-shadow:0 8px 26px rgba(0,0,0,.55);
+  font-size:9px;
+  font-weight:950;
+}
+.freight-preview-marker.pickup>span { border-radius:7px; }
+.freight-preview-marker.delivery>span { border-radius:50%; }
+.freight-preview-marker>small {
+  max-width:150px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  padding:3px 6px;
+  border:1px solid #3a3042;
+  background:rgba(10,8,13,.94);
+  color:#c3b2ce;
+  font-size:7px;
+  font-weight:850;
+}
