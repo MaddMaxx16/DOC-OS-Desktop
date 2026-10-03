@@ -28,3 +28,10 @@ test('desktop runtime contains no phone-shell class', async () => {
   const contents = await Promise.all(files.map((path) => readFile(new URL(path, import.meta.url), 'utf8')))
   assert.equal(contents.some((content) => content.includes('phone-shell')), false)
 })
+
+test('MapLibre map class does not shadow the native Map registry', async () => {
+  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  assert.match(source, /Map as MapLibreMap/)
+  assert.match(source, /new globalThis\.Map\(\)/)
+  assert.match(source, /new MapLibreMap\(\{/)
+})
