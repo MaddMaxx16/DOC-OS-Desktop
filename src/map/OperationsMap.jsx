@@ -5,15 +5,18 @@ import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
-export default function OperationsMap({ drivers, selection, onSelectSubject }) {
+export default function OperationsMap({
+  drivers,
+  driverDay,
+  selectedDriver,
+  selectedStop,
+  selection,
+  onSelectSubject,
+}) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
   const markerRefs = useRef(new globalThis.Map())
   const onSelectSubjectRef = useRef(onSelectSubject)
-
-  const selectedDriver = isSelection(selection, SELECTION_TYPES.DRIVER)
-    ? drivers.find((driver) => driver.id === selection.id) ?? null
-    : null
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -55,7 +58,7 @@ export default function OperationsMap({ drivers, selection, onSelectSubject }) {
 
     drivers.forEach((driver) => {
       const identity = getDriverIdentity(driver.id)
-      const selected = isSelection(selection, SELECTION_TYPES.DRIVER, driver.id)
+      const selected = selectedDriver?.id === driver.id
       const element = document.createElement('button')
       element.type = 'button'
       element.className = `driver-marker ${selected ? 'selected' : ''}`
@@ -73,15 +76,46 @@ export default function OperationsMap({ drivers, selection, onSelectSubject }) {
         .setLngLat(driver.coordinates)
         .addTo(map)
 
-      markerRefs.current.set(driver.id, marker)
+      markerRefs.current.set(`driver:${driver.id}`, marker)
     })
-  }, [drivers, selection])
+
+    const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
+    for (const stop of driverDay?.freightStops ?? []) {
+      if (!stop.coordinates || !driverIdentity) continue
+      const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
+      const element = document.createElement('button')
+      element.type = 'button'
+      element.className = `manifest-stop-marker ${stop.role} ${selected ? 'selected' : ''}`
+      element.style.setProperty('--driver-color', driverIdentity.color)
+      element.setAttribute('aria-label', `Select ${stop.role} ${stop.loadRef} at ${stop.locationLabel}`)
+      element.innerHTML = `<span>${stop.role === 'pickup' ? 'P' : 'D'}${stop.manifestOrder + 1}</span><small>${stop.loadRef}</small>`
+      element.addEventListener('click', (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, stop.id)
+      })
+
+      const marker = new Marker({ element, anchor: 'bottom' })
+        .setLngLat(stop.coordinates)
+        .addTo(map)
+
+      markerRefs.current.set(`stop:${stop.id}`, marker)
+    }
+  }, [driverDay, drivers, selectedDriver, selection])
 
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !selectedDriver) return
-    map.easeTo({ center: selectedDriver.coordinates, zoom: Math.max(map.getZoom(), 10), duration: 500 })
-  }, [selectedDriver])
+    if (!map) return
+
+    if (selectedStop?.coordinates) {
+      map.easeTo({ center: selectedStop.coordinates, zoom: Math.max(map.getZoom(), 10.7), duration: 450 })
+      return
+    }
+
+    if (selectedDriver) {
+      map.easeTo({ center: selectedDriver.coordinates, zoom: Math.max(map.getZoom(), 10), duration: 500 })
+    }
+  }, [selectedDriver, selectedStop])
 
   return (
     <div className="map-stage">
