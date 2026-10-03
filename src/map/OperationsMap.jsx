@@ -88,7 +88,7 @@ export default function OperationsMap({
       element.className = `manifest-stop-marker ${stop.role} ${selected ? 'selected' : ''}`
       element.style.setProperty('--driver-color', driverIdentity.color)
       element.setAttribute('aria-label', `Select ${stop.role} ${stop.loadRef} at ${stop.locationLabel}`)
-      element.innerHTML = `<span>${stop.role === 'pickup' ? 'P' : 'D'}${stop.manifestOrder + 1}</span><small>${stop.loadRef}</small>`
+      element.innerHTML = `<span>${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}</span><small>${stop.loadRef}</small>`
       element.addEventListener('click', (event) => {
         event.preventDefault()
         event.stopPropagation()
