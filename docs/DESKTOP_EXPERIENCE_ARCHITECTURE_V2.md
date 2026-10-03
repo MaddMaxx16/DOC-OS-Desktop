@@ -428,22 +428,22 @@ Examples:
 
 ---
 
-## 11. Bottom dock and workspace
+## 11. Bottom app bar and shared app drawer
 
-The bottom of DOC OS has two different concepts:
+The bottom of DOC OS has two distinct shell primitives:
 
-1. **App Dock**
-2. **App Workspace**
+1. **Full-width App Bar**
+2. **Shared Bottom App Drawer**
 
-They should not visually blur together.
+They are related but should not visually blur together.
 
-### Dock
+### Full-width App Bar
 
-Always compact.
+The app bar is always anchored edge-to-edge across the bottom of the workstation.
 
 Target height:
 
-- approximately 50–64 px.
+- approximately 58–64 px.
 
 Possible apps:
 
@@ -459,17 +459,31 @@ Badges may appear for unread/new content.
 
 CarrierSource remains locked during early career.
 
-### Working workspace
+The active app receives the strong selected treatment.
 
-Opening an app raises a desktop-native workspace.
+Clicking the active app again, or using the app close control, closes the app drawer.
 
-Target height:
+### Shared Bottom App Drawer
 
-- roughly 32–42% of the screen depending on app.
+Every ordinary dock app opens into the same shell-level drawer.
 
-The map remains visible above it.
+The drawer:
 
-The workspace should feel like desktop software:
+- spans the full workstation width,
+- sits directly above the app bar,
+- claims real vertical layout space,
+- resizes the map above it rather than covering the map,
+- targets approximately 35–45% of the screen height,
+- defaults near 40%,
+- returns its space to the map when closed.
+
+The player therefore learns one app-navigation rule:
+
+> click app → drawer opens  
+> click another app → drawer content switches  
+> close app → map expands
+
+App views should feel like desktop software:
 
 - tables,
 - lists,
@@ -478,7 +492,38 @@ The workspace should feel like desktop software:
 - filters,
 - inspectors.
 
-Do not simply mount the old phone screen inside a larger rectangle.
+Do not mount floating app windows over arbitrary parts of the map as the normal app pattern.
+
+Do not simply mount the old phone screen inside the drawer.
+
+### Map relationship
+
+The map remains the persistent operational surface above the drawer.
+
+Apps may request a contextual map mode.
+
+Examples:
+
+- FreightLink → marketplace overview, lane markers, selected lane route,
+- Documents → relevant load/document geography when useful,
+- Messages → selected driver/load context when useful,
+- Banking → ordinary operations map unless another context is selected.
+
+The app does not own the map. It supplies context to the shared map.
+
+### FreightLink shopping mode
+
+When FreightLink opens:
+
+- zoom out enough to understand the marketplace geography,
+- show available lanes as selectable marketplace markers,
+- preserve relevant driver/manifest context where practical.
+
+Selecting a lane:
+
+- selects the same `LOAD` object in the board and map,
+- frames the driver insertion point, deadhead, pickup, loaded route, and delivery,
+- keeps the app drawer visible below while the map shows the geography above.
 
 ### Focused workspace
 
@@ -494,7 +539,7 @@ the task may expand to most of the screen.
 
 Gameplay automatically pauses.
 
-The player should still see a compact operational reminder, but the task gets visual priority.
+Focused mode is an intentional exception to the shared bottom app drawer, not a second ordinary app layout.
 
 ---
 
@@ -1162,6 +1207,10 @@ The following are now considered locked unless deliberately reopened:
 - Left and right panels slide in/out.
 - Side panels overlay rather than permanently squeeze the map.
 - The bottom dock stays compact when no app is active.
+- The app bar spans the full workstation width.
+- Ordinary dock apps share one full-width bottom app drawer.
+- The shared app drawer resizes the map above it instead of covering it.
+- The default shared app drawer targets roughly 40% of the viewport height.
 - Desktop apps are rebuilt as desktop apps rather than stretched phone screens.
 - Existing simulation logic is preserved where sound.
 - Jordan's tutorial is removed from the active loop during the systems rebuild.
