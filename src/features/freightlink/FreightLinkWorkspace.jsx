@@ -55,13 +55,17 @@ export default function FreightLinkWorkspace({
 }) {
   const [candidateDriverId, setCandidateDriverId] = useState(drivers[0]?.id ?? null)
   const [fitFilter, setFitFilter] = useState('ALL')
-  const [routeState, setRouteState] = useState({ status: 'idle', deadhead: null, loaded: null })
+  const [routeResult, setRouteResult] = useState(null)
 
   const candidateDriver = drivers.find((driver) => driver.id === candidateDriverId) ?? null
   const candidateDay = driverDays.find((day) => day.driverId === candidateDriverId) ?? null
   const selectedLane = isSelection(selection, SELECTION_TYPES.LOAD)
     ? lanes.find((lane) => lane.id === selection.id) ?? null
     : null
+  const routeKey = selectedLane && driver ? `${selectedLane.id}:${driver.id}` : null
+  const routeState = routeResult?.key === routeKey
+    ? routeResult
+    : { status: routeKey ? 'routing' : 'idle', deadhead: null, loaded: null }
 
   const evaluations = useMemo(() => {
     if (!candidateDriver || !candidateDay) return []
@@ -111,7 +115,6 @@ export default function FreightLinkWorkspace({
     }
 
     let active = true
-    setRouteState({ status: 'routing', deadhead: null, loaded: null })
     onRoutePreviewChange({
       lane: selectedLane,
       driver: candidateDriver,
@@ -129,7 +132,7 @@ export default function FreightLinkWorkspace({
     ]).then(([deadhead, loaded]) => {
       if (!active) return
       const status = deadhead.source === 'road' || loaded.source === 'road' ? 'ready' : 'estimate'
-      setRouteState({ status, deadhead, loaded })
+      setRouteResult({ key: routeKey, status, deadhead, loaded })
       onRoutePreviewChange({
         lane: selectedLane,
         driver: candidateDriver,
