@@ -151,3 +151,14 @@
 .app-dock button strong { font-size: 8px; }
 .app-dock button small { color: #665f72; font-size: 6px; font-weight: 900; letter-spacing: .08em; }
 .dock-clock { flex: 0 0 78px; display: grid; place-items: center; color: #a483b8; font-size: 7px; font-weight: 950; letter-spacing: .12em; }
+
+.app-dock button.active {
+  background:#13222d;
+  color:#e5eef4;
+  box-shadow:inset 0 2px #8a7398;
+}
+.app-dock button:disabled {
+  cursor:default;
+  opacity:.46;
+}
+.workspace-open .app-dock { border-color:#3a3341; }
