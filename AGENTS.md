@@ -32,12 +32,14 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.1 Live Operations Foundation
+## Current packet — V2.7.1.1 Startup Route Guard
 
-V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete.
+V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete. V2.7.1 Live Operations Foundation is implemented pending visual acceptance.
 
 Guardrails:
-- preserve every locked planning, routing, map, booking, and Rate Con invariant from V2.1–V2.6,
+- preserve every locked planning, routing, map, booking, Rate Con, and V2.7.1 live-clock invariant,
+- no-selection startup must never treat null route state and null selected-driver state as a valid route match,
+- route rendering may read segments only when both a selected driver and a driver-scoped route result exist,
 - activate the existing top-right pause/play/fast-forward runway instead of redesigning the header,
 - simulation begins at 6:00 AM, Day 1, paused,
 - Play advances one game minute per simulation tick; Fast Forward advances four game minutes per tick,
