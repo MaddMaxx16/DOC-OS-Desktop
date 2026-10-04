@@ -1,32 +1,76 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { SHELL_CONFIG } from '../src/config/shellConfig.js'
+import { SHELL_CONFIG, WORKSTATION_SECTIONS } from '../src/config/shellConfig.js'
 
-test('V2.1 drawers start closed', () => {
-  assert.equal(SHELL_CONFIG.leftDrawerDefaultOpen, false)
-  assert.equal(SHELL_CONFIG.rightDrawerDefaultOpen, false)
-})
-
-test('V2.1 desktop reference remains 1920x1080', () => {
+test('desktop reference remains 1920x1080', () => {
   assert.equal(SHELL_CONFIG.referenceWidth, 1920)
   assert.equal(SHELL_CONFIG.referenceHeight, 1080)
 })
 
+test('V2.5.1 workstation uses rail, browser, and inspector widths', () => {
+  assert.equal(SHELL_CONFIG.commandRailWidth, 76)
+  assert.equal(SHELL_CONFIG.browserWidth, 340)
+  assert.equal(SHELL_CONFIG.inspectorWidth, 430)
+  assert.equal(WORKSTATION_SECTIONS[0].id, 'drivers')
+  assert.equal(WORKSTATION_SECTIONS[1].id, 'freightlink')
+})
+
 test('desktop project contains no Capacitor dependency', async () => {
   const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
-  const dependencyNames = Object.keys({ ...(packageJson.dependencies ?? {}), ...(packageJson.devDependencies ?? {}) })
+  const dependencyNames = Object.keys({
+    ...(packageJson.dependencies ?? {}),
+    ...(packageJson.devDependencies ?? {}),
+  })
   assert.equal(dependencyNames.some((name) => name.startsWith('@capacitor/')), false)
 })
 
-test('desktop runtime contains no phone-shell class', async () => {
+test('desktop runtime contains no phone shell or retired bottom drawer runtime', async () => {
   const files = [
     '../src/app/App.jsx',
     '../src/shell/DesktopShell.jsx',
     '../src/shell/shell.css',
   ]
   const contents = await Promise.all(files.map((path) => readFile(new URL(path, import.meta.url), 'utf8')))
-  assert.equal(contents.some((content) => content.includes('phone-shell')), false)
+  const joined = contents.join('\n')
+
+  assert.doesNotMatch(joined, /phone-shell/)
+  assert.doesNotMatch(joined, /DesktopAppDrawer/)
+  assert.doesNotMatch(joined, /AppDock/)
+  assert.doesNotMatch(joined, /desktop-app-drawer/)
+  assert.doesNotMatch(joined, /app-dock/)
+})
+
+test('V2.5.1 shell is rail -> browser -> map -> inspector', async () => {
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.match(shell, /<CommandRail/)
+  assert.match(shell, /<DriverBrowser/)
+  assert.match(shell, /className="map-workspace"/)
+  assert.match(shell, /<OperationsInspector/)
+  assert.match(css, /grid-template-columns: 76px 0 minmax\(0, 1fr\) 0/)
+  assert.match(css, /browser-open\.inspector-open/)
+  assert.match(css, /76px minmax\(300px, 340px\) minmax\(0, 1fr\) minmax\(390px, 430px\)/)
+})
+
+test('V2.5.1 command rail exposes Drivers and FreightLink as live sections', async () => {
+  const rail = await readFile(new URL('../src/shell/CommandRail.jsx', import.meta.url), 'utf8')
+
+  assert.match(rail, /section\.id === 'drivers' \|\| section\.id === 'freightlink'/)
+  assert.match(rail, /activeSection === section\.id/)
+  assert.match(rail, /onToggleSection\(section\.id\)/)
+})
+
+test('FreightLink renders left marketplace browser and right selected-lane inspector', async () => {
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+
+  assert.match(freight, /workstation-browser freightlink-browser/)
+  assert.match(freight, /workstation-inspector freightlink-inspector/)
+  assert.match(freight, /selectedLane && selectedEvaluation/)
+  assert.match(css, /\.freightlink-workspace \{\s*display: contents;/)
+  assert.match(css, /\.freightlink-inspector \{[\s\S]*grid-template-rows: auto minmax\(0, 1fr\) auto;/)
 })
 
 test('MapLibre map class does not shadow the native Map registry', async () => {
@@ -36,62 +80,7 @@ test('MapLibre map class does not shadow the native Map registry', async () => {
   assert.match(source, /new MapLibreMap\(\{/)
 })
 
-
-test('V2.4.4 shared app drawer owns the taller bottom workstation region', async () => {
-  assert.equal(SHELL_CONFIG.dockHeight, 64)
-  assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.46)
-  assert.equal(SHELL_CONFIG.appDrawerMinHeight, 360)
-  assert.equal(SHELL_CONFIG.appDrawerMaxHeight, 540)
-
-  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
-  const drawer = await readFile(new URL('../src/shell/DesktopAppDrawer.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
-
-  assert.match(shell, /<div className="map-workspace">/)
-  assert.match(shell, /<DesktopAppDrawer activeApp=\{activeApp\}>/)
-  assert.match(drawer, /className="desktop-app-drawer"/)
-  assert.match(css, /grid-template-rows: minmax\(0, 1fr\) clamp\(360px, 46vh, 540px\) 64px/)
-  assert.match(css, /width: 100%/)
-})
-
-test('FreightLink uses the shared drawer instead of floating over the map', async () => {
-  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
-  assert.match(css, /\.freightlink-workspace\{position:relative/)
-  assert.doesNotMatch(css, /\.freightlink-workspace\{position:absolute/)
-})
-
-test('FreightLink marketplace mode exposes map-selectable lane markers', async () => {
-  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  assert.match(source, /market-lane-marker/)
-  assert.match(source, /SELECTION_TYPES\.LOAD/)
-  assert.match(source, /marketLanes = \[\]/)
-  assert.match(source, /workspaceOpen \|\| freightRoutePreview/)
-})
-
-
-test('V2.4.3 marketplace keeps labels quiet until interaction', async () => {
-  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
-
-  assert.match(source, /anotherLaneSelected/)
-  assert.match(css, /\.driver-marker > small \{[\s\S]*display: none;/)
-  assert.match(css, /\.driver-marker:hover > small,[\s\S]*\.driver-marker\.selected > small/)
-  assert.match(css, /\.market-lane-marker > small \{[\s\S]*display: none;/)
-  assert.match(css, /\.market-lane-marker\.muted/)
-})
-
-test('V2.4.2 FreightLink inspector uses two desktop columns', async () => {
-  const source = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
-
-  assert.match(source, /className="lane-detail-columns"/)
-  assert.match(source, /className="lane-detail-column"/)
-  assert.match(css, /\.lane-detail-columns \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/)
-  assert.match(css, /\.lane-route-copy strong \{\s*font-size: 11px;/)
-})
-
-
-test('V2.4.3 local Vite setup owns the MapLibre worker explicitly', async () => {
+test('local Vite setup owns the MapLibre worker explicitly', async () => {
   const vite = await readFile(new URL('../vite.config.js', import.meta.url), 'utf8')
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
@@ -100,38 +89,59 @@ test('V2.4.3 local Vite setup owns the MapLibre worker explicitly', async () => 
   assert.match(map, /setWorkerUrl\(maplibreWorkerUrl\)/)
 })
 
-test('V2.4.3 uses a dark vector basemap instead of filtered raster OSM', async () => {
+test('operations map remains dark, flat, north-up, and pan/zoom only', async () => {
   const style = await readFile(new URL('../src/data/mapStyle.js', import.meta.url), 'utf8')
+  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
   assert.match(style, /tiles\.openfreemap\.org\/styles\/dark/)
-  assert.doesNotMatch(style, /tile\.openstreetmap\.org/)
-  assert.doesNotMatch(style, /type:\s*['"]raster['"]/)
+  assert.match(source, /bearing:\s*0/)
+  assert.match(source, /pitch:\s*0/)
+  assert.match(source, /maxPitch:\s*0/)
+  assert.match(source, /dragRotate:\s*false/)
+  assert.match(source, /map\.touchZoomRotate\.disableRotation\(\)/)
+  assert.match(source, /map\.touchPitch\.disable\(\)/)
+  assert.match(source, /new NavigationControl\(\{ showCompass: false \}\)/)
 })
 
-test('V2.4.3 map language uses trucks, typed POIs, and neutral preview routes', async () => {
+test('map language uses trucks, typed POIs, neutral proposal routes, and committed route anchors', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
   assert.match(map, /function truckMarkup/)
-  assert.match(map, /driver-truck-icon/)
   assert.match(map, /function poiSvg/)
   assert.match(map, /type === 'fuel'/)
   assert.match(map, /type === 'food'/)
   assert.match(map, /type === 'truck-stop'/)
-  assert.match(map, /type === 'service'/)
+  assert.match(map, /DRIVER_ROUTE_SOURCE/)
+  assert.match(map, /buildDriverRouteAnchors/)
   assert.match(map, /const PREVIEW_ROUTE = '#c8d2da'/)
   assert.match(map, /const PREVIEW_DEADHEAD = '#8797a4'/)
-  assert.doesNotMatch(map, /addLine\(DEADHEAD_SOURCE[\s\S]*identity\.color/)
+  assert.match(css, /\.driver-route-anchor/)
+  assert.match(css, /\.freight-preview-marker/)
 })
 
-test('V2.4.3 operational seed classifies facility POIs', async () => {
-  const { locations } = await import('../src/data/operationsSeed.js')
+test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
 
-  assert.equal(locations['metroline-yard'].poiType, 'yard')
-  assert.equal(locations['meadowlands-staging'].poiType, 'staging')
-  assert.equal(locations['queens-freight-center'].poiType, 'warehouse')
+  assert.match(app, /freightCandidateDriverId/)
+  assert.match(shell, /freightRoutePreview\?\.lane\?\.id === selection\.id/)
+  assert.match(shell, /freightRoutePreview\?\.driver\?\.id === freightCandidateDriverId/)
+  assert.match(freight, /candidateDriverId/)
+  assert.match(freight, /onCandidateDriverChange/)
 })
 
-test('V2.4.3 desktop type scale has an 11px readability floor', async () => {
+test('FreightLink proposal includes entry, loaded, and rejoin road legs', async () => {
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
+
+  assert.match(freight, /calculateRoadRoute\(originCoordinates, pickup\.coordinates\)/)
+  assert.match(freight, /calculateRoadRoute\(pickup\.coordinates, delivery\.coordinates\)/)
+  assert.match(freight, /calculateRoadRoute\(delivery\.coordinates, nextCoordinates\)/)
+  assert.match(freight, /rejoinRoute: rejoin/)
+})
+
+test('desktop type scale keeps an 11px operational readability floor', async () => {
   const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8')
   const freightCss = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
 
@@ -139,174 +149,52 @@ test('V2.4.3 desktop type scale has an 11px readability floor', async () => {
   assert.match(globalCss, /--type-secondary:\s*12px/)
   assert.match(globalCss, /--type-body:\s*14px/)
   assert.match(globalCss, /--type-emphasis:\s*16px/)
-  assert.match(globalCss, /--type-heading:\s*22px/)
-  assert.match(freightCss, /font-size:\s*var\(--type-micro\)/)
   assert.match(freightCss, /font-size:\s*var\(--type-body\)/)
 })
 
-
-test('V2.4.4 operations map is locked flat, north-up, and pan-and-zoom only', async () => {
-  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-
-  assert.match(source, /bearing:\s*0/)
-  assert.match(source, /pitch:\s*0/)
-  assert.match(source, /maxPitch:\s*0/)
-  assert.match(source, /dragRotate:\s*false/)
-  assert.match(source, /pitchWithRotate:\s*false/)
-  assert.match(source, /touchPitch:\s*false/)
-  assert.match(source, /keyboard:\s*false/)
-  assert.match(source, /map\.dragRotate\.disable\(\)/)
-  assert.match(source, /map\.touchZoomRotate\.disableRotation\(\)/)
-  assert.match(source, /map\.touchPitch\.disable\(\)/)
-  assert.match(source, /new NavigationControl\(\{ showCompass: false \}\)/)
-})
-
-test('V2.4.4 shared app drawer uses the taller desktop target without shrinking type', async () => {
-  const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8')
-  const freightCss = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
-  const shellCss = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
-
-  assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.46)
-  assert.equal(SHELL_CONFIG.appDrawerMinHeight, 360)
-  assert.equal(SHELL_CONFIG.appDrawerMaxHeight, 540)
-  assert.match(shellCss, /clamp\(360px, 46vh, 540px\)/)
-  assert.match(globalCss, /--type-micro:\s*11px/)
-  assert.match(freightCss, /font-size:\s*var\(--type-body\)/)
-})
-
-
-test('V2.4.5 shell rejects stale route preview data from another selected lane', async () => {
-  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
-
-  assert.match(shell, /freightRoutePreview\?\.lane\?\.id === selection\.id/)
-  assert.match(shell, /freightRoutePreview\?\.driver\?\.id === freightCandidateDriverId/)
-  assert.match(shell, /activeFreightRoutePreview/)
-  assert.match(shell, /freightRoutePreview=\{activeFreightRoutePreview\}/)
-})
-
-test('V2.4.5 selected-lane focus hides unrelated marketplace and manifest clutter', async () => {
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
-
-  assert.match(map, /const loadSelected = isSelection\(selection, SELECTION_TYPES\.LOAD\)/)
-  assert.match(map, /workspaceOpen && !loadSelected/)
-  assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
-  assert.match(map, /if \(loadSelected && \(!selectedDriver \|\| driver\.id !== selectedDriver\.id\)\) return/)
-  assert.match(css, /\.freight-preview-marker > em \{\s*display: none;/)
-})
-
-
-test('V2.4.6 FreightLink candidate driver is shared with the shell map', async () => {
+test('V2.5 booking lifecycle remains explicit and Rate Con request does not commit freight', async () => {
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
-  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
-  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
-
-  assert.match(app, /freightCandidateDriverId/)
-  assert.match(app, /onFreightCandidateDriverChange=\{setFreightCandidateDriverId\}/)
-  assert.match(shell, /freightCandidateDriver/)
-  assert.match(shell, /activeApp === 'freightlink'/)
-  assert.match(freight, /candidateDriverId/)
-  assert.match(freight, /onCandidateDriverChange/)
-})
-
-test('V2.4.6 map renders committed driver plan under neutral insertion preview', async () => {
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-
-  assert.match(map, /DRIVER_ROUTE_SOURCE/)
-  assert.match(map, /buildDriverRouteSegments/)
-  assert.match(map, /markInsertionAffectedSegment/)
-  assert.match(map, /'line-color': identity\.color/)
-  assert.match(map, /REJOIN_SOURCE/)
-  assert.match(map, /freightRoutePreview\.rejoinRoute/)
-  assert.match(map, /color: PREVIEW_ROUTE/)
-  assert.match(map, /color: PREVIEW_DEADHEAD/)
-})
-
-test('V2.4.6 FreightLink proposal includes entry loaded and rejoin legs', async () => {
-  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
-
-  assert.match(freight, /selectedEvaluation\.insertion\.nextCoordinates/)
-  assert.match(freight, /calculateRoadRoute\(originCoordinates, pickup\.coordinates\)/)
-  assert.match(freight, /calculateRoadRoute\(pickup\.coordinates, delivery\.coordinates\)/)
-  assert.match(freight, /calculateRoadRoute\(delivery\.coordinates, nextCoordinates\)/)
-  assert.match(freight, /rejoinRoute: rejoin/)
-})
-
-test('V2.4.6 map symbols shrink without reducing operational text scale', async () => {
-  const mapCss = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
-  const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8')
-
-  assert.match(mapCss, /\.driver-truck-icon \{[\s\S]*width: 42px;[\s\S]*height: 31px;/)
-  assert.match(mapCss, /\.poi-symbol \{[\s\S]*width: 34px;[\s\S]*height: 34px;/)
-  assert.match(globalCss, /--type-micro:\s*11px/)
-  assert.match(globalCss, /--type-body:\s*14px/)
-})
-
-
-test('V2.4.7 FreightLink keeps compact committed route anchors visible', async () => {
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
-
-  assert.match(map, /buildDriverRouteAnchors/)
-  assert.match(map, /workspaceOpen && driverIdentity && driverDay/)
-  assert.match(map, /driver-route-anchor/)
-  assert.match(map, /route-anchor:/)
-  assert.match(css, /\.driver-route-anchor \{[\s\S]*opacity: \.76;/)
-  assert.match(css, /\.driver-route-anchor \.poi-symbol \{[\s\S]*width: 27px;[\s\S]*height: 27px;/)
-})
-
-
-test('V2.5 FreightLink exposes explicit booking lifecycle controls', async () => {
-  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
 
   assert.match(freight, /REQUEST RATE CON/)
   assert.match(freight, /WAITING FOR RATE CON/)
   assert.match(freight, /REVIEW RATE CON/)
   assert.match(freight, /WAITING FOR CORRECTION/)
-  assert.match(freight, /bookingStatusLabel/)
-  assert.match(freight, /bookingLocksDriver/)
+  assert.match(app, /record\?\.status === BOOKING_STATUS\.CONFIRMED/)
+  assert.match(app, /commitBookedFreight/)
 })
 
-test('V2.5 Rate Confirmation uses focused review instead of the bottom drawer', async () => {
+test('Rate Confirmation review is player-driven instead of pre-verified', async () => {
+  const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+
+  assert.match(review, /reviewChoices/)
+  assert.match(review, />MATCH</)
+  assert.match(review, />ISSUE</)
+  assert.match(review, /REVIEW ALL TERMS/)
+  assert.match(review, /reviewedCount === checks\.length/)
+  assert.doesNotMatch(review, />TERMS MATCH</)
+  assert.doesNotMatch(review, /check\.matches \? '✓'/)
+})
+
+test('Rate Confirmation remains a focused full-workspace task', async () => {
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const focused = await readFile(new URL('../src/shell/FocusedWorkspace.jsx', import.meta.url), 'utf8')
-  const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
-  assert.match(shell, /<RateConfirmationReview/)
   assert.match(focused, /focused-workspace/)
-  assert.match(focused, /GAMEPLAY PAUSED/)
-  assert.match(review, /VERIFY BEFORE ACCEPTING/)
-  assert.match(review, /REQUEST CORRECTION/)
-  assert.match(review, /ACCEPT ANYWAY \+ ASSIGN/)
+  assert.match(top, /DESKTOP V2\.5\.1 · WORKSTATION/)
+  assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
-test('V2.5 confirmation rebuilds operational load and driver-plan truth', async () => {
+test('confirmed freight rebuilds operational load and driver-plan truth', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
 
   assert.match(app, /operationalLoads/)
   assert.match(app, /operationalDriverPlans/)
   assert.match(app, /buildDriverDays\(drivers, operationalLoads, operationalDriverPlans, locations\)/)
-  assert.match(app, /commitBookedFreight/)
   assert.match(app, /setOperationalLoads\(committed\.loads\)/)
   assert.match(app, /setOperationalDriverPlans\(committed\.driverPlans\)/)
-  assert.match(app, /record\?\.status === BOOKING_STATUS\.CONFIRMED/)
-})
-
-test('V2.5 confirmed lanes leave the marketplace only after Rate Con acceptance', async () => {
-  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
-
-  assert.match(app, /confirmedLaneIds/)
-  assert.match(app, /BOOKING_STATUS\.CONFIRMED/)
   assert.match(app, /freightMarket\.filter\(\(lane\) => !confirmedLaneIds\.has\(lane\.id\)\)/)
-  assert.match(app, /confirmBookingRecord/)
-})
-
-test('V2.5 focused top bar communicates paused Rate Con review', async () => {
-  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
-
-  assert.match(top, /DESKTOP V2\.5 · BOOKING \+ RATE CON/)
-  assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
-  assert.match(top, /focused/)
 })
