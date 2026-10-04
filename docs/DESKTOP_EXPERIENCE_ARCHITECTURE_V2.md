@@ -369,6 +369,16 @@ Use names, initials, icons, labels, outlines, and selection treatment as backup 
 
 The map remains interactive, detailed, and readable without becoming cluttered.
 
+The normal operations camera is a flat north-up planning surface:
+
+- bearing is fixed at 0°,
+- pitch is fixed at 0°,
+- mouse/trackpad interaction is pan + zoom only,
+- rotation and perspective gestures are disabled,
+- automatic camera moves preserve bearing 0° and pitch 0°.
+
+DOC OS does not use a cinematic 3D/perspective camera for ordinary dispatch work.
+
 ### Basemap
 
 The default operational map should be:
@@ -521,8 +531,8 @@ The drawer:
 - sits directly above the app bar,
 - claims real vertical layout space,
 - resizes the map above it rather than covering the map,
-- targets approximately 35–45% of the screen height,
-- defaults near 40%,
+- targets approximately 46% of the screen height,
+- defaults near 46%,
 - returns its space to the map when closed.
 
 The player therefore learns one app-navigation rule:
@@ -1258,7 +1268,7 @@ The following are now considered locked unless deliberately reopened:
 - The app bar spans the full workstation width.
 - Ordinary dock apps share one full-width bottom app drawer.
 - The shared app drawer resizes the map above it instead of covering it.
-- The default shared app drawer targets roughly 40% of the viewport height.
+- The default shared app drawer targets roughly 46% of the viewport height, bounded to 360–540 px for normal desktop layouts.
 - Desktop apps are rebuilt as desktop apps rather than stretched phone screens.
 - Existing simulation logic is preserved where sound.
 - Jordan's tutorial is removed from the active loop during the systems rebuild.
@@ -1286,24 +1296,24 @@ The following are now considered locked unless deliberately reopened:
 
 The active completion packet is:
 
-# **V2.4.3 — Readability + Map Language**
+# **V2.4.4 — Map Interaction + Drawer Layout Polish**
 
 It locks:
 
-- comfortable desktop typography,
-- a crisp dark vector basemap,
-- neutral marketplace route previews,
-- driver-colored assigned-route semantics,
-- truck-shaped driver markers,
-- typed POI markers for operational locations,
-- marketplace decluttering and selection hierarchy,
-- deterministic MapLibre/Vite worker setup for local testing.
+- flat north-up map interaction,
+- pan + zoom only,
+- no accidental rotate / tilt / perspective state,
+- 46% shared app drawer target,
+- 360–540 px shared drawer bounds,
+- normal-desktop FreightLink evaluation visibility without shrinking text.
 
-After V2.4.3 passes visual acceptance, the next gameplay packet is:
+After V2.4.4 passes visual acceptance, V2.4 is considered complete.
+
+The next gameplay packet is:
 
 # **V2.5 — Booking + Rate Confirmation**
 
-V2.5 may add commitment behavior, but it must preserve the V2.4.3 map language and readability floor.
+V2.5 must preserve the V2.4.3 map language, readability floor, and the V2.4.4 flat-camera/shared-drawer contract.
 
 
 ---
