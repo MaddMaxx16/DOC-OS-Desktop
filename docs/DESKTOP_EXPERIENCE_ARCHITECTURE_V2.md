@@ -1430,38 +1430,42 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 and V2.6.1 are accepted and locked.
+V2.5, V2.6.1, and V2.6.2 are accepted and locked.
 
 The active implementation packet is:
 
-# **V2.6.2 — Stop Sequencing**
+# **V2.6.3 — Breaks, Places + Staging**
 
 It establishes:
 
-- direct drag resequencing of confirmed freight stops inside the Driver Day timeline,
-- committed manifestOrder as the only sequencing truth,
-- pickup-before-delivery as a hard sequencing rule,
-- trailer-capacity overflow as a blocked move,
-- projected-arrival recalculation after accepted moves,
-- capacity snapshots rebuilt from the new order,
-- appointment and HOS consequences surfaced as warnings,
-- committed map-route rebuild from the exact same updated Driver Day timeline,
-- no automatic route optimization; the player remains responsible for solving the day,
-- Lunch retaining its current timeline slot while freight is moved around it.
+- explicit insertion lanes between Driver Day events instead of card-half drop targeting,
+- freight stops and Lunch as movable planning events,
+- full-sequence ordering so inserting freight before/after Lunch preserves the visible schedule order,
+- Lunch as a real selected gameplay POI,
+- route-aware lunch choices ranked by detour from the surrounding Driver Day events,
+- lunch-place metadata including POI type, truck access, parking, and stable location identity,
+- lunch location changes rebuilding the committed route and downstream timing,
+- staging/end-location selection from real valid staging POIs,
+- staging location changes rebuilding the final route leg,
+- selected staging identity persisting as the planned end-of-day truck location,
+- candidate lunch/staging POIs visible and selectable on the live map,
+- the shared location model as the future RPG bridge rather than a separate RPG-only lunch database.
 
-V2.6.2 deliberately does **not** make Lunch draggable or choose a new lunch/staging POI. Those location decisions belong to:
+V2.6.3 deliberately does **not** implement driver favorite-place bonuses, food quality effects, morale/fatigue rewards, relationship changes, random place events, or other RPG consequences yet. Those systems must enrich these same POIs later rather than replace them.
 
-# **V2.6.3 — Breaks, Places + Staging**
+The locked interaction rule is:
 
-V2.6.3 must preserve the locked lunch rule:
+> timeline decides when  
+> map/place selection decides where  
+> Driver Day truth records what actually happens
 
-> Lunch is a real selected POI whose route/timing consequences become part of Driver Day truth and whose location can later receive RPG metadata.
-
-After V2.6.3, proceed to:
+After V2.6.3 passes functional and visual acceptance, proceed to:
 
 # **V2.6.4 — Readiness + Send Schedule**
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, and V2.6.1 planning-state contract.
+V2.6.4 owns final plan blockers/warnings, review, SEND SCHEDULE, SEND ANYWAY for warnings, and sent-plan locking.
+
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, V2.6.1 planning-state contract, and V2.6.2 committed stop-sequencing contract.
 
 ---
 
