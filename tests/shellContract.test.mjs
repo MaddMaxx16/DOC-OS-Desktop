@@ -138,13 +138,14 @@ test('V2.5.4 pause status lives beside the clock instead of at the bottom of the
   const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
 
   assert.match(top, /clock-time-row/)
-  assert.match(top, />PAUSED</)
+  assert.match(top, /modeLabel/)
+  assert.match(top, /'PAUSED'/)
   assert.match(css, /\.clock-time-row/)
   assert.doesNotMatch(rail, /command-rail-status/)
   assert.doesNotMatch(css, /\.command-rail-status/)
 })
 
-test('V2.5.5 top bar reserves a compact disabled time-control strip beside the smaller clock', async () => {
+test('V2.5.5 top bar keeps the compact time-control strip beside the smaller clock', async () => {
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
 
@@ -356,6 +357,37 @@ test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promis
   assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
 })
 
+test('V2.7.1 activates the simulation clock, focused pause, and sent-plan live-state plumbing', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+  const inspector = await readFile(new URL('../src/shell/OperationsInspector.jsx', import.meta.url), 'utf8')
+  const panel = await readFile(new URL('../src/features/driver-day/DriverDayPanel.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.match(app, /createSimulationClock/)
+  assert.match(app, /buildLiveDriverStates/)
+  assert.match(app, /simulationClock\.mode === SIMULATION_MODE\.PAUSED/)
+  assert.match(app, /setInterval/)
+  assert.match(app, /focusedTask \|\| simulationClock\.mode/)
+  assert.match(app, /onSimulationModeChange=\{setSimulationClockMode\}/)
+  assert.match(shell, /liveDriverStates/)
+  assert.match(shell, /selectedLiveState/)
+  assert.match(shell, /simulationClock=\{simulationClock\}/)
+  assert.match(top, /simulationDateLabel/)
+  assert.match(top, /formatClock/)
+  assert.match(top, /SIMULATION_MODE\.PAUSED/)
+  assert.match(top, /SIMULATION_MODE\.PLAYING/)
+  assert.match(top, /SIMULATION_MODE\.FAST/)
+  assert.match(top, /disabled=\{focused\}/)
+  assert.match(inspector, /liveState=\{liveState\}/)
+  assert.match(panel, /liveState\?\.phase === 'scheduled'/)
+  assert.match(panel, /liveState\?\.phase === 'active'/)
+  assert.match(css, /cursor: pointer/)
+  assert.match(css, /\.clock-time-row em\.playing/)
+  assert.match(css, /\.clock-time-row em\.fast/)
+})
+
 test('V2.6.5.14 keeps the previous complete route visible while the same driver refreshes', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
@@ -492,7 +524,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.14 · STABLE ROUTE SWAP/)
+  assert.match(top, /DESKTOP V2\.7\.1 · LIVE OPS FOUNDATION/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

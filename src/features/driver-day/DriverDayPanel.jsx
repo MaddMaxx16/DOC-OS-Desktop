@@ -153,6 +153,7 @@ export default function DriverDayPanel({
   selection,
   planning = false,
   planningFeedback = null,
+  liveState = null,
   onStartPlanning,
   onStopPlanning,
   onMovePlanEvent,
@@ -368,10 +369,18 @@ export default function DriverDayPanel({
       )}
 
       {!editable && (
-        <div className="sent-plan-note">
-          <span>SCHEDULE SENT</span>
-          <strong>{driver.name} now owns this communicated plan.</strong>
-          <small>Editing is locked until the Live Operations revision workflow is built.</small>
+        <div className={`sent-plan-note live-${liveState?.phase ?? 'sent'}`}>
+          <span>{liveState?.label ?? 'SCHEDULE SENT'}</span>
+          <strong>{liveState?.detail ?? `${driver.name} now owns this communicated plan.`}</strong>
+          <small>
+            {liveState?.phase === 'scheduled'
+              ? `Shift starts at ${formatClock(liveState.shiftStartMinutes)}. Live execution is armed.`
+              : liveState?.phase === 'active'
+                ? 'Clock is inside the sent shift window. Route execution is ready for Live Operations.'
+                : liveState?.phase === 'closed'
+                  ? 'The communicated shift window has passed.'
+                  : 'Editing remains locked after dispatch.'}
+          </small>
         </div>
       )}
 

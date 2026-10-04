@@ -1,0 +1,74 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {
+  advanceSimulationClock,
+  buildLiveDriverState,
+  createSimulationClock,
+  FAST_FORWARD_MULTIPLIER,
+  setSimulationMode,
+  simulationDateLabel,
+  simulationMinutesPerTick,
+  SIMULATION_MODE,
+} from '../src/domain/live/liveOperations.js'
+
+test('simulation clock starts paused at 6:00 AM on Day 1', () => {
+  assert.deepEqual(createSimulationClock(), {
+    dayNumber: 1,
+    currentMinutes: 360,
+    mode: SIMULATION_MODE.PAUSED,
+  })
+})
+
+test('play and fast-forward modes advance deterministic game minutes', () => {
+  const playing = setSimulationMode(createSimulationClock(), SIMULATION_MODE.PLAYING)
+  const fast = setSimulationMode(playing, SIMULATION_MODE.FAST)
+
+  assert.equal(simulationMinutesPerTick(SIMULATION_MODE.PLAYING), 1)
+  assert.equal(simulationMinutesPerTick(SIMULATION_MODE.FAST), FAST_FORWARD_MULTIPLIER)
+  assert.equal(advanceSimulationClock(playing).currentMinutes, 361)
+  assert.equal(advanceSimulationClock(fast).currentMinutes, 364)
+})
+
+test('simulation clock advances across midnight and increments the business day', () => {
+  const clock = createSimulationClock({
+    dayNumber: 1,
+    currentMinutes: 1439,
+    mode: SIMULATION_MODE.PLAYING,
+  })
+  const advanced = advanceSimulationClock(clock, 2)
+
+  assert.equal(advanced.dayNumber, 2)
+  assert.equal(advanced.currentMinutes, 1)
+  assert.equal(simulationDateLabel(advanced), 'SEP 8 · DAY 2')
+})
+
+test('draft plans are not armed for live operations', () => {
+  const state = buildLiveDriverState({
+    driverId: 'marcus-reed',
+    dispatchStatus: 'draft',
+    shift: { startMinutes: 420, endMinutes: 1020 },
+  }, createSimulationClock())
+
+  assert.equal(state.phase, 'draft')
+  assert.equal(state.sent, false)
+})
+
+test('sent plan waits for shift start then becomes live-ready inside the shift window', () => {
+  const day = {
+    driverId: 'marcus-reed',
+    dispatchStatus: 'sent',
+    shift: { startMinutes: 420, endMinutes: 1020 },
+  }
+
+  const scheduled = buildLiveDriverState(day, createSimulationClock({
+    currentMinutes: 360,
+  }))
+  const active = buildLiveDriverState(day, createSimulationClock({
+    currentMinutes: 421,
+  }))
+
+  assert.equal(scheduled.phase, 'scheduled')
+  assert.equal(scheduled.label, 'SCHEDULED')
+  assert.equal(active.phase, 'active')
+  assert.equal(active.label, 'LIVE READY')
+})

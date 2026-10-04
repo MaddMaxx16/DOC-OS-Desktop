@@ -19,6 +19,7 @@ export default function OperationsInspector({
   selectedStop,
   planning = false,
   planningFeedback = null,
+  liveState = null,
   onStartPlanning,
   onStopPlanning,
   onMovePlanEvent,
@@ -79,6 +80,7 @@ export default function OperationsInspector({
             selection={selection}
             planning={planning}
             planningFeedback={planningFeedback}
+            liveState={liveState}
             onStartPlanning={() => onStartPlanning?.(driver.id)}
             onStopPlanning={() => onStopPlanning?.(driver.id)}
             onMovePlanEvent={onMovePlanEvent}
