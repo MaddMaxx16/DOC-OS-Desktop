@@ -13,3 +13,197 @@
 .lane-section{margin-top:12px}.lane-section header{min-height:22px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.lane-section header small{color:#6f808d;font-size:7px;text-align:right}.manifest-insertion-card{display:grid;grid-template-columns:1fr 18px 1.35fr 18px 1fr;align-items:center;gap:5px;padding:9px;border:1px solid #223642;background:#0b171f}.manifest-insertion-card>div{min-width:0;display:flex;flex-direction:column;gap:3px}.manifest-insertion-card>b{color:#506878;text-align:center;font-size:12px}.manifest-insertion-card strong,.manifest-insertion-card small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.manifest-insertion-card strong{font-size:9px}.manifest-insertion-card small{color:#677986;font-size:6px}.manifest-insertion-card .inserted-lane{padding:7px;border:1px solid #49697e;background:#112532}
 .freight-signal-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.freight-signal{min-height:68px;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:9px;border:1px solid #243743;background:#0b171f}.freight-signal.good{border-left:3px solid #4d8d7d}.freight-signal.poor{border-left:3px solid #975867}.freight-signal span{color:#6f8391;font-size:6px;font-weight:950;letter-spacing:.11em}.freight-signal strong{font-size:9px}.freight-signal.good strong{color:#87c2b2}.freight-signal.poor strong{color:#d18b99}.freight-signal small{color:#697b88;font-size:6px;line-height:1.35}.route-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.route-stats small{color:#6b7c88;font-size:6px}
 .freightlink-footer{margin-top:13px;display:grid;grid-template-columns:1fr 165px;align-items:center;gap:10px;padding-top:11px;border-top:1px solid #1a2a34}.freightlink-footer>div{min-width:0;display:flex;flex-direction:column;gap:4px}.freightlink-footer span{color:#75698a;font-size:6px;font-weight:950;letter-spacing:.12em}.freightlink-footer strong{color:#8ea0ad;font-size:8px;line-height:1.4}.freightlink-footer button{height:34px;border:1px solid #2a3842;background:#11181d;color:#5d6971;font-size:7px;font-weight:950;letter-spacing:.08em}
+
+
+/* V2.4.2 FreightLink readability + compact inspector */
+.freightlink-body {
+  grid-template-columns: minmax(520px, .84fr) minmax(680px, 1.16fr);
+}
+.lane-board-head,
+.lane-row {
+  grid-template-columns: minmax(210px, 1.45fr) 132px 84px 110px;
+  gap: 10px;
+}
+.lane-board-head {
+  height: 30px;
+  font-size: 7px;
+}
+.lane-row {
+  min-height: 64px;
+  padding: 8px 12px;
+}
+.lane-route-copy span {
+  font-size: 8px;
+}
+.lane-route-copy strong {
+  font-size: 11px;
+}
+.lane-route-copy small,
+.lane-pickup-copy small,
+.lane-rate-copy small {
+  font-size: 8px;
+}
+.lane-pickup-copy strong,
+.lane-rate-copy strong {
+  font-size: 10px;
+}
+.lane-fit-pill {
+  min-height: 42px;
+  padding: 6px 8px;
+}
+.lane-fit-pill strong {
+  font-size: 9px;
+}
+.lane-fit-pill small {
+  font-size: 7px;
+}
+
+.freightlink-title > span,
+.freightlink-driver-select > span {
+  font-size: 8px;
+}
+.freightlink-title small {
+  font-size: 10px;
+}
+.freightlink-driver-select select {
+  font-size: 11px;
+}
+.freightlink-filters span {
+  font-size: 8px;
+}
+.freightlink-filters b {
+  font-size: 8px;
+}
+
+.lane-detail-panel {
+  overflow: auto;
+  padding: 10px 12px;
+}
+.lane-detail-hero {
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 12px;
+}
+.lane-detail-hero > div:first-child span {
+  font-size: 8px;
+}
+.lane-detail-hero > div:first-child strong {
+  font-size: 16px;
+}
+.lane-detail-hero > div:first-child small {
+  font-size: 9px;
+}
+.detail-fit-badge {
+  min-height: 48px;
+}
+.detail-fit-badge span {
+  font-size: 7px;
+}
+.detail-fit-badge strong {
+  font-size: 15px;
+}
+
+.lane-money-strip {
+  margin-top: 8px;
+  gap: 7px;
+}
+.lane-money-strip > div,
+.route-stats > div {
+  min-height: 50px;
+  padding: 7px 9px;
+}
+.lane-money-strip span,
+.lane-section header span,
+.manifest-insertion-card span,
+.route-stats span {
+  font-size: 7px;
+}
+.lane-money-strip strong,
+.route-stats strong {
+  font-size: 11px;
+}
+
+.lane-detail-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  margin-top: 8px;
+}
+.lane-detail-column {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+.lane-detail-columns .lane-section {
+  margin-top: 0;
+}
+.lane-section header {
+  min-height: 20px;
+  margin-bottom: 5px;
+}
+.lane-section header small {
+  max-width: 72%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 8px;
+}
+
+.manifest-insertion-card {
+  grid-template-columns: 1fr 14px 1.3fr 14px 1fr;
+  gap: 4px;
+  padding: 7px;
+}
+.manifest-insertion-card strong {
+  font-size: 10px;
+}
+.manifest-insertion-card small {
+  font-size: 7px;
+}
+.manifest-insertion-card .inserted-lane {
+  padding: 6px;
+}
+
+.freight-signal-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.freight-signal {
+  min-height: 56px;
+  gap: 4px;
+  padding: 7px 8px;
+}
+.freight-signal span {
+  font-size: 7px;
+}
+.freight-signal strong {
+  font-size: 10px;
+}
+.freight-signal small {
+  font-size: 7px;
+  line-height: 1.25;
+}
+
+.route-stats {
+  gap: 6px;
+}
+.route-stats small {
+  font-size: 7px;
+}
+
+.freightlink-footer {
+  margin-top: 0;
+  grid-template-columns: minmax(0, 1fr) 154px;
+  gap: 8px;
+  padding-top: 8px;
+}
+.freightlink-footer span {
+  font-size: 7px;
+}
+.freightlink-footer strong {
+  font-size: 8px;
+}
+.freightlink-footer button {
+  height: 36px;
+  font-size: 8px;
+}

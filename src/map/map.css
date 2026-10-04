@@ -263,3 +263,42 @@
   border-color: #8a6c9b;
   color: #e5d9ec;
 }
+
+
+/* V2.4.2 marketplace declutter */
+.driver-marker.market-mode:not(.selected) > small {
+  display: none;
+}
+.driver-marker.market-mode:not(.selected) > span {
+  width: 30px;
+  height: 30px;
+  opacity: .82;
+}
+.market-lane-marker {
+  gap: 0;
+}
+.market-lane-marker > span {
+  min-width: 38px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 7px;
+}
+.market-lane-marker > small {
+  display: none;
+}
+.market-lane-marker:hover > small,
+.market-lane-marker.selected > small {
+  display: block;
+  margin-top: 3px;
+}
+.market-lane-marker.muted {
+  opacity: .18;
+}
+.market-lane-marker.muted:hover {
+  opacity: .72;
+}
+.map-vignette {
+  background:
+    linear-gradient(rgba(4, 9, 14, .18), rgba(4, 9, 14, .28)),
+    radial-gradient(circle at 50% 45%, transparent 34%, rgba(0, 0, 0, .18) 100%);
+}

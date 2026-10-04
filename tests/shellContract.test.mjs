@@ -67,3 +67,25 @@ test('FreightLink marketplace mode exposes map-selectable lane markers', async (
   assert.match(source, /marketLanes = \[\]/)
   assert.match(source, /workspaceOpen \|\| freightRoutePreview/)
 })
+
+
+test('V2.4.2 marketplace keeps labels quiet until interaction', async () => {
+  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(source, /market-mode/)
+  assert.match(source, /anotherLaneSelected/)
+  assert.match(css, /\.driver-marker\.market-mode:not\(\.selected\) > small/)
+  assert.match(css, /\.market-lane-marker > small \{\s*display: none;/)
+  assert.match(css, /\.market-lane-marker\.muted/)
+})
+
+test('V2.4.2 FreightLink inspector uses two desktop columns', async () => {
+  const source = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+
+  assert.match(source, /className="lane-detail-columns"/)
+  assert.match(source, /className="lane-detail-column"/)
+  assert.match(css, /\.lane-detail-columns \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/)
+  assert.match(css, /\.lane-route-copy strong \{\s*font-size: 11px;/)
+})

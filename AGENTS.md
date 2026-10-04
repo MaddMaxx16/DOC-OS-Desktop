@@ -32,24 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.1 Shared Bottom App Drawer
+## Current packet — V2.4.2 FreightLink Usability Pass
 
-V2.1 through V2.4 are structurally locked. Visual polish remains deferred.
+V2.1 through V2.4.1 are structurally locked.
 
-V2.4.1 promotes the bottom app workspace into a shared shell primitive.
+V2.4.2 is a focused usability pass before V2.5.
 
 Guardrails:
-- every dock app opens inside the same `DesktopAppDrawer`,
-- the app drawer spans the full workstation width,
-- the bottom app bar spans the full workstation width,
-- default app drawer height targets about 40% of the viewport, bounded to a practical desktop range,
-- opening an app resizes the map above the drawer instead of covering it,
-- closing the app restores the map to the reclaimed space,
-- app-specific views own their internal content but not shell placement,
-- FreightLink marketplace mode shows available lanes on the map before a lane is selected,
-- selecting a FreightLink lane keeps board selection and map selection synchronized,
-- focused document/task modes may still expand beyond the shared drawer in later packets,
-- Drivers and Ops remain map-context drawers rather than dock apps.
+- keep the shared full-width bottom app drawer and full-width app bar unchanged,
+- FreightLink marketplace markers must stay compact until hovered or selected,
+- when one lane is selected, unrelated marketplace lanes should visually recede,
+- driver labels should not crowd FreightLink marketplace overview,
+- selected lane geography remains the dominant map signal,
+- FreightLink inspector should fit useful evaluation context without forcing one-section-at-a-time scrolling,
+- inspector content uses a two-column desktop layout at normal desktop widths,
+- typography may be increased for readability without changing gameplay truth,
+- the current raster basemap may receive a temporary darker treatment, but a full map-style redesign remains a later visual pass,
+- do not begin booking or Rate Confirmation behavior until V2.5.
 
 ## Verification
 

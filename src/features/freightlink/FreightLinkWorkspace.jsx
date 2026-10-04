@@ -266,63 +266,69 @@ export default function FreightLinkWorkspace({
                 <div><span>FREIGHT</span><strong>{selectedLane.freight.pallets} PLT · {Math.round(selectedLane.freight.weightLbs / 1000)}K LB</strong></div>
               </div>
 
-              <section className="lane-section">
-                <header><span>MANIFEST INSERTION</span><small>{candidateDriver?.name}</small></header>
-                <div className="manifest-insertion-card">
-                  <div><span>AFTER</span><strong>{selectedEvaluation.insertion.afterLabel}</strong><small>{selectedEvaluation.insertion.originLocationLabel}</small></div>
-                  <b>→</b>
-                  <div className="inserted-lane"><span>ADD LANE</span><strong>{selectedLane.laneRef}</strong><small>{formatClock(selectedEvaluation.insertion.pickupArrival)} pickup · {formatClock(selectedEvaluation.insertion.deliveryArrival)} delivery</small></div>
-                  <b>→</b>
-                  <div><span>BEFORE</span><strong>{selectedEvaluation.insertion.beforeLabel}</strong><small>{selectedEvaluation.insertion.nextLocationLabel}</small></div>
-                </div>
-              </section>
+              <div className="lane-detail-columns">
+                <div className="lane-detail-column">
+                  <section className="lane-section">
+                    <header><span>MANIFEST INSERTION</span><small>{candidateDriver?.name}</small></header>
+                    <div className="manifest-insertion-card">
+                      <div><span>AFTER</span><strong>{selectedEvaluation.insertion.afterLabel}</strong><small>{selectedEvaluation.insertion.originLocationLabel}</small></div>
+                      <b>→</b>
+                      <div className="inserted-lane"><span>ADD LANE</span><strong>{selectedLane.laneRef}</strong><small>{formatClock(selectedEvaluation.insertion.pickupArrival)} pickup · {formatClock(selectedEvaluation.insertion.deliveryArrival)} delivery</small></div>
+                      <b>→</b>
+                      <div><span>BEFORE</span><strong>{selectedEvaluation.insertion.beforeLabel}</strong><small>{selectedEvaluation.insertion.nextLocationLabel}</small></div>
+                    </div>
+                  </section>
 
-              <section className="lane-section">
-                <header><span>FIT SIGNALS</span><small>{selectedEvaluation.detail}</small></header>
-                <div className="freight-signal-grid">
-                  <SignalCard
-                    label="APPOINTMENTS"
-                    ok={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk}
-                    primary={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk ? 'WINDOWS HOLD' : 'WINDOW RISK'}
-                    secondary={`P ${windowLabel(selectedLane.pickupWindow)} · D ${windowLabel(selectedLane.deliveryWindow)}`}
-                  />
-                  <SignalCard
-                    label="MANIFEST"
-                    ok={selectedEvaluation.schedule.ok}
-                    primary={selectedEvaluation.schedule.ok ? `${Math.max(0, selectedEvaluation.schedule.marginMinutes)} MIN SLACK` : `${Math.abs(selectedEvaluation.schedule.marginMinutes)} MIN LATE`}
-                    secondary={`${selectedEvaluation.insertion.afterLabel} → lane → ${selectedEvaluation.insertion.beforeLabel}`}
-                  />
-                  <SignalCard
-                    label="HOS"
-                    ok={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk}
-                    primary={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk ? 'WITHIN HOURS' : 'HOS RISK'}
-                    secondary={`Drive ${formatMinutes(selectedEvaluation.hos.projectedDriveMinutes)} / ${formatMinutes(selectedEvaluation.hos.driveAvailableMinutes)}`}
-                  />
-                  <SignalCard
-                    label="CAPACITY"
-                    ok={selectedEvaluation.capacity.ok}
-                    primary={selectedEvaluation.capacity.ok ? 'TRAILER FITS' : 'OVER CAPACITY'}
-                    secondary={`${selectedEvaluation.capacity.palletsAfterPickup}/${selectedEvaluation.capacity.palletsCapacity} plt · ${Math.round(selectedEvaluation.capacity.weightAfterPickupLbs / 1000)}k/${Math.round(selectedEvaluation.capacity.weightCapacityLbs / 1000)}k lb`}
-                  />
+                  <section className="lane-section">
+                    <header><span>MAP ROUTE</span><small>{routeState.status === 'routing' ? 'ROUTING…' : routeState.status === 'ready' ? 'ROAD ROUTE READY' : 'ESTIMATED ROUTE'}</small></header>
+                    <div className="route-stats">
+                      <div><span>DEADHEAD</span><strong>{formatMiles(routeState.deadhead?.distanceMiles ?? selectedEvaluation.route.deadhead.miles)}</strong><small>{formatMinutes(routeState.deadhead?.durationMinutes ?? selectedEvaluation.route.deadhead.minutes)}</small></div>
+                      <div><span>LOADED</span><strong>{formatMiles(routeState.loaded?.distanceMiles ?? selectedEvaluation.route.loaded.miles)}</strong><small>{formatMinutes(routeState.loaded?.durationMinutes ?? selectedEvaluation.route.loaded.minutes)}</small></div>
+                      <div><span>PICKUP ETA</span><strong>{formatClock(selectedEvaluation.insertion.pickupArrival)}</strong><small>{selectedEvaluation.appointment.pickupMargin} min margin</small></div>
+                    </div>
+                  </section>
                 </div>
-              </section>
 
-              <section className="lane-section">
-                <header><span>MAP ROUTE</span><small>{routeState.status === 'routing' ? 'ROUTING…' : routeState.status === 'ready' ? 'ROAD ROUTE READY' : 'ESTIMATED ROUTE'}</small></header>
-                <div className="route-stats">
-                  <div><span>DEADHEAD</span><strong>{formatMiles(routeState.deadhead?.distanceMiles ?? selectedEvaluation.route.deadhead.miles)}</strong><small>{formatMinutes(routeState.deadhead?.durationMinutes ?? selectedEvaluation.route.deadhead.minutes)}</small></div>
-                  <div><span>LOADED</span><strong>{formatMiles(routeState.loaded?.distanceMiles ?? selectedEvaluation.route.loaded.miles)}</strong><small>{formatMinutes(routeState.loaded?.durationMinutes ?? selectedEvaluation.route.loaded.minutes)}</small></div>
-                  <div><span>PICKUP ETA</span><strong>{formatClock(selectedEvaluation.insertion.pickupArrival)}</strong><small>{selectedEvaluation.appointment.pickupMargin} min window margin</small></div>
-                </div>
-              </section>
+                <div className="lane-detail-column">
+                  <section className="lane-section">
+                    <header><span>FIT SIGNALS</span><small>{selectedEvaluation.detail}</small></header>
+                    <div className="freight-signal-grid">
+                      <SignalCard
+                        label="APPOINTMENTS"
+                        ok={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk}
+                        primary={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk ? 'WINDOWS HOLD' : 'WINDOW RISK'}
+                        secondary={`P ${windowLabel(selectedLane.pickupWindow)} · D ${windowLabel(selectedLane.deliveryWindow)}`}
+                      />
+                      <SignalCard
+                        label="MANIFEST"
+                        ok={selectedEvaluation.schedule.ok}
+                        primary={selectedEvaluation.schedule.ok ? `${Math.max(0, selectedEvaluation.schedule.marginMinutes)} MIN SLACK` : `${Math.abs(selectedEvaluation.schedule.marginMinutes)} MIN LATE`}
+                        secondary={`${selectedEvaluation.insertion.afterLabel} → lane → ${selectedEvaluation.insertion.beforeLabel}`}
+                      />
+                      <SignalCard
+                        label="HOS"
+                        ok={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk}
+                        primary={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk ? 'WITHIN HOURS' : 'HOS RISK'}
+                        secondary={`Drive ${formatMinutes(selectedEvaluation.hos.projectedDriveMinutes)} / ${formatMinutes(selectedEvaluation.hos.driveAvailableMinutes)}`}
+                      />
+                      <SignalCard
+                        label="CAPACITY"
+                        ok={selectedEvaluation.capacity.ok}
+                        primary={selectedEvaluation.capacity.ok ? 'TRAILER FITS' : 'OVER CAPACITY'}
+                        secondary={`${selectedEvaluation.capacity.palletsAfterPickup}/${selectedEvaluation.capacity.palletsCapacity} plt · ${Math.round(selectedEvaluation.capacity.weightAfterPickupLbs / 1000)}k/${Math.round(selectedEvaluation.capacity.weightCapacityLbs / 1000)}k lb`}
+                      />
+                    </div>
+                  </section>
 
-              <footer className="freightlink-footer">
-                <div>
-                  <span>V2.4 EVALUATION ONLY</span>
-                  <strong>{selectedEvaluation.detail}</strong>
+                  <footer className="freightlink-footer">
+                    <div>
+                      <span>V2.4 EVALUATION ONLY</span>
+                      <strong>{selectedEvaluation.detail}</strong>
+                    </div>
+                    <button type="button" disabled>BOOKING + RATE CON · V2.5</button>
+                  </footer>
                 </div>
-                <button type="button" disabled>BOOKING + RATE CON · V2.5</button>
-              </footer>
+              </div>
             </>
           )}
         </aside>
