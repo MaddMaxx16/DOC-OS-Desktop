@@ -88,7 +88,16 @@ function recalculateTimeline({
   let nextLoads = loads
   let nextPlan = {
     ...plan,
-    lunch: plan.lunch ? { ...plan.lunch } : null,
+    lunch: plan.lunch
+      ? {
+          ...plan.lunch,
+          preferredStartMinutes: Number(plan.lunch.preferredStartMinutes ?? plan.lunch.startMinutes),
+          durationMinutes: Number(
+            plan.lunch.durationMinutes
+              ?? (Number(plan.lunch.endMinutes ?? 0) - Number(plan.lunch.startMinutes ?? 0)),
+          ),
+        }
+      : null,
     staging: plan.staging ? { ...plan.staging } : null,
   }
 
@@ -110,11 +119,9 @@ function recalculateTimeline({
       nextLoads = updateLoadArrival(nextLoads, event.loadId, event.role, arrival)
       readyMinute = arrival + (event.role === 'pickup' ? PICKUP_SERVICE_MINUTES : DELIVERY_SERVICE_MINUTES)
     } else if (event.kind === 'lunch' && nextPlan.lunch) {
-      const duration = Math.max(
-        1,
-        Number(nextPlan.lunch.endMinutes ?? 0) - Number(nextPlan.lunch.startMinutes ?? 0),
-      )
-      const startMinutes = Math.max(rawArrival, Number(nextPlan.lunch.startMinutes ?? rawArrival))
+      const duration = Math.max(1, Number(nextPlan.lunch.durationMinutes ?? 30))
+      const preferredStart = Number(nextPlan.lunch.preferredStartMinutes ?? rawArrival)
+      const startMinutes = Math.max(rawArrival, preferredStart)
       nextPlan = {
         ...nextPlan,
         lunch: {
