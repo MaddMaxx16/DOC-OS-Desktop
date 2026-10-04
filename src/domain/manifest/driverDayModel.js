@@ -74,15 +74,35 @@ export function applyCapacitySnapshots(stops = [], trailer = {}) {
   })
 }
 
-function timelineStart(driver, plan) {
+function timelineStart(driver, plan, locations) {
+  const explicitStart = plan.startLocationId
+    ? locations[plan.startLocationId] ?? null
+    : null
+
+  if (explicitStart?.coordinates) {
+    return {
+      id: `${driver.id}:shift-start`,
+      driverId: driver.id,
+      kind: 'shift-start',
+      label: 'SHIFT START',
+      projectedArrivalMinutes: plan.shift.startMinutes,
+      locationId: explicitStart.id ?? plan.startLocationId,
+      locationLabel: explicitStart.label ?? plan.startLocationId,
+      coordinates: explicitStart.coordinates,
+      anchorMode: 'poi',
+    }
+  }
+
   return {
     id: `${driver.id}:shift-start`,
     driverId: driver.id,
     kind: 'shift-start',
     label: 'SHIFT START',
     projectedArrivalMinutes: plan.shift.startMinutes,
-    locationId: driver.homeBaseLocationId ?? 'metroline-yard',
-    locationLabel: driver.homeBaseLabel ?? 'Metroline Yard',
+    locationId: null,
+    locationLabel: driver.locationLabel ?? 'Current truck position',
+    coordinates: Array.isArray(driver.coordinates) ? driver.coordinates : null,
+    anchorMode: 'driver',
   }
 }
 
@@ -127,7 +147,7 @@ export function buildDriverDay({ driver, loads = [], plan, locations = {} } = {}
   )
   const lunch = timelineLunch(driver, plan, locations)
   const staging = timelineStaging(driver, plan, locations)
-  const timeline = [timelineStart(driver, plan)]
+  const timeline = [timelineStart(driver, plan, locations)]
 
   for (const stop of freightStops) {
     timeline.push(stop)

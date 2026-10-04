@@ -443,3 +443,9 @@
     grid-template-columns: minmax(0, 1fr) 380px;
   }
 }
+
+
+.ratecon-field-issue {
+  background: rgba(224, 177, 71, .16);
+  box-shadow: inset 0 0 0 2px rgba(224, 177, 71, .42);
+}

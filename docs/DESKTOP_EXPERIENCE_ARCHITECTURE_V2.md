@@ -430,6 +430,11 @@ Therefore:
 - normal Driver view keeps the richer pickup/delivery markers and supplements them with compact typed anchors for non-freight events such as Yard, Lunch, and Staging,
 - FreightLink may use the quieter compact anchor treatment for the candidate driver's whole committed day,
 - route-anchor coverage must be data-driven for every driver rather than special-cased per seed driver.
+- the current truck marker is itself a valid route-origin anchor,
+- home base must not be assumed to be shift start,
+- Driver Day begins at the current operational truck position unless the plan explicitly defines a start facility,
+- an explicit start facility renders as a typed POI anchor and the route begins there,
+- there must be no invisible teleport between the truck's current position and the first planned event.
 
 ### Pickup / delivery marker
 
@@ -771,7 +776,8 @@ Focused review:
 - does **not** repeat the Rate Confirmation answer beside that reference value,
 - requires the player to visually read the paper and mark each comparison **MATCH** or **ISSUE**,
 - begins with no term pre-verified,
-- briefly highlights the corresponding paper field when the player chooses ISSUE without revealing whether that judgment is correct,
+- briefly pulses the corresponding paper field when the player first chooses ISSUE without revealing whether that judgment is correct,
+- keeps that field visibly marked as an issue until the player changes the judgment back to MATCH,
 - offers correction when the player flags an issue.
 
 Verification is gameplay, not an automatic answer key.
@@ -1308,7 +1314,9 @@ The following are now considered locked unless deliberately reopened:
 - Rate Confirmation verification is player-driven; no term begins pre-verified.
 - The verification panel shows only the FreightLink reference value; the player reads the Rate Con value from the paper.
 - Rate Confirmation paper uses the shared draggable Document Desk and stacking model.
-- ISSUE may highlight the referenced paper field but must not reveal correctness.
+- ISSUE keeps the referenced paper field visibly marked until the player changes the judgment; the mark must not reveal correctness.
+- The current truck position is the default Driver Day route origin; home base is not an automatic start location.
+- A plan may explicitly define a startLocationId when the day truly begins at a facility.
 - The player marks each comparison MATCH or ISSUE before acceptance.
 - The player may deliberately accept flagged mismatched terms; DOC OS preserves the document terms exactly as written.
 - Lunch and staging are part of operational planning.
@@ -1327,27 +1335,24 @@ The following are now considered locked unless deliberately reopened:
 
 The active correction packet is:
 
-# **V2.5.2 — Document Desk + POI Completeness**
+# **V2.5.3 — Persistent Issue Markup + Route Origin Truth**
 
 It locks:
 
-- reusable physical Document Desk infrastructure,
-- draggable document sheets with bring-to-front / z-order behavior,
-- more authentic broker-paper presentation,
-- FreightLink-reference-only verification,
-- player-read Rate Con values,
-- MATCH / ISSUE without correctness reveal,
-- quick paper-field highlight when ISSUE is selected,
-- full route-endpoint anchor coverage for every seeded driver,
-- normal Driver view supplementation with Y/L/S and other non-freight anchors,
-- richer P/D facility markers remaining intact,
-- exact route-to-POI endpoint connection from V2.5.1.
+- persistent Rate Con ISSUE markings on the physical paper,
+- initial ISSUE feedback pulse without correctness reveal,
+- MATCH clearing the corresponding issue mark,
+- current operational truck position as the default Driver Day origin,
+- home base as reference data rather than automatic shift start,
+- optional explicit plan startLocationId for true facility-based starts,
+- current truck asset as the visible route-origin anchor,
+- no invisible reposition/teleport between current position and first planned stop.
 
-After V2.5.2 passes functional and visual acceptance, the next gameplay packet is:
+After V2.5.3 passes functional and visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 must preserve the V2.5 booking truth plus the V2.5.1 workstation and V2.5.2 document/POI contracts.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, and V2.5.3 route-origin truth.
 
 
 ---

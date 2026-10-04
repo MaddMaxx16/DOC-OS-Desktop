@@ -102,9 +102,10 @@ export default function RateConfirmationReview({
       ? `${flaggedChecks.length} ISSUE${flaggedChecks.length > 1 ? 'S' : ''} FLAGGED`
       : 'REVIEW COMPLETE'
 
-  const paperFieldClass = (fieldId) => (
-    highlightField === fieldId ? 'ratecon-field-highlight' : ''
-  )
+  const paperFieldClass = (fieldId) => [
+    reviewChoices[fieldId] === 'issue' ? 'ratecon-field-issue' : '',
+    highlightField === fieldId ? 'ratecon-field-highlight' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <div className="ratecon-review">

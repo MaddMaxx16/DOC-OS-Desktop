@@ -57,43 +57,83 @@ test('route anchors preserve meaningful Marcus locations without duplicate physi
   )
 })
 
-test('route anchors include the driver yard as the shift-start anchor', () => {
-  const anchors = buildDriverRouteAnchors(marcus, locations)
-  const yard = anchors.find((anchor) => anchor.locationId === 'metroline-yard')
+test('seeded Driver Days start at each truck current operational position by default', () => {
+  for (const driver of drivers) {
+    const day = days.find((candidate) => candidate.driverId === driver.id)
+    const start = day.timeline[0]
 
-  assert.equal(yard?.badge, 'Y')
-  assert.equal(yard?.poiType, 'yard')
+    assert.equal(start.kind, 'shift-start')
+    assert.equal(start.anchorMode, 'driver')
+    assert.equal(start.locationId, null)
+    assert.equal(start.locationLabel, driver.locationLabel)
+    assert.deepEqual(start.coordinates, driver.coordinates)
+  }
 })
 
+test('current truck marker owns the default shift-start anchor', () => {
+  const anchors = buildDriverRouteAnchors(marcus, locations)
 
-test('every seeded driver route segment endpoint has a route anchor', () => {
+  assert.equal(
+    anchors.some((anchor) => anchor.eventIds.includes('marcus-reed:shift-start')),
+    false,
+  )
+})
+
+test('every seeded route segment endpoint has either a POI anchor or the current truck asset', () => {
   for (const day of days) {
     const anchors = buildDriverRouteAnchors(day, locations)
     const coveredEventIds = new Set(
       anchors.flatMap((anchor) => anchor.eventIds),
     )
+    const driverStartId = `${day.driverId}:shift-start`
     const segments = buildDriverRouteSegments(day, locations)
 
     for (const segment of segments) {
       assert.ok(
-        coveredEventIds.has(segment.fromId),
-        `${day.driverId} route is missing a visible anchor for ${segment.fromId}`,
+        coveredEventIds.has(segment.fromId) || segment.fromId === driverStartId,
+        `${day.driverId} route is missing visible origin context for ${segment.fromId}`,
       )
       assert.ok(
-        coveredEventIds.has(segment.toId),
-        `${day.driverId} route is missing a visible anchor for ${segment.toId}`,
+        coveredEventIds.has(segment.toId) || segment.toId === driverStartId,
+        `${day.driverId} route is missing visible destination context for ${segment.toId}`,
       )
     }
   }
 })
 
-test('Derrick route includes yard, pickup, lunch/staging, and delivery anchors', () => {
+test('Derrick route begins at Derrick current Brooklyn truck position and keeps later POI anchors', () => {
+  const derrickDriver = drivers.find((driver) => driver.id === 'derrick-cole')
   const derrick = days.find((day) => day.driverId === 'derrick-cole')
+  const segments = buildDriverRouteSegments(derrick, locations)
   const anchors = buildDriverRouteAnchors(derrick, locations)
   const badges = anchors.map((anchor) => anchor.badge)
 
-  assert.ok(badges.includes('Y'))
+  assert.deepEqual(segments[0].fromCoordinates, derrickDriver.coordinates)
+  assert.equal(derrick.timeline[0].locationLabel, 'Brooklyn, NY')
   assert.ok(badges.includes('P1'))
   assert.ok(badges.includes('D1'))
   assert.ok(badges.includes('L/S'))
+  assert.equal(badges.includes('Y'), false)
+})
+
+
+test('an explicit plan start location overrides current truck position', () => {
+  const driver = drivers.find((item) => item.id === 'derrick-cole')
+  const explicitPlans = {
+    ...driverPlans,
+    'derrick-cole': {
+      ...driverPlans['derrick-cole'],
+      startLocationId: 'metroline-yard',
+    },
+  }
+  const explicitDay = buildDriverDays([driver], loads, explicitPlans, locations)[0]
+  const start = explicitDay.timeline[0]
+  const anchors = buildDriverRouteAnchors(explicitDay, locations)
+  const yard = anchors.find((anchor) => anchor.locationId === 'metroline-yard')
+
+  assert.equal(start.anchorMode, 'poi')
+  assert.equal(start.locationLabel, 'Metroline Yard')
+  assert.deepEqual(start.coordinates, locations['metroline-yard'].coordinates)
+  assert.equal(yard?.badge, 'Y')
+  assert.equal(yard?.poiType, 'yard')
 })

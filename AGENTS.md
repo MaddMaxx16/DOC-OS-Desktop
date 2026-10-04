@@ -32,29 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.5.2 Document Desk + POI Completeness
+## Current packet — V2.5.3 Persistent Issue Markup + Route Origin Truth
 
-V2.1 through V2.5.1 remain the active desktop foundation.
+V2.1 through V2.5.2 remain the active desktop foundation.
 
 Guardrails:
 - preserve the V2.5.1 command rail → browser → full-height map → inspector workstation,
-- Focused Workspace remains the deliberate deep-task exception,
-- Rate Confirmation paper lives on a reusable physical Document Desk,
-- document sheets have persistent-in-session X/Y position and z-order behavior,
-- dragging a document brings it to the front,
-- stacking infrastructure must support future BOL/POD/invoice/document sheets without replacing the desk model,
-- Rate Confirmation should visually read as a loose broker document rather than a dashboard card,
-- the verification panel shows FreightLink reference values only,
-- the Rate Con value must be read from the paper itself,
-- MATCH / ISSUE is the player's judgment and must not reveal correctness,
-- choosing ISSUE briefly highlights the corresponding area of the paper without confirming whether the player is right,
-- acceptance remains blocked until every required comparison has been reviewed,
-- the game may preserve a missed mismatch as a player mistake,
-- every visible committed route segment must have visible endpoint context,
-- the selected driver's normal map renders non-freight route anchors for yard, lunch, staging, and other route-owning events,
-- freight pickup/delivery markers remain the richer P/D markers in normal Driver view,
-- FreightLink may continue using the quieter compact route-anchor treatment,
-- route/anchor completeness is validated for every seeded driver, not special-cased for Derrick,
+- preserve V2.5.2 Document Desk dragging/stacking and reference-only Rate Con verification,
+- choosing ISSUE keeps the corresponding paper field visibly marked until the player changes that judgment,
+- the initial ISSUE click may still animate/pulse the marked area,
+- MATCH removes any persistent issue markup for that field,
+- the driver/truck map marker represents current operational position,
+- home base is identity/reference data and must not automatically become shift start,
+- Driver Day begins at the current truck position by default,
+- a plan may explicitly provide startLocationId when the operational day truly begins at a facility such as Metroline Yard,
+- the current truck asset counts as the visible anchor for a default shift-start route origin,
+- route geometry must visibly leave the current truck marker toward the first planned event,
+- explicit facility starts use a typed POI anchor instead,
+- no teleporting between current truck position and the first Driver Day event,
 - V2.5 booking/manifest truth remains authoritative,
 - do not begin editable Daily Planning behavior until V2.6.
 

@@ -10,7 +10,7 @@ export default function TopBar({ focused = false }) {
         <span className="status-dot" />
         <strong>{focused ? 'FOCUSED' : 'NO ALERTS'}</strong>
         <span className="status-divider" />
-        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5.2 · DOCUMENT DESK'}</small>
+        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5.3 · ROUTE ORIGIN'}</small>
       </div>
 
       <div className="clock-block">
