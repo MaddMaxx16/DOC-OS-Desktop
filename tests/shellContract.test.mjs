@@ -370,7 +370,7 @@ test('V2.6.5.13 publishes the committed route only after the full serialized day
   const hydration = await readFile(new URL('../src/domain/routing/committedRouteHydration.js', import.meta.url), 'utf8')
 
   assert.match(map, /hydrateCommittedRouteSegments\(segmentSpecs/)
-  assert.match(map, /\.then\(\(segments\) => \{[\s\S]*setDriverRouteResult\(\{ key: driverRouteKey, segments \}\)/)
+  assert.match(map, /\.then\(\(segments\) => \{[\s\S]*setDriverRouteResult\(\{[\s\S]*key: driverRouteKey,[\s\S]*driverId: selectedDriver\.id,[\s\S]*segments,[\s\S]*\}\)/)
   assert.doesNotMatch(map, /onProgress:/)
   assert.doesNotMatch(hydration, /onProgress/)
 })
