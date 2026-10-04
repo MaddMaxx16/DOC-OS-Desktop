@@ -11,11 +11,6 @@ function formatWeight(value) {
   return `${Math.round(Number(value || 0) / 1000)}k lb`
 }
 
-function formatMiles(value) {
-  if (!Number.isFinite(value)) return '—'
-  return `${value.toFixed(value >= 10 ? 0 : 1)} mi`
-}
-
 function eventCode(item) {
   if (item.kind === 'shift-start') return 'START'
   if (item.kind === 'lunch') return 'LUNCH'
@@ -62,66 +57,15 @@ function PlanHealth({ health }) {
   )
 }
 
-function PlanningPlacePicker({ driverId, event, options, onChoosePlanningPlace }) {
-  if (!event || !['lunch', 'staging'].includes(event.kind)) return null
-
-  const lunch = event.kind === 'lunch'
-
-  return (
-    <section className="planning-place-picker">
-      <header>
-        <div>
-          <span>{lunch ? 'LUNCH PLACE' : 'END-OF-DAY STAGING'}</span>
-          <strong>{event.locationLabel}</strong>
-        </div>
-        <small>{lunch ? 'Choose a real stop. Route detour updates immediately.' : 'Choose where the truck finishes the day.'}</small>
-      </header>
-
-      <div className="planning-place-list">
-        {options.map((option) => (
-          <button
-            type="button"
-            key={option.id}
-            className={option.isCurrent ? 'current' : ''}
-            disabled={option.isCurrent}
-            onClick={() => onChoosePlanningPlace?.({
-              driverId,
-              kind: event.kind,
-              locationId: option.id,
-            })}
-          >
-            <div>
-              <strong>{option.label}</strong>
-              <span>{option.poiType.replace('-', ' ').toUpperCase()}</span>
-            </div>
-            <small>
-              {lunch
-                ? `+${option.detourMinutes} min · ${formatMiles(option.detourMiles)} detour`
-                : `${option.travelMinutes} min · ${formatMiles(option.travelMiles)} from final stop`}
-            </small>
-            <em>
-              {option.truckAccess.toUpperCase()} TRUCK ACCESS
-              {option.parking ? ' · PARKING' : ' · NO TRUCK PARKING'}
-            </em>
-            {option.isCurrent && <b>CURRENT</b>}
-          </button>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 export default function DriverDayPanel({
   driver,
   day,
   selection,
   planning = false,
   planningFeedback = null,
-  planningPlaceOptions = [],
   onStartPlanning,
   onStopPlanning,
   onMovePlanEvent,
-  onChoosePlanningPlace,
   onSelectSubject,
 }) {
   const [draggedEventId, setDraggedEventId] = useState(null)
@@ -209,14 +153,14 @@ export default function DriverDayPanel({
             <div className="day-row-meta">
               <span>OFF DUTY</span>
               <b>30 MIN</b>
-              <em>{planning ? 'click to choose place' : `until ${formatClock(item.endMinutes)}`}</em>
+              <em>{planning ? 'click to open lunch planner' : `until ${formatClock(item.endMinutes)}`}</em>
             </div>
           )}
           {item.kind === 'staging' && (
             <div className="day-row-meta">
               <span>SHIFT END</span>
               <b>STAGING</b>
-              <em>{planning ? 'click to choose place' : 'planned'}</em>
+              <em>{planning ? 'click to choose end location' : 'planned'}</em>
             </div>
           )}
           {item.kind === 'shift-start' && (
@@ -321,12 +265,6 @@ export default function DriverDayPanel({
             </div>
           )}
 
-          <PlanningPlacePicker
-            driverId={driver.id}
-            event={selectedPlanningEvent}
-            options={planningPlaceOptions}
-            onChoosePlanningPlace={onChoosePlanningPlace}
-          />
         </>
       )}
 
