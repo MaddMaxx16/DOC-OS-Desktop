@@ -136,7 +136,7 @@ export const driverPlans = Object.freeze({
       locationId: 'meadowlands-staging',
       afterManifestOrder: 1,
     }),
-    staging: Object.freeze({ arrivalMinutes: 1000, locationId: 'meadowlands-staging' }),
+    staging: Object.freeze({ arrivalMinutes: 1000, locationId: null }),
   }),
   'taylor-brooks': Object.freeze({
     dispatchStatus: 'draft',
@@ -147,7 +147,7 @@ export const driverPlans = Object.freeze({
       locationId: 'meadowlands-staging',
       afterManifestOrder: 1,
     }),
-    staging: Object.freeze({ arrivalMinutes: 900, locationId: 'meadowlands-staging' }),
+    staging: Object.freeze({ arrivalMinutes: 900, locationId: null }),
   }),
   'derrick-cole': Object.freeze({
     dispatchStatus: 'draft',
@@ -158,6 +158,6 @@ export const driverPlans = Object.freeze({
       locationId: 'meadowlands-staging',
       afterManifestOrder: 0,
     }),
-    staging: Object.freeze({ arrivalMinutes: 870, locationId: 'meadowlands-staging' }),
+    staging: Object.freeze({ arrivalMinutes: 870, locationId: null }),
   }),
 })
