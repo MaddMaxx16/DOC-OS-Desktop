@@ -12,13 +12,9 @@ import {
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
 } from '../domain/routing/driverRoutePlan.js'
-import {
-  buildRouteAnchorDisplayPlan,
-  nextOperationalEventId,
-} from '../domain/routing/mapRouteDisplay.js'
-import { exactSegmentRouteShape } from '../domain/routing/routeRenderGeometry.js'
+import { nextOperationalEventId } from '../domain/routing/mapRouteDisplay.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
-import { calculateRoadRoutePlan } from '../services/roadRouting.js'
+import { calculateRoadRoute } from '../services/roadRouting.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
@@ -274,28 +270,21 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
+    const nextStopId = nextOperationalEventId(driverDay)
     const routeAnchors = driverIdentity && driverDay
       ? buildDriverRouteAnchors(driverDay, locations)
       : []
-    const routeAnchorDisplay = buildRouteAnchorDisplayPlan(routeAnchors, {
-      selectedEventId: selectedStop?.id ?? null,
-      nextEventId: nextOperationalEventId(driverDay),
-    })
     const previewPickupId = freightRoutePreview?.pickup?.id ?? null
     const previewDeliveryId = freightRoutePreview?.delivery?.id ?? null
 
     const addRouteAnchorMarker = (routeAnchor, { interactive = false } = {}) => {
+      const selected = Boolean(
+        selectedStop
+        && routeAnchor.eventIds.includes(selectedStop.id),
+      )
       const element = document.createElement(interactive ? 'button' : 'div')
       if (interactive) element.type = 'button'
-      element.className = [
-        'poi-marker',
-        'driver-route-anchor',
-        routeAnchor.poiType,
-        routeAnchor.selected ? 'selected' : '',
-        routeAnchor.next ? 'priority-label' : '',
-        routeAnchor.crowded ? 'crowded-label' : '',
-        routeAnchor.labelPlacement,
-      ].filter(Boolean).join(' ')
+      element.className = `poi-marker driver-route-anchor ${routeAnchor.poiType} ${selected ? 'selected' : ''}`
       element.style.setProperty('--driver-color', driverIdentity.color)
       element.setAttribute(
         'aria-label',
@@ -310,23 +299,15 @@ export default function OperationsMap({
         element.addEventListener('click', (event) => {
           event.preventDefault()
           event.stopPropagation()
-          const eventId = (
-            selectedStop
-            && routeAnchor.eventIds.includes(selectedStop.id)
-          )
-            ? selectedStop.id
-            : routeAnchor.eventIds[0]
-          onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, eventId)
+          onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, routeAnchor.eventIds[0])
         })
       }
 
       let offset = [0, 0]
-      if (workspaceOpen && freightRoutePreview) {
-        if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
-        else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
-      }
+      if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
+      else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
 
-      const marker = new Marker({ element, anchor: 'center', offset })
+      const marker = new Marker({ element, anchor: 'bottom', offset })
         .setLngLat(routeAnchor.coordinates)
         .addTo(map)
 
@@ -334,12 +315,13 @@ export default function OperationsMap({
     }
 
     if (workspaceOpen && driverIdentity) {
-      for (const routeAnchor of routeAnchorDisplay) {
+      for (const routeAnchor of routeAnchors) {
         addRouteAnchorMarker(routeAnchor)
       }
     } else if (driverIdentity) {
-      for (const routeAnchor of routeAnchorDisplay) {
-        addRouteAnchorMarker(routeAnchor, { interactive: true })
+      for (const routeAnchor of routeAnchors) {
+        const isFreightLocation = routeAnchor.eventKinds.includes('freight-stop')
+        if (!isFreightLocation) addRouteAnchorMarker(routeAnchor, { interactive: true })
       }
     }
 
@@ -385,7 +367,33 @@ export default function OperationsMap({
       }
     }
 
+    for (const stop of workspaceOpen ? [] : (driverDay?.freightStops ?? [])) {
+      if (!stop.coordinates || !driverIdentity) continue
+      const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
+      const location = locations[stop.locationId]
+      const element = document.createElement('button')
+      element.type = 'button'
+      const priorityLabel = selected || stop.id === nextStopId
+      element.className = `poi-marker facility-stop ${stop.role} ${selected ? 'selected' : ''} ${priorityLabel ? 'priority-label' : ''}`
+      element.style.setProperty('--driver-color', driverIdentity.color)
+      element.setAttribute('aria-label', `Select ${stop.role} ${stop.loadRef} at ${stop.locationLabel}`)
+      element.innerHTML = `${facilityMarkup({
+        type: locationType(location),
+        role: stop.role,
+        badge: `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`,
+      })}<small>${stop.locationLabel}</small>`
+      element.addEventListener('click', (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, stop.id)
+      })
 
+      const marker = new Marker({ element, anchor: 'bottom' })
+        .setLngLat(stop.coordinates)
+        .addTo(map)
+
+      markerRefs.current.set(`stop:${stop.id}`, marker)
+    }
 
   }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
@@ -395,29 +403,15 @@ export default function OperationsMap({
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
 
-    const loadRoutes = async () => {
-      if (!segmentSpecs.length) {
-        setDriverRouteResult({ key: driverRouteKey, segments: [] })
-        return
-      }
-
-      const waypoints = [
-        segmentSpecs[0].fromCoordinates,
-        ...segmentSpecs.map((segment) => segment.toCoordinates),
-      ]
-      const routedLegs = await calculateRoadRoutePlan(waypoints)
-
-      if (!active) return
-
-      const segments = segmentSpecs.map((segment, index) => ({
+    Promise.all(
+      segmentSpecs.map(async (segment) => ({
         ...segment,
-        route: routedLegs?.[index] ?? null,
-      }))
-
+        route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
+      })),
+    ).then((segments) => {
+      if (!active) return
       setDriverRouteResult({ key: driverRouteKey, segments })
-    }
-
-    loadRoutes()
+    })
 
     return () => {
       active = false
@@ -444,20 +438,18 @@ export default function OperationsMap({
     const insertion = freightRoutePreview?.evaluation?.insertion ?? null
     const segments = markInsertionAffectedSegment(plannedDriverRoutes, insertion)
     const features = segments
+      .filter((segment) => (
+        segment.route?.source === 'road'
+        && Array.isArray(segment.route?.routeShape)
+        && segment.route.routeShape.length >= 2
+      ))
       .map((segment) => ({
-        segment,
-        routeShape: exactSegmentRouteShape(segment),
-      }))
-      .filter(({ routeShape }) => routeShape.length >= 2)
-      .map(({ segment, routeShape }) => ({
         type: 'Feature',
         properties: {
           affected: segment.affected,
           destinationRole: segment.toRole ?? '',
-          fromId: segment.fromId,
-          toId: segment.toId,
         },
-        geometry: { type: 'LineString', coordinates: routeShape },
+        geometry: { type: 'LineString', coordinates: segment.route.routeShape },
       }))
 
     if (!features.length) return clearDriverRoute
