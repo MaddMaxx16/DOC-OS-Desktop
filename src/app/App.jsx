@@ -64,6 +64,7 @@ export default function App() {
       && subjectDriverId !== planningDriverId
     ) {
       setPlanningDriverId(null)
+      setPlanningFeedback(null)
     }
 
     if (type === SELECTION_TYPES.DRIVER || type === SELECTION_TYPES.STOP) {
