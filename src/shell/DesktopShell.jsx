@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
@@ -83,17 +84,18 @@ export default function DesktopShell({
     : committedMapDriverDay
 
   const planningActive = planningDriverId === selectedDriver?.id
-  const planningPlaceOptions = (
+  const selectedPlanningKind = selectedStop?.kind ?? null
+  const planningPlaceOptions = useMemo(() => (
     planningActive
     && driverDay
-    && (selectedStop?.kind === 'lunch' || selectedStop?.kind === 'staging')
-  )
-    ? buildPlanningPlaceOptions({
-        day: driverDay,
-        kind: selectedStop.kind,
-        locations,
-      })
-    : []
+    && (selectedPlanningKind === 'lunch' || selectedPlanningKind === 'staging')
+      ? buildPlanningPlaceOptions({
+          day: driverDay,
+          kind: selectedPlanningKind,
+          locations,
+        })
+      : []
+  ), [driverDay, locations, planningActive, selectedPlanningKind])
 
   const hasBrowser = activeApp === 'drivers' || freightlinkOpen
   const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)

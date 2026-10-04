@@ -32,25 +32,20 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.1.1 Startup Route Guard
+## Current packet — V2.7.1.2 Camera Ownership
 
-V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete. V2.7.1 Live Operations Foundation is implemented pending visual acceptance.
+V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete. V2.7.1 Live Operations clock/execution-gate behavior is visually accepted.
 
 Guardrails:
-- preserve every locked planning, routing, map, booking, Rate Con, and V2.7.1 live-clock invariant,
-- no-selection startup must never treat null route state and null selected-driver state as a valid route match,
-- route rendering may read segments only when both a selected driver and a driver-scoped route result exist,
-- activate the existing top-right pause/play/fast-forward runway instead of redesigning the header,
-- simulation begins at 6:00 AM, Day 1, paused,
-- Play advances one game minute per simulation tick; Fast Forward advances four game minutes per tick,
-- Focused Workspace freezes simulation time regardless of the requested clock mode,
-- closing Focused Workspace may resume the previously requested Play/Fast mode,
-- only SENT Driver Days are armed for Live Operations,
-- before shift start a sent plan is SCHEDULED; inside the shift window it becomes LIVE READY,
-- draft plans remain planning truth only and are not live-executable,
-- V2.7.1 does not move trucks, complete route legs, consume service time, mutate HOS, or auto-complete stops,
-- truck movement and execution-position truth belong to the next V2.7 slice,
-- do not let clock activation mutate route timing, Driver Day order, appointments, capacity, or sent-plan contents.
+- preserve every locked planning, routing, map, booking, Rate Con, startup-guard, and V2.7.1 live-clock invariant,
+- selecting a driver or stop may frame that target once,
+- after intentional framing, manual pan/zoom belongs to the player and ordinary React rerenders or simulation-clock ticks must not reclaim the camera,
+- a moving selected truck must not automatically drag the camera in future Live Operations unless a separate explicit Follow Driver mode is added,
+- camera framing keys are based on selection/planning target identity, not continuously changing truck coordinates,
+- clearing selection resets the frame key so a later re-selection may intentionally frame again,
+- FreightLink preview/planning modes may still intentionally fit their own relevant geometry,
+- stabilize planning-place option identity so the live clock does not manufacture false camera-change signals,
+- do not change routing, route geometry, simulation speed, Driver Day sequencing, HOS, appointments, capacity, or sent-plan truth in this packet.
 
 ## Verification
 
