@@ -11,6 +11,11 @@ function formatWeight(value) {
   return `${Math.round(Number(value || 0) / 1000)}k lb`
 }
 
+function eventTimeLabel(item) {
+  if (item.kind === 'staging' && !item.locationId) return 'TBD'
+  return formatClock(item.projectedArrivalMinutes)
+}
+
 function eventCode(item) {
   if (item.kind === 'shift-start') return 'START'
   if (item.kind === 'lunch') return 'LUNCH'
@@ -141,7 +146,7 @@ export default function DriverDayPanel({
           <span className="timeline-dot" />
           {index < day.timeline.length - 1 && <i />}
         </div>
-        <time>{formatClock(item.projectedArrivalMinutes)}</time>
+        <time>{eventTimeLabel(item)}</time>
         <div className="timeline-content">
           <div className="timeline-title">
             {draggableEvent && <span className="stop-drag-handle" aria-hidden="true">⋮⋮</span>}
@@ -160,7 +165,7 @@ export default function DriverDayPanel({
             <div className="day-row-meta">
               <span>SHIFT END</span>
               <b>STAGING</b>
-              <em>{planning ? 'click to choose end location' : 'planned'}</em>
+              <em>{planning ? 'click to choose end location' : item.locationId ? 'planned' : 'not selected'}</em>
             </div>
           )}
           {item.kind === 'shift-start' && (
