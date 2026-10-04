@@ -10,7 +10,7 @@ export default function TopBar() {
         <span className="status-dot" />
         <strong>NO ALERTS</strong>
         <span className="status-divider" />
-        <small>DESKTOP V2.4.4 · MAP + DRAWER</small>
+        <small>DESKTOP V2.4.5 · MAP FOCUS</small>
       </div>
 
       <div className="clock-block">
