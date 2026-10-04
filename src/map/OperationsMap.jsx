@@ -341,14 +341,12 @@ export default function OperationsMap({
       markerRefs.current.set(`route-anchor:${routeAnchor.id}`, marker)
     }
 
-    if (workspaceOpen && driverIdentity) {
-      for (const routeAnchor of routeAnchors) {
-        addRouteAnchorMarker(routeAnchor)
-      }
-    } else if (driverIdentity) {
+    if (driverIdentity) {
       for (const routeAnchor of routeAnchors) {
         const isFreightLocation = routeAnchor.eventKinds.includes('freight-stop')
-        if (!isFreightLocation) addRouteAnchorMarker(routeAnchor, { interactive: true })
+        if (!isFreightLocation) {
+          addRouteAnchorMarker(routeAnchor, { interactive: !workspaceOpen })
+        }
       }
     }
 
@@ -411,7 +409,7 @@ export default function OperationsMap({
 
     clearCommittedStops()
 
-    if (workspaceOpen || !selectedDriver || !driverDay?.freightStops?.length) {
+    if (!selectedDriver || !driverDay?.freightStops?.length) {
       return clearCommittedStops
     }
 
@@ -572,7 +570,6 @@ export default function OperationsMap({
     plannedDriverRoutes,
     selectedDriver,
     selection,
-    workspaceOpen,
   ])
 
   useEffect(() => {
