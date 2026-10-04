@@ -32,26 +32,26 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.3 Readability + Map Language
+## Current packet — V2.4.4 Map Interaction + Drawer Layout Polish
 
-V2.1 through V2.4.2 are structurally locked.
+V2.1 through V2.4.3 are structurally locked.
 
-V2.4.3 establishes the visual language players will use for long desktop sessions.
+V2.4.4 is the final usability polish before V2.5.
 
 Guardrails:
-- no important operational text should require leaning toward the monitor,
-- shared desktop type scale: micro 11px, secondary 12px, body 14px, emphasis 16px, heading 22px,
-- FreightLink preview routes are neutral because unassigned freight does not belong to a driver,
-- assigned operational routes inherit the owning driver's identity color in later execution packets,
-- drivers render as truck assets in driver color with initials integrated into the marker,
-- POI icon shape communicates location type before color,
-- POI taxonomy must support warehouse, yard, staging, fuel, food, truck stop, and service,
-- pickup and delivery are facility roles layered onto the underlying POI type,
-- marketplace opportunities remain compact until hover or selection,
-- selected geography is visually dominant while unrelated opportunities recede,
-- use a crisp dark vector basemap; do not return to brightness-filtered OSM raster styling,
-- hide irrelevant consumer POI clutter from the basemap where practical,
-- MapLibre/Vite worker setup must be deterministic for local Mac testing,
+- keep the V2.4.3 dark vector basemap, truck markers, POI language, route semantics, and readability scale,
+- operations map is permanently flat and north-up,
+- normal map interaction is pan + zoom only,
+- bearing is locked to 0 degrees,
+- pitch is locked to 0 degrees,
+- mouse drag rotation, touch rotation, and touch pitch are disabled,
+- programmatic camera moves must preserve bearing 0 and pitch 0,
+- navigation control exposes zoom only, not compass/rotation affordances,
+- shared app drawer targets 46% of viewport height,
+- shared app drawer bounds are 360px minimum and 540px maximum,
+- increased drawer height must not be achieved by shrinking operational typography,
+- FreightLink may still scroll on genuinely small viewports, but normal desktop height should expose nearly the full selected-lane evaluation,
+- closing the active app restores the reclaimed map space cleanly,
 - do not begin booking or Rate Confirmation behavior until V2.5.
 
 ## Verification
