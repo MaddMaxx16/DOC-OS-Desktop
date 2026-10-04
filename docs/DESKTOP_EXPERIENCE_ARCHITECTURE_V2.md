@@ -1271,6 +1271,25 @@ Acceptance:
 
 The game clock can run, pause, and fast-forward; Focused work freezes it; and a sent schedule visibly becomes armed Live Operations state at the correct shift window.
 
+#### V2.7.1.2 — Camera Ownership
+
+Live Operations clock ticks must not be treated as camera-navigation events.
+
+Rules:
+
+- selecting a driver or stop may frame the target once,
+- after that frame completes, pan/zoom ownership transfers to the player,
+- simulation ticks, status updates, route hydration, and ordinary rerenders do not re-center the map,
+- a driver's changing live coordinates do not imply camera follow,
+- future driver-follow behavior must be an explicit player-controlled mode,
+- clearing/changing selection may intentionally create a new frame target,
+- planning place and FreightLink preview modes may continue to perform deliberate fit operations when their target actually changes.
+
+This creates the camera invariant:
+
+> selection chooses context once  
+> the player owns the camera afterward
+
 #### V2.7.2 — Route Execution + Truck Motion
 
 Next build:
@@ -1582,22 +1601,26 @@ V2.5 through V2.6.5.14 are accepted and locked.
 
 # **V2.6 Daily Planning is complete.**
 
-The current verification hotfix is:
+V2.7.1 Live Operations Foundation is visually accepted. The current polish hotfix is:
 
-# **V2.7.1.1 — Startup Route Guard**
+# **V2.7.1.2 — Camera Ownership**
 
-V2.7.1 activated Live Operations clock state. Initial browser startup exposed a null-state route bug: with no selected driver and no hydrated route result, both optional IDs evaluated as undefined and the old same-driver comparison incorrectly passed before reading `driverRouteResult.segments`.
+The live clock exposed a camera-control bug: the selection-framing effect could rerun on ordinary clock-driven renders because a fresh planning-options array was created each render. With Marcus still selected, that repeatedly called `easeTo` and snapped the map back to the truck after manual panning.
 
-Locked startup invariant:
+V2.7.1.2 fixes camera ownership:
 
-- no selected driver = no committed route segments,
-- no route result = no committed route segments,
-- a cached route may be reused only when both objects exist and their driver IDs match,
-- route segments must be an array before the map reads them.
+- each driver/stop/planning frame receives a stable frame key,
+- the same frame key can execute only once until the target changes,
+- manual pan/zoom is preserved through simulation ticks,
+- clearing selection resets framing eligibility,
+- planning-place options are memoized instead of recreated every clock render,
+- future moving trucks will not automatically drag the camera unless Follow Driver becomes an explicit mode.
 
-The V2.7.1 clock/execution-gate behavior remains unchanged.
+Acceptance:
 
-After this hotfix is visually accepted, continue with:
+With Marcus selected and the clock running, the player can pan or zoom away from Marcus and the map remains where the player left it.
+
+After visual acceptance, proceed to:
 
 # **V2.7.2 — Route Execution + Truck Motion**
 
