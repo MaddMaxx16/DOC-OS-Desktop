@@ -27,6 +27,7 @@ export default function DesktopShell({
   planningFeedback,
   pendingPlanningPlace,
   planningPlacePreviewDay,
+  operationsInspectorHidden = false,
   freightRoutePreview,
   freightCandidateDriverId,
   onToggleApp,
@@ -45,6 +46,7 @@ export default function DesktopShell({
   onCancelDriverPlanningPlace,
   onConfirmDriverPlanningPlace,
   onSendDriverSchedule,
+  onCloseOperationsInspector,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -92,7 +94,11 @@ export default function DesktopShell({
 
   const hasBrowser = activeApp === 'drivers' || freightlinkOpen
   const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)
-  const hasOperationsInspector = !freightlinkOpen && Boolean(selection)
+  const hasOperationsInspector = (
+    !freightlinkOpen
+    && Boolean(selection)
+    && !operationsInspectorHidden
+  )
   const hasInspector = hasFreightInspector || hasOperationsInspector
 
   const focusedRecord = focusedTask?.type === 'rate-confirmation'
@@ -211,6 +217,7 @@ export default function DesktopShell({
               onStopPlanning={onStopDriverPlanning}
               onMovePlanEvent={onMoveDriverPlanEvent}
               onSendSchedule={onSendDriverSchedule}
+              onClose={onCloseOperationsInspector}
               onSelectSubject={onSelectSubject}
             />
           )}
