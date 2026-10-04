@@ -1292,13 +1292,33 @@ This creates the camera invariant:
 
 #### V2.7.2 — Route Execution + Truck Motion
 
-Next build:
+Build:
 
-- sent-plan execution position,
-- truck movement along committed road geometry,
-- actual next-stop truth,
-- completed-leg fading,
-- arrival state at the first operational stop.
+- derive execution position for every SENT Driver Day from the shared live clock,
+- SCHEDULED before shift start,
+- EN ROUTE between planned events,
+- one-minute ARRIVED state at freight stops before the next travel interval,
+- Lunch as a real dwell window through its planned end time,
+- ROUTE COMPLETE after the final planned event,
+- precise selected/map-driver truck position interpolated by cumulative distance along the hydrated committed road LineString,
+- actual next-event truth replaces the static first-stop assumption,
+- completed route legs fade,
+- active route leg remains strongest,
+- future route legs remain visible but subordinate,
+- Driver Day rows communicate completed / NOW / NEXT execution state,
+- Fleet browser reflects each sent driver's live execution status,
+- moving trucks never reclaim camera ownership.
+
+Scope boundary:
+
+- all sent Driver Days advance logically from the shared clock,
+- precise map movement requires real hydrated road geometry and is rendered for the current map driver in this slice,
+- do not fake unhydrated drivers with straight-line movement,
+- pickup/delivery service timers, loading/unloading, HOS consumption, onboard mutation, and exception handling remain later V2.7 slices.
+
+Acceptance:
+
+With a sent schedule and running clock, the current map driver's truck visibly travels the real committed road route toward the correct next event. Reaching a stop produces ARRIVED state, prior route legs fade, Lunch parks the truck until break end, and manual camera position is preserved.
 
 #### Later V2.7 slices
 
@@ -1601,28 +1621,39 @@ V2.5 through V2.6.5.14 are accepted and locked.
 
 # **V2.6 Daily Planning is complete.**
 
-V2.7.1 Live Operations Foundation is visually accepted. The current polish hotfix is:
+V2.7.1, V2.7.1.1, and V2.7.1.2 are visually accepted and locked.
 
-# **V2.7.1.2 — Camera Ownership**
+The active work packet is:
 
-The live clock exposed a camera-control bug: the selection-framing effect could rerun on ordinary clock-driven renders because a fresh planning-options array was created each render. With Marcus still selected, that repeatedly called `easeTo` and snapped the map back to the truck after manual panning.
+# **V2.7.2 — Route Execution + Truck Motion**
 
-V2.7.1.2 fixes camera ownership:
+Build:
 
-- each driver/stop/planning frame receives a stable frame key,
-- the same frame key can execute only once until the target changes,
-- manual pan/zoom is preserved through simulation ticks,
-- clearing selection resets framing eligibility,
-- planning-place options are memoized instead of recreated every clock render,
-- future moving trucks will not automatically drag the camera unless Follow Driver becomes an explicit mode.
+- derive live execution state from each SENT Driver Day timeline,
+- move the currently hydrated map driver's truck along real committed road geometry,
+- use cumulative route distance for position interpolation,
+- expose EN ROUTE, ARRIVED, ON BREAK, and ROUTE COMPLETE states,
+- respect Lunch as a dwell window,
+- drive next-stop emphasis from actual execution state,
+- fade completed route legs and emphasize the active leg,
+- mark Driver Day rows as completed / NOW / NEXT,
+- show live execution status in the Fleet browser,
+- preserve V2.7.1.2 player-owned camera behavior.
+
+Non-goals:
+
+- no pickup/loading puzzle yet,
+- no unload/service timer yet,
+- no onboard-load mutation,
+- no HOS decrement,
+- no detention or exception engine,
+- no fake straight-line movement for drivers whose road routes are not hydrated.
 
 Acceptance:
 
-With Marcus selected and the clock running, the player can pan or zoom away from Marcus and the map remains where the player left it.
+At normal or fast time, a sent driver's selected truck progresses along the actual road route toward its next planned event, route/timeline state advances coherently, Lunch holds the truck, and camera pan/zoom remains untouched.
 
-After visual acceptance, proceed to:
-
-# **V2.7.2 — Route Execution + Truck Motion**
+After acceptance, the next Live Operations slice will add stop service/handoff behavior and can generalize hydrated route caching for simultaneous visible fleet motion.
 
 ---
 
