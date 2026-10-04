@@ -357,6 +357,20 @@ test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promis
   assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
 })
 
+test('V2.7.1.2 frames a selection once and then releases camera ownership to the player', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /cameraFrameKeyRef = useRef\(null\)/)
+  assert.match(map, /frameKey = `driver:\$\{selectedDriver\.id\}`/)
+  assert.match(map, /if \(cameraFrameKeyRef\.current === frameKey\) return/)
+  assert.match(map, /cameraFrameKeyRef\.current = frameKey/)
+  assert.match(map, /cameraFrameKeyRef\.current = null/)
+  assert.match(shell, /const planningPlaceOptions = useMemo/)
+  assert.match(shell, /selectedPlanningKind/)
+  assert.match(shell, /\[driverDay, locations, planningActive, selectedPlanningKind\]/)
+})
+
 test('V2.7.1.1 no-selection startup cannot dereference a null route result', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
@@ -534,7 +548,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.1\.1 · STARTUP ROUTE GUARD/)
+  assert.match(top, /DESKTOP V2\.7\.1\.2 · CAMERA OWNERSHIP/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
