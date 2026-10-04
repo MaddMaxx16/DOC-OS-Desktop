@@ -145,7 +145,7 @@ export default function FreightLinkWorkspace({
     const originCoordinates = selectedEvaluation.insertion.originCoordinates
     const nextCoordinates = selectedEvaluation.insertion.nextCoordinates
 
-    if (!pickup?.coordinates || !delivery?.coordinates || !originCoordinates || !nextCoordinates) {
+    if (!pickup?.coordinates || !delivery?.coordinates || !originCoordinates) {
       onRoutePreviewChange({
         lane: selectedLane,
         driver: candidateDriver,
@@ -176,10 +176,13 @@ export default function FreightLinkWorkspace({
     Promise.all([
       calculateRoadRoute(originCoordinates, pickup.coordinates),
       calculateRoadRoute(pickup.coordinates, delivery.coordinates),
-      calculateRoadRoute(delivery.coordinates, nextCoordinates),
+      nextCoordinates
+        ? calculateRoadRoute(delivery.coordinates, nextCoordinates)
+        : Promise.resolve(null),
     ]).then(([deadhead, loaded, rejoin]) => {
       if (!active) return
-      const status = [deadhead, loaded, rejoin].every((route) => route.source === 'road')
+      const routedLegs = [deadhead, loaded, ...(rejoin ? [rejoin] : [])]
+      const status = routedLegs.every((route) => route.source === 'road')
         ? 'ready'
         : 'estimate'
       setRouteResult({ key: routeKey, status, deadhead, loaded, rejoin })
