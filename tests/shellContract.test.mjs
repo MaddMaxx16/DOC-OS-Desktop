@@ -352,6 +352,19 @@ test('V2.6.5.3 committed routes retry road geometry and never draw estimate diag
   assert.match(render, /return \[\]/)
 })
 
+test('V2.6.5.4 committed Driver Day routing uses one ordered multi-waypoint road plan', async () => {
+  const routing = await readFile(new URL('../src/services/roadRouting.js', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(routing, /calculateRoadRoutePlan/)
+  assert.match(routing, /overview=false&geometries=geojson&steps=true/)
+  assert.match(routing, /roadPlanLegs/)
+  assert.match(map, /calculateRoadRoutePlan\(waypoints\)/)
+  assert.match(map, /segmentSpecs\[0\]\.fromCoordinates/)
+  assert.match(map, /\.\.\.segmentSpecs\.map\(\(segment\) => segment\.toCoordinates\)/)
+  assert.doesNotMatch(map, /for \(let index = 0; index < segmentSpecs\.length; index \+= 2\)/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -427,7 +440,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.3 · ROAD ROUTE RELIABILITY/)
+  assert.match(top, /DESKTOP V2\.6\.5\.4 · CONTINUOUS ROUTE PLAN/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
