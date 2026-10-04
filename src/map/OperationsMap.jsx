@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Map as MapLibreMap,
   Marker,
@@ -150,9 +150,14 @@ export default function OperationsMap({
         `${event.id}@${event.locationId ?? 'truck'}@${Array.isArray(event.coordinates) ? event.coordinates.join(',') : ''}`
       )).join('|')}`
     : null
-  const plannedDriverRoutes = driverRouteResult?.key === driverRouteKey
-    ? driverRouteResult.segments
-    : []
+  const plannedDriverRoutes = useMemo(
+    () => (
+      driverRouteResult?.key === driverRouteKey
+        ? driverRouteResult.segments
+        : []
+    ),
+    [driverRouteKey, driverRouteResult],
+  )
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -426,11 +431,6 @@ export default function OperationsMap({
 
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
-
-    setDriverRouteResult({
-      key: driverRouteKey,
-      segments: segmentSpecs.map((segment) => ({ ...segment, route: null })),
-    })
 
     hydrateCommittedRouteSegments(segmentSpecs, {
       routeSegment: calculateRoadRoute,
