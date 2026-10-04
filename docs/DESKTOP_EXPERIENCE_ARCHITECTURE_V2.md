@@ -529,6 +529,22 @@ This preserves the hierarchy:
 > badge = plan structure  
 > full label = current relevance
 
+### Road-route reliability
+
+Committed map geometry distinguishes **real road geometry** from **timing-only estimates**.
+
+Rules:
+
+- public-router requests retry before falling back,
+- Driver Day route requests use low concurrency rather than bursting every leg at once,
+- estimate fallback may still support timing/fit calculations,
+- estimate fallback must **not** render as a thick committed road route,
+- only route geometry with source `road` is eligible for committed-map rendering,
+- failed estimates are not permanently cached,
+- if road geometry remains unavailable, DOC OS shows an honest temporary route gap rather than a misleading straight-line road.
+
+This is a temporary desktop-development routing strategy. V2.7+ should preserve the distinction between route truth and estimate truth while moving toward a production-grade routing dependency.
+
 ### Route/POI endpoint integrity
 
 Committed route geometry and committed POI geometry share one coordinate truth.
@@ -1488,24 +1504,25 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5.1 are accepted and locked.
+V2.5 through V2.6.5.2 are accepted and locked.
 
-The active visual-correction packet is:
+The active map-correction packet is:
 
-# **V2.6.5.2 — Route Endpoint Integrity**
+# **V2.6.5.3 — Road Route Reliability**
 
-Acceptance of V2.6.5.1 showed that label geometry was no longer moving the POI, but several committed route legs still failed to visibly meet their D/P facility markers.
+V2.6.5.2 made endpoint normalization explicit, but visual acceptance exposed the actual remaining failure mode: some public OSRM calls were failing while several Driver Day legs were requested concurrently. Those failures fell back to straight-line estimate geometry, which was then rendered with the same blue committed-route treatment as real road geometry.
 
-V2.6.5.2 locks the deeper route invariant:
+V2.6.5.3 corrects that distinction:
 
-- every committed segment renders with the exact gameplay origin and destination coordinates,
-- road-snapped geometry is normalized back to those exact endpoints,
-- missing routed geometry falls back to a direct visible segment instead of dropping a leg,
-- grouped route anchors and route-segment endpoints are regression-tested to share identical coordinates,
-- committed facility icons are center-anchored on their gameplay coordinate,
-- V2.6.5 label declutter and grouped-marker behavior remain intact.
+- road routing retries before timing fallback,
+- Driver Day legs route with intentionally low concurrency,
+- timing-only estimate results are not cached as permanent road truth,
+- committed-map rendering rejects estimate geometry,
+- failed road legs temporarily remain absent rather than appearing as fake diagonal roads,
+- successful road geometry still normalizes to exact gameplay POI endpoints,
+- V2.6.5 map declutter remains intact.
 
-After V2.6.5.2 passes visual acceptance, proceed to:
+After V2.6.5.3 passes visual acceptance, proceed to:
 
 # **V2.7 — Live Operations**
 
