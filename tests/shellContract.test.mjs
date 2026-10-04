@@ -307,7 +307,7 @@ test('V2.6.4.1 Operations Inspector can close without clearing operational selec
   assert.match(css, /\.workstation-panel-header > button:hover/)
 })
 
-test('V2.6.5 selected sent route persists independently of inspector visibility and labels declutter by priority', async () => {
+test('V2.6.5.5 keeps route persistence while restoring proven freight-stop markers', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
@@ -316,64 +316,15 @@ test('V2.6.5 selected sent route persists independently of inspector visibility 
   assert.match(app, /operationsInspectorHidden/)
   assert.match(shell, /operationsInspectorHidden/)
   assert.match(shell, /driverDay=\{mapDriverDay\}/)
-  assert.match(map, /if \(!selectedDriver \|\| !plannedDriverRoutes\.length\)/)
-  assert.match(map, /priority-label/)
-  assert.match(map, /crowded-label/)
-  assert.match(map, /labelPlacement/)
-  assert.match(css, /\.driver-route-anchor\.priority-label > small/)
-  assert.match(css, /\.driver-route-anchor\.crowded-label\.label-right > small/)
-  assert.match(css, /\.driver-route-anchor\.crowded-label\.label-left > small/)
-  assert.match(css, /Same-facility visits share one physical marker/)
-})
-
-test('V2.6.5.2 committed route geometry and POI markers share exact endpoint coordinates', async () => {
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
-
-  assert.match(map, /exactSegmentRouteShape/)
-  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
-  assert.match(map, /fromId: segment\.fromId/)
-  assert.match(map, /toId: segment\.toId/)
-  assert.match(css, /\.driver-route-anchor > small \{[\s\S]*position: absolute/)
-  assert.match(css, /pointer-events: none/)
-})
-
-test('V2.6.5.3 committed routes retry road geometry and never draw estimate diagonals as roads', async () => {
-  const routing = await readFile(new URL('../src/services/roadRouting.js', import.meta.url), 'utf8')
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const render = await readFile(new URL('../src/domain/routing/routeRenderGeometry.js', import.meta.url), 'utf8')
-
-  assert.match(routing, /MAX_ROAD_ATTEMPTS = 3/)
-  assert.match(routing, /RETRY_DELAYS_MS = \[0, 250, 700\]/)
-  assert.match(routing, /Do not cache an estimate/)
-  assert.match(map, /calculateRoadRoutePlan/)
-  assert.match(render, /segment\.route\?\.source !== 'road'/)
-  assert.match(render, /return \[\]/)
-})
-
-test('V2.6.5.4 committed Driver Day routing uses one ordered multi-waypoint road plan', async () => {
-  const routing = await readFile(new URL('../src/services/roadRouting.js', import.meta.url), 'utf8')
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-
-  assert.match(routing, /calculateRoadRoutePlan/)
-  assert.match(routing, /overview=false&geometries=geojson&steps=true/)
-  assert.match(routing, /roadPlanLegs/)
-  assert.match(map, /calculateRoadRoutePlan\(waypoints\)/)
-  assert.match(map, /segmentSpecs\[0\]\.fromCoordinates/)
-  assert.match(map, /\.\.\.segmentSpecs\.map\(\(segment\) => segment\.toCoordinates\)/)
-  assert.doesNotMatch(map, /for \(let index = 0; index < segmentSpecs\.length; index \+= 2\)/)
-})
-
-test('V2.6.5.4 committed POIs use a fixed shell centered on the same continuous-route coordinate', async () => {
-  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
-
-  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
-  assert.match(map, /if \(workspaceOpen && freightRoutePreview\)/)
-  assert.match(css, /\.driver-route-anchor \{[\s\S]*width: 28px/)
-  assert.match(css, /\.driver-route-anchor \{[\s\S]*height: 28px/)
-  assert.match(css, /\.driver-route-anchor \{[\s\S]*padding: 0/)
-  assert.match(css, /\.driver-route-anchor \.poi-symbol \{[\s\S]*box-sizing: border-box/)
+  assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
+  assert.match(map, /poi-marker facility-stop/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'bottom' \}\)/)
+  assert.match(map, /calculateRoadRoute\(segment\.fromCoordinates, segment\.toCoordinates\)/)
+  assert.match(map, /segment\.route\?\.source === 'road'/)
+  assert.match(css, /\.facility-stop \{[\s\S]*width: 34px/)
+  assert.match(css, /\.facility-stop > em \{[\s\S]*display: none/)
+  assert.match(css, /\.facility-stop > small \{[\s\S]*position: absolute/)
+  assert.match(css, /\.facility-stop\.priority-label > small/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -451,7 +402,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.4 · CONTINUOUS ROUTE PLAN/)
+  assert.match(top, /DESKTOP V2\.6\.5\.5 · PROVEN ROUTE MARKERS/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -496,14 +447,14 @@ test('V2.5.2 ISSUE highlights the paper field without revealing correctness', as
   assert.match(css, /@keyframes rateconIssueFlash/)
 })
 
-test('normal Driver view renders grouped committed route anchors for every physical stop', async () => {
+test('normal Driver view uses proven freight-stop markers and reserves route anchors for non-freight events', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
+  assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
+  assert.match(map, /poi-marker facility-stop/)
   assert.match(map, /const routeAnchors = driverIdentity && driverDay/)
-  assert.match(map, /buildRouteAnchorDisplayPlan/)
-  assert.match(map, /for \(const routeAnchor of routeAnchorDisplay\)/)
-  assert.match(map, /addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
-  assert.doesNotMatch(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops/)
+  assert.match(map, /const isFreightLocation = routeAnchor\.eventKinds\.includes\('freight-stop'\)/)
+  assert.match(map, /if \(!isFreightLocation\) addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
 })
 
 
