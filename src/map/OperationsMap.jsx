@@ -123,10 +123,11 @@ export default function OperationsMap({
   selection,
   freightRoutePreview,
   planningPlaceOptions = [],
+  pendingPlanningPlace = null,
   workspaceOpen,
   marketLanes = [],
   locations = {},
-  onChoosePlanningPlace,
+  onPreviewPlanningPlace,
   onSelectSubject,
 }) {
   const mapContainerRef = useRef(null)
@@ -134,7 +135,7 @@ export default function OperationsMap({
   const markerRefs = useRef(new globalThis.Map())
   const previewMarkerRefs = useRef([])
   const onSelectSubjectRef = useRef(onSelectSubject)
-  const onChoosePlanningPlaceRef = useRef(onChoosePlanningPlace)
+  const onPreviewPlanningPlaceRef = useRef(onPreviewPlanningPlace)
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
 
@@ -152,8 +153,8 @@ export default function OperationsMap({
   }, [onSelectSubject])
 
   useEffect(() => {
-    onChoosePlanningPlaceRef.current = onChoosePlanningPlace
-  }, [onChoosePlanningPlace])
+    onPreviewPlanningPlaceRef.current = onPreviewPlanningPlace
+  }, [onPreviewPlanningPlace])
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return undefined
@@ -328,7 +329,11 @@ export default function OperationsMap({
       && (selectedStop?.kind === 'lunch' || selectedStop?.kind === 'staging')
     ) {
       for (const option of planningPlaceOptions) {
-        if (!Array.isArray(option.coordinates) || option.id === selectedStop.locationId) continue
+        if (
+          !Array.isArray(option.coordinates)
+          || option.id === selectedStop.locationId
+          || option.id === pendingPlanningPlace?.locationId
+        ) continue
 
         const element = document.createElement('button')
         element.type = 'button'
@@ -345,7 +350,7 @@ export default function OperationsMap({
         element.addEventListener('click', (event) => {
           event.preventDefault()
           event.stopPropagation()
-          onChoosePlanningPlaceRef.current?.({
+          onPreviewPlanningPlaceRef.current?.({
             driverId: selectedDriver.id,
             kind: selectedStop.kind,
             locationId: option.id,
@@ -387,7 +392,7 @@ export default function OperationsMap({
       markerRefs.current.set(`stop:${stop.id}`, marker)
     }
 
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     if (!driverRouteKey || !driverDay) return undefined
