@@ -1,4 +1,4 @@
-export default function TopBar() {
+export default function TopBar({ focused = false }) {
   return (
     <header className="top-bar">
       <div className="brand-block">
@@ -6,11 +6,11 @@ export default function TopBar() {
         <span>New York Operations</span>
       </div>
 
-      <div className="operations-status" aria-label="Operational status">
+      <div className={`operations-status ${focused ? 'focused' : ''}`} aria-label="Operational status">
         <span className="status-dot" />
-        <strong>NO ALERTS</strong>
+        <strong>{focused ? 'FOCUSED' : 'NO ALERTS'}</strong>
         <span className="status-divider" />
-        <small>DESKTOP V2.4.7 · ROUTE ANCHORS</small>
+        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5 · BOOKING + RATE CON'}</small>
       </div>
 
       <div className="clock-block">

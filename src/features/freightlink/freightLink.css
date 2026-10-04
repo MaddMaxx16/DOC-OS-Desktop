@@ -290,3 +290,59 @@
 .freightlink-footer button {
   font-size: var(--type-micro);
 }
+
+
+/* V2.5 booking + Rate Con lifecycle */
+.freightlink-driver-select select:disabled {
+  cursor: not-allowed;
+  opacity: .72;
+}
+.lane-fit-pill .booking-state {
+  margin-top: 3px;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .035em;
+  color: #9aaab5;
+}
+.lane-fit-pill .booking-state.requested {
+  color: #c5aa68;
+}
+.lane-fit-pill .booking-state.rate-con-ready {
+  color: #a78aba;
+}
+.lane-fit-pill .booking-state.correction-requested {
+  color: #d08a98;
+}
+.lane-fit-pill .booking-state.confirmed {
+  color: #79baa7;
+}
+
+.booking-footer {
+  border-top-color: #293945;
+}
+.booking-footer > div > span {
+  color: #a78aba;
+}
+.booking-footer button {
+  min-height: 42px;
+  border-color: #415768;
+  background: #12212c;
+  color: #b8c8d4;
+  cursor: pointer;
+}
+.booking-footer button:hover:not(:disabled) {
+  border-color: #7895aa;
+  background: #182c39;
+  color: #edf4f8;
+}
+.booking-footer button.ready {
+  border-color: #816b8f;
+  background: #251d2b;
+  color: #d3bde0;
+  box-shadow: inset 0 2px #9a7baa;
+}
+.booking-footer button:disabled {
+  cursor: default;
+  opacity: .58;
+}

@@ -254,3 +254,59 @@ test('V2.4.7 FreightLink keeps compact committed route anchors visible', async (
   assert.match(css, /\.driver-route-anchor \{[\s\S]*opacity: \.76;/)
   assert.match(css, /\.driver-route-anchor \.poi-symbol \{[\s\S]*width: 27px;[\s\S]*height: 27px;/)
 })
+
+
+test('V2.5 FreightLink exposes explicit booking lifecycle controls', async () => {
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
+
+  assert.match(freight, /REQUEST RATE CON/)
+  assert.match(freight, /WAITING FOR RATE CON/)
+  assert.match(freight, /REVIEW RATE CON/)
+  assert.match(freight, /WAITING FOR CORRECTION/)
+  assert.match(freight, /bookingStatusLabel/)
+  assert.match(freight, /bookingLocksDriver/)
+})
+
+test('V2.5 Rate Confirmation uses focused review instead of the bottom drawer', async () => {
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const focused = await readFile(new URL('../src/shell/FocusedWorkspace.jsx', import.meta.url), 'utf8')
+  const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+
+  assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
+  assert.match(shell, /<FocusedWorkspace/)
+  assert.match(shell, /<RateConfirmationReview/)
+  assert.match(focused, /focused-workspace/)
+  assert.match(focused, /GAMEPLAY PAUSED/)
+  assert.match(review, /VERIFY BEFORE ACCEPTING/)
+  assert.match(review, /REQUEST CORRECTION/)
+  assert.match(review, /ACCEPT ANYWAY \+ ASSIGN/)
+})
+
+test('V2.5 confirmation rebuilds operational load and driver-plan truth', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+
+  assert.match(app, /operationalLoads/)
+  assert.match(app, /operationalDriverPlans/)
+  assert.match(app, /buildDriverDays\(drivers, operationalLoads, operationalDriverPlans, locations\)/)
+  assert.match(app, /commitBookedFreight/)
+  assert.match(app, /setOperationalLoads\(committed\.loads\)/)
+  assert.match(app, /setOperationalDriverPlans\(committed\.driverPlans\)/)
+  assert.match(app, /record\?\.status === BOOKING_STATUS\.CONFIRMED/)
+})
+
+test('V2.5 confirmed lanes leave the marketplace only after Rate Con acceptance', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+
+  assert.match(app, /confirmedLaneIds/)
+  assert.match(app, /BOOKING_STATUS\.CONFIRMED/)
+  assert.match(app, /freightMarket\.filter\(\(lane\) => !confirmedLaneIds\.has\(lane\.id\)\)/)
+  assert.match(app, /confirmBookingRecord/)
+})
+
+test('V2.5 focused top bar communicates paused Rate Con review', async () => {
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(top, /DESKTOP V2\.5 · BOOKING \+ RATE CON/)
+  assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
+  assert.match(top, /focused/)
+})

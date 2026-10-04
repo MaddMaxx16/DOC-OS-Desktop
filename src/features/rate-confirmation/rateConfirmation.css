@@ -1,0 +1,318 @@
+.ratecon-review {
+  width: min(1500px, 100%);
+  height: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(620px, 1.35fr) minmax(360px, .65fr);
+  gap: 20px;
+}
+
+.ratecon-paper {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 30px 34px;
+  border: 1px solid #3a4650;
+  background: #e7e5df;
+  color: #13171a;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, .36);
+}
+
+.ratecon-paper-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #20262a;
+}
+.ratecon-paper-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ratecon-paper-header span,
+.ratecon-paper section > span,
+.ratecon-rate span,
+.ratecon-freight-grid span,
+.ratecon-notes > span {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.ratecon-paper-header > div:first-child > strong {
+  font-size: 28px;
+  letter-spacing: .04em;
+}
+.ratecon-paper-header small {
+  font-size: 13px;
+}
+.ratecon-revision {
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.ratecon-revision strong {
+  font-size: 24px;
+}
+.ratecon-revision small {
+  font-weight: 850;
+}
+
+.ratecon-party-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 20px;
+}
+.ratecon-party-grid section {
+  min-height: 116px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 1px solid #9ca4a8;
+  background: rgba(255, 255, 255, .28);
+}
+.ratecon-party-grid strong {
+  font-size: 18px;
+}
+.ratecon-party-grid small {
+  font-size: 13px;
+}
+
+.ratecon-rate {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border: 2px solid #21272b;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px 20px;
+}
+.ratecon-rate strong {
+  grid-row: span 2;
+  font-size: 34px;
+}
+.ratecon-rate small {
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.ratecon-stop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+}
+.ratecon-stop-grid section {
+  min-height: 122px;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid #9ca4a8;
+}
+.ratecon-stop-grid section > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ratecon-stop-grid strong {
+  font-size: 17px;
+}
+.ratecon-stop-grid small {
+  font-size: 14px;
+}
+.ratecon-stop-number {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #20272c;
+  color: #f5f5f2;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.ratecon-freight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 18px;
+}
+.ratecon-freight-grid > div {
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid #a4aaad;
+}
+.ratecon-freight-grid strong {
+  font-size: 16px;
+}
+
+.ratecon-notes {
+  margin-top: 18px;
+  padding: 15px 16px;
+  border: 1px solid #a4aaad;
+}
+.ratecon-notes p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.ratecon-paper-footer {
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid #9ca4a8;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.ratecon-verification {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid #2a3d4a;
+  background: #081119;
+}
+.ratecon-verification > header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #20313d;
+}
+.ratecon-verification > header span {
+  color: #8598a7;
+  font-size: var(--type-micro);
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+.ratecon-verification > header strong {
+  font-size: 24px;
+}
+.ratecon-verification > header small {
+  color: #8294a3;
+  font-size: var(--type-secondary);
+  line-height: 1.45;
+}
+
+.ratecon-check-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.ratecon-check {
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #263844;
+  background: #0b171f;
+}
+.ratecon-check > span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 15px;
+  font-weight: 950;
+}
+.ratecon-check > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ratecon-check strong {
+  font-size: var(--type-body);
+}
+.ratecon-check small {
+  color: #8da0ad;
+  font-size: var(--type-secondary);
+}
+.ratecon-check.match {
+  border-left: 3px solid #4e9582;
+}
+.ratecon-check.match > span {
+  background: #18382f;
+  color: #81c6b1;
+}
+.ratecon-check.mismatch {
+  border-left: 3px solid #b06072;
+  background: #1a1015;
+}
+.ratecon-check.mismatch > span {
+  background: #4a202a;
+  color: #e59aaa;
+}
+
+.ratecon-risk-warning {
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px solid #8a4b59;
+  background: #1c1015;
+}
+.ratecon-risk-warning strong {
+  color: #e79aaa;
+  font-size: var(--type-body);
+}
+.ratecon-risk-warning p {
+  margin: 6px 0 0;
+  color: #c99ba5;
+  font-size: var(--type-secondary);
+  line-height: 1.45;
+}
+
+.ratecon-review-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+  margin-top: 16px;
+}
+.ratecon-review-actions button {
+  min-height: 46px;
+  border: 1px solid #3a5263;
+  font-size: var(--type-body);
+  font-weight: 900;
+  letter-spacing: .03em;
+  cursor: pointer;
+}
+.ratecon-correction-button {
+  background: #17141b;
+  color: #cfb5dd;
+  border-color: #725d7f !important;
+}
+.ratecon-confirm-button {
+  background: #18362e;
+  color: #a6dacb;
+  border-color: #4c927f !important;
+}
+.ratecon-confirm-button.warning {
+  background: #321a21;
+  color: #efa4b4;
+  border-color: #a45a6a !important;
+}
+
+@media (max-width: 1180px) {
+  .ratecon-review {
+    grid-template-columns: 1fr;
+    overflow: auto;
+  }
+  .ratecon-paper,
+  .ratecon-verification {
+    overflow: visible;
+  }
+}
