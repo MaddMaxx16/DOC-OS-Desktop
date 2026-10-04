@@ -2,6 +2,26 @@ const ROUTER_URL = 'https://router.project-osrm.org/route/v1/driving'
 const REQUEST_TIMEOUT_MS = 6500
 const routeCache = new Map()
 
+function sameCoordinate(left, right) {
+  return Array.isArray(left)
+    && Array.isArray(right)
+    && Math.abs(Number(left[0]) - Number(right[0])) < 0.000001
+    && Math.abs(Number(left[1]) - Number(right[1])) < 0.000001
+}
+
+export function ensureRouteTouchesEndpoints(routeShape = [], origin, destination) {
+  const shape = Array.isArray(routeShape)
+    ? routeShape.map((point) => [...point])
+    : []
+
+  if (!shape.length) return [origin, destination]
+
+  if (!sameCoordinate(shape[0], origin)) shape.unshift([...origin])
+  if (!sameCoordinate(shape[shape.length - 1], destination)) shape.push([...destination])
+
+  return shape
+}
+
 function fallbackRoute(origin, destination) {
   const [originLon, originLat] = origin
   const [destinationLon, destinationLat] = destination
@@ -43,7 +63,7 @@ export async function calculateRoadRoute(origin, destination) {
     const result = {
       distanceMiles: route.distance / 1609.344,
       durationMinutes: Math.max(1, Math.round(route.duration / 60)),
-      routeShape: route.geometry.coordinates,
+      routeShape: ensureRouteTouchesEndpoints(route.geometry.coordinates, origin, destination),
       source: 'road',
     }
     routeCache.set(key, result)
