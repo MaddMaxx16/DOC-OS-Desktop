@@ -177,7 +177,6 @@ export default function OperationsMap({
     markerRefs.current.clear()
 
     const loadSelected = isSelection(selection, SELECTION_TYPES.LOAD)
-    const freightPreviewActive = Boolean(freightRoutePreview)
 
     drivers.forEach((driver) => {
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
