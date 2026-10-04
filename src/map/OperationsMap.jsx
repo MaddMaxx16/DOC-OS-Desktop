@@ -324,8 +324,10 @@ export default function OperationsMap({
       }
 
       let offset = [0, 0]
-      if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
-      else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
+      if (workspaceOpen && freightRoutePreview) {
+        if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
+        else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
+      }
 
       const marker = new Marker({ element, anchor: 'center', offset })
         .setLngLat(routeAnchor.coordinates)
