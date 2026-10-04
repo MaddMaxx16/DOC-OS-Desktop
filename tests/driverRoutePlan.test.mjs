@@ -64,3 +64,36 @@ test('route anchors include the driver yard as the shift-start anchor', () => {
   assert.equal(yard?.badge, 'Y')
   assert.equal(yard?.poiType, 'yard')
 })
+
+
+test('every seeded driver route segment endpoint has a route anchor', () => {
+  for (const day of days) {
+    const anchors = buildDriverRouteAnchors(day, locations)
+    const coveredEventIds = new Set(
+      anchors.flatMap((anchor) => anchor.eventIds),
+    )
+    const segments = buildDriverRouteSegments(day, locations)
+
+    for (const segment of segments) {
+      assert.ok(
+        coveredEventIds.has(segment.fromId),
+        `${day.driverId} route is missing a visible anchor for ${segment.fromId}`,
+      )
+      assert.ok(
+        coveredEventIds.has(segment.toId),
+        `${day.driverId} route is missing a visible anchor for ${segment.toId}`,
+      )
+    }
+  }
+})
+
+test('Derrick route includes yard, pickup, lunch/staging, and delivery anchors', () => {
+  const derrick = days.find((day) => day.driverId === 'derrick-cole')
+  const anchors = buildDriverRouteAnchors(derrick, locations)
+  const badges = anchors.map((anchor) => anchor.badge)
+
+  assert.ok(badges.includes('Y'))
+  assert.ok(badges.includes('P1'))
+  assert.ok(badges.includes('D1'))
+  assert.ok(badges.includes('L/S'))
+})
