@@ -17,6 +17,9 @@ export default function OperationsInspector({
   driver,
   driverDay,
   selectedStop,
+  planning = false,
+  onStartPlanning,
+  onStopPlanning,
   onSelectSubject,
 }) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
@@ -30,7 +33,7 @@ export default function OperationsInspector({
 
   return (
     <aside
-      className={`workstation-inspector operations-inspector ${driver ? 'driver-context' : ''}`}
+      className={`workstation-inspector operations-inspector ${driver ? 'driver-context' : ''} ${planning ? 'planning-context' : ''}`}
       style={style}
       data-selection={selectionKey ?? ''}
       aria-label="Selection details"
@@ -61,6 +64,9 @@ export default function OperationsInspector({
             driver={driver}
             day={driverDay}
             selection={selection}
+            planning={planning}
+            onStartPlanning={() => onStartPlanning?.(driver.id)}
+            onStopPlanning={() => onStopPlanning?.(driver.id)}
             onSelectSubject={onSelectSubject}
           />
         </div>
