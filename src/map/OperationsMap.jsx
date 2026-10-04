@@ -703,26 +703,13 @@ export default function OperationsMap({
     const identity = getDriverIdentity(selectedDriver.id)
     const insertion = freightRoutePreview?.evaluation?.insertion ?? null
     const segments = markInsertionAffectedSegment(displayDriverRoutes, insertion)
-    const features = segments
-      .filter((segment) => (
-        segment.route?.source === 'road'
-        && Array.isArray(segment.route?.routeShape)
-        && segment.route.routeShape.length >= 2
-      ))
-      .map((segment) => ({
-        type: 'Feature',
-        properties: {
-          affected: segment.affected,
-          destinationRole: segment.toRole ?? '',
-        },
-        geometry: { type: 'LineString', coordinates: segment.route.routeShape },
-      }))
+    const routeData = committedRouteGeoJson(segments)
 
-    if (!features.length) return clearDriverRoute
+    if (!routeData.features.length) return clearDriverRoute
 
     map.addSource(DRIVER_ROUTE_SOURCE, {
       type: 'geojson',
-      data: { type: 'FeatureCollection', features },
+      data: routeData,
     })
 
     const beforeId = map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)
@@ -749,6 +736,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.22,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.14,
+          ['==', ['get', 'executionPhase'], 'active'],
+          0.96,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.34,
           freightRoutePreview ? 0.62 : 0.82,
         ],
       },
@@ -767,6 +760,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.14,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.2,
+          ['==', ['get', 'executionPhase'], 'active'],
+          1,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.46,
           freightRoutePreview ? 0.62 : 0.88,
         ],
       },
@@ -785,6 +784,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.22,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.14,
+          ['==', ['get', 'executionPhase'], 'active'],
+          0.96,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.34,
           freightRoutePreview ? 0.62 : 0.82,
         ],
         'line-dasharray': PICKUP_CASING_DASH,
@@ -804,6 +809,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.14,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.2,
+          ['==', ['get', 'executionPhase'], 'active'],
+          1,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.46,
           freightRoutePreview ? 0.62 : 0.88,
         ],
         'line-dasharray': PICKUP_ROUTE_DASH,
@@ -814,6 +825,18 @@ export default function OperationsMap({
 
     return clearDriverRoute
   }, [displayDriverRoutes, freightRoutePreview, mapReady, selectedDriver])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map || !selectedDriver || !displayDriverRoutes.length) return
+
+    const source = map.getSource(DRIVER_ROUTE_SOURCE)
+    if (!source?.setData) return
+
+    const insertion = freightRoutePreview?.evaluation?.insertion ?? null
+    const segments = markInsertionAffectedSegment(displayDriverRoutes, insertion)
+    source.setData(committedRouteGeoJson(segments, liveState))
+  }, [displayDriverRoutes, freightRoutePreview, liveState, mapReady, selectedDriver])
 
   useEffect(() => {
     const map = mapRef.current
