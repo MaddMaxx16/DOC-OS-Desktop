@@ -32,22 +32,22 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.10 Clean Native Stops
+## Current packet — V2.6.5.11 Shared Native Stops
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5.6 truck-access coordinates, V2.6.5.7 serialized road hydration, and V2.6.5.9 MapLibre-native committed stops remain active.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5.6 truck-access coordinates, V2.6.5.7 serialized road hydration, and V2.6.5.9/.10 MapLibre-native committed stops remain active.
 
 Guardrails:
 - preserve selected-driver route persistence and Driver Day plan truth,
 - preserve facility-coordinate vs truck-access-coordinate separation,
 - preserve serialized committed road hydration and real-road-only rendering,
-- committed P/D stop badges remain MapLibre-native and must not return to HTML DOM Marker rendering,
-- route lines and committed stop badges use the same route-access coordinates and map projection,
-- native P/D badges and selected/next facility labels remain above committed route lines,
-- native committed-stop layers remain clickable and feed the shared STOP selection model,
-- V2.6.5.8 route diagnostics have completed their purpose and must not remain in the normal dev UI,
-- remove diagnostic map dots/rings, diagnostic panel, and diagnostic CSS after proof is established,
-- do not change routing, sequencing, appointments, HOS, capacity, sent-plan truth, or facility identity in this cleanup packet,
-- visual acceptance should confirm ordinary P/D badges are visible directly on their blue route endpoints without diagnostic overlays.
+- committed pickup/delivery stop badges use one MapLibre-native renderer in every ordinary map mode,
+- opening FreightLink must not disable the native committed-stop source/layers,
+- FreightLink marketplace markers and candidate-route preview are overlays only; they must not replace Marcus's committed stop renderer,
+- DOM route-anchor markers are reserved for non-freight plan events such as Lunch and Staging,
+- committed freight route anchors must not return to the old DOM Marker path in FreightLink,
+- native P/D badges remain above committed route lines and continue using the route-access coordinate truth,
+- selected/next labels and STOP selection behavior remain shared between Live Map and FreightLink,
+- do not change routing, lane evaluation, sequencing, HOS, capacity, appointments, or sent-plan truth in this packet.
 
 ## Verification
 
