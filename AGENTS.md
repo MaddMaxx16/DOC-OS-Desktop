@@ -32,26 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.4 Map Interaction + Drawer Layout Polish
+## Current packet — V2.4.5 FreightLink Map Focus Cleanup
 
-V2.1 through V2.4.3 are structurally locked.
+V2.1 through V2.4.4 are structurally locked.
 
-V2.4.4 is the final usability polish before V2.5.
+V2.4.5 removes visual overlap and stale-preview risk discovered during final FreightLink testing.
 
 Guardrails:
-- keep the V2.4.3 dark vector basemap, truck markers, POI language, route semantics, and readability scale,
-- operations map is permanently flat and north-up,
-- normal map interaction is pan + zoom only,
-- bearing is locked to 0 degrees,
-- pitch is locked to 0 degrees,
-- mouse drag rotation, touch rotation, and touch pitch are disabled,
-- programmatic camera moves must preserve bearing 0 and pitch 0,
-- navigation control exposes zoom only, not compass/rotation affordances,
-- shared app drawer targets 46% of viewport height,
-- shared app drawer bounds are 360px minimum and 540px maximum,
-- increased drawer height must not be achieved by shrinking operational typography,
-- FreightLink may still scroll on genuinely small viewports, but normal desktop height should expose nearly the full selected-lane evaluation,
-- closing the active app restores the reclaimed map space cleanly,
+- preserve the V2.4.4 flat north-up camera and 46% shared app drawer,
+- FreightLink has two map modes: marketplace overview and selected-lane focus,
+- marketplace overview may show compact load opportunities and driver assets,
+- selected-lane focus hides unrelated marketplace opportunity markers,
+- selected-lane focus hides the candidate driver's full manifest stop set,
+- selected-lane focus hides unrelated drivers,
+- selected-lane focus shows the selected neutral route and its pickup/delivery facilities as the dominant map objects,
+- FreightLink route preview data is rendered only when its lane id matches the currently selected LOAD id,
+- stale route/marker data from a previous lane must never remain visible after selection changes,
+- selected pickup/delivery facility markers stay compact and do not repeat redundant PICKUP/DELIVERY text,
+- do not change FreightLink fit truth, map style, route semantics, shell structure, or typography scale,
 - do not begin booking or Rate Confirmation behavior until V2.5.
 
 ## Verification
