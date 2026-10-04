@@ -1430,44 +1430,47 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5, V2.6.1, and V2.6.2 are accepted and locked.
+V2.5 through V2.6.3.2 are accepted and locked.
 
-The active refinement is:
-
-# **V2.6.3.2 — Contextual Staging**
-
-V2.6.3 and V2.6.3.1 retain:
-
-- explicit insertion lanes,
-- movable freight stops and Lunch,
-- route-aware physical lunch POIs,
-- unassigned draft staging,
-- side-flyout place preview,
-- explicit CONFIRM LUNCH / CONFIRM STAGING,
-- shared RPG-ready location identity.
-
-V2.6.3.2 locks one additional staging rule:
-
-> End-of-day staging choices must make operational sense from the driver's final real stop.
-
-That means:
-
-- the staging flyout ranks candidates by travel from the final real stop,
-- nearby local truck parking/staging/yard POIs should naturally appear first,
-- regionally distant choices remain available as deliberate reposition decisions,
-- staging candidates can expose local/regional type, truck access, parking, and overnight capability,
-- the player still chooses; DOC OS does not auto-pick the nearest staging location,
-- confirmation remains the only action that writes staging into Driver Day truth.
-
-The current New York gameplay dataset therefore includes dedicated Bronx-side staging around the Hunts Point / Port Morris industrial area so a Bronx final delivery does not force an implausible New Jersey or Brooklyn reposition.
-
-After V2.6.3.2 passes functional and visual acceptance, proceed to:
+The active implementation packet is:
 
 # **V2.6.4 — Readiness + Send Schedule**
 
-V2.6.4 owns final plan blockers/warnings, review, SEND SCHEDULE, SEND ANYWAY for warnings, and sent-plan locking.
+It establishes:
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, V2.6.1 planning-state contract, V2.6.2 committed stop-sequencing contract, and the V2.6.3 physical-place/preview-confirm contracts.
+- Plan Check as an always-visible readiness surface,
+- hard blockers separated from sendable warnings,
+- actionable readiness issues that can select the owning Driver Day stop,
+- required physical Lunch and Staging plan truth before dispatch,
+- missing confirmed staging as a hard send blocker,
+- explicit schedule review before dispatch,
+- clean plan confirmation through **SEND TO DRIVER**,
+- warning-bearing plan confirmation through deliberate **SEND ANYWAY**,
+- authoritative DRAFT → SENT dispatch-plan state transition,
+- sent-plan edit locking before Live Operations,
+- a visible SENT PLAN / schedule-sent treatment in the Driver Day inspector.
+
+The send rule is:
+
+> blocker = fix the plan  
+> warning = player may deliberately send anyway  
+> ready = confirm and dispatch
+
+SEND SCHEDULE must never repair, optimize, or silently change the Driver Day. It communicates the plan exactly as the player has built it.
+
+Once sent:
+
+- stop sequencing is no longer casually editable,
+- Lunch/Staging choices are no longer casually editable,
+- the communicated plan remains authoritative until a later Live Operations revision workflow explicitly changes it.
+
+V2.6.4 completes **V2.6 Daily Planning** when the player can build an interleaved multi-load day, choose physical Lunch and Staging, understand readiness, deliberately dispatch the schedule, and see it lock as SENT.
+
+After V2.6.4 passes functional and visual acceptance, proceed to:
+
+# **V2.7 — Live Operations**
+
+V2.7 may then activate the clock controls and execute the sent plan rather than rebuilding planning truth.
 
 ---
 
