@@ -348,12 +348,22 @@ test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promis
 
   assert.match(map, /hydrateCommittedRouteSegments/)
   assert.match(map, /routeSegment: calculateRoadRoute/)
-  assert.match(map, /onProgress/)
+  assert.doesNotMatch(map, /onProgress/)
   assert.doesNotMatch(map, /Promise\.all\(\s*segmentSpecs\.map/)
   assert.match(hydration, /for \(let index = 0; index < segments\.length; index \+= 1\)/)
   assert.match(hydration, /RETRY_WAVES = 2/)
   assert.match(hydration, /BETWEEN_SEGMENTS_MS = 140/)
   assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
+})
+
+test('V2.6.5.13 publishes the committed route only after the full serialized day resolves', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const hydration = await readFile(new URL('../src/domain/routing/committedRouteHydration.js', import.meta.url), 'utf8')
+
+  assert.match(map, /hydrateCommittedRouteSegments\(segmentSpecs/)
+  assert.match(map, /\.then\(\(segments\) => \{[\s\S]*setDriverRouteResult\(\{ key: driverRouteKey, segments \}\)/)
+  assert.doesNotMatch(map, /onProgress:/)
+  assert.doesNotMatch(hydration, /onProgress/)
 })
 
 test('V2.6.5.10 removes diagnostic overlays after native-stop proof', async () => {
