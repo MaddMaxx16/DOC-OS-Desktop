@@ -32,23 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.7 Serialized Route Hydration
+## Current packet — V2.6.5.9 Native Operational Stops
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 label declutter and V2.6.5.6 operational access-point truth remain active.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 label declutter, V2.6.5.6 truck-access coordinates, and V2.6.5.7 serialized road hydration remain active.
 
 Guardrails:
 - preserve selected-driver route persistence and Driver Day plan truth,
 - preserve facility-coordinate vs truck-access-coordinate separation,
-- committed Driver Day road legs must not be requested in one Promise.all burst against the public OSRM endpoint,
-- hydrate committed segments strictly in Driver Day order with at most one active road request at a time,
-- successful road legs may appear progressively as they resolve,
-- estimate fallbacks remain timing-only and must not render as committed blue roads,
-- unresolved estimate legs receive a later retry wave automatically without requiring the player to refresh or edit the plan,
-- successful route results remain cached; estimate failures remain uncached,
-- operational P/D/L/S markers follow resolved truck-access coordinates and fall back to facility coordinates only while their road leg is unresolved,
-- do not restore the retired continuous multi-waypoint routing experiment,
-- remove retired routing helpers/tests that are no longer used by runtime code,
-- do not alter sequencing, HOS, appointments, capacity, sent-plan truth, or driver ownership in this packet.
+- preserve serialized committed road hydration and real-road-only rendering,
+- committed pickup/delivery stop badges must render as MapLibre-native layers, not HTML DOM markers,
+- committed route lines and committed P/D stop badges must share the same map projection and route-access coordinate source,
+- do not reintroduce DOM Marker rendering for committed freight stops,
+- native committed-stop layers must remain clickable and feed the existing shared STOP selection model,
+- selected and next planned stops may expose facility labels; other committed stops remain badge-first and reveal labels on hover,
+- native committed-stop layers render above committed route lines,
+- Lunch/Staging may remain DOM route anchors for now; this packet specifically replaces freight P/D stop markers proven to drift on screen,
+- V2.6.5.8 diagnostics remain dev-only until this native-stop correction passes visual acceptance,
+- do not alter sequencing, appointments, HOS, capacity, sent-plan truth, route ownership, or facility identity in this packet.
 
 ## Verification
 
