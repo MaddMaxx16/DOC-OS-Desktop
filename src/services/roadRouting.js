@@ -1,5 +1,7 @@
 const ROUTER_URL = 'https://router.project-osrm.org/route/v1/driving'
-const REQUEST_TIMEOUT_MS = 6500
+const REQUEST_TIMEOUT_MS = 4500
+const MAX_ROAD_ATTEMPTS = 3
+const RETRY_DELAYS_MS = [0, 250, 700]
 const routeCache = new Map()
 
 function sameCoordinate(left, right) {
@@ -43,13 +45,15 @@ function fallbackRoute(origin, destination) {
   }
 }
 
-export async function calculateRoadRoute(origin, destination) {
-  if (!Array.isArray(origin) || !Array.isArray(destination)) throw new Error('Route endpoints are required')
-  const key = `${origin.join(',')}:${destination.join(',')}`
-  if (routeCache.has(key)) return routeCache.get(key)
+function wait(milliseconds) {
+  if (!milliseconds) return Promise.resolve()
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
 
+async function requestRoadRoute(origin, destination) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
   try {
     const coordinates = `${origin[0]},${origin[1]};${destination[0]},${destination[1]}`
     const response = await fetch(
@@ -60,19 +64,35 @@ export async function calculateRoadRoute(origin, destination) {
     const data = await response.json()
     const route = data.routes?.[0]
     if (!route?.geometry?.coordinates?.length) throw new Error('Road route missing geometry')
-    const result = {
+
+    return {
       distanceMiles: route.distance / 1609.344,
       durationMinutes: Math.max(1, Math.round(route.duration / 60)),
       routeShape: ensureRouteTouchesEndpoints(route.geometry.coordinates, origin, destination),
       source: 'road',
     }
-    routeCache.set(key, result)
-    return result
-  } catch {
-    const result = fallbackRoute(origin, destination)
-    routeCache.set(key, result)
-    return result
   } finally {
     clearTimeout(timeout)
   }
+}
+
+export async function calculateRoadRoute(origin, destination) {
+  if (!Array.isArray(origin) || !Array.isArray(destination)) throw new Error('Route endpoints are required')
+  const key = `${origin.join(',')}:${destination.join(',')}`
+  if (routeCache.has(key)) return routeCache.get(key)
+
+  for (let attempt = 0; attempt < MAX_ROAD_ATTEMPTS; attempt += 1) {
+    await wait(RETRY_DELAYS_MS[attempt] ?? 0)
+
+    try {
+      const result = await requestRoadRoute(origin, destination)
+      routeCache.set(key, result)
+      return result
+    } catch {
+      // A public road-router miss is retried before falling back to timing-only estimation.
+    }
+  }
+
+  // Do not cache an estimate. A later map refresh should get another chance to obtain real road geometry.
+  return fallbackRoute(origin, destination)
 }
