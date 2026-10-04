@@ -245,10 +245,13 @@ export function moveDriverPlanEventToGap({
     locations,
   })
 
-  if (nextDay?.planHealth?.blockers?.length) {
+  const sequencingBlocker = nextDay?.planHealth?.blockerIssues?.find((issue) => (
+    issue.id.startsWith('capacity:')
+  ))
+  if (sequencingBlocker) {
     return {
       ok: false,
-      reason: `Move blocked: ${nextDay.planHealth.blockers[0]}`,
+      reason: `Move blocked: ${sequencingBlocker.message}`,
     }
   }
 

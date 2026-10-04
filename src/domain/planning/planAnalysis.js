@@ -18,24 +18,67 @@ export function analyzeDriverDay(day, driver, locations = {}) {
       status: 'blocked',
       blockers: ['Driver Day unavailable.'],
       warnings: [],
+      blockerIssues: [{ id: 'driver-day-missing', message: 'Driver Day unavailable.', stopId: null }],
+      warningIssues: [],
       driveMinutes: 0,
       dutyMinutes: 0,
     }
   }
 
-  const blockers = []
-  const warnings = []
+  const blockerIssues = []
+  const warningIssues = []
+
+  const addBlocker = (id, message, stopId = null) => {
+    blockerIssues.push({ id, message, stopId })
+  }
+
+  const addWarning = (id, message, stopId = null) => {
+    warningIssues.push({ id, message, stopId })
+  }
+
+  const lunch = day.timeline?.find((event) => event.kind === 'lunch') ?? null
+  const staging = day.timeline?.find((event) => event.kind === 'staging') ?? null
+
+  if (!lunch) {
+    addBlocker('lunch-missing', 'Plan a lunch break before sending the schedule.')
+  } else if (!lunch.locationId) {
+    addBlocker(
+      'lunch-location-missing',
+      'Choose and confirm a lunch location.',
+      lunch.id,
+    )
+  }
+
+  if (!staging?.locationId) {
+    addBlocker(
+      'staging-location-missing',
+      'Choose and confirm an end-of-day staging location.',
+      staging?.id ?? `${driver.id}:staging`,
+    )
+  }
 
   for (const stop of day.freightStops ?? []) {
     if (stop.capacityAfter?.overCapacity) {
-      blockers.push(`${stop.loadRef} exceeds trailer capacity after ${stop.role}.`)
+      addBlocker(
+        `capacity:${stop.id}`,
+        `${stop.loadRef} exceeds trailer capacity after ${stop.role}.`,
+        stop.id,
+      )
     }
 
     const margin = finite(stop.appointmentEndMinutes) - finite(stop.projectedArrivalMinutes)
     if (margin < 0) {
-      warnings.push(`${stop.loadRef} ${stop.role} is projected ${Math.abs(margin)} min late.`)
+      addWarning(
+        `appointment-late:${stop.id}`,
+        `${stop.loadRef} ${stop.role} is projected ${Math.abs(margin)} min late.`,
+        stop.id,
+      )
     } else if (margin < TIGHT_APPOINTMENT_MINUTES) {
-      warnings.push(`${stop.loadRef} ${stop.role} has only ${margin} min appointment margin.`)
+      addWarning(
+        `appointment-tight:${stop.id}`,
+        `${stop.loadRef} ${stop.role} has only ${margin} min appointment margin.`,
+        stop.id,
+      )
     }
   }
 
@@ -58,16 +101,29 @@ export function analyzeDriverDay(day, driver, locations = {}) {
   const dutyAvailable = parseHosClock(driver.hos?.duty)
 
   if (driveMinutes > driveAvailable) {
-    warnings.push(`Driving HOS is exceeded by ${driveMinutes - driveAvailable} min.`)
+    addWarning(
+      'hos-drive',
+      `Driving HOS is exceeded by ${driveMinutes - driveAvailable} min.`,
+      finalEvent?.id ?? null,
+    )
   }
   if (dutyMinutes > dutyAvailable) {
-    warnings.push(`Duty HOS is exceeded by ${dutyMinutes - dutyAvailable} min.`)
+    addWarning(
+      'hos-duty',
+      `Duty HOS is exceeded by ${dutyMinutes - dutyAvailable} min.`,
+      finalEvent?.id ?? null,
+    )
   }
+
+  const blockers = blockerIssues.map((issue) => issue.message)
+  const warnings = warningIssues.map((issue) => issue.message)
 
   return {
     status: blockers.length ? 'blocked' : warnings.length ? 'warning' : 'ready',
     blockers,
     warnings,
+    blockerIssues,
+    warningIssues,
     driveMinutes,
     dutyMinutes,
   }

@@ -18,7 +18,10 @@ import { commitBookedFreight } from '../domain/booking/commitBookedFreight.js'
 import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
-import { canEditDispatchPlan } from '../domain/planning/dispatchPlan.js'
+import {
+  canEditDispatchPlan,
+  sendDispatchPlan,
+} from '../domain/planning/dispatchPlan.js'
 import { choosePlanningPlace } from '../domain/planning/planningPlaces.js'
 import { moveDriverPlanEventToGap } from '../domain/planning/stopSequencing.js'
 import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
@@ -210,6 +213,33 @@ export default function App() {
         ? `${result.location.label} confirmed. ${firstWarning}`
         : `${result.location.label} confirmed. Route and timing recalculated.`,
     })
+  }
+
+  const sendDriverSchedule = ({ driverId, allowWarnings = false }) => {
+    const driverDay = driverDays.find((day) => day.driverId === driverId)
+    if (!driverDay || planningDriverId !== driverId) return
+
+    const result = sendDispatchPlan({
+      driverId,
+      driverPlans: operationalDriverPlans,
+      driverDay,
+      allowWarnings,
+    })
+
+    if (!result.ok) {
+      setPlanningFeedback({
+        driverId,
+        tone: result.requiresWarningOverride ? 'warning' : 'blocked',
+        message: result.reason ?? 'This schedule cannot be sent yet.',
+      })
+      return
+    }
+
+    setOperationalDriverPlans(result.driverPlans)
+    setPlanningDriverId(null)
+    setPlanningFeedback(null)
+    setPendingPlanningPlace(null)
+    setSelection(createSelection(SELECTION_TYPES.DRIVER, driverId))
   }
 
   const toggleApp = (appId) => {
@@ -417,6 +447,7 @@ export default function App() {
       onPreviewDriverPlanningPlace={previewDriverPlanningPlace}
       onCancelDriverPlanningPlace={cancelDriverPlanningPlace}
       onConfirmDriverPlanningPlace={confirmDriverPlanningPlace}
+      onSendDriverSchedule={sendDriverSchedule}
       onSelectSubject={selectSubject}
     />
   )

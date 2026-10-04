@@ -44,6 +44,7 @@ export default function DesktopShell({
   onPreviewDriverPlanningPlace,
   onCancelDriverPlanningPlace,
   onConfirmDriverPlanningPlace,
+  onSendDriverSchedule,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -209,6 +210,7 @@ export default function DesktopShell({
               onStartPlanning={onStartDriverPlanning}
               onStopPlanning={onStopDriverPlanning}
               onMovePlanEvent={onMoveDriverPlanEvent}
+              onSendSchedule={onSendDriverSchedule}
               onSelectSubject={onSelectSubject}
             />
           )}
