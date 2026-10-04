@@ -1,3 +1,5 @@
+import { normalizeDispatchPlanStatus } from '../planning/dispatchPlan.js'
+
 function finite(value, fallback = 0) {
   const number = Number(value)
   return Number.isFinite(number) ? number : fallback
@@ -163,6 +165,7 @@ export function buildDriverDay({ driver, loads = [], plan, locations = {} } = {}
 
   return {
     driverId: driver.id,
+    dispatchStatus: normalizeDispatchPlanStatus(plan),
     shift: plan.shift,
     hos: driver.hos,
     trailer: {
