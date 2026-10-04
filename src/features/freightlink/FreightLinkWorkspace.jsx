@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  BOOKING_STATUS,
+  bookingStatusLabel,
+} from '../../domain/booking/bookingLifecycle.js'
 import { getDriverIdentity } from '../../domain/drivers/driverIdentity.js'
 import { evaluateFreightLane } from '../../domain/freight/freightFit.js'
 import { formatClock } from '../../domain/manifest/driverDayModel.js'
@@ -43,14 +47,49 @@ function SignalCard({ label, ok, primary, secondary }) {
   )
 }
 
+function bookingActionLabel(record) {
+  switch (record?.status) {
+    case BOOKING_STATUS.REQUESTED:
+      return 'WAITING FOR RATE CON'
+    case BOOKING_STATUS.RATE_CON_READY:
+      return record.correctionCount ? 'REVIEW CORRECTED RATE CON' : 'REVIEW RATE CON'
+    case BOOKING_STATUS.CORRECTION_REQUESTED:
+      return 'WAITING FOR CORRECTION'
+    case BOOKING_STATUS.CONFIRMED:
+      return 'CONFIRMED'
+    default:
+      return 'REQUEST RATE CON'
+  }
+}
+
+function bookingHelper(record, evaluation) {
+  switch (record?.status) {
+    case BOOKING_STATUS.REQUESTED:
+      return 'Request sent. The broker is returning the Rate Confirmation.'
+    case BOOKING_STATUS.RATE_CON_READY:
+      return 'Rate Confirmation received. Review the document before committing the freight.'
+    case BOOKING_STATUS.CORRECTION_REQUESTED:
+      return 'Correction requested. Wait for the revised Rate Confirmation before confirming.'
+    case BOOKING_STATUS.CONFIRMED:
+      return 'Freight is confirmed and has moved into operational work.'
+    default:
+      return evaluation?.legal
+        ? 'Request the Rate Confirmation before committing this freight.'
+        : 'This lane has fit risks. You may still request the Rate Confirmation, but verify the plan carefully.'
+  }
+}
+
 export default function FreightLinkWorkspace({
   drivers,
   driverDays,
   lanes,
   locations,
+  bookingRecords,
   selection,
   candidateDriverId,
   onCandidateDriverChange,
+  onRequestRateCon,
+  onOpenRateCon,
   onSelectSubject,
   onClose,
   onRoutePreviewChange,
@@ -63,6 +102,11 @@ export default function FreightLinkWorkspace({
   const selectedLane = isSelection(selection, SELECTION_TYPES.LOAD)
     ? lanes.find((lane) => lane.id === selection.id) ?? null
     : null
+  const selectedBooking = selectedLane ? bookingRecords[selectedLane.id] ?? null : null
+  const bookingLocksDriver = Boolean(
+    selectedBooking
+    && selectedBooking.status !== BOOKING_STATUS.CONFIRMED,
+  )
   const routeKey = selectedLane && candidateDriver ? `${selectedLane.id}:${candidateDriver.id}` : null
   const routeState = routeResult?.key === routeKey
     ? routeResult
@@ -157,6 +201,28 @@ export default function FreightLinkWorkspace({
   }, [candidateDriver, locations, onRoutePreviewChange, routeKey, selectedEvaluation, selectedLane])
 
   const candidateIdentity = candidateDriver ? getDriverIdentity(candidateDriver.id) : null
+  const bookingActionDisabled = (
+    selectedBooking?.status === BOOKING_STATUS.REQUESTED
+    || selectedBooking?.status === BOOKING_STATUS.CORRECTION_REQUESTED
+    || selectedBooking?.status === BOOKING_STATUS.CONFIRMED
+  )
+
+  const handleBookingAction = () => {
+    if (!selectedLane || !selectedEvaluation || !candidateDriver) return
+
+    if (selectedBooking?.status === BOOKING_STATUS.RATE_CON_READY) {
+      onOpenRateCon(selectedLane.id)
+      return
+    }
+
+    if (!selectedBooking) {
+      onRequestRateCon({
+        laneId: selectedLane.id,
+        driverId: candidateDriver.id,
+        evaluation: selectedEvaluation,
+      })
+    }
+  }
 
   return (
     <section className="freightlink-workspace" aria-label="FreightLink desktop">
@@ -168,10 +234,14 @@ export default function FreightLinkWorkspace({
         </div>
 
         <label className="freightlink-driver-select">
-          <span>DRIVER</span>
+          <span>{bookingLocksDriver ? 'DRIVER · LOCKED FOR REQUEST' : 'DRIVER'}</span>
           <div style={candidateIdentity ? { '--driver-color': candidateIdentity.color } : undefined}>
             <i />
-            <select value={candidateDriverId ?? ''} onChange={(event) => onCandidateDriverChange(event.target.value)}>
+            <select
+              value={candidateDriverId ?? ''}
+              disabled={bookingLocksDriver}
+              onChange={(event) => onCandidateDriverChange(event.target.value)}
+            >
               {drivers.map((driver) => (
                 <option value={driver.id} key={driver.id}>{driver.name}</option>
               ))}
@@ -215,6 +285,7 @@ export default function FreightLinkWorkspace({
               const pickup = locations[lane.pickupLocationId]
               const delivery = locations[lane.deliveryLocationId]
               const selected = selectedLane?.id === lane.id
+              const bookingRecord = bookingRecords[lane.id] ?? null
               return (
                 <button
                   type="button"
@@ -239,6 +310,11 @@ export default function FreightLinkWorkspace({
                   <div className={`lane-fit-pill ${evaluation?.tone ?? 'poor'}`}>
                     <strong>{evaluation?.label ?? '—'}</strong>
                     <small>{evaluation?.insertion.afterLabel ?? '—'} → {evaluation?.insertion.beforeLabel ?? '—'}</small>
+                    {bookingRecord && (
+                      <em className={`booking-state ${bookingRecord.status}`}>
+                        {bookingStatusLabel(bookingRecord)}
+                      </em>
+                    )}
                   </div>
                 </button>
               )
@@ -328,12 +404,19 @@ export default function FreightLinkWorkspace({
                     </div>
                   </section>
 
-                  <footer className="freightlink-footer">
+                  <footer className="freightlink-footer booking-footer">
                     <div>
-                      <span>V2.4 EVALUATION ONLY</span>
-                      <strong>{selectedEvaluation.detail}</strong>
+                      <span>{bookingStatusLabel(selectedBooking)}</span>
+                      <strong>{bookingHelper(selectedBooking, selectedEvaluation)}</strong>
                     </div>
-                    <button type="button" disabled>BOOKING + RATE CON · V2.5</button>
+                    <button
+                      type="button"
+                      className={selectedBooking?.status === BOOKING_STATUS.RATE_CON_READY ? 'ready' : ''}
+                      disabled={bookingActionDisabled}
+                      onClick={handleBookingAction}
+                    >
+                      {bookingActionLabel(selectedBooking)}
+                    </button>
                   </footer>
                 </div>
               </div>
