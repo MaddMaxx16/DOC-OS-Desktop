@@ -698,7 +698,7 @@ export default function OperationsMap({
 
     clearDriverRoute()
 
-    if (!selectedDriver || !plannedDriverRoutes.length) return clearDriverRoute
+    if (!selectedDriver || !displayDriverRoutes.length) return clearDriverRoute
 
     const identity = getDriverIdentity(selectedDriver.id)
     const insertion = freightRoutePreview?.evaluation?.insertion ?? null
