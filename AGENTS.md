@@ -32,23 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.12 Route Seam Continuity
+## Current packet — V2.6.5.13 Atomic Route Publish
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5.6 truck-access coordinates, V2.6.5.7 serialized road hydration, V2.6.5.9/.10 native committed stops, and V2.6.5.11 shared Live Map/FreightLink stop rendering remain active.
+V2.1 through V2.6.5.12 remain the locked gameplay and map foundation.
 
 Guardrails:
-- preserve Driver Day order, route mileage, duration, HOS, appointments, capacity, and sent-plan truth,
-- preserve real-road-only rendering and serialized road hydration,
-- preserve one canonical operational access coordinate per Driver Day event,
-- adjacent committed route legs must visually meet at that same canonical access coordinate,
-- route-seam stitching is rendering truth only; it must not mutate the route's calculated distance or duration,
-- the outgoing leg may receive a short display-only connector from the canonical stop access point to its OSRM-snapped first road point,
-- committed pickup/delivery badges remain on the same canonical access coordinates used by the stitched route,
-- FreightLink deadhead → loaded → rejoin preview legs must use the same seam-continuity rule at pickup and delivery,
-- candidate preview timing and fit math continue to use the original routed results,
-- preserve pickup-bound dashed styling and delivery/non-pickup solid styling,
-- do not introduce interpolation, splines, or curves that leave the routed road geometry,
-- do not alter routing requests or reintroduce multi-waypoint/continuous-route experiments in this packet.
+- preserve Driver Day order, route mileage, duration, HOS, appointments, capacity, sent-plan truth, access-point truth, native stop rendering, and route seam continuity,
+- keep committed road hydration serialized so the public router is never burst with all Driver Day legs at once,
+- do not publish partially hydrated committed routes to the map,
+- the player should not watch the committed day appear leg-by-leg as individual route requests finish,
+- publish one completed committed-route snapshot after the hydration pass finishes,
+- unresolved estimate legs may still receive the existing retry wave before the final snapshot is published,
+- estimate fallback geometry remains timing-only and must not render as committed road truth,
+- opening FreightLink must reuse the same stable committed-route snapshot rather than triggering a progressive redraw,
+- FreightLink candidate preview behavior is unchanged by this packet,
+- do not change routing requests, route coordinates, route styling, Driver Day sequencing, or planning math in this packet.
 
 ## Verification
 
