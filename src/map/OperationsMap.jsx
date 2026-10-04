@@ -148,6 +148,7 @@ export default function OperationsMap({
   const previewMarkerRefs = useRef([])
   const onSelectSubjectRef = useRef(onSelectSubject)
   const onPreviewPlanningPlaceRef = useRef(onPreviewPlanningPlace)
+  const cameraFrameKeyRef = useRef(null)
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
 
@@ -944,6 +945,34 @@ export default function OperationsMap({
     const map = mapRef.current
     if (!map || freightRoutePreview || workspaceOpen) return
 
+    const stopCoordinates = Array.isArray(selectedStop?.coordinates)
+      ? selectedStop.coordinates
+      : null
+    const driverCoordinates = Array.isArray(selectedDriver?.coordinates)
+      ? selectedDriver.coordinates
+      : null
+    const planningSignature = planningPlaceOptions
+      .map((option) => (
+        `${option.id}@${Array.isArray(option.coordinates) ? option.coordinates.join(',') : ''}`
+      ))
+      .join('|')
+
+    let frameKey = null
+    if (
+      selectedStop
+      && ['lunch', 'staging'].includes(selectedStop.kind)
+      && planningPlaceOptions.length
+    ) {
+      frameKey = `places:${selectedStop.id}:${planningSignature}`
+    } else if (selectedStop && stopCoordinates) {
+      frameKey = `stop:${selectedStop.id}@${stopCoordinates.join(',')}`
+    } else if (selectedDriver && driverCoordinates) {
+      frameKey = `driver:${selectedDriver.id}`
+    }
+
+    if (!frameKey || cameraFrameKeyRef.current === frameKey) return
+    cameraFrameKeyRef.current = frameKey
+
     if (
       selectedStop
       && ['lunch', 'staging'].includes(selectedStop.kind)
@@ -953,7 +982,7 @@ export default function OperationsMap({
         .map((option) => option.coordinates)
         .filter((coordinates) => Array.isArray(coordinates))
 
-      if (Array.isArray(selectedStop.coordinates)) points.push(selectedStop.coordinates)
+      if (stopCoordinates) points.push(stopCoordinates)
 
       if (points.length >= 2) {
         const lngs = points.map((point) => point[0])
@@ -970,9 +999,9 @@ export default function OperationsMap({
       }
     }
 
-    if (selectedStop?.coordinates) {
+    if (stopCoordinates) {
       map.easeTo({
-        center: selectedStop.coordinates,
+        center: stopCoordinates,
         zoom: Math.max(map.getZoom(), 10.7),
         bearing: 0,
         pitch: 0,
@@ -981,9 +1010,9 @@ export default function OperationsMap({
       return
     }
 
-    if (selectedDriver) {
+    if (driverCoordinates) {
       map.easeTo({
-        center: selectedDriver.coordinates,
+        center: driverCoordinates,
         zoom: Math.max(map.getZoom(), 10),
         bearing: 0,
         pitch: 0,
