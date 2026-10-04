@@ -7,11 +7,20 @@ import {
 } from 'maplibre-gl'
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
+import {
+  buildDriverRouteSegments,
+  markInsertionAffectedSegment,
+} from '../domain/routing/driverRoutePlan.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
+import { calculateRoadRoute } from '../services/roadRouting.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
 setWorkerUrl(maplibreWorkerUrl)
+
+const DRIVER_ROUTE_SOURCE = 'driver-plan-source'
+const DRIVER_ROUTE_CASING_LAYER = 'driver-plan-casing'
+const DRIVER_ROUTE_LAYER = 'driver-plan-layer'
 
 const DEADHEAD_SOURCE = 'freightlink-deadhead-source'
 const DEADHEAD_CASING_LAYER = 'freightlink-deadhead-casing'
@@ -19,6 +28,9 @@ const DEADHEAD_LAYER = 'freightlink-deadhead-layer'
 const LOADED_SOURCE = 'freightlink-loaded-source'
 const LOADED_CASING_LAYER = 'freightlink-loaded-casing'
 const LOADED_LAYER = 'freightlink-loaded-layer'
+const REJOIN_SOURCE = 'freightlink-rejoin-source'
+const REJOIN_CASING_LAYER = 'freightlink-rejoin-casing'
+const REJOIN_LAYER = 'freightlink-rejoin-layer'
 
 const PREVIEW_ROUTE = '#c8d2da'
 const PREVIEW_DEADHEAD = '#8797a4'
@@ -116,6 +128,14 @@ export default function OperationsMap({
   const previewMarkerRefs = useRef([])
   const onSelectSubjectRef = useRef(onSelectSubject)
   const [mapReady, setMapReady] = useState(false)
+  const [driverRouteResult, setDriverRouteResult] = useState(null)
+
+  const driverRouteKey = selectedDriver && driverDay
+    ? `${selectedDriver.id}:${driverDay.timeline.map((event) => event.id).join('|')}`
+    : null
+  const plannedDriverRoutes = driverRouteResult?.key === driverRouteKey
+    ? driverRouteResult.segments
+    : []
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -234,7 +254,7 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
-    for (const stop of loadSelected ? [] : (driverDay?.freightStops ?? [])) {
+    for (const stop of workspaceOpen ? [] : (driverDay?.freightStops ?? [])) {
       if (!stop.coordinates || !driverIdentity) continue
       const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
       const location = locations[stop.locationId]
@@ -262,7 +282,7 @@ export default function OperationsMap({
     }
 
     if (
-      !loadSelected
+      !workspaceOpen
       && selectedStop?.coordinates
       && driverIdentity
       && ['lunch', 'staging'].includes(selectedStop.kind)
@@ -288,6 +308,102 @@ export default function OperationsMap({
   }, [driverDay, drivers, locations, marketLanes, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
+    if (!driverRouteKey || !driverDay) return undefined
+
+    const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
+    let active = true
+
+    Promise.all(
+      segmentSpecs.map(async (segment) => ({
+        ...segment,
+        route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
+      })),
+    ).then((segments) => {
+      if (!active) return
+      setDriverRouteResult({ key: driverRouteKey, segments })
+    })
+
+    return () => {
+      active = false
+    }
+  }, [driverDay, driverRouteKey, locations])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map) return undefined
+
+    const clearDriverRoute = () => {
+      if (map.getLayer(DRIVER_ROUTE_LAYER)) map.removeLayer(DRIVER_ROUTE_LAYER)
+      if (map.getLayer(DRIVER_ROUTE_CASING_LAYER)) map.removeLayer(DRIVER_ROUTE_CASING_LAYER)
+      if (map.getSource(DRIVER_ROUTE_SOURCE)) map.removeSource(DRIVER_ROUTE_SOURCE)
+    }
+
+    clearDriverRoute()
+
+    if (!selectedDriver || !plannedDriverRoutes.length) return clearDriverRoute
+
+    const identity = getDriverIdentity(selectedDriver.id)
+    const insertion = freightRoutePreview?.evaluation?.insertion ?? null
+    const segments = markInsertionAffectedSegment(plannedDriverRoutes, insertion)
+    const features = segments
+      .filter((segment) => Array.isArray(segment.route?.routeShape) && segment.route.routeShape.length >= 2)
+      .map((segment) => ({
+        type: 'Feature',
+        properties: { affected: segment.affected },
+        geometry: { type: 'LineString', coordinates: segment.route.routeShape },
+      }))
+
+    if (!features.length) return clearDriverRoute
+
+    map.addSource(DRIVER_ROUTE_SOURCE, {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features },
+    })
+
+    const beforeId = map.getLayer(DEADHEAD_CASING_LAYER)
+      ? DEADHEAD_CASING_LAYER
+      : map.getLayer(LOADED_CASING_LAYER)
+        ? LOADED_CASING_LAYER
+        : undefined
+
+    map.addLayer({
+      id: DRIVER_ROUTE_CASING_LAYER,
+      type: 'line',
+      source: DRIVER_ROUTE_SOURCE,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': ROUTE_CASING,
+        'line-width': 7,
+        'line-opacity': [
+          'case',
+          ['boolean', ['get', 'affected'], false],
+          0.22,
+          freightRoutePreview ? 0.62 : 0.82,
+        ],
+      },
+    }, beforeId)
+
+    map.addLayer({
+      id: DRIVER_ROUTE_LAYER,
+      type: 'line',
+      source: DRIVER_ROUTE_SOURCE,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': identity.color,
+        'line-width': 4,
+        'line-opacity': [
+          'case',
+          ['boolean', ['get', 'affected'], false],
+          0.14,
+          freightRoutePreview ? 0.62 : 0.88,
+        ],
+      },
+    }, beforeId)
+
+    return clearDriverRoute
+  }, [freightRoutePreview, mapReady, plannedDriverRoutes, selectedDriver])
+
+  useEffect(() => {
     const map = mapRef.current
     if (!mapReady || !map) return undefined
 
@@ -297,10 +413,12 @@ export default function OperationsMap({
         DEADHEAD_CASING_LAYER,
         LOADED_LAYER,
         LOADED_CASING_LAYER,
+        REJOIN_LAYER,
+        REJOIN_CASING_LAYER,
       ]) {
         if (map.getLayer(layerId)) map.removeLayer(layerId)
       }
-      for (const sourceId of [DEADHEAD_SOURCE, LOADED_SOURCE]) {
+      for (const sourceId of [DEADHEAD_SOURCE, LOADED_SOURCE, REJOIN_SOURCE]) {
         if (map.getSource(sourceId)) map.removeSource(sourceId)
       }
     }
@@ -375,6 +493,15 @@ export default function OperationsMap({
       color: PREVIEW_ROUTE,
       width: 6,
     })
+    addRoute({
+      sourceId: REJOIN_SOURCE,
+      casingLayerId: REJOIN_CASING_LAYER,
+      layerId: REJOIN_LAYER,
+      route: freightRoutePreview.rejoinRoute,
+      color: PREVIEW_DEADHEAD,
+      width: 3,
+      dashed: true,
+    })
 
     const addPreviewMarker = (location, role) => {
       if (!location?.coordinates) return
@@ -398,7 +525,11 @@ export default function OperationsMap({
     addPreviewMarker(freightRoutePreview.delivery, 'delivery')
 
     const points = []
-    for (const route of [freightRoutePreview.deadheadRoute, freightRoutePreview.loadedRoute]) {
+    for (const route of [
+      freightRoutePreview.deadheadRoute,
+      freightRoutePreview.loadedRoute,
+      freightRoutePreview.rejoinRoute,
+    ]) {
       if (Array.isArray(route?.routeShape)) points.push(...route.routeShape)
     }
     if (!points.length) {

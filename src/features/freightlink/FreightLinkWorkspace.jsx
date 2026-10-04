@@ -49,11 +49,12 @@ export default function FreightLinkWorkspace({
   lanes,
   locations,
   selection,
+  candidateDriverId,
+  onCandidateDriverChange,
   onSelectSubject,
   onClose,
   onRoutePreviewChange,
 }) {
-  const [candidateDriverId, setCandidateDriverId] = useState(drivers[0]?.id ?? null)
   const [fitFilter, setFitFilter] = useState('ALL')
   const [routeResult, setRouteResult] = useState(null)
 
@@ -65,7 +66,7 @@ export default function FreightLinkWorkspace({
   const routeKey = selectedLane && candidateDriver ? `${selectedLane.id}:${candidateDriver.id}` : null
   const routeState = routeResult?.key === routeKey
     ? routeResult
-    : { status: routeKey ? 'routing' : 'idle', deadhead: null, loaded: null }
+    : { status: routeKey ? 'routing' : 'idle', deadhead: null, loaded: null, rejoin: null }
 
   const evaluations = useMemo(() => {
     if (!candidateDriver || !candidateDay) return []
@@ -97,8 +98,9 @@ export default function FreightLinkWorkspace({
     const pickup = locations[selectedLane.pickupLocationId]
     const delivery = locations[selectedLane.deliveryLocationId]
     const originCoordinates = selectedEvaluation.insertion.originCoordinates
+    const nextCoordinates = selectedEvaluation.insertion.nextCoordinates
 
-    if (!pickup?.coordinates || !delivery?.coordinates || !originCoordinates) {
+    if (!pickup?.coordinates || !delivery?.coordinates || !originCoordinates || !nextCoordinates) {
       onRoutePreviewChange({
         lane: selectedLane,
         driver: candidateDriver,
@@ -107,6 +109,7 @@ export default function FreightLinkWorkspace({
         delivery,
         deadheadRoute: null,
         loadedRoute: null,
+        rejoinRoute: null,
         routeStatus: 'estimate',
       })
       return undefined
@@ -121,16 +124,20 @@ export default function FreightLinkWorkspace({
       delivery,
       deadheadRoute: null,
       loadedRoute: null,
+      rejoinRoute: null,
       routeStatus: 'routing',
     })
 
     Promise.all([
       calculateRoadRoute(originCoordinates, pickup.coordinates),
       calculateRoadRoute(pickup.coordinates, delivery.coordinates),
-    ]).then(([deadhead, loaded]) => {
+      calculateRoadRoute(delivery.coordinates, nextCoordinates),
+    ]).then(([deadhead, loaded, rejoin]) => {
       if (!active) return
-      const status = deadhead.source === 'road' || loaded.source === 'road' ? 'ready' : 'estimate'
-      setRouteResult({ key: routeKey, status, deadhead, loaded })
+      const status = [deadhead, loaded, rejoin].every((route) => route.source === 'road')
+        ? 'ready'
+        : 'estimate'
+      setRouteResult({ key: routeKey, status, deadhead, loaded, rejoin })
       onRoutePreviewChange({
         lane: selectedLane,
         driver: candidateDriver,
@@ -139,6 +146,7 @@ export default function FreightLinkWorkspace({
         delivery,
         deadheadRoute: deadhead,
         loadedRoute: loaded,
+        rejoinRoute: rejoin,
         routeStatus: status,
       })
     })
@@ -163,7 +171,7 @@ export default function FreightLinkWorkspace({
           <span>DRIVER</span>
           <div style={candidateIdentity ? { '--driver-color': candidateIdentity.color } : undefined}>
             <i />
-            <select value={candidateDriverId ?? ''} onChange={(event) => setCandidateDriverId(event.target.value)}>
+            <select value={candidateDriverId ?? ''} onChange={(event) => onCandidateDriverChange(event.target.value)}>
               {drivers.map((driver) => (
                 <option value={driver.id} key={driver.id}>{driver.name}</option>
               ))}

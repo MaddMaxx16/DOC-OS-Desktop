@@ -434,13 +434,20 @@ Pickup and delivery facility markers surface:
 
 Color must communicate ownership.
 
+**Assigned / committed driver plan**
+- the driver's existing planned day renders continuously in the owning driver's persistent identity color,
+- route order follows the authoritative Driver Day timeline,
+- when evaluating a candidate insertion, the existing direct leg being replaced is subdued rather than treated as the proposal.
+
 **Unassigned / marketplace freight**
-- neutral route treatment,
-- neutral deadhead treatment,
+- proposed insertion route stays neutral,
+- deadhead into pickup is neutral dashed,
+- loaded pickup → delivery is stronger neutral solid,
+- rejoin delivery → next existing stop is neutral dashed,
 - selection is communicated through weight, casing, emphasis, and POI markers.
 
-**Assigned operational freight**
-- route inherits the owning driver's persistent color identity.
+**After assignment**
+- once freight is actually booked/assigned, its route becomes part of the owning driver's colored operational plan.
 
 This preserves the rule:
 
@@ -580,7 +587,8 @@ When FreightLink opens without a selected lane:
 - zoom out enough to understand the marketplace geography,
 - show available lanes as compact selectable marketplace markers,
 - show driver assets without permanent name cards,
-- avoid rendering the candidate driver's full manifest stop set.
+- show the candidate driver's existing planned route in that driver's identity color,
+- avoid rendering the candidate driver's individual manifest stop markers while shopping.
 
 **Selected-lane focus**
 
@@ -589,13 +597,17 @@ When a lane is selected:
 - select the same `LOAD` object in the board and map,
 - hide unrelated marketplace opportunity markers,
 - hide unrelated drivers,
-- hide the candidate driver's full manifest stop set,
-- render only the selected lane's neutral deadhead / loaded route and selected pickup / delivery facilities as dominant geography,
+- keep the candidate driver's colored existing route visible as the baseline plan,
+- hide the candidate driver's individual manifest stop markers,
+- identify the exact existing route leg between the evaluated insertion's AFTER and BEFORE events,
+- visually subdue that direct leg,
+- overlay the proposed insertion in neutral as AFTER → pickup → delivery → BEFORE,
+- use neutral dashed treatment for entry/rejoin travel and stronger neutral solid treatment for loaded travel,
 - keep route preview data synchronized to the currently selected LOAD id,
 - reject stale route/marker data from a previously selected lane,
 - keep the app drawer visible below while the map shows the geography above.
 
-The inspector owns the detailed insertion explanation. The map should not duplicate every manifest stop merely because a lane is being evaluated.
+The inspector owns the detailed insertion explanation. The map's job is to make **current plan vs proposed plan** readable spatially without recreating manifest-label clutter.
 
 ### Focused workspace
 
@@ -1310,23 +1322,24 @@ The following are now considered locked unless deliberately reopened:
 
 The active completion packet is:
 
-# **V2.4.5 — FreightLink Map Focus Cleanup**
+# **V2.4.6 — Driver Route + Load Insertion Preview**
 
 It locks:
 
-- clear separation between marketplace overview and selected-lane focus,
-- selected-lane map decluttering,
-- no unrelated driver / manifest overlays while evaluating a lane,
-- stale route-preview rejection when lane selection changes,
-- compact selected pickup / delivery facility markers.
+- FreightLink candidate-driver context at the shell/map level,
+- persistent colored planned-driver routes,
+- route order derived from the authoritative Driver Day timeline,
+- neutral three-leg insertion preview: entry → loaded freight → rejoin,
+- dimming only the existing direct leg replaced by the proposal,
+- smaller truck/facility symbol bodies without shrinking readable text.
 
-After V2.4.5 passes visual acceptance, V2.4 is considered complete.
+After V2.4.6 passes visual acceptance, V2.4 is considered complete.
 
 The next gameplay packet is:
 
 # **V2.5 — Booking + Rate Confirmation**
 
-V2.5 must preserve the V2.4.3 map language, V2.4.4 flat-camera/shared-drawer contract, and V2.4.5 focus-mode rules.
+V2.5 must preserve the V2.4 map/readability/focus contracts and convert accepted neutral proposal geometry into the driver's committed colored route only after successful booking/assignment.
 
 
 ---

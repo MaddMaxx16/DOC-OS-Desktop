@@ -15,6 +15,7 @@ export default function App() {
   const [selection, setSelection] = useState(null)
   const [activeApp, setActiveApp] = useState(null)
   const [freightRoutePreview, setFreightRoutePreview] = useState(null)
+  const [freightCandidateDriverId, setFreightCandidateDriverId] = useState(drivers[0]?.id ?? null)
 
   const selectSubject = (type, id) => {
     setSelection(createSelection(type, id))
@@ -39,6 +40,9 @@ export default function App() {
     if (appId !== 'freightlink') return
 
     const opening = activeApp !== 'freightlink'
+    if (opening && selection?.type === SELECTION_TYPES.DRIVER) {
+      setFreightCandidateDriverId(selection.id)
+    }
     setActiveApp(opening ? 'freightlink' : null)
     setLeftOpen(false)
     setRightOpen(false)
@@ -64,6 +68,7 @@ export default function App() {
       selection={selection}
       activeApp={activeApp}
       freightRoutePreview={freightRoutePreview}
+      freightCandidateDriverId={freightCandidateDriverId}
       leftOpen={leftOpen}
       rightOpen={rightOpen}
       onToggleLeft={() => setLeftOpen((value) => !value)}
@@ -73,6 +78,7 @@ export default function App() {
       onToggleApp={toggleApp}
       onCloseActiveApp={closeActiveApp}
       onRoutePreviewChange={setFreightRoutePreview}
+      onFreightCandidateDriverChange={setFreightCandidateDriverId}
       onSelectSubject={selectSubject}
     />
   )
