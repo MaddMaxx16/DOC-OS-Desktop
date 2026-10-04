@@ -52,6 +52,7 @@ export default function PlanningPlaceFlyout({
                 option.isCurrent ? 'current' : '',
                 previewing ? 'previewing' : '',
               ].filter(Boolean).join(' ')}
+              disabled={option.isCurrent}
               onClick={() => onPreviewPlace?.({
                 driverId: driver.id,
                 kind: event.kind,
