@@ -43,6 +43,7 @@ test('exactSegmentRouteShape preserves valid road geometry that already touches 
     fromCoordinates: [-74.0732, 40.7901],
     toCoordinates: [-74.0107, 40.6562],
     route: {
+      source: 'road',
       routeShape: [
         [-74.0732, 40.7901],
         [-74.0500, 40.7300],
