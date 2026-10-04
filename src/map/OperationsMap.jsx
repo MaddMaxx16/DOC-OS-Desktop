@@ -214,7 +214,7 @@ export default function OperationsMap({
       displayDriverRoutes,
       selectedDriver?.coordinates ?? null,
     ),
-    [displayDriverRoutes, liveState, selectedDriver?.coordinates],
+    [displayDriverRoutes, liveState, selectedDriver],
   )
 
   useEffect(() => {
