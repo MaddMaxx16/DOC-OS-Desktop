@@ -35,6 +35,8 @@ function locationOption(location, metrics, currentLocationId) {
     truckAccess: location.truckAccess ?? 'unknown',
     parking: Boolean(location.parking),
     costTier: Number(location.costTier ?? 0),
+    stagingType: location.stagingType ?? null,
+    overnight: location.overnight ?? null,
     isCurrent: location.id === currentLocationId,
     ...metrics,
   }
@@ -90,6 +92,11 @@ export function buildPlanningPlaceOptions({
       travelMiles: into.miles,
       detourMinutes: 0,
       detourMiles: 0,
+      proximityLabel: into.minutes <= 5
+        ? 'NEAR FINAL STOP'
+        : into.minutes <= 15
+          ? 'LOCAL REPOSITION'
+          : 'LONG REPOSITION',
     }, currentLocationId)
   })
 
