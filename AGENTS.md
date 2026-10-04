@@ -32,25 +32,28 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.1 Planning Foundation
+## Current packet — V2.6.2 Stop Sequencing
 
-V2.1 through V2.5 remain the locked desktop foundation.
+V2.1 through V2.6.1 remain the locked desktop foundation.
 
 Guardrails:
-- preserve the V2.5.1 command rail → browser → full-height map → inspector workstation,
+- preserve the map-first command rail → browser → live map → inspector workstation,
 - preserve V2.5 booking/Rate Con truth and committed freight ownership,
-- dispatch-plan status is gameplay truth stored with the driver plan,
-- Planning Mode is presentation state only and must not create a second manifest or schedule,
-- DRAFT PLAN is editable; SENT PLAN is not casually editable,
-- the selected Driver Day inspector is the planning surface; do not add a full-screen planner or bottom drawer,
-- keep the live map visible during ordinary planning,
-- compact the Driver Day summary so the timeline owns most inspector height,
-- no stop reordering in V2.6.1; sequencing belongs to V2.6.2,
-- no lunch-place picker in V2.6.1; physical lunch POI selection belongs to V2.6.3,
-- no Send Schedule behavior in V2.6.1; readiness/send belongs to V2.6.4,
+- the committed manifest remains the only stop-order source of truth,
+- Planning Mode may reorder freight stops only while the driver plan is DRAFT,
+- moving a stop rewrites manifestOrder on the committed loads; do not create a parallel draft-manifest copy,
+- pickup must remain before its matching delivery,
+- reject resequences that would exceed trailer capacity,
+- risky-but-possible appointment or HOS outcomes remain visible warnings rather than automatic optimization,
+- every accepted resequence recalculates projected arrivals and capacity state,
+- the committed map route rebuilds from the same updated Driver Day timeline,
+- the player chooses the order; do not add an Optimize Route button,
+- Lunch is not draggable yet; its timeline slot remains fixed during V2.6.2,
+- physical lunch POI selection and movable Lunch belong to V2.6.3,
+- staging selection belongs to V2.6.3,
+- readiness and Send Schedule belong to V2.6.4,
 - current truck position remains the default route origin,
-- lunch and staging remain real operational locations,
-- the V2.6 lunch-POI/RPG bridge in the architecture document is locked.
+- the V2.6 lunch-POI/RPG bridge remains locked.
 
 ## Verification
 
