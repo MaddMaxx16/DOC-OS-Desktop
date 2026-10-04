@@ -27,6 +27,10 @@ export function buildRateConfirmation({
     laneId: lane.id,
     laneRef: lane.laneRef,
     confirmationNumber: `FLB-${lane.id.replace('FL-', '')}-0907`,
+    issuedAtLabel: 'Sep 7, 2026 · 6:02 AM',
+    paymentTerms: 'Net 30 from clean POD',
+    trackingRequirement: 'Driver check-in required at arrival and release',
+    accessorialTerms: 'Detention eligible after 2 hours with signed in/out times. Lumper requires receipt.',
     revision,
     corrected,
     broker: Object.freeze({
