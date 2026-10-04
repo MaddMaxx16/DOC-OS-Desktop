@@ -265,6 +265,30 @@ test('V2.6.3.2 staging flyout exposes context labels for nearby end-of-day choic
   assert.match(css, /\.planning-place-flyout-list i/)
 })
 
+test('V2.6.4 Driver Day exposes actionable readiness and deliberate schedule dispatch', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const inspector = await readFile(new URL('../src/shell/OperationsInspector.jsx', import.meta.url), 'utf8')
+  const panel = await readFile(new URL('../src/features/driver-day/DriverDayPanel.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/driver-day/driverDay.css', import.meta.url), 'utf8')
+
+  assert.match(app, /sendDispatchPlan/)
+  assert.match(app, /sendDriverSchedule/)
+  assert.match(shell, /onSendSchedule=\{onSendDriverSchedule\}/)
+  assert.match(inspector, /onSendSchedule/)
+  assert.match(panel, /SCHEDULE READINESS/)
+  assert.match(panel, /SEND SCHEDULE/)
+  assert.match(panel, /SEND ANYWAY/)
+  assert.match(panel, /SEND TO/)
+  assert.match(panel, /BACK TO PLAN/)
+  assert.match(panel, /SHOW STOP/)
+  assert.match(panel, /SCHEDULE SENT/)
+  assert.match(css, /\.driver-day-send-bar/)
+  assert.match(css, /\.schedule-send-review/)
+  assert.match(css, /\.plan-issue-list/)
+  assert.match(css, /\.sent-plan-note/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -340,7 +364,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.3\.2 · CONTEXTUAL STAGING/)
+  assert.match(top, /DESKTOP V2\.6\.4 · READINESS \+ SEND/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
