@@ -50,6 +50,19 @@ test('choosing a Lunch POI persists the physical location and recalculates the D
   assert.deepEqual(lunch.coordinates, locations['hudson-route-diner'].coordinates)
 })
 
+test('unassigned staging exposes the complete valid staging choice set', () => {
+  const options = buildPlanningPlaceOptions({
+    day,
+    kind: 'staging',
+    locations,
+  })
+
+  assert.ok(options.length >= 4)
+  assert.equal(options.some((option) => option.isCurrent), false)
+  assert.ok(options.some((option) => option.id === 'newark-overnight-lot'))
+  assert.ok(options.some((option) => option.id === 'metroline-yard'))
+})
+
 test('choosing staging persists the truck end-of-day place and updates the final route endpoint', () => {
   const result = choosePlanningPlace({
     driver: marcus,
