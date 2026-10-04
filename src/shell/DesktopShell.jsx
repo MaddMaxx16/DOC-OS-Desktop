@@ -2,6 +2,7 @@ import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { buildPlanningPlaceOptions } from '../domain/planning/planningPlaces.js'
+import PlanningPlaceFlyout from '../features/driver-day/PlanningPlaceFlyout.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -24,6 +25,8 @@ export default function DesktopShell({
   focusedTask,
   planningDriverId,
   planningFeedback,
+  pendingPlanningPlace,
+  planningPlacePreviewDay,
   freightRoutePreview,
   freightCandidateDriverId,
   onToggleApp,
@@ -38,7 +41,9 @@ export default function DesktopShell({
   onStartDriverPlanning,
   onStopDriverPlanning,
   onMoveDriverPlanEvent,
-  onChooseDriverPlanningPlace,
+  onPreviewDriverPlanningPlace,
+  onCancelDriverPlanningPlace,
+  onConfirmDriverPlanningPlace,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -61,9 +66,15 @@ export default function DesktopShell({
   const mapDriver = freightlinkOpen
     ? (freightDriver ?? freightCandidateDriver)
     : selectedDriver
-  const mapDriverDay = mapDriver
+  const committedMapDriverDay = mapDriver
     ? driverDays.find((day) => day.driverId === mapDriver.id) ?? null
     : driverDay
+  const mapDriverDay = (
+    !freightlinkOpen
+    && planningPlacePreviewDay?.driverId === mapDriver?.id
+  )
+    ? planningPlacePreviewDay
+    : committedMapDriverDay
 
   const planningActive = planningDriverId === selectedDriver?.id
   const planningPlaceOptions = (
@@ -163,13 +174,29 @@ export default function DesktopShell({
               selection={selection}
               freightRoutePreview={activeFreightRoutePreview}
               planningPlaceOptions={planningPlaceOptions}
+              pendingPlanningPlace={pendingPlanningPlace}
               workspaceOpen={freightlinkOpen}
               marketLanes={marketLanes}
               locations={locations}
-              onChoosePlanningPlace={onChooseDriverPlanningPlace}
+              onPreviewPlanningPlace={onPreviewDriverPlanningPlace}
               onSelectSubject={onSelectSubject}
             />
           </div>
+
+          {planningActive && selectedStop && ['lunch', 'staging'].includes(selectedStop.kind) && (
+            <PlanningPlaceFlyout
+              driver={selectedDriver}
+              event={selectedStop}
+              options={planningPlaceOptions}
+              pendingPlace={pendingPlanningPlace?.driverId === selectedDriver?.id
+                && pendingPlanningPlace?.kind === selectedStop.kind
+                ? pendingPlanningPlace
+                : null}
+              onPreviewPlace={onPreviewDriverPlanningPlace}
+              onCancel={onCancelDriverPlanningPlace}
+              onConfirm={onConfirmDriverPlanningPlace}
+            />
+          )}
 
           {hasOperationsInspector && (
             <OperationsInspector
@@ -179,11 +206,9 @@ export default function DesktopShell({
               selectedStop={selectedStop}
               planning={planningActive}
               planningFeedback={planningFeedback?.driverId === selectedDriver?.id ? planningFeedback : null}
-              planningPlaceOptions={planningPlaceOptions}
               onStartPlanning={onStartDriverPlanning}
               onStopPlanning={onStopDriverPlanning}
               onMovePlanEvent={onMoveDriverPlanEvent}
-              onChoosePlanningPlace={onChooseDriverPlanningPlace}
               onSelectSubject={onSelectSubject}
             />
           )}
