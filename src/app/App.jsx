@@ -39,6 +39,7 @@ export default function App() {
   const [planningDriverId, setPlanningDriverId] = useState(null)
   const [planningFeedback, setPlanningFeedback] = useState(null)
   const [pendingPlanningPlace, setPendingPlanningPlace] = useState(null)
+  const [operationsInspectorHidden, setOperationsInspectorHidden] = useState(false)
 
   const driverDays = useMemo(
     () => buildDriverDays(drivers, operationalLoads, operationalDriverPlans, locations),
@@ -75,6 +76,7 @@ export default function App() {
 
   const selectSubject = (type, id) => {
     setPendingPlanningPlace(null)
+    setOperationsInspectorHidden(false)
     setSelection(createSelection(type, id))
 
     const subjectDriverId = type === SELECTION_TYPES.DRIVER
@@ -242,6 +244,13 @@ export default function App() {
     setSelection(createSelection(SELECTION_TYPES.DRIVER, driverId))
   }
 
+  const closeOperationsInspector = () => {
+    setOperationsInspectorHidden(true)
+    setPlanningFeedback(null)
+    setPendingPlanningPlace(null)
+    setPlanningDriverId(null)
+  }
+
   const toggleApp = (appId) => {
     if (!['drivers', 'freightlink'].includes(appId)) return
 
@@ -251,6 +260,7 @@ export default function App() {
     }
 
     if (appId === 'freightlink' && opening) {
+      setOperationsInspectorHidden(false)
       setPlanningDriverId(null)
       setPlanningFeedback(null)
       setPendingPlanningPlace(null)
@@ -430,6 +440,7 @@ export default function App() {
       planningFeedback={planningFeedback}
       pendingPlanningPlace={pendingPlanningPlace}
       planningPlacePreviewDay={planningPlacePreviewDay}
+      operationsInspectorHidden={operationsInspectorHidden}
       freightRoutePreview={freightRoutePreview}
       freightCandidateDriverId={freightCandidateDriverId}
       onToggleApp={toggleApp}
@@ -448,6 +459,7 @@ export default function App() {
       onCancelDriverPlanningPlace={cancelDriverPlanningPlace}
       onConfirmDriverPlanningPlace={confirmDriverPlanningPlace}
       onSendDriverSchedule={sendDriverSchedule}
+      onCloseOperationsInspector={closeOperationsInspector}
       onSelectSubject={selectSubject}
     />
   )

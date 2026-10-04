@@ -289,6 +289,24 @@ test('V2.6.4 Driver Day exposes actionable readiness and deliberate schedule dis
   assert.match(css, /\.sent-plan-note/)
 })
 
+test('V2.6.4.1 Operations Inspector can close without clearing operational selection', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const inspector = await readFile(new URL('../src/shell/OperationsInspector.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.match(app, /operationsInspectorHidden/)
+  assert.match(app, /closeOperationsInspector/)
+  assert.match(app, /setOperationsInspectorHidden\(true\)/)
+  assert.match(app, /setOperationsInspectorHidden\(false\)/)
+  assert.doesNotMatch(app, /closeOperationsInspector[\s\S]{0,220}setSelection\(null\)/)
+  assert.match(shell, /!operationsInspectorHidden/)
+  assert.match(shell, /onClose=\{onCloseOperationsInspector\}/)
+  assert.match(inspector, /aria-label="Close inspector"/)
+  assert.match(inspector, /onClick=\{onClose\}/)
+  assert.match(css, /\.workstation-panel-header > button:hover/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -364,7 +382,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.4 · READINESS \+ SEND/)
+  assert.match(top, /DESKTOP V2\.6\.4\.1 · CLOSABLE INSPECTOR/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
