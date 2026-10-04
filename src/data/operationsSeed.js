@@ -121,6 +121,7 @@ export const loads = Object.freeze([
 
 export const driverPlans = Object.freeze({
   'marcus-reed': Object.freeze({
+    dispatchStatus: 'draft',
     shift: Object.freeze({ startMinutes: 420, endMinutes: 1020 }),
     lunch: Object.freeze({
       startMinutes: 630,
@@ -131,6 +132,7 @@ export const driverPlans = Object.freeze({
     staging: Object.freeze({ arrivalMinutes: 1000, locationId: 'meadowlands-staging' }),
   }),
   'taylor-brooks': Object.freeze({
+    dispatchStatus: 'draft',
     shift: Object.freeze({ startMinutes: 450, endMinutes: 1020 }),
     lunch: Object.freeze({
       startMinutes: 735,
@@ -141,6 +143,7 @@ export const driverPlans = Object.freeze({
     staging: Object.freeze({ arrivalMinutes: 900, locationId: 'meadowlands-staging' }),
   }),
   'derrick-cole': Object.freeze({
+    dispatchStatus: 'draft',
     shift: Object.freeze({ startMinutes: 480, endMinutes: 1020 }),
     lunch: Object.freeze({
       startMinutes: 690,
