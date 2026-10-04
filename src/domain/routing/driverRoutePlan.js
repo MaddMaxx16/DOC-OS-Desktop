@@ -31,6 +31,8 @@ export function buildDriverRouteAnchors(driverDay, locations = {}) {
   const grouped = new Map()
 
   for (const event of driverDay?.timeline ?? []) {
+    if (event?.anchorMode === 'driver') continue
+
     const coordinates = coordinatesForEvent(event, locations)
     if (!coordinates) continue
 
