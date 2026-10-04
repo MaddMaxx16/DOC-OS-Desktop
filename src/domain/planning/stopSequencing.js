@@ -101,7 +101,7 @@ function recalculateTimeline({
     staging: plan.staging ? { ...plan.staging } : null,
   }
 
-  let day = buildDriverDay({ driver, loads: nextLoads, plan: nextPlan, locations })
+  const day = buildDriverDay({ driver, loads: nextLoads, plan: nextPlan, locations })
   if (!day) return { loads: nextLoads, plan: nextPlan }
 
   let readyMinute = Number(day.shift.startMinutes ?? 0)
@@ -145,7 +145,6 @@ function recalculateTimeline({
     }
 
     currentCoordinates = coordinates ?? currentCoordinates
-    day = buildDriverDay({ driver, loads: nextLoads, plan: nextPlan, locations })
   }
 
   return { loads: nextLoads, plan: nextPlan }
