@@ -199,6 +199,25 @@ test('V2.6.1 Driver Day exposes draft planning mode without replacing the map-fi
   assert.match(css, /\.driver-day-panel\.planning/)
 })
 
+test('V2.6.2 Planning Mode drags freight stops through the authoritative reorder callback', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const panel = await readFile(new URL('../src/features/driver-day/DriverDayPanel.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/driver-day/driverDay.css', import.meta.url), 'utf8')
+
+  assert.match(app, /resequenceDriverStops/)
+  assert.match(app, /reorderDriverStop/)
+  assert.match(shell, /onReorderStop=\{onReorderDriverStop\}/)
+  assert.match(panel, /draggable=\{draggableStop\}/)
+  assert.match(panel, /onDragStart/)
+  assert.match(panel, /onDragOver/)
+  assert.match(panel, /onDrop/)
+  assert.match(panel, /Pickup must stay before its matching delivery/)
+  assert.match(panel, /<PlanHealth health=\{day\.planHealth\}/)
+  assert.match(css, /\.driver-day-row\.drop-before/)
+  assert.match(css, /\.planning-feedback\.blocked/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -274,7 +293,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.1 · PLANNING FOUNDATION/)
+  assert.match(top, /DESKTOP V2\.6\.2 · STOP SEQUENCING/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
