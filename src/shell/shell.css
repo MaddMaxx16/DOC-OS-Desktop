@@ -222,3 +222,35 @@
 .workspace-open .app-dock {
   border-color: #3a3341;
 }
+
+
+/* V2.4.3 readability contract */
+.brand-block strong { font-size: 18px; }
+.brand-block span { font-size: var(--type-micro); }
+.clock-block span { font-size: var(--type-micro); }
+.clock-block strong { font-size: 20px; }
+.operations-status strong,
+.operations-status small { font-size: var(--type-micro); }
+
+.drawer-handle > span:not(.handle-icon) { font-size: 10px; }
+.drawer-handle b { font-size: 11px; }
+
+.drawer-header span { font-size: var(--type-micro); }
+.drawer-header strong { font-size: 20px; }
+.drawer-header small { font-size: var(--type-secondary); }
+
+.driver-list strong { font-size: var(--type-body); }
+.driver-list small,
+.driver-list em { font-size: var(--type-micro); }
+.driver-list i { font-size: 12px; }
+
+.driver-identity-strip span { font-size: var(--type-secondary); }
+.driver-identity-strip small { font-size: var(--type-micro); }
+.empty-context span { font-size: var(--type-micro); }
+.empty-context strong { font-size: var(--type-emphasis); }
+.empty-context p { font-size: var(--type-secondary); }
+
+.dock-brand { font-size: var(--type-secondary); }
+.app-dock button strong { font-size: var(--type-secondary); }
+.app-dock button small { font-size: 10px; }
+.dock-clock { font-size: var(--type-micro); }
