@@ -180,6 +180,25 @@ test('V2.5.7 FreightLink fit treatment is a compact inset badge', async () => {
   assert.match(css, /gap: 2px/)
 })
 
+test('V2.6.1 Driver Day exposes draft planning mode without replacing the map-first shell', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const inspector = await readFile(new URL('../src/shell/OperationsInspector.jsx', import.meta.url), 'utf8')
+  const panel = await readFile(new URL('../src/features/driver-day/DriverDayPanel.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/driver-day/driverDay.css', import.meta.url), 'utf8')
+
+  assert.match(app, /planningDriverId/)
+  assert.match(app, /startDriverPlanning/)
+  assert.match(shell, /planning=\{planningDriverId === selectedDriver\?\.id\}/)
+  assert.match(inspector, /planning-context/)
+  assert.match(panel, /dispatchPlanStatusLabel/)
+  assert.match(panel, /EDIT PLAN/)
+  assert.match(panel, /PLANNING MODE/)
+  assert.match(panel, /DONE/)
+  assert.match(css, /grid-template-columns: 1\.25fr \.9fr 1fr/)
+  assert.match(css, /\.driver-day-panel\.planning/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -255,7 +274,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.7 · FIT BADGE/)
+  assert.match(top, /DESKTOP V2\.6\.1 · PLANNING FOUNDATION/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
