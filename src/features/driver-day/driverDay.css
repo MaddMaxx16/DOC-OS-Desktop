@@ -724,4 +724,5 @@
 
 .driver-day-panel.send-reviewing .driver-day-timeline {
   opacity: .74;
+  pointer-events: none;
 }
