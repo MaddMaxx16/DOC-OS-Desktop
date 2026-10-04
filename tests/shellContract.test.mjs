@@ -186,7 +186,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.2 · DOCUMENT DESK/)
+  assert.match(top, /DESKTOP V2\.5\.3 · ROUTE ORIGIN/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -238,4 +238,26 @@ test('V2.5.2 normal Driver view renders non-freight route endpoints instead of u
   assert.match(map, /routeAnchor\.eventKinds\.includes\('freight-stop'\)/)
   assert.match(map, /if \(!isFreightLocation\) addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
   assert.match(map, /workspaceOpen && driverIdentity/)
+})
+
+
+test('V2.5.3 Rate Con keeps ISSUE markup on paper until the player changes the judgment', async () => {
+  const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/rate-confirmation/rateConfirmation.css', import.meta.url), 'utf8')
+
+  assert.match(review, /reviewChoices\[fieldId\] === 'issue' \? 'ratecon-field-issue'/)
+  assert.match(review, /highlightField === fieldId \? 'ratecon-field-highlight'/)
+  assert.match(css, /\.ratecon-field-issue/)
+  assert.match(css, /rgba\(224, 177, 71, \.16\)/)
+})
+
+test('V2.5.3 Driver Day default shift origin is the current truck asset, not automatic home base', async () => {
+  const day = await readFile(new URL('../src/domain/manifest/driverDayModel.js', import.meta.url), 'utf8')
+  const route = await readFile(new URL('../src/domain/routing/driverRoutePlan.js', import.meta.url), 'utf8')
+
+  assert.match(day, /plan\.startLocationId/)
+  assert.match(day, /locationLabel: driver\.locationLabel/)
+  assert.match(day, /coordinates: Array\.isArray\(driver\.coordinates\) \? driver\.coordinates : null/)
+  assert.match(day, /anchorMode: 'driver'/)
+  assert.match(route, /if \(event\?\.anchorMode === 'driver'\) continue/)
 })
