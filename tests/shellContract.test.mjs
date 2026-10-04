@@ -365,6 +365,18 @@ test('V2.6.5.4 committed Driver Day routing uses one ordered multi-waypoint road
   assert.doesNotMatch(map, /for \(let index = 0; index < segmentSpecs\.length; index \+= 2\)/)
 })
 
+test('V2.6.5.4 committed POIs use a fixed shell centered on the same continuous-route coordinate', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
+  assert.match(map, /if \(workspaceOpen && freightRoutePreview\)/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*width: 28px/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*height: 28px/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*padding: 0/)
+  assert.match(css, /\.driver-route-anchor \.poi-symbol \{[\s\S]*box-sizing: border-box/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
