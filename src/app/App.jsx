@@ -166,6 +166,9 @@ export default function App() {
 
   const cancelDriverPlanningPlace = () => {
     setPendingPlanningPlace(null)
+    if (planningDriverId) {
+      setSelection(createSelection(SELECTION_TYPES.DRIVER, planningDriverId))
+    }
   }
 
   const confirmDriverPlanningPlace = () => {
@@ -197,7 +200,7 @@ export default function App() {
     setOperationalLoads(result.loads)
     setOperationalDriverPlans(result.driverPlans)
     setPendingPlanningPlace(null)
-    setSelection(createSelection(SELECTION_TYPES.STOP, `${driverId}:${kind}`))
+    setSelection(createSelection(SELECTION_TYPES.DRIVER, driverId))
 
     const firstWarning = result.driverDay?.planHealth?.warnings?.[0]
     setPlanningFeedback({
