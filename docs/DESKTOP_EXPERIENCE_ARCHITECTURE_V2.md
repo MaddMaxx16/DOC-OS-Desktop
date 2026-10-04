@@ -365,44 +365,77 @@ Use names, initials, icons, labels, outlines, and selection treatment as backup 
 
 ---
 
-## 10. Map interaction contract
+## 10. Map interaction and visual-language contract
 
-The map remains interactive without becoming cluttered.
+The map remains interactive, detailed, and readable without becoming cluttered.
+
+### Basemap
+
+The default operational map should be:
+
+- dark,
+- crisp,
+- vector-based,
+- detailed enough to understand roads and geography,
+- restrained enough that gameplay symbols remain dominant.
+
+Consumer POI clutter should be suppressed where practical. Gameplay POIs are drawn by DOC OS, not delegated to the basemap.
 
 ### Driver marker
 
-Click:
+Drivers render as **truck assets**, not generic circles.
 
-- compact popover,
-- driver name,
-- status,
-- ETA/next stop,
-- critical warning if needed.
+The marker:
 
-A secondary action such as **View Driver** can open the right drawer.
+- uses the driver's persistent identity color,
+- includes initials as a backup identity cue,
+- shows the driver's name/status on hover or selection,
+- may gain heading/orientation later during live operations.
+
+### POI taxonomy
+
+POI icon shape communicates type before color.
+
+The map system must support at least:
+
+- warehouse / freight facility,
+- Metroline yard,
+- staging / parking,
+- fuel,
+- food,
+- truck stop,
+- repair / service.
+
+Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
 ### Pickup / delivery marker
 
-Click:
+Pickup and delivery facility markers surface:
 
-- load/lane identifier,
+- role,
+- load/lane identifier where relevant,
+- facility identity,
 - appointment window,
 - driver,
 - projected arrival,
 - timing state.
 
-A secondary action can open the load/right drawer.
+### Route color semantics
 
-### Facility
+Color must communicate ownership.
 
-Click:
+**Unassigned / marketplace freight**
+- neutral route treatment,
+- neutral deadhead treatment,
+- selection is communicated through weight, casing, emphasis, and POI markers.
 
-- facility name,
-- expected DOC arrivals,
-- current known scheduling pressure,
-- eventual predicted wait information.
+**Assigned operational freight**
+- route inherits the owning driver's persistent color identity.
 
-A secondary action opens facility context in the right drawer.
+This preserves the rule:
+
+> neutral = opportunity  
+> driver color = committed ownership
 
 ### Route leg
 
@@ -413,18 +446,33 @@ Click:
 - destination,
 - remaining time,
 - remaining miles where available,
-- load/manfest relationship.
+- load/manifest relationship.
+
+### Readability floor
+
+DOC OS is a desktop game, not a dense admin dashboard.
+
+Target type scale:
+
+- micro / uppercase labels: 11 px minimum,
+- supporting/secondary text: 12 px minimum,
+- normal operational information: 14 px,
+- emphasized information: 16 px or larger,
+- major app headings: approximately 20–26 px.
+
+If important information requires leaning toward the monitor or squinting at normal desktop distance, the presentation fails.
 
 ### Selection synchronization
 
-Map, manifest, load, and driver selection should share one selection model.
+Map, manifest, load, and driver selection share one selection model.
 
 Examples:
 
-- select Marcus → Marcus route brightens,
-- select a manifest stop → that stop highlights on map,
+- select Marcus → Marcus truck and owned route become emphasized,
+- select a manifest stop → that typed POI highlights on map,
 - click a route leg → corresponding driver/load context becomes selected,
-- click a facility → related expected arrivals can be surfaced.
+- click a facility → related expected arrivals can be surfaced,
+- click marketplace freight → the same LOAD becomes selected in FreightLink.
 
 ---
 
@@ -1216,7 +1264,8 @@ The following are now considered locked unless deliberately reopened:
 - Jordan's tutorial is removed from the active loop during the systems rebuild.
 - Gameplay systems are stabilized before onboarding is rebuilt.
 - Each driver has a unique persistent color identity.
-- Color follows driver marker, route, and related operational cues.
+- Driver identity color follows assigned driver markers, assigned routes, and related operational cues.
+- Unassigned FreightLink route previews stay neutral until freight is committed.
 - Color is supported by labels/icons for accessibility.
 - The driver manifest remains the operational backbone.
 - Interleaved pickups/deliveries remain supported.
@@ -1225,6 +1274,9 @@ The following are now considered locked unless deliberately reopened:
 - Lunch and staging are part of operational planning.
 - Focused work pauses simulation.
 - Map selection and manifest/context selection share one model.
+- Drivers use truck markers; operational locations use typed POI icons rather than generic circles.
+- Desktop operational text follows the V2.4.3 readability floor (11/12/14/16/22 px scale).
+- The operational basemap is a dark detailed vector style with consumer POI clutter suppressed.
 - Browser previews remain intentional checkpoints, not automatic per-push deployments.
 - PC/Steam remains the long-term target.
 
@@ -1232,26 +1284,27 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-The next implementation packet is:
+The active completion packet is:
 
-# **V2.1 — Shell Reset**
+# **V2.4.3 — Readability + Map Language**
 
-It should do only the structural reset:
+It locks:
 
-- remove active Jordan tutorial interruption/gating,
-- remove the permanent left driver panel,
-- remove the permanent right operations panel,
-- restore the map as the dominant canvas,
-- add compact left/right handles,
-- create independent sliding drawers,
-- keep drawers as overlays rather than layout columns,
-- collapse the bottom workspace back to the compact dock by default,
-- preserve current gameplay systems underneath,
-- remove Desktop Build 1 shell code that becomes obsolete.
+- comfortable desktop typography,
+- a crisp dark vector basemap,
+- neutral marketplace route previews,
+- driver-colored assigned-route semantics,
+- truck-shaped driver markers,
+- typed POI markers for operational locations,
+- marketplace decluttering and selection hierarchy,
+- deterministic MapLibre/Vite worker setup for local testing.
 
-Do **not** rebuild FreightLink, Documents, Banking, or the full manifest UI inside V2.1.
+After V2.4.3 passes visual acceptance, the next gameplay packet is:
 
-The purpose of V2.1 is to get the workstation shell right before we pile gameplay surfaces back into it.
+# **V2.5 — Booking + Rate Confirmation**
+
+V2.5 may add commitment behavior, but it must preserve the V2.4.3 map language and readability floor.
+
 
 ---
 

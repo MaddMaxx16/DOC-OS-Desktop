@@ -32,22 +32,26 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.2 FreightLink Usability Pass
+## Current packet — V2.4.3 Readability + Map Language
 
-V2.1 through V2.4.1 are structurally locked.
+V2.1 through V2.4.2 are structurally locked.
 
-V2.4.2 is a focused usability pass before V2.5.
+V2.4.3 establishes the visual language players will use for long desktop sessions.
 
 Guardrails:
-- keep the shared full-width bottom app drawer and full-width app bar unchanged,
-- FreightLink marketplace markers must stay compact until hovered or selected,
-- when one lane is selected, unrelated marketplace lanes should visually recede,
-- driver labels should not crowd FreightLink marketplace overview,
-- selected lane geography remains the dominant map signal,
-- FreightLink inspector should fit useful evaluation context without forcing one-section-at-a-time scrolling,
-- inspector content uses a two-column desktop layout at normal desktop widths,
-- typography may be increased for readability without changing gameplay truth,
-- the current raster basemap may receive a temporary darker treatment, but a full map-style redesign remains a later visual pass,
+- no important operational text should require leaning toward the monitor,
+- shared desktop type scale: micro 11px, secondary 12px, body 14px, emphasis 16px, heading 22px,
+- FreightLink preview routes are neutral because unassigned freight does not belong to a driver,
+- assigned operational routes inherit the owning driver's identity color in later execution packets,
+- drivers render as truck assets in driver color with initials integrated into the marker,
+- POI icon shape communicates location type before color,
+- POI taxonomy must support warehouse, yard, staging, fuel, food, truck stop, and service,
+- pickup and delivery are facility roles layered onto the underlying POI type,
+- marketplace opportunities remain compact until hover or selection,
+- selected geography is visually dominant while unrelated opportunities recede,
+- use a crisp dark vector basemap; do not return to brightness-filtered OSM raster styling,
+- hide irrelevant consumer POI clutter from the basemap where practical,
+- MapLibre/Vite worker setup must be deterministic for local Mac testing,
 - do not begin booking or Rate Confirmation behavior until V2.5.
 
 ## Verification

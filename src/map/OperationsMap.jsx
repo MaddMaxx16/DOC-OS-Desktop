@@ -1,14 +1,102 @@
 import { useEffect, useRef, useState } from 'react'
-import { Map as MapLibreMap, Marker, NavigationControl } from 'maplibre-gl'
+import {
+  Map as MapLibreMap,
+  Marker,
+  NavigationControl,
+  setWorkerUrl,
+} from 'maplibre-gl'
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
+setWorkerUrl(maplibreWorkerUrl)
+
 const DEADHEAD_SOURCE = 'freightlink-deadhead-source'
+const DEADHEAD_CASING_LAYER = 'freightlink-deadhead-casing'
 const DEADHEAD_LAYER = 'freightlink-deadhead-layer'
 const LOADED_SOURCE = 'freightlink-loaded-source'
+const LOADED_CASING_LAYER = 'freightlink-loaded-casing'
 const LOADED_LAYER = 'freightlink-loaded-layer'
+
+const PREVIEW_ROUTE = '#c8d2da'
+const PREVIEW_DEADHEAD = '#8797a4'
+const ROUTE_CASING = '#111a22'
+
+function tuneBaseMap(map) {
+  const layers = map.getStyle()?.layers ?? []
+
+  for (const layer of layers) {
+    if (layer.type !== 'symbol') continue
+
+    const id = String(layer.id ?? '').toLowerCase()
+    const noisyPoi = /(poi|shop|amenity|transit|aeroway|airport|housenum)/.test(id)
+    const keepGeography = /(road|street|place|city|town|state|country|water)/.test(id)
+
+    if (noisyPoi && !keepGeography) {
+      map.setLayoutProperty(layer.id, 'visibility', 'none')
+      continue
+    }
+
+    if (/(road|street)/.test(id) && map.getPaintProperty(layer.id, 'text-opacity') !== undefined) {
+      map.setPaintProperty(layer.id, 'text-opacity', 0.72)
+    }
+  }
+}
+
+function truckMarkup(initials) {
+  return `
+    <span class="driver-truck-icon" aria-hidden="true">
+      <svg viewBox="0 0 64 40" focusable="false">
+        <path d="M4 9h33v22H4z" class="truck-box"/>
+        <path d="M37 16h12l9 9v6H37z" class="truck-cab"/>
+        <path d="M43 19h6l5 6H43z" class="truck-window"/>
+        <circle cx="16" cy="33" r="5" class="truck-wheel"/>
+        <circle cx="48" cy="33" r="5" class="truck-wheel"/>
+      </svg>
+      <b>${initials}</b>
+    </span>
+  `
+}
+
+function poiSvg(type) {
+  if (type === 'yard') {
+    return '<svg viewBox="0 0 48 48" focusable="false"><path d="M7 15h34v25H7z"/><path d="M12 9h24v8H12z"/><path d="M13 24h8v16h-8zm14 0h8v16h-8z"/></svg>'
+  }
+  if (type === 'staging') {
+    return '<svg viewBox="0 0 48 48" focusable="false"><rect x="8" y="8" width="32" height="32" rx="5"/><path d="M18 34V14h8c7 0 11 3 11 9s-4 9-11 9h-3"/><path d="M23 19v8h3c4 0 6-1 6-4s-2-4-6-4z"/></svg>'
+  }
+  if (type === 'fuel') {
+    return '<svg viewBox="0 0 48 48" focusable="false"><path d="M10 7h20v34H10z"/><path d="M14 12h12v9H14z"/><path d="M30 15h5l5 6v15c0 3-2 5-5 5s-5-2-5-5"/><path d="M35 15v7h5"/></svg>'
+  }
+  if (type === 'food') {
+    return '<svg viewBox="0 0 48 48" focusable="false"><path d="M14 7v15m-5-15v10c0 4 2 6 5 6s5-2 5-6V7m-5 16v18"/><path d="M31 7c5 5 7 11 7 18h-7v16m0-34v18"/></svg>'
+  }
+  if (type === 'truck-stop') {
+    return '<svg viewBox="0 0 48 48" focusable="false"><path d="M5 13h23v20H5z"/><path d="M28 20h8l7 7v6H28z"/><circle cx="14" cy="35" r="4"/><circle cx="36" cy="35" r="4"/></svg>'
+  }
+  if (type === 'service') {
+    return '<svg viewBox="0 0 48 48" focusable="false"><path d="M31 8a10 10 0 0 0-10 13L8 34l6 6 13-13A10 10 0 0 0 40 17l-7 7-6-6 7-7a10 10 0 0 0-3-3z"/></svg>'
+  }
+
+  return '<svg viewBox="0 0 48 48" focusable="false"><path d="M6 18 24 7l18 11v23H6z"/><path d="M12 24h7v17h-7zm11 0h7v17h-7zm11 0h4v17h-4z"/><path d="M10 18h28"/></svg>'
+}
+
+function locationType(location, fallback = 'warehouse') {
+  return location?.poiType ?? fallback
+}
+
+function facilityMarkup({ type, role, badge }) {
+  const roleLabel = role === 'pickup' ? 'PICKUP' : role === 'delivery' ? 'DELIVERY' : ''
+  return `
+    <span class="poi-symbol ${type}" aria-hidden="true">
+      ${poiSvg(type)}
+      ${badge ? `<b>${badge}</b>` : ''}
+    </span>
+    ${roleLabel ? `<em>${roleLabel}</em>` : ''}
+  `
+}
 
 export default function OperationsMap({
   drivers,
@@ -46,7 +134,10 @@ export default function OperationsMap({
     })
 
     map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right')
-    map.on('load', () => setMapReady(true))
+    map.on('load', () => {
+      tuneBaseMap(map)
+      setMapReady(true)
+    })
     mapRef.current = map
 
     const observer = new ResizeObserver(() => map.resize())
@@ -79,7 +170,7 @@ export default function OperationsMap({
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
       element.setAttribute('aria-label', `Select ${driver.name}, ${identity.colorName} driver`)
-      element.innerHTML = `<span>${driver.initials}</span><small><i></i>${driver.name}</small>`
+      element.innerHTML = `${truckMarkup(driver.initials)}<small><i></i>${driver.name}</small>`
       element.addEventListener('click', (event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -128,12 +219,17 @@ export default function OperationsMap({
     for (const stop of driverDay?.freightStops ?? []) {
       if (!stop.coordinates || !driverIdentity) continue
       const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
+      const location = locations[stop.locationId]
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `manifest-stop-marker ${stop.role} ${selected ? 'selected' : ''}`
+      element.className = `poi-marker facility-stop ${stop.role} ${selected ? 'selected' : ''}`
       element.style.setProperty('--driver-color', driverIdentity.color)
       element.setAttribute('aria-label', `Select ${stop.role} ${stop.loadRef} at ${stop.locationLabel}`)
-      element.innerHTML = `<span>${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}</span><small>${stop.loadRef}</small>`
+      element.innerHTML = `${facilityMarkup({
+        type: locationType(location),
+        role: stop.role,
+        badge: `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`,
+      })}<small>${stop.locationLabel}</small>`
       element.addEventListener('click', (event) => {
         event.preventDefault()
         event.stopPropagation()
@@ -152,12 +248,17 @@ export default function OperationsMap({
       && driverIdentity
       && ['lunch', 'staging'].includes(selectedStop.kind)
     ) {
+      const location = locations[selectedStop.locationId]
+      const eventType = selectedStop.kind === 'lunch' ? 'food' : locationType(location, 'staging')
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `operational-event-marker ${selectedStop.kind} selected`
+      element.className = `poi-marker operational-event-marker ${selectedStop.kind} selected`
       element.style.setProperty('--driver-color', driverIdentity.color)
       element.setAttribute('aria-label', `${selectedStop.label} at ${selectedStop.locationLabel}`)
-      element.innerHTML = `<span>${selectedStop.kind === 'lunch' ? 'LUNCH' : 'STAGE'}</span><small>${selectedStop.locationLabel}</small>`
+      element.innerHTML = `${facilityMarkup({
+        type: eventType,
+        badge: selectedStop.kind === 'lunch' ? 'L' : 'S',
+      })}<small>${selectedStop.locationLabel}</small>`
 
       const marker = new Marker({ element, anchor: 'bottom' })
         .setLngLat(selectedStop.coordinates)
@@ -169,22 +270,39 @@ export default function OperationsMap({
 
   useEffect(() => {
     const map = mapRef.current
-    if (!mapReady || !map) return
+    if (!mapReady || !map) return undefined
 
-    const clearLayer = (layerId, sourceId) => {
-      if (map.getLayer(layerId)) map.removeLayer(layerId)
-      if (map.getSource(sourceId)) map.removeSource(sourceId)
+    const clearRoute = () => {
+      for (const layerId of [
+        DEADHEAD_LAYER,
+        DEADHEAD_CASING_LAYER,
+        LOADED_LAYER,
+        LOADED_CASING_LAYER,
+      ]) {
+        if (map.getLayer(layerId)) map.removeLayer(layerId)
+      }
+      for (const sourceId of [DEADHEAD_SOURCE, LOADED_SOURCE]) {
+        if (map.getSource(sourceId)) map.removeSource(sourceId)
+      }
     }
-    clearLayer(DEADHEAD_LAYER, DEADHEAD_SOURCE)
-    clearLayer(LOADED_LAYER, LOADED_SOURCE)
+
+    clearRoute()
     previewMarkerRefs.current.forEach((marker) => marker.remove())
     previewMarkerRefs.current = []
 
-    if (!freightRoutePreview) return
+    if (!freightRoutePreview) return clearRoute
 
-    const identity = getDriverIdentity(freightRoutePreview.driver.id)
-    const addLine = (sourceId, layerId, route, color, dashed = false) => {
+    const addRoute = ({
+      sourceId,
+      casingLayerId,
+      layerId,
+      route,
+      color,
+      width,
+      dashed = false,
+    }) => {
       if (!Array.isArray(route?.routeShape) || route.routeShape.length < 2) return
+
       map.addSource(sourceId, {
         type: 'geojson',
         data: {
@@ -193,6 +311,20 @@ export default function OperationsMap({
           geometry: { type: 'LineString', coordinates: route.routeShape },
         },
       })
+
+      map.addLayer({
+        id: casingLayerId,
+        type: 'line',
+        source: sourceId,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': ROUTE_CASING,
+          'line-width': width + 4,
+          'line-opacity': 0.92,
+          ...(dashed ? { 'line-dasharray': [2, 2] } : {}),
+        },
+      })
+
       map.addLayer({
         id: layerId,
         type: 'line',
@@ -200,28 +332,51 @@ export default function OperationsMap({
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
           'line-color': color,
-          'line-width': dashed ? 3 : 5,
-          'line-opacity': dashed ? .72 : .94,
+          'line-width': width,
+          'line-opacity': dashed ? 0.8 : 1,
           ...(dashed ? { 'line-dasharray': [2, 2] } : {}),
         },
       })
     }
 
-    addLine(DEADHEAD_SOURCE, DEADHEAD_LAYER, freightRoutePreview.deadheadRoute, identity.color, true)
-    addLine(LOADED_SOURCE, LOADED_LAYER, freightRoutePreview.loadedRoute, '#9b82ad')
+    addRoute({
+      sourceId: DEADHEAD_SOURCE,
+      casingLayerId: DEADHEAD_CASING_LAYER,
+      layerId: DEADHEAD_LAYER,
+      route: freightRoutePreview.deadheadRoute,
+      color: PREVIEW_DEADHEAD,
+      width: 3,
+      dashed: true,
+    })
+    addRoute({
+      sourceId: LOADED_SOURCE,
+      casingLayerId: LOADED_CASING_LAYER,
+      layerId: LOADED_LAYER,
+      route: freightRoutePreview.loadedRoute,
+      color: PREVIEW_ROUTE,
+      width: 6,
+    })
 
-    const addPreviewMarker = (coordinates, role, label) => {
-      if (!coordinates) return
+    const addPreviewMarker = (location, role) => {
+      if (!location?.coordinates) return
+
       const element = document.createElement('div')
-      element.className = `freight-preview-marker ${role}`
-      element.innerHTML = `<span>${role === 'pickup' ? 'P' : 'D'}</span><small>${label}</small>`
+      element.className = `poi-marker freight-preview-marker ${role}`
+      element.innerHTML = `${facilityMarkup({
+        type: locationType(location),
+        role,
+        badge: role === 'pickup' ? 'P' : 'D',
+      })}<small>${location.label}</small>`
+
       previewMarkerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' }).setLngLat(coordinates).addTo(map),
+        new Marker({ element, anchor: 'bottom' })
+          .setLngLat(location.coordinates)
+          .addTo(map),
       )
     }
 
-    addPreviewMarker(freightRoutePreview.pickup?.coordinates, 'pickup', freightRoutePreview.pickup?.label)
-    addPreviewMarker(freightRoutePreview.delivery?.coordinates, 'delivery', freightRoutePreview.delivery?.label)
+    addPreviewMarker(freightRoutePreview.pickup, 'pickup')
+    addPreviewMarker(freightRoutePreview.delivery, 'delivery')
 
     const points = []
     for (const route of [freightRoutePreview.deadheadRoute, freightRoutePreview.loadedRoute]) {
@@ -238,12 +393,7 @@ export default function OperationsMap({
       map.fitBounds(
         [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
         {
-          padding: {
-            top: 54,
-            right: 64,
-            bottom: 64,
-            left: 64,
-          },
+          padding: { top: 58, right: 72, bottom: 66, left: 72 },
           maxZoom: 11.5,
           duration: 450,
         },
@@ -251,12 +401,11 @@ export default function OperationsMap({
     }
 
     return () => {
-      clearLayer(DEADHEAD_LAYER, DEADHEAD_SOURCE)
-      clearLayer(LOADED_LAYER, LOADED_SOURCE)
+      clearRoute()
       previewMarkerRefs.current.forEach((marker) => marker.remove())
       previewMarkerRefs.current = []
     }
-  }, [freightRoutePreview, mapReady, workspaceOpen])
+  }, [freightRoutePreview, mapReady])
 
   useEffect(() => {
     const map = mapRef.current
@@ -281,7 +430,7 @@ export default function OperationsMap({
     map.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
       {
-        padding: { top: 48, right: 56, bottom: 56, left: 56 },
+        padding: { top: 56, right: 64, bottom: 56, left: 64 },
         maxZoom: 10.1,
         duration: 450,
       },
@@ -300,7 +449,7 @@ export default function OperationsMap({
     if (selectedDriver) {
       map.easeTo({ center: selectedDriver.coordinates, zoom: Math.max(map.getZoom(), 10), duration: 500 })
     }
-  }, [freightRoutePreview, selectedDriver, selectedStop])
+  }, [freightRoutePreview, selectedDriver, selectedStop, workspaceOpen])
 
   return (
     <div className="map-stage">

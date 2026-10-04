@@ -17,6 +17,13 @@
   --accent: #739abb;
   --accent-soft: #29445b;
   --attention: #b08bc4;
+
+  /* V2.4.3 readability scale — desktop play at normal sitting distance. */
+  --type-micro: 11px;
+  --type-secondary: 12px;
+  --type-body: 14px;
+  --type-emphasis: 16px;
+  --type-heading: 22px;
 }
 
 * { box-sizing: border-box; }
