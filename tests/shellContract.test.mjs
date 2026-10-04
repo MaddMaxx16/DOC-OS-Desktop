@@ -173,3 +173,23 @@ test('V2.4.4 shared app drawer uses the taller desktop target without shrinking 
   assert.match(globalCss, /--type-micro:\s*11px/)
   assert.match(freightCss, /font-size:\s*var\(--type-body\)/)
 })
+
+
+test('V2.4.5 shell rejects stale route preview data from another selected lane', async () => {
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+
+  assert.match(shell, /freightRoutePreview\?\.lane\?\.id === selection\.id/)
+  assert.match(shell, /activeFreightRoutePreview/)
+  assert.match(shell, /freightRoutePreview=\{activeFreightRoutePreview\}/)
+})
+
+test('V2.4.5 selected-lane focus hides unrelated marketplace and manifest clutter', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /const loadSelected = isSelection\(selection, SELECTION_TYPES\.LOAD\)/)
+  assert.match(map, /workspaceOpen && !loadSelected/)
+  assert.match(map, /for \(const stop of loadSelected \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
+  assert.match(map, /if \(loadSelected && \(!selectedDriver \|\| driver\.id !== selectedDriver\.id\)\) return/)
+  assert.match(css, /\.freight-preview-marker > em \{\s*display: none;/)
+})

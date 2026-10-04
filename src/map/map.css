@@ -344,3 +344,21 @@
 .operational-event-marker .poi-symbol b {
   background: var(--driver-color);
 }
+
+
+/* V2.4.5 selected-lane focus mode */
+.freight-preview-marker > em {
+  display: none;
+}
+.freight-preview-marker .poi-symbol {
+  width: 40px;
+  height: 40px;
+}
+.freight-preview-marker .poi-symbol svg {
+  width: 25px;
+  height: 25px;
+}
+.freight-preview-marker > small {
+  max-width: 180px;
+  font-size: 11px;
+}
