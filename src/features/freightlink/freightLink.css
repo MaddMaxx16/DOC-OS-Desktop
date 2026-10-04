@@ -514,3 +514,40 @@
   white-space: normal;
   line-height: 1.2;
 }
+
+/* V2.5.5: keep lane fit cards fully inside the browser instead of riding under the edge. */
+.freightlink-browser-list {
+  overflow-x: hidden;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
+}
+
+.lane-row {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(78px, 84px);
+  gap: 7px 8px;
+  padding-right: 10px;
+}
+
+.lane-fit-pill {
+  width: 100%;
+  min-width: 0;
+  max-width: 84px;
+  justify-self: end;
+  align-self: stretch;
+  padding: 7px 6px;
+}
+
+.lane-fit-pill strong,
+.lane-fit-pill small {
+  max-width: 100%;
+}
+
+.lane-browser-meta {
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.lane-browser-meta strong {
+  margin-left: 0;
+}
