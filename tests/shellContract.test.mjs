@@ -120,6 +120,30 @@ test('map language uses trucks, typed POIs, neutral proposal routes, and committ
   assert.match(css, /\.freight-preview-marker/)
 })
 
+test('V2.5.4 committed route language dashes pickup-bound legs and keeps other legs solid', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const route = await readFile(new URL('../src/domain/routing/driverRoutePlan.js', import.meta.url), 'utf8')
+
+  assert.match(route, /toRole: to\.role \?\? null/)
+  assert.match(map, /destinationRole: segment\.toRole \?\? ''/)
+  assert.match(map, /DRIVER_ROUTE_PICKUP_LAYER/)
+  assert.match(map, /pickupLegFilter/)
+  assert.match(map, /'line-dasharray': PICKUP_ROUTE_DASH/)
+  assert.match(map, /filter: solidLegFilter/)
+})
+
+test('V2.5.4 pause status lives beside the clock instead of at the bottom of the command rail', async () => {
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+  const rail = await readFile(new URL('../src/shell/CommandRail.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.match(top, /clock-time-row/)
+  assert.match(top, />PAUSED</)
+  assert.match(css, /\.clock-time-row/)
+  assert.doesNotMatch(rail, /command-rail-status/)
+  assert.doesNotMatch(css, /\.command-rail-status/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -139,6 +163,15 @@ test('FreightLink proposal includes entry, loaded, and rejoin road legs', async 
   assert.match(freight, /calculateRoadRoute\(pickup\.coordinates, delivery\.coordinates\)/)
   assert.match(freight, /calculateRoadRoute\(delivery\.coordinates, nextCoordinates\)/)
   assert.match(freight, /rejoinRoute: rejoin/)
+})
+
+test('V2.5.4 FreightLink cleanup allows operational copy to wrap instead of clipping', async () => {
+  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+
+  assert.match(css, /V2\.5\.4 visual cleanup/)
+  assert.match(css, /\.lane-route-copy strong,[\s\S]*white-space: normal/)
+  assert.match(css, /\.lane-fit-pill small \{[\s\S]*white-space: normal/)
+  assert.match(css, /\.manifest-insertion-card strong,[\s\S]*overflow-wrap: anywhere/)
 })
 
 test('desktop type scale keeps an 11px operational readability floor', async () => {
@@ -186,7 +219,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.3 · ROUTE ORIGIN/)
+  assert.match(top, /DESKTOP V2\.5\.4 · CLEANUP/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
