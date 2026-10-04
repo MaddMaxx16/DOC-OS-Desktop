@@ -32,23 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.4 Continuous Route Plan
+## Current packet — V2.6.5.5 Proven Route Markers
 
-V2.1 through V2.6.5.3 remain the locked desktop foundation.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 map declutter remains accepted in intent, but its grouped committed-freight marker implementation is retired after visual regression.
 
 Guardrails:
-- preserve V2.6.5 map declutter, grouped facility anchors, route persistence, and priority labels,
-- preserve V2.6.5.1 label-anchor integrity and V2.6.5.2 endpoint normalization,
-- preserve V2.6.5.3 separation between road geometry and timing-only estimates,
-- a committed Driver Day must be routed as one ordered multi-waypoint road plan rather than unrelated per-leg road requests,
-- the router receives the Driver Day waypoint order exactly as shown in the manifest,
-- returned route legs are split back into DOC OS segments only after that single continuous route calculation,
-- pickup/delivery line-style semantics remain per leg after splitting,
-- the fixed committed POI marker shell is centered on the same gameplay coordinate used by the route,
-- labels and badge bubbles may overflow the shell but may not alter its size or coordinate center,
-- committed POI offsets are permitted only while a visible FreightLink preview intentionally needs separation,
-- no hidden/stale preview state may offset normal Driver Day markers,
-- do not change Driver Day sequence, scheduling truth, or facility identity in this correction packet.
+- preserve selected-driver committed route persistence when the inspector closes,
+- restore the proven V2.6.4.1 committed freight-stop marker architecture,
+- normal Driver view renders freight pickups/deliveries from driverDay.freightStops,
+- committed freight markers use their original bottom-anchored MapLibre marker geometry,
+- route rendering returns to per-segment road routing from the authoritative Driver Day order,
+- timing-only estimate geometry must not be drawn as a committed blue road,
+- label declutter is presentation-only and must not replace or reposition committed freight-stop markers,
+- PICKUP / DELIVERY text beneath normal committed markers stays hidden to reduce clutter,
+- selected stop and next planned stop may expose the facility name,
+- other committed freight stops remain badge-first and reveal facility name on hover/focus,
+- non-freight Lunch/Staging route anchors remain separate from committed freight markers,
+- same-facility marker grouping is deferred; do not reintroduce it until it can be implemented without changing proven route/marker geometry,
+- do not alter Driver Day sequencing, plan truth, route ownership, or sent-plan behavior in this packet.
 
 ## Verification
 

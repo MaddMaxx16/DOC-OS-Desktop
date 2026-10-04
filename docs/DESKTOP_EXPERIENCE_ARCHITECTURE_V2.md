@@ -511,88 +511,22 @@ Therefore:
 - other drivers remain visible as truck assets without painting every sent route at equal strength by default,
 - selecting another driver transfers full committed-route emphasis to that driver.
 
-Committed-stop labels use progressive disclosure:
+Committed freight stops retain the proven V2.6.4.1 marker geometry:
 
-- every physical facility keeps its typed POI marker and P/D/L/S badge,
-- the selected stop may show its full facility label,
-- the next operational stop may show its full facility label,
-- other stops remain badge-first until hover/focus,
-- multiple planned visits at the same facility share one physical facility marker and combine their visit badges,
-- close important labels may be placed left/right/above/below their exact marker with a short connector rather than overlapping,
-- the physical marker coordinate itself must remain exact.
+- pickup/delivery markers come directly from the authoritative Driver Day freight stops,
+- those markers remain bottom-anchored to their gameplay coordinates,
+- label declutter must never replace or move the underlying P/D marker,
+- normal committed markers do not show redundant PICKUP / DELIVERY text below the icon,
+- the selected stop and next planned stop may show their full facility names,
+- other freight stops remain badge-first until hover/focus.
 
-Before V2.7 execution state exists, "next operational stop" may use the first planned event after shift start as a temporary priority heuristic. V2.7 must replace that heuristic with the driver's real current execution position.
+The grouped committed-marker experiment from V2.6.5 is retired because visual acceptance showed it broke the proven route-to-marker relationship. Same-facility grouping may return later only through a map-native implementation that preserves exact route geometry.
 
 This preserves the hierarchy:
 
-> truck + route = operational ownership  
+> route + P/D marker = operational truth  
 > badge = plan structure  
-> full label = current relevance
-
-### Continuous committed route plan
-
-A SENT/DRAFT Driver Day is one ordered operational route, not a collection of unrelated route requests.
-
-Therefore:
-
-- DOC OS sends the ordered Driver Day waypoints to the road router in one multi-waypoint request,
-- the router returns one coherent route calculation with ordered legs,
-- DOC OS splits those returned legs back into per-segment display semantics,
-- pickup-bound legs may remain dashed while delivery/non-pickup legs remain solid,
-- all legs share one waypoint/snapping context,
-- the committed facility marker uses a fixed coordinate-centered shell so the visible icon center equals the route endpoint pixel,
-- hidden FreightLink preview state must not offset committed markers.
-
-This preserves:
-
-> one Driver Day  
-> one ordered route calculation  
-> many visually typed route legs
-
-### Road-route reliability
-
-Committed map geometry distinguishes **real road geometry** from **timing-only estimates**.
-
-Rules:
-
-- public-router requests retry before falling back,
-- Driver Day route requests use low concurrency rather than bursting every leg at once,
-- estimate fallback may still support timing/fit calculations,
-- estimate fallback must **not** render as a thick committed road route,
-- only route geometry with source `road` is eligible for committed-map rendering,
-- failed estimates are not permanently cached,
-- if road geometry remains unavailable, DOC OS shows an honest temporary route gap rather than a misleading straight-line road.
-
-This is a temporary desktop-development routing strategy. V2.7+ should preserve the distinction between route truth and estimate truth while moving toward a production-grade routing dependency.
-
-### Route/POI endpoint integrity
-
-Committed route geometry and committed POI geometry share one coordinate truth.
-
-For every rendered committed segment:
-
-- the road-router may return road-snapped geometry,
-- DOC OS must explicitly prepend the exact gameplay origin when needed,
-- DOC OS must explicitly append the exact gameplay destination when needed,
-- if routed geometry is unavailable, the segment must fall back to a direct visible connection rather than disappear,
-- grouped route-anchor markers use the same endpoint coordinates as the segment,
-- committed facility markers are center-anchored on that coordinate.
-
-The visual invariant is:
-
-> if a stop badge exists, the committed route physically reaches that badge's exact gameplay coordinate
-
-### Label-anchor integrity
-
-Facility labels are presentation only.
-
-A label becoming visible must **never** change the marker's physical anchor position. In particular:
-
-- MapLibre's route/POI coordinate belongs to the typed facility icon,
-- selected, next-stop, and hover labels float outside the marker's layout geometry,
-- leader lines may connect an offset label back to the exact POI,
-- label height/width must not move the P/D/L/S icon away from the route endpoint,
-- route geometry and facility marker geometry must continue to meet at the exact gameplay coordinate.
+> facility label = contextual detail
 
 ### Selection synchronization
 
@@ -1524,25 +1458,28 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5.3 are accepted and locked.
+V2.5 through V2.6.4.1 are accepted and locked.
 
-The active route-correction packet is:
+The active corrective packet is:
 
-# **V2.6.5.4 — Continuous Route Plan**
+# **V2.6.5.5 — Proven Route Markers**
 
-Repeated visual acceptance showed that independent per-leg routing was the remaining structural weakness. Even with exact endpoint normalization, separate route calls can fail or snap independently and produce a Driver Day that does not read as one continuous operating plan.
+Repeated visual testing showed that the route/marker relationship was trustworthy before V2.6.5. The regression began when normal Driver view replaced the original freight-stop markers with grouped route-anchor markers. Subsequent route experiments did not restore the visual connection.
 
-V2.6.5.4 changes the committed routing model:
+V2.6.5.5 therefore restores the last proven route/marker architecture:
 
-- the full ordered Driver Day is sent to OSRM as one multi-waypoint route request,
-- the returned ordered legs are mapped back to DOC OS segment semantics,
-- pickup-bound dashed and delivery-bound solid styling remain intact,
-- all committed legs share one road-route calculation,
-- the committed POI icon sits inside a fixed 28×28 coordinate-centered shell,
-- facility labels remain outside marker geometry,
-- preview-only marker offsets are disabled unless the FreightLink preview is actually visible.
+- committed P/D markers again render directly from Driver Day freight stops,
+- those markers use the original bottom-anchor behavior,
+- committed route legs again route per authoritative Driver Day segment,
+- only real road geometry renders as the committed route,
+- V2.6.5 label declutter remains, but only as text visibility:
+  - redundant PICKUP / DELIVERY text is hidden,
+  - selected/next facility names stay visible,
+  - other facility names appear on hover/focus,
+- Lunch/Staging keep their separate non-freight route anchors,
+- grouped committed freight markers are explicitly retired for now.
 
-After V2.6.5.4 passes visual acceptance, proceed to:
+If V2.6.5.5 restores the proven route-to-marker connection while keeping the cleaner label treatment, lock V2.6 map polish and proceed to:
 
 # **V2.7 — Live Operations**
 

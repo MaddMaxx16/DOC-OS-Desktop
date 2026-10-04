@@ -552,3 +552,43 @@
   max-width: 58px;
   white-space: nowrap;
 }
+
+/* V2.6.5.5: keep proven freight-stop marker geometry; declutter text independently. */
+.facility-stop {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  overflow: visible;
+}
+
+.facility-stop > em {
+  display: none;
+}
+
+.facility-stop > small {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 39px;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.facility-stop.priority-label > small,
+.facility-stop.selected > small,
+.facility-stop:hover > small,
+.facility-stop:focus-visible > small {
+  display: block;
+}
+
+.facility-stop.priority-label > small {
+  border-color: color-mix(in srgb, var(--driver-color) 52%, #344652);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--driver-color) 9%, transparent);
+}
