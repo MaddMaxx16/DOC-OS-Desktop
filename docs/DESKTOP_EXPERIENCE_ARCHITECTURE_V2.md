@@ -1342,22 +1342,23 @@ The following are now considered locked unless deliberately reopened:
 
 The active polish packet is:
 
-# **V2.5.6 — FreightLink Row Spacing**
+# **V2.5.7 — Compact FreightLink Fit Badge**
 
 It locks:
 
-- lane-fit cards fully inside the FreightLink browser column,
-- a deliberate right-side gutter between fit cards and the browser/map boundary,
-- compact unbooked freight rows with no empty booking-state grid row,
-- booking-state rows appearing only when booking state actually exists,
-- no clipped TIGHT/GOOD/POOR labels or fit-card borders,
+- the lane-fit treatment as a compact status badge rather than a secondary panel,
+- a 76 px fit column at the reference desktop layout,
+- a larger right-side gutter so the badge sits clearly inside the FreightLink browser,
+- vertical centering instead of stretching the badge across the full lane row,
+- compact internal padding around TIGHT/GOOD/POOR and the insertion cue,
+- the V2.5.6 compact row and booking-state behavior,
 - the V2.5.5 clock and disabled pause / play / fast-forward control strip.
 
-After V2.5.6 passes visual acceptance, the next gameplay packet is:
+After V2.5.7 passes visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, and V2.5.6 FreightLink row-spacing contract.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, and V2.5.7 compact fit-badge contract.
 
 ---
 
