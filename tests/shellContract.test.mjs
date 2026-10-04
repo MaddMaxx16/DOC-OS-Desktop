@@ -307,25 +307,24 @@ test('V2.6.4.1 Operations Inspector can close without clearing operational selec
   assert.match(css, /\.workstation-panel-header > button:hover/)
 })
 
-test('V2.6.5.5 keeps route persistence while restoring proven freight-stop markers', async () => {
+test('V2.6.5.9 committed freight stops render in MapLibre instead of displaced DOM markers', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
   assert.match(app, /operationsInspectorHidden/)
   assert.match(shell, /operationsInspectorHidden/)
   assert.match(shell, /driverDay=\{mapDriverDay\}/)
-  assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
-  assert.match(map, /poi-marker facility-stop/)
-  assert.match(map, /new Marker\(\{ element, anchor: 'bottom' \}\)/)
-  assert.match(map, /hydrateCommittedRouteSegments/)
-  assert.match(map, /routeSegment: calculateRoadRoute/)
-  assert.match(map, /segment\.route\?\.source === 'road'/)
-  assert.match(css, /\.facility-stop \{[\s\S]*width: 34px/)
-  assert.match(css, /\.facility-stop > em \{[\s\S]*display: none/)
-  assert.match(css, /\.facility-stop > small \{[\s\S]*position: absolute/)
-  assert.match(css, /\.facility-stop\.priority-label > small/)
+  assert.match(map, /COMMITTED_STOP_SOURCE/)
+  assert.match(map, /COMMITTED_STOP_CIRCLE_LAYER/)
+  assert.match(map, /COMMITTED_STOP_BADGE_LAYER/)
+  assert.match(map, /COMMITTED_STOP_LABEL_LAYER/)
+  assert.match(map, /type: 'circle'/)
+  assert.match(map, /text-field': \['get', 'badge'\]/)
+  assert.match(map, /text-field': \['get', 'label'\]/)
+  assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*stop\.coordinates/)
+  assert.match(map, /map\.on\('click', layerId, selectStop\)/)
+  assert.doesNotMatch(map, /poi-marker facility-stop/)
 })
 
 test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-access coordinates', async () => {
@@ -450,7 +449,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.8 · ROUTE DIAGNOSTICS/)
+  assert.match(top, /DESKTOP V2\.6\.5\.9 · NATIVE STOP LAYER/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -495,16 +494,15 @@ test('V2.5.2 ISSUE highlights the paper field without revealing correctness', as
   assert.match(css, /@keyframes rateconIssueFlash/)
 })
 
-test('normal Driver view uses proven freight-stop markers and reserves route anchors for non-freight events', async () => {
+test('normal Driver view uses map-native freight stops and reserves DOM route anchors for non-freight events', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
-  assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
-  assert.match(map, /poi-marker facility-stop/)
+  assert.match(map, /COMMITTED_STOP_SOURCE/)
+  assert.match(map, /driverDay\.freightStops/)
   assert.match(map, /const routeAnchors = driverIdentity && driverDay/)
   assert.match(map, /const isFreightLocation = routeAnchor\.eventKinds\.includes\('freight-stop'\)/)
   assert.match(map, /if \(!isFreightLocation\) addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
 })
-
 
 test('V2.5.3 Rate Con keeps ISSUE markup on paper until the player changes the judgment', async () => {
   const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')

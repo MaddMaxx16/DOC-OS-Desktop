@@ -34,6 +34,10 @@ const ROUTE_DEBUG_ENDPOINT_SOURCE = 'route-debug-endpoint-source'
 const ROUTE_DEBUG_ENDPOINT_LAYER = 'route-debug-endpoint-layer'
 const ROUTE_DEBUG_MARKER_SOURCE = 'route-debug-marker-source'
 const ROUTE_DEBUG_MARKER_LAYER = 'route-debug-marker-layer'
+const COMMITTED_STOP_SOURCE = 'committed-stop-source'
+const COMMITTED_STOP_CIRCLE_LAYER = 'committed-stop-circle-layer'
+const COMMITTED_STOP_BADGE_LAYER = 'committed-stop-badge-layer'
+const COMMITTED_STOP_LABEL_LAYER = 'committed-stop-label-layer'
 
 const DEADHEAD_SOURCE = 'freightlink-deadhead-source'
 const DEADHEAD_CASING_LAYER = 'freightlink-deadhead-casing'
@@ -183,6 +187,8 @@ export default function OperationsMap({
     ),
     [driverRouteKey, driverRouteResult],
   )
+  const nextStopId = nextOperationalEventId(driverDay)
+
   const routeDebugRows = useMemo(() => {
     const accessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
 
@@ -338,7 +344,6 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
-    const nextStopId = nextOperationalEventId(driverDay)
     const routeAnchors = driverIdentity && driverDay
       ? buildDriverRouteAnchors(driverDay, locations)
       : []
@@ -447,41 +452,186 @@ export default function OperationsMap({
       }
     }
 
-    for (const stop of workspaceOpen ? [] : (driverDay?.freightStops ?? [])) {
-      if (!stop.coordinates || !driverIdentity) continue
-      const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
-      const location = locations[stop.locationId]
-      const element = document.createElement('button')
-      element.type = 'button'
-      const priorityLabel = selected || stop.id === nextStopId
-      element.className = `poi-marker facility-stop ${stop.role} ${selected ? 'selected' : ''} ${priorityLabel ? 'priority-label' : ''}`
-      element.style.setProperty('--driver-color', driverIdentity.color)
-      element.setAttribute('aria-label', `Select ${stop.role} ${stop.loadRef} at ${stop.locationLabel}`)
-      element.innerHTML = `${facilityMarkup({
-        type: locationType(location),
-        role: stop.role,
-        badge: `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`,
-      })}<small>${stop.locationLabel}</small>`
-      element.addEventListener('click', (event) => {
-        event.preventDefault()
-        event.stopPropagation()
-        onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, stop.id)
-      })
 
-      const markerCoordinates = routeAccessCoordinate(
-        routeAccessByEventId,
-        stop.id,
-        stop.coordinates,
-      )
-
-      const marker = new Marker({ element, anchor: 'bottom' })
-        .setLngLat(markerCoordinates)
-        .addTo(map)
-
-      markerRefs.current.set(`stop:${stop.id}`, marker)
-    }
 
   }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, plannedDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map) return undefined
+
+    const clearCommittedStops = () => {
+      if (map.getLayer(COMMITTED_STOP_LABEL_LAYER)) map.removeLayer(COMMITTED_STOP_LABEL_LAYER)
+      if (map.getLayer(COMMITTED_STOP_BADGE_LAYER)) map.removeLayer(COMMITTED_STOP_BADGE_LAYER)
+      if (map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)) map.removeLayer(COMMITTED_STOP_CIRCLE_LAYER)
+      if (map.getSource(COMMITTED_STOP_SOURCE)) map.removeSource(COMMITTED_STOP_SOURCE)
+    }
+
+    clearCommittedStops()
+
+    if (workspaceOpen || !selectedDriver || !driverDay?.freightStops?.length) {
+      return clearCommittedStops
+    }
+
+    const identity = getDriverIdentity(selectedDriver.id)
+    const accessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
+    const features = driverDay.freightStops
+      .map((stop) => {
+        const coordinates = routeAccessCoordinate(
+          accessByEventId,
+          stop.id,
+          stop.coordinates,
+        )
+        if (!Array.isArray(coordinates)) return null
+
+        const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
+        const priority = selected || stop.id === nextStopId
+
+        return {
+          type: 'Feature',
+          id: stop.id,
+          properties: {
+            id: stop.id,
+            role: stop.role,
+            badge: `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`,
+            label: stop.locationLabel,
+            priority,
+            selected,
+          },
+          geometry: {
+            type: 'Point',
+            coordinates,
+          },
+        }
+      })
+      .filter(Boolean)
+
+    if (!features.length) return clearCommittedStops
+
+    map.addSource(COMMITTED_STOP_SOURCE, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features,
+      },
+    })
+
+    map.addLayer({
+      id: COMMITTED_STOP_CIRCLE_LAYER,
+      type: 'circle',
+      source: COMMITTED_STOP_SOURCE,
+      paint: {
+        'circle-radius': [
+          'case',
+          ['boolean', ['get', 'selected'], false],
+          16,
+          14,
+        ],
+        'circle-color': '#101a22',
+        'circle-stroke-color': identity.color,
+        'circle-stroke-width': [
+          'case',
+          ['boolean', ['get', 'selected'], false],
+          3,
+          2,
+        ],
+        'circle-opacity': 0.98,
+        'circle-stroke-opacity': 1,
+      },
+    })
+
+    map.addLayer({
+      id: COMMITTED_STOP_BADGE_LAYER,
+      type: 'symbol',
+      source: COMMITTED_STOP_SOURCE,
+      layout: {
+        'text-field': ['get', 'badge'],
+        'text-size': 10,
+        'text-font': ['Open Sans Bold'],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+      },
+      paint: {
+        'text-color': identity.color,
+        'text-halo-color': '#071019',
+        'text-halo-width': 1,
+      },
+    })
+
+    map.addLayer({
+      id: COMMITTED_STOP_LABEL_LAYER,
+      type: 'symbol',
+      source: COMMITTED_STOP_SOURCE,
+      filter: ['==', ['get', 'priority'], true],
+      layout: {
+        'text-field': ['get', 'label'],
+        'text-size': 11,
+        'text-font': ['Open Sans Semibold'],
+        'text-anchor': 'top',
+        'text-offset': [0, 1.9],
+        'text-max-width': 18,
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+      },
+      paint: {
+        'text-color': '#d7e1e7',
+        'text-halo-color': '#071018',
+        'text-halo-width': 2,
+      },
+    })
+
+    const selectStop = (event) => {
+      const stopId = event.features?.[0]?.properties?.id
+      if (stopId) onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, stopId)
+    }
+    const showStopLabel = (event) => {
+      const stopId = event.features?.[0]?.properties?.id
+      map.getCanvas().style.cursor = 'pointer'
+      if (!stopId || !map.getLayer(COMMITTED_STOP_LABEL_LAYER)) return
+      map.setFilter(COMMITTED_STOP_LABEL_LAYER, [
+        'any',
+        ['==', ['get', 'priority'], true],
+        ['==', ['get', 'id'], stopId],
+      ])
+    }
+    const resetStopLabel = () => {
+      map.getCanvas().style.cursor = ''
+      if (!map.getLayer(COMMITTED_STOP_LABEL_LAYER)) return
+      map.setFilter(COMMITTED_STOP_LABEL_LAYER, ['==', ['get', 'priority'], true])
+    }
+
+    for (const layerId of [
+      COMMITTED_STOP_CIRCLE_LAYER,
+      COMMITTED_STOP_BADGE_LAYER,
+      COMMITTED_STOP_LABEL_LAYER,
+    ]) {
+      map.on('click', layerId, selectStop)
+      map.on('mouseenter', layerId, showStopLabel)
+      map.on('mouseleave', layerId, resetStopLabel)
+    }
+
+    return () => {
+      for (const layerId of [
+        COMMITTED_STOP_CIRCLE_LAYER,
+        COMMITTED_STOP_BADGE_LAYER,
+        COMMITTED_STOP_LABEL_LAYER,
+      ]) {
+        map.off('click', layerId, selectStop)
+        map.off('mouseenter', layerId, showStopLabel)
+        map.off('mouseleave', layerId, resetStopLabel)
+      }
+      resetStopLabel()
+      clearCommittedStops()
+    }
+  }, [
+    driverDay,
+    mapReady,
+    nextStopId,
+    plannedDriverRoutes,
+    selectedDriver,
+    selection,
+    workspaceOpen,
+  ])
 
   useEffect(() => {
     if (!driverRouteKey || !driverDay) return undefined
@@ -551,11 +701,13 @@ export default function OperationsMap({
       data: { type: 'FeatureCollection', features },
     })
 
-    const beforeId = map.getLayer(DEADHEAD_CASING_LAYER)
-      ? DEADHEAD_CASING_LAYER
-      : map.getLayer(LOADED_CASING_LAYER)
-        ? LOADED_CASING_LAYER
-        : undefined
+    const beforeId = map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)
+      ? COMMITTED_STOP_CIRCLE_LAYER
+      : map.getLayer(DEADHEAD_CASING_LAYER)
+        ? DEADHEAD_CASING_LAYER
+        : map.getLayer(LOADED_CASING_LAYER)
+          ? LOADED_CASING_LAYER
+          : undefined
 
     const solidLegFilter = ['!=', ['get', 'destinationRole'], 'pickup']
     const pickupLegFilter = ['==', ['get', 'destinationRole'], 'pickup']

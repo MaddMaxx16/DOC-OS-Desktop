@@ -540,16 +540,19 @@ Therefore:
 - other drivers remain visible as truck assets without painting every sent route at equal strength by default,
 - selecting another driver transfers full committed-route emphasis to that driver.
 
-Committed freight stops retain the proven V2.6.4.1 marker geometry:
+Committed freight stops render as MapLibre-native operational layers:
 
-- pickup/delivery markers come directly from the authoritative Driver Day freight stops,
-- the stop retains its canonical facility identity while the operational marker may resolve to the route's truck-access coordinate,
-- label declutter must never independently move the underlying P/D marker away from route-access truth,
-- normal committed markers do not show redundant PICKUP / DELIVERY text below the icon,
+- pickup/delivery features come directly from the authoritative Driver Day freight stops,
+- each feature resolves to the route's truck-access coordinate when road truth is available,
+- committed route lines and committed P/D stop badges use the same MapLibre projection,
+- DOM Marker positioning must not be used for committed freight-stop badges,
+- normal committed stop presentation is badge-first rather than redundant PICKUP / DELIVERY copy,
 - the selected stop and next planned stop may show their full facility names,
-- other freight stops remain badge-first until hover/focus.
+- other freight stops reveal facility labels on hover/focus,
+- native stop layers remain clickable and feed the shared STOP selection model,
+- committed stop layers render above their committed route line.
 
-The grouped committed-marker experiment from V2.6.5 is retired because visual acceptance showed it broke the proven route-to-marker relationship. Same-facility grouping may return later only through a map-native implementation that preserves exact route geometry.
+V2.6.5.8 diagnostics proved the route endpoint and marker-access coordinates were identical while the HTML stop marker still appeared displaced on screen. Therefore the committed freight-stop DOM-marker path is retired. Same-facility grouping may return later only through a map-native implementation that preserves route projection truth.
 
 This preserves the hierarchy:
 
@@ -1491,27 +1494,37 @@ V2.5 through V2.6.4.1 are accepted and locked.
 
 The active corrective packet is:
 
-# **V2.6.5.7 — Serialized Route Hydration**
+# **V2.6.5.9 — Native Operational Stops**
 
-V2.6.5.6 correctly separated facility coordinates from routable truck-access coordinates, but visual acceptance exposed the remaining runtime failure: V2.6.5.5 had restored a `Promise.all` burst that requests every committed Driver Day leg from the public OSRM endpoint at once.
+V2.6.5.8 diagnostics finally isolated the remaining route/marker failure.
 
-That produces partial days when some requests fail or throttle. Because estimate geometry is intentionally hidden, those failed legs appear as missing route connections.
+The browser showed:
 
-V2.6.5.7 corrects that runtime behavior:
+- all 7 Marcus route legs were real ROAD geometry,
+- route endpoint and marker-access coordinates matched exactly,
+- diagnostic route-end dots and marker-access rings rendered on top of each other,
+- the HTML pickup/delivery stop icons still appeared visibly displaced from those exact coordinates.
 
-- committed road segments hydrate one at a time in Driver Day order,
-- successful legs render progressively,
-- each road request retains the existing internal retry behavior,
-- any leg still returning an estimate receives a second delayed hydration wave,
-- estimate failures remain uncached so recovery is possible,
-- operational stop markers update to the resolved truck-access coordinate as each road leg succeeds,
-- the retired continuous-route experiment and its unused render helpers are removed.
+That proves the remaining fault is the DOM-marker rendering layer, not routing, snapping, Driver Day order, or access-point data.
+
+V2.6.5.9 therefore removes committed P/D stops from the HTML Marker path:
+
+- committed freight stops render from one GeoJSON source,
+- their visual badge is a MapLibre-native circle + symbol layer,
+- labels are a MapLibre-native symbol layer,
+- route and stop use the same access coordinates and the same projection engine,
+- selected/next labels remain visible,
+- secondary facility labels reveal on hover,
+- native stop layers remain clickable and preserve STOP selection,
+- route layers render below the committed stop layers,
+- retired committed `.facility-stop` DOM CSS is removed,
+- V2.6.5.8 diagnostics remain dev-only for visual proof during acceptance.
 
 Acceptance:
 
-Marcus's full committed day resolves all real-road legs without D1/P3 disappearing simply because several OSRM calls were made simultaneously.
+D1, P3, and every other committed P/D badge visually sit on the same pink/yellow diagnostic endpoint coordinate that the blue route reaches.
 
-After visual acceptance, lock V2.6 map polish and proceed to:
+After visual acceptance, remove the diagnostics UI, lock V2.6 map polish, and proceed to:
 
 # **V2.7 — Live Operations**
 
