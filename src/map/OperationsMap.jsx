@@ -12,6 +12,7 @@ import {
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
 } from '../domain/routing/driverRoutePlan.js'
+import { hydrateCommittedRouteSegments } from '../domain/routing/committedRouteHydration.js'
 import { nextOperationalEventId } from '../domain/routing/mapRouteDisplay.js'
 import {
   buildRouteAccessByEventId,
@@ -426,12 +427,19 @@ export default function OperationsMap({
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
 
-    Promise.all(
-      segmentSpecs.map(async (segment) => ({
-        ...segment,
-        route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
-      })),
-    ).then((segments) => {
+    setDriverRouteResult({
+      key: driverRouteKey,
+      segments: segmentSpecs.map((segment) => ({ ...segment, route: null })),
+    })
+
+    hydrateCommittedRouteSegments(segmentSpecs, {
+      routeSegment: calculateRoadRoute,
+      isActive: () => active,
+      onProgress: (segments) => {
+        if (!active) return
+        setDriverRouteResult({ key: driverRouteKey, segments })
+      },
+    }).then((segments) => {
       if (!active) return
       setDriverRouteResult({ key: driverRouteKey, segments })
     })
