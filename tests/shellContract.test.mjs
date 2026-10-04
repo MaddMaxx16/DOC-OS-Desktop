@@ -217,24 +217,39 @@ test('V2.6.2 Planning Mode drags freight stops through the authoritative reorder
   assert.match(css, /\.planning-feedback\.blocked/)
 })
 
-test('V2.6.3 Planning Mode moves Lunch through insertion lanes and chooses physical POIs', async () => {
-  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+test('V2.6.3 Planning Mode moves Lunch through insertion lanes and uses physical POIs', async () => {
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const panel = await readFile(new URL('../src/features/driver-day/DriverDayPanel.jsx', import.meta.url), 'utf8')
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/features/driver-day/driverDay.css', import.meta.url), 'utf8')
 
-  assert.match(app, /choosePlanningPlace/)
-  assert.match(app, /chooseDriverPlanningPlace/)
   assert.match(shell, /buildPlanningPlaceOptions/)
-  assert.match(shell, /planningPlaceOptions=\{planningPlaceOptions\}/)
   assert.match(panel, /BREAKS, PLACES \+ STAGING/)
-  assert.match(panel, /PlanningPlacePicker/)
   assert.match(panel, /Drag freight or Lunch into the insertion lanes/)
   assert.match(map, /planning-place-option/)
-  assert.match(map, /onChoosePlanningPlaceRef/)
   assert.match(map, /event\.locationId \?\? 'truck'/)
-  assert.match(css, /\.planning-place-picker/)
+})
+
+test('V2.6.3.1 place choices use a side flyout with preview and explicit confirmation', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const panel = await readFile(new URL('../src/features/driver-day/DriverDayPanel.jsx', import.meta.url), 'utf8')
+  const flyout = await readFile(new URL('../src/features/driver-day/PlanningPlaceFlyout.jsx', import.meta.url), 'utf8')
+  const flyoutCss = await readFile(new URL('../src/features/driver-day/planningPlaceFlyout.css', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(app, /pendingPlanningPlace/)
+  assert.match(app, /planningPlacePreviewDay/)
+  assert.match(app, /previewDriverPlanningPlace/)
+  assert.match(app, /confirmDriverPlanningPlace/)
+  assert.match(shell, /<PlanningPlaceFlyout/)
+  assert.match(shell, /planningPlacePreviewDay/)
+  assert.match(flyout, /CONFIRM LUNCH/)
+  assert.match(flyout, /CONFIRM STAGING/)
+  assert.match(flyout, /PREVIEWING/)
+  assert.match(flyoutCss, /right: 430px/)
+  assert.match(flyoutCss, /width: 390px/)
+  assert.match(map, /onPreviewPlanningPlaceRef/)
+  assert.doesNotMatch(panel, /PlanningPlacePicker/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -312,7 +327,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.3 · BREAKS \+ PLACES/)
+  assert.match(top, /DESKTOP V2\.6\.3\.1 · PLACE CONFIRM/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
