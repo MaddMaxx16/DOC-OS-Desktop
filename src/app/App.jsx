@@ -63,6 +63,14 @@ export default function App() {
     }
 
     if (type === SELECTION_TYPES.LOAD) {
+      const bookingRecord = bookingRecords[id]
+      if (
+        bookingRecord
+        && bookingRecord.status !== BOOKING_STATUS.CONFIRMED
+        && bookingRecord.driverId
+      ) {
+        setFreightCandidateDriverId(bookingRecord.driverId)
+      }
       setRightOpen(false)
     }
   }
