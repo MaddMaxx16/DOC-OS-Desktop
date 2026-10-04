@@ -10,7 +10,7 @@ export default function TopBar({ focused = false }) {
         <span className="status-dot" />
         <strong>{focused ? 'FOCUSED' : 'NO ALERTS'}</strong>
         <span className="status-divider" />
-        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5.4 · CLEANUP'}</small>
+        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5.5 · CONTROL STRIP'}</small>
       </div>
 
       <div className="clock-block">
@@ -18,6 +18,11 @@ export default function TopBar({ focused = false }) {
         <div className="clock-time-row">
           <strong>6:00 AM</strong>
           <em>PAUSED</em>
+          <div className="time-controls" aria-label="Time controls">
+            <button type="button" className="active" disabled aria-label="Pause">Ⅱ</button>
+            <button type="button" disabled aria-label="Play">▶</button>
+            <button type="button" disabled aria-label="Fast forward">»</button>
+          </div>
         </div>
       </div>
     </header>
