@@ -37,7 +37,7 @@ test('MapLibre map class does not shadow the native Map registry', async () => {
 })
 
 
-test('V2.4.1 shared app drawer owns the bottom workstation region', async () => {
+test('V2.4.4 shared app drawer owns the taller bottom workstation region', async () => {
   assert.equal(SHELL_CONFIG.dockHeight, 64)
   assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.46)
   assert.equal(SHELL_CONFIG.appDrawerMinHeight, 360)
