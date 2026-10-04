@@ -53,20 +53,23 @@ test('unresolved estimate legs get another serialized hydration wave', async () 
   assert.equal(result[1].route.source, 'road')
 })
 
-test('progress updates expose successful road legs without waiting for the whole day', async () => {
-  const progress = []
+
+
+
+test('committed route hydration returns the completed day without exposing partial publication callbacks', async () => {
   const segmentSpecs = [
     { id: 'a', fromCoordinates: [0, 0], toCoordinates: [1, 1] },
     { id: 'b', fromCoordinates: [1, 1], toCoordinates: [2, 2] },
   ]
 
-  await hydrateCommittedRouteSegments(segmentSpecs, {
-    routeSegment: async (from, to) => ({ source: 'road', routeShape: [from, to] }),
-    onProgress: (segments) => {
-      progress.push(segments.filter((segment) => segment.route?.source === 'road').length)
-    },
+  const result = await hydrateCommittedRouteSegments(segmentSpecs, {
+    routeSegment: async (from, to) => ({
+      source: 'road',
+      routeShape: [from, to],
+    }),
     waitFn: async () => {},
   })
 
-  assert.deepEqual(progress, [1, 2])
+  assert.equal(result.length, 2)
+  assert.ok(result.every((segment) => segment.route?.source === 'road'))
 })
