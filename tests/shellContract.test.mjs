@@ -252,6 +252,19 @@ test('V2.6.3.1 place choices use a side flyout with preview and explicit confirm
   assert.doesNotMatch(panel, /PlanningPlacePicker/)
 })
 
+test('V2.6.3.2 staging flyout exposes context labels for nearby end-of-day choices', async () => {
+  const flyout = await readFile(new URL('../src/features/driver-day/PlanningPlaceFlyout.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/driver-day/planningPlaceFlyout.css', import.meta.url), 'utf8')
+  const planning = await readFile(new URL('../src/domain/planning/planningPlaces.js', import.meta.url), 'utf8')
+
+  assert.match(flyout, /proximityLabel/)
+  assert.match(flyout, /OVERNIGHT/)
+  assert.match(planning, /NEAR FINAL STOP/)
+  assert.match(planning, /LOCAL REPOSITION/)
+  assert.match(planning, /LONG REPOSITION/)
+  assert.match(css, /\.planning-place-flyout-list i/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -327,7 +340,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.3\.1 · PLACE CONFIRM/)
+  assert.match(top, /DESKTOP V2\.6\.3\.2 · CONTEXTUAL STAGING/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
