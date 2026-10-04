@@ -587,10 +587,6 @@ export default function OperationsMap({
     hydrateCommittedRouteSegments(segmentSpecs, {
       routeSegment: calculateRoadRoute,
       isActive: () => active,
-      onProgress: (segments) => {
-        if (!active) return
-        setDriverRouteResult({ key: driverRouteKey, segments })
-      },
     }).then((segments) => {
       if (!active) return
       setDriverRouteResult({ key: driverRouteKey, segments })
