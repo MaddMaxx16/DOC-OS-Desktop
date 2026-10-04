@@ -44,7 +44,7 @@ export function buildPlanningPlaceOptions({
   day,
   kind,
   locations = {},
-  limit = 5,
+  limit = null,
 } = {}) {
   const role = roleForKind(kind)
   const context = eventContext(day, kind)
@@ -100,7 +100,8 @@ export function buildPlanningPlaceOptions({
     return leftScore - rightScore || left.label.localeCompare(right.label)
   })
 
-  return options.slice(0, Math.max(1, Number(limit) || 5))
+  if (limit == null) return options
+  return options.slice(0, Math.max(1, Number(limit) || options.length))
 }
 
 export function choosePlanningPlace({
