@@ -47,12 +47,13 @@ export function receiveCorrectedRateConfirmation(record, rateConfirmation) {
   }
 }
 
-export function confirmBookingRecord(record) {
+export function confirmBookingRecord(record, { acceptedWithMismatch = false } = {}) {
   if (!record?.rateConfirmation) return record
   return {
     ...record,
     status: BOOKING_STATUS.CONFIRMED,
     confirmedRateConfirmationId: record.rateConfirmation.id,
+    acceptedWithMismatch: Boolean(acceptedWithMismatch),
   }
 }
 
