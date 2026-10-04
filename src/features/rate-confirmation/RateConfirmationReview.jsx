@@ -184,7 +184,7 @@ export default function RateConfirmationReview({
             return (
               <div className={`ratecon-check ${choice ? `reviewed ${choice}` : ''}`} key={check.id}>
                 <div className="ratecon-check-heading">
-                  <span>{reviewChoices[check.id] ? reviewedCount : '—'}</span>
+                  <span>{choice === 'match' ? 'M' : choice === 'issue' ? '!' : '—'}</span>
                   <strong>{check.label}</strong>
                 </div>
 
