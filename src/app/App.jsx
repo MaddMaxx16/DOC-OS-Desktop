@@ -50,6 +50,20 @@ export default function App() {
   const selectSubject = (type, id) => {
     setSelection(createSelection(type, id))
 
+    const subjectDriverId = type === SELECTION_TYPES.DRIVER
+      ? id
+      : type === SELECTION_TYPES.STOP
+        ? driverDays.find((day) => day.timeline.some((item) => item.id === id))?.driverId ?? null
+        : null
+
+    if (
+      planningDriverId
+      && subjectDriverId
+      && subjectDriverId !== planningDriverId
+    ) {
+      setPlanningDriverId(null)
+    }
+
     if (type === SELECTION_TYPES.DRIVER || type === SELECTION_TYPES.STOP) {
       return
     }
