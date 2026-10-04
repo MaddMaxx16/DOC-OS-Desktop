@@ -483,7 +483,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.12 · ROUTE SEAM CONTINUITY/)
+  assert.match(top, /DESKTOP V2\.6\.5\.13 · ATOMIC ROUTE PUBLISH/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
