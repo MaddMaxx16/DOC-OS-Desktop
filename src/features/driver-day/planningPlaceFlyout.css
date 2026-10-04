@@ -89,9 +89,13 @@
   text-align: left;
   cursor: pointer;
 }
-.planning-place-flyout-list > button:hover {
+.planning-place-flyout-list > button:hover:not(:disabled) {
   border-color: #557181;
   background: #10212a;
+}
+.planning-place-flyout-list > button:disabled {
+  cursor: default;
+  opacity: .8;
 }
 .planning-place-flyout-list > button.current {
   border-color: #3f5c53;
