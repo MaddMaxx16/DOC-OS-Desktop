@@ -416,6 +416,23 @@ The map system must support at least:
 
 Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
+### Stable route refresh
+
+Atomic publication prevents a route from assembling leg-by-leg, but a refresh must also avoid a blank frame between the old complete route and the new complete route.
+
+Rules:
+
+- the last complete route snapshot may remain visible while the same driver's replacement route hydrates,
+- the replacement route swaps in only after its full hydration/retry pass finishes,
+- the cached snapshot is scoped to the selected driver,
+- switching drivers must never show the previous driver's route,
+- this is presentation continuity only and does not make the old route current planning truth after the swap completes.
+
+This creates the transition invariant:
+
+> old complete route → new complete route  
+> never old route → blank map → new route
+
 ### Atomic committed-route publication
 
 Committed Driver Day routing may hydrate multiple road legs serially, but route loading is not gameplay and should not read as vehicle motion.
@@ -1533,34 +1550,31 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5.12 are accepted and locked.
+V2.5 through V2.6.5.13 are accepted and locked.
 
-The active final presentation-polish packet is:
+The active final V2.6 polish packet is:
 
-# **V2.6.5.13 — Atomic Route Publish**
+# **V2.6.5.14 — Stable Route Swap**
 
-After route geometry, access points, native committed stops, FreightLink parity, and route seams were corrected, visual acceptance exposed a different kind of jumpiness: the route visibly builds itself one leg at a time.
+V2.6.5.13 removed leg-by-leg route construction, leaving one minor visual flash: when the Driver Day key changes, the current route result no longer matches the new key, so the map temporarily renders no committed route while the replacement snapshot hydrates.
 
-That behavior came from V2.6.5.7's `onProgress` publication:
+V2.6.5.14 removes that blank frame:
 
-- road requests correctly hydrate serially,
-- each successful leg was immediately pushed into React state,
-- MapLibre then rebuilt the committed route after every leg,
-- the player therefore watched the route pop across the map in chunks.
-
-V2.6.5.13 keeps the reliable serialized requests but changes presentation:
-
-- no intermediate route snapshots are published,
-- the full hydration/retry pass completes first,
-- one completed Driver Day route snapshot is then published,
-- FreightLink reuses the same stable committed route,
-- no route geometry, coordinates, timing, HOS, appointments, or planning math changes are introduced.
+- a completed route snapshot is retained for the currently selected driver,
+- while that same driver's refreshed route hydrates, the previous complete route remains visible,
+- once the replacement completes, the map swaps atomically to the new route,
+- switching to another driver never displays the prior driver's cached route,
+- no routing, coordinate, timing, HOS, appointment, or planning logic changes are introduced.
 
 Acceptance:
 
-Selecting a driver or opening the map does not show the committed route assembling leg-by-leg. The completed route appears as one stable path once road hydration is ready.
+Refreshing a selected driver's route transitions from one complete route to the next without a blank flash and without progressive leg construction.
 
-After visual acceptance, lock V2.6 Daily Planning and proceed to:
+After visual acceptance:
+
+# **V2.6 Daily Planning is complete.**
+
+The active build order advances to:
 
 # **V2.7 — Live Operations**
 
