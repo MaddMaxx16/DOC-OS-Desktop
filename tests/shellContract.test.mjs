@@ -336,9 +336,9 @@ test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-acce
   assert.match(routing, /destinationAccessCoordinates/)
   assert.match(routing, /data\?\.waypoints\?\.\[0\]\?\.location/)
   assert.match(routing, /data\?\.waypoints\?\.\[1\]\?\.location/)
-  assert.match(map, /buildRouteAccessByEventId\(plannedDriverRoutes\)/)
+  assert.match(map, /buildRouteAccessByEventId\(displayDriverRoutes\)/)
   assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*stop\.coordinates/)
-  assert.match(map, /plannedDriverRoutes, planningPlaceOptions/)
+  assert.match(map, /displayDriverRoutes, planningPlaceOptions/)
   assert.match(access, /Prefer the incoming leg's destination access point/)
 })
 
@@ -380,6 +380,22 @@ test('V2.6.5.11 FreightLink does not disable the native committed-stop layer', a
   assert.match(map, /COMMITTED_STOP_CIRCLE_LAYER/)
   assert.match(map, /COMMITTED_STOP_BADGE_LAYER/)
   assert.match(map, /COMMITTED_STOP_LABEL_LAYER/)
+})
+
+test('V2.6.5.12 stitches committed and FreightLink route seams through canonical access points', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const access = await readFile(new URL('../src/domain/routing/routeAccessPoints.js', import.meta.url), 'utf8')
+
+  assert.match(map, /stitchCommittedRouteSegments/)
+  assert.match(map, /const displayDriverRoutes = useMemo/)
+  assert.match(map, /markInsertionAffectedSegment\(displayDriverRoutes, insertion\)/)
+  assert.match(map, /stitchFreightPreviewRoutes\(freightRoutePreview\)/)
+  assert.match(map, /displayPreview\.deadheadRoute/)
+  assert.match(map, /displayPreview\.loadedRoute/)
+  assert.match(map, /displayPreview\.rejoinRoute/)
+  assert.match(access, /stitchRouteShapeToAccess/)
+  assert.match(access, /renderOriginAccessCoordinates/)
+  assert.match(access, /renderDestinationAccessCoordinates/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -457,7 +473,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.11 · SHARED NATIVE STOPS/)
+  assert.match(top, /DESKTOP V2\.6\.5\.12 · ROUTE SEAM CONTINUITY/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
