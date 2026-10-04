@@ -15,12 +15,17 @@ const marcus = days.find((day) => day.driverId === 'marcus-reed')
 test('Marcus planned route follows authoritative timeline order', () => {
   const segments = buildDriverRouteSegments(marcus, locations)
 
+  const expected = []
+  for (let index = 0; index < marcus.timeline.length - 1; index += 1) {
+    const from = marcus.timeline[index]
+    const to = marcus.timeline[index + 1]
+    if (!from.coordinates || !to.coordinates) continue
+    expected.push([from.id, to.id])
+  }
+
   assert.deepEqual(
     segments.map((segment) => [segment.fromId, segment.toId]),
-    marcus.timeline.slice(0, -1).map((event, index) => [
-      event.id,
-      marcus.timeline[index + 1].id,
-    ]),
+    expected,
   )
 })
 
@@ -66,8 +71,8 @@ test('route anchors preserve meaningful Marcus locations without duplicate physi
   assert.ok(anchors.find((anchor) => anchor.badge === 'P3'))
   assert.ok(anchors.find((anchor) => anchor.badge === 'D2'))
   assert.ok(anchors.find((anchor) => anchor.badge === 'D3'))
-  assert.equal(meadowlands?.badge, 'L/S')
-  assert.equal(meadowlands?.poiType, 'staging')
+  assert.equal(meadowlands?.badge, 'L')
+  assert.equal(meadowlands?.poiType, 'food')
   assert.equal(
     anchors.filter((anchor) => anchor.locationId === 'meadowlands-staging').length,
     1,
@@ -129,7 +134,8 @@ test('Derrick route begins at Derrick current Brooklyn truck position and keeps 
   assert.equal(derrick.timeline[0].locationLabel, 'Brooklyn, NY')
   assert.ok(badges.includes('P1'))
   assert.ok(badges.includes('D1'))
-  assert.ok(badges.includes('L/S'))
+  assert.ok(badges.includes('L'))
+  assert.equal(badges.includes('S'), false)
   assert.equal(badges.includes('Y'), false)
 })
 

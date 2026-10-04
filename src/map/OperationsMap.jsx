@@ -123,10 +123,11 @@ export default function OperationsMap({
   selection,
   freightRoutePreview,
   planningPlaceOptions = [],
+  pendingPlanningPlace = null,
   workspaceOpen,
   marketLanes = [],
   locations = {},
-  onChoosePlanningPlace,
+  onPreviewPlanningPlace,
   onSelectSubject,
 }) {
   const mapContainerRef = useRef(null)
@@ -134,7 +135,7 @@ export default function OperationsMap({
   const markerRefs = useRef(new globalThis.Map())
   const previewMarkerRefs = useRef([])
   const onSelectSubjectRef = useRef(onSelectSubject)
-  const onChoosePlanningPlaceRef = useRef(onChoosePlanningPlace)
+  const onPreviewPlanningPlaceRef = useRef(onPreviewPlanningPlace)
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
 
@@ -152,8 +153,8 @@ export default function OperationsMap({
   }, [onSelectSubject])
 
   useEffect(() => {
-    onChoosePlanningPlaceRef.current = onChoosePlanningPlace
-  }, [onChoosePlanningPlace])
+    onPreviewPlanningPlaceRef.current = onPreviewPlanningPlace
+  }, [onPreviewPlanningPlace])
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return undefined
@@ -328,7 +329,11 @@ export default function OperationsMap({
       && (selectedStop?.kind === 'lunch' || selectedStop?.kind === 'staging')
     ) {
       for (const option of planningPlaceOptions) {
-        if (!Array.isArray(option.coordinates) || option.id === selectedStop.locationId) continue
+        if (
+          !Array.isArray(option.coordinates)
+          || option.id === selectedStop.locationId
+          || option.id === pendingPlanningPlace?.locationId
+        ) continue
 
         const element = document.createElement('button')
         element.type = 'button'
@@ -345,7 +350,7 @@ export default function OperationsMap({
         element.addEventListener('click', (event) => {
           event.preventDefault()
           event.stopPropagation()
-          onChoosePlanningPlaceRef.current?.({
+          onPreviewPlanningPlaceRef.current?.({
             driverId: selectedDriver.id,
             kind: selectedStop.kind,
             locationId: option.id,
@@ -387,7 +392,7 @@ export default function OperationsMap({
       markerRefs.current.set(`stop:${stop.id}`, marker)
     }
 
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     if (!driverRouteKey || !driverDay) return undefined
@@ -725,6 +730,32 @@ export default function OperationsMap({
     const map = mapRef.current
     if (!map || freightRoutePreview || workspaceOpen) return
 
+    if (
+      selectedStop
+      && ['lunch', 'staging'].includes(selectedStop.kind)
+      && planningPlaceOptions.length
+    ) {
+      const points = planningPlaceOptions
+        .map((option) => option.coordinates)
+        .filter((coordinates) => Array.isArray(coordinates))
+
+      if (Array.isArray(selectedStop.coordinates)) points.push(selectedStop.coordinates)
+
+      if (points.length >= 2) {
+        const lngs = points.map((point) => point[0])
+        const lats = points.map((point) => point[1])
+        map.fitBounds(
+          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+          {
+            padding: { top: 64, right: 440, bottom: 70, left: 70 },
+            maxZoom: 10.4,
+            duration: 450,
+          },
+        )
+        return
+      }
+    }
+
     if (selectedStop?.coordinates) {
       map.easeTo({
         center: selectedStop.coordinates,
@@ -745,7 +776,7 @@ export default function OperationsMap({
         duration: 500,
       })
     }
-  }, [freightRoutePreview, selectedDriver, selectedStop, workspaceOpen])
+  }, [freightRoutePreview, planningPlaceOptions, selectedDriver, selectedStop, workspaceOpen])
 
   return (
     <div className="map-stage">

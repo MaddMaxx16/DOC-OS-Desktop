@@ -148,6 +148,7 @@
 
 /* V2.5.1 workstation: rail -> browser -> map -> inspector */
 .operations-canvas {
+  position: relative;
   display: grid;
   grid-template-columns: 76px 0 minmax(0, 1fr) 0;
   grid-template-rows: minmax(0, 1fr);

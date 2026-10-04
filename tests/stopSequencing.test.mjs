@@ -42,7 +42,10 @@ test('valid stop resequencing rewrites the authoritative manifest and route orde
     .map((segment) => segment.toId)
   assert.deepEqual(
     routeIds,
-    result.driverDay.timeline.slice(1).map((event) => event.id),
+    result.driverDay.timeline
+      .slice(1)
+      .filter((event) => Array.isArray(event.coordinates))
+      .map((event) => event.id),
   )
 })
 

@@ -1,0 +1,195 @@
+.planning-place-flyout {
+  position: absolute;
+  z-index: 28;
+  top: 14px;
+  right: 430px;
+  bottom: 14px;
+  width: 390px;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  border: 1px solid #334956;
+  border-right-color: #526877;
+  background: rgba(7, 15, 21, .98);
+  box-shadow: -14px 18px 42px rgba(0, 0, 0, .48);
+  backdrop-filter: blur(10px);
+}
+
+.planning-place-flyout > header {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #263944;
+  background: #0a141b;
+}
+.planning-place-flyout > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.planning-place-flyout > header span,
+.planning-place-flyout-context span,
+.planning-place-flyout footer span {
+  color: #9d83aa;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .1em;
+}
+.planning-place-flyout > header strong {
+  font-size: var(--type-emphasis);
+}
+.planning-place-flyout > header button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #314652;
+  background: #0e1921;
+  color: #afc0cb;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.planning-place-flyout-context {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #22343f;
+  background: #0a151d;
+}
+.planning-place-flyout-context strong {
+  color: #dce6ec;
+  font-size: var(--type-body);
+}
+.planning-place-flyout-context small {
+  color: #7f929f;
+  font-size: var(--type-secondary);
+  line-height: 1.35;
+}
+
+.planning-place-flyout-list {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 10px;
+}
+.planning-place-flyout-list > button {
+  position: relative;
+  min-height: 84px;
+  display: grid;
+  gap: 5px;
+  padding: 10px 11px;
+  border: 1px solid #223743;
+  border-radius: 4px;
+  background: #0b1820;
+  color: #d9e3e9;
+  text-align: left;
+  cursor: pointer;
+}
+.planning-place-flyout-list > button:hover:not(:disabled) {
+  border-color: #557181;
+  background: #10212a;
+}
+.planning-place-flyout-list > button:disabled {
+  cursor: default;
+  opacity: .8;
+}
+.planning-place-flyout-list > button.current {
+  border-color: #3f5c53;
+}
+.planning-place-flyout-list > button.previewing {
+  border-color: #9a7bab;
+  background: #17121c;
+  box-shadow: inset 3px 0 #ad8dbc;
+}
+.planning-place-flyout-list > button > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.planning-place-flyout-list strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--type-body);
+  white-space: nowrap;
+}
+.planning-place-flyout-list span,
+.planning-place-flyout-list small,
+.planning-place-flyout-list em,
+.planning-place-flyout-list b {
+  font-size: var(--type-micro);
+}
+.planning-place-flyout-list span {
+  color: #728897;
+  font-weight: 900;
+}
+.planning-place-flyout-list small {
+  color: #a5b5bf;
+}
+.planning-place-flyout-list em {
+  color: #6f8491;
+  font-style: normal;
+  font-weight: 800;
+}
+.planning-place-flyout-list b {
+  position: absolute;
+  right: 9px;
+  bottom: 8px;
+  color: #7fae9a;
+  font-weight: 950;
+  letter-spacing: .06em;
+}
+.planning-place-flyout-list > button.previewing b {
+  color: #c5a8d3;
+}
+
+.planning-place-flyout > footer {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid #2a3e4a;
+  background: #09131a;
+}
+.planning-place-flyout > footer > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.planning-place-flyout > footer strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--type-secondary);
+  white-space: nowrap;
+}
+.planning-place-flyout > footer button {
+  min-width: 132px;
+  height: 38px;
+  border: 1px solid #7c6389;
+  border-radius: 4px;
+  background: #24172b;
+  color: #e0c9eb;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.planning-place-flyout > footer button:disabled {
+  border-color: #2c3c46;
+  background: #0d171e;
+  color: #586a76;
+  cursor: default;
+}
+
+@media (max-width: 1320px) {
+  .planning-place-flyout {
+    right: 380px;
+    width: 350px;
+  }
+}
