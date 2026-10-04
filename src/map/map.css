@@ -2,38 +2,58 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background:
-    linear-gradient(rgba(39, 58, 72, .08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(39, 58, 72, .08) 1px, transparent 1px),
-    #071019;
-  background-size: 44px 44px;
+  background: #0a1118;
 }
 
-.map-container { position: absolute; inset: 0; }
+.map-container {
+  position: absolute;
+  inset: 0;
+}
+
 .map-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  box-shadow: inset 0 0 100px rgba(0, 0, 0, .38);
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, .22);
 }
 
 .map-label {
   position: absolute;
-  left: 22px;
+  left: 20px;
   top: 18px;
   z-index: 2;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 8px 10px;
-  border-left: 2px solid #678cab;
-  background: rgba(6, 12, 18, .74);
+  gap: 4px;
+  padding: 9px 12px;
+  border-left: 3px solid #718b9d;
+  background: rgba(7, 13, 19, .84);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .24);
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
-.map-label span { color: #7690a5; font-size: 8px; font-weight: 900; letter-spacing: .16em; }
-.map-label strong { font-size: 12px; }
+.map-label span {
+  color: #91a3b0;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+.map-label strong {
+  font-size: 14px;
+}
 
+.maplibregl-ctrl-group {
+  border: 1px solid #344652 !important;
+  background: rgba(8, 15, 22, .94) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .35) !important;
+}
+.maplibregl-ctrl-group button {
+  width: 34px !important;
+  height: 34px !important;
+  filter: invert(.9);
+}
+
+/* Drivers — asset type is communicated by a truck silhouette, identity by color. */
 .driver-marker {
   appearance: none;
   border: 0;
@@ -42,263 +62,285 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   cursor: pointer;
 }
-.driver-marker > span {
-  width: 34px;
-  height: 34px;
+.driver-truck-icon {
+  position: relative;
+  width: 52px;
+  height: 38px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  border: 2px solid var(--driver-color);
-  background: #14222d;
-  color: var(--driver-color);
-  box-shadow: 0 7px 20px rgba(0, 0, 0, .5);
-  font-size: 9px;
+  filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .5));
+  transition: transform .16s ease, filter .16s ease;
+}
+.driver-truck-icon svg {
+  width: 52px;
+  height: 36px;
+  overflow: visible;
+}
+.driver-truck-icon .truck-box,
+.driver-truck-icon .truck-cab {
+  fill: var(--driver-color);
+  stroke: #081018;
+  stroke-width: 2.2;
+}
+.driver-truck-icon .truck-window {
+  fill: #18242d;
+  stroke: #081018;
+  stroke-width: 1.6;
+}
+.driver-truck-icon .truck-wheel {
+  fill: #071019;
+  stroke: #d8e3ea;
+  stroke-width: 1.6;
+}
+.driver-truck-icon b {
+  position: absolute;
+  left: 8px;
+  top: 9px;
+  width: 27px;
+  color: #071019;
+  font-size: 10px;
   font-weight: 950;
-  transition: transform .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: -.02em;
 }
 .driver-marker > small {
-  display: flex;
+  display: none;
   align-items: center;
   gap: 5px;
-  padding: 3px 6px;
-  border: 1px solid #263b4a;
-  background: rgba(6, 12, 18, .9);
-  color: #c6d3dd;
+  padding: 4px 7px;
+  border: 1px solid #354957;
+  border-radius: 4px;
+  background: rgba(6, 12, 18, .94);
+  color: #e0e9ef;
   white-space: nowrap;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 800;
 }
 .driver-marker > small i {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--driver-color);
 }
-.driver-marker:hover > span { transform: translateY(-2px); }
-.driver-marker.selected > span {
-  transform: translateY(-2px) scale(1.08);
-  border-color: #e5f0f6;
-  background: var(--driver-color);
-  color: #071019;
-  box-shadow: 0 0 0 4px rgba(235, 244, 250, .16), 0 9px 28px rgba(0, 0, 0, .6);
-}
+.driver-marker:hover > small,
 .driver-marker.selected > small {
-  border-color: var(--driver-color);
-  color: #eef5fa;
-}
-
-.maplibregl-ctrl-group {
-  border: 1px solid #263a49 !important;
-  background: rgba(8, 15, 22, .9) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,.28) !important;
-}
-.maplibregl-ctrl-group button { filter: invert(.85); }
-
-.manifest-stop-marker {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: #d7e2ea;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
 }
-.manifest-stop-marker > span {
-  min-width: 28px;
-  height: 28px;
-  padding: 0 5px;
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--driver-color);
-  border-radius: 7px;
-  background: #0a151d;
-  color: var(--driver-color);
-  box-shadow: 0 7px 18px rgba(0,0,0,.45);
-  font-size: 8px;
-  font-weight: 950;
+.driver-marker:hover .driver-truck-icon,
+.driver-marker.selected .driver-truck-icon {
+  transform: translateY(-2px) scale(1.08);
 }
-.manifest-stop-marker.delivery > span { border-radius: 50%; }
-.manifest-stop-marker > small {
-  padding: 2px 5px;
-  border: 1px solid #263b4a;
-  background: rgba(6,12,18,.92);
-  color: #9dafbc;
-  font-size: 7px;
-  font-weight: 850;
-}
-.manifest-stop-marker.selected > span {
-  background: var(--driver-color);
-  color: #071019;
-  border-color: #ecf5fa;
-  box-shadow: 0 0 0 4px rgba(235,244,250,.16), 0 8px 24px rgba(0,0,0,.55);
+.driver-marker.selected .driver-truck-icon {
+  filter:
+    drop-shadow(0 0 6px rgba(255, 255, 255, .5))
+    drop-shadow(0 9px 16px rgba(0, 0, 0, .58));
 }
 
-.operational-event-marker {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: #dce6ed;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-.operational-event-marker > span {
-  min-width: 46px;
-  height: 28px;
-  padding: 0 7px;
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--driver-color);
-  border-radius: 7px;
-  background: var(--driver-color);
-  color: #071019;
-  box-shadow: 0 0 0 4px rgba(235,244,250,.16), 0 8px 24px rgba(0,0,0,.55);
-  font-size: 7px;
-  font-weight: 950;
-  letter-spacing: .08em;
-}
-.operational-event-marker.lunch > span { border-radius: 3px; }
-.operational-event-marker.staging > span { border-style: dashed; }
-.operational-event-marker > small {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 2px 5px;
-  border: 1px solid #263b4a;
-  background: rgba(6,12,18,.92);
-  color: #a8b8c4;
-  font-size: 7px;
-  font-weight: 850;
-}
-
-.freight-preview-marker {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:3px;
-  color:#dce6ed;
-  pointer-events:none;
-}
-.freight-preview-marker>span {
-  width:34px;
-  height:34px;
-  display:grid;
-  place-items:center;
-  border:2px solid #9b82ad;
-  background:#211a29;
-  color:#d8c5e6;
-  box-shadow:0 8px 26px rgba(0,0,0,.55);
-  font-size:9px;
-  font-weight:950;
-}
-.freight-preview-marker.pickup>span { border-radius:7px; }
-.freight-preview-marker.delivery>span { border-radius:50%; }
-.freight-preview-marker>small {
-  max-width:150px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  padding:3px 6px;
-  border:1px solid #3a3042;
-  background:rgba(10,8,13,.94);
-  color:#c3b2ce;
-  font-size:7px;
-  font-weight:850;
-}
-
-
+/* Marketplace opportunity — compact by default, descriptive only on interaction. */
 .market-lane-marker {
   appearance: none;
   border: 0;
   background: transparent;
-  color: #d9cce2;
+  color: #dbe4ea;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
+  transition: opacity .15s ease;
 }
 .market-lane-marker > span {
-  min-width: 44px;
-  height: 26px;
-  padding: 0 7px;
+  min-width: 54px;
+  height: 28px;
+  padding: 0 9px;
   display: grid;
   place-items: center;
-  border: 1px solid #7f6790;
+  border: 1px solid #7f8d98;
   border-radius: 999px;
-  background: rgba(27, 20, 34, .95);
-  box-shadow: 0 7px 18px rgba(0, 0, 0, .42);
-  color: #cdb7dc;
-  font-size: 7px;
-  font-weight: 950;
-  letter-spacing: .08em;
+  background: rgba(18, 25, 31, .96);
+  color: #d1dae0;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .4);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
 }
 .market-lane-marker > small {
-  max-width: 150px;
+  display: none;
+  max-width: 230px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 2px 5px;
-  border: 1px solid #3b3043;
-  background: rgba(9, 7, 11, .9);
-  color: #a898b2;
-  font-size: 6px;
-  font-weight: 800;
-}
-.market-lane-marker:hover > span,
-.market-lane-marker.selected > span {
-  border-color: #d3b9e2;
-  background: #806294;
-  color: #09070b;
-  box-shadow: 0 0 0 4px rgba(155, 130, 173, .18), 0 8px 22px rgba(0, 0, 0, .5);
-}
-.market-lane-marker.selected > small {
-  border-color: #8a6c9b;
-  color: #e5d9ec;
-}
-
-
-/* V2.4.2 marketplace declutter */
-.driver-marker.market-mode:not(.selected) > small {
-  display: none;
-}
-.driver-marker.market-mode:not(.selected) > span {
-  width: 30px;
-  height: 30px;
-  opacity: .82;
-}
-.market-lane-marker {
-  gap: 0;
-}
-.market-lane-marker > span {
-  min-width: 38px;
-  height: 22px;
-  padding: 0 6px;
-  font-size: 7px;
-}
-.market-lane-marker > small {
-  display: none;
+  padding: 5px 8px;
+  border: 1px solid #394955;
+  border-radius: 4px;
+  background: rgba(7, 12, 17, .96);
+  color: #cbd5dc;
+  font-size: 12px;
+  font-weight: 750;
 }
 .market-lane-marker:hover > small,
 .market-lane-marker.selected > small {
   display: block;
-  margin-top: 3px;
+}
+.market-lane-marker:hover > span,
+.market-lane-marker.selected > span {
+  border-color: #e4ecf1;
+  background: #c8d2da;
+  color: #0a1118;
+  box-shadow: 0 0 0 4px rgba(200, 210, 218, .14), 0 8px 20px rgba(0, 0, 0, .48);
 }
 .market-lane-marker.muted {
   opacity: .18;
 }
 .market-lane-marker.muted:hover {
-  opacity: .72;
+  opacity: .76;
 }
-.map-vignette {
-  background:
-    linear-gradient(rgba(4, 9, 14, .18), rgba(4, 9, 14, .28)),
-    radial-gradient(circle at 50% 45%, transparent 34%, rgba(0, 0, 0, .18) 100%);
+
+/* Shared POI language — icon shape communicates location type before color. */
+.poi-marker {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #e5edf2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.poi-symbol {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #748795;
+  border-radius: 9px;
+  background: #101a22;
+  box-shadow: 0 7px 20px rgba(0, 0, 0, .48);
+}
+.poi-symbol svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: #cbd6dc;
+}
+.poi-symbol.warehouse svg path:first-child,
+.poi-symbol.yard svg path:first-child {
+  fill: rgba(203, 214, 220, .08);
+}
+.poi-symbol b {
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #0a1118;
+  border-radius: 999px;
+  background: #d5dee4;
+  color: #0a1118;
+  font-size: 10px;
+  font-weight: 950;
+}
+.poi-marker > em {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(9, 15, 20, .92);
+  color: #aebdc8;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+.poi-marker > small {
+  display: none;
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 7px;
+  border: 1px solid #344652;
+  border-radius: 4px;
+  background: rgba(7, 13, 18, .95);
+  color: #d7e1e7;
+  font-size: 12px;
+  font-weight: 750;
+}
+.poi-marker:hover > small,
+.poi-marker.selected > small,
+.freight-preview-marker > small {
+  display: block;
+}
+
+.facility-stop .poi-symbol {
+  border-color: var(--driver-color);
+}
+.facility-stop .poi-symbol b {
+  background: var(--driver-color);
+}
+.facility-stop.selected .poi-symbol {
+  box-shadow: 0 0 0 4px rgba(235, 244, 250, .15), 0 9px 24px rgba(0, 0, 0, .55);
+}
+
+.poi-symbol.staging {
+  border-style: dashed;
+}
+.poi-symbol.food {
+  border-color: #b99762;
+  color: #d6b779;
+}
+.poi-symbol.fuel {
+  border-color: #72a5c6;
+  color: #91c0dd;
+}
+.poi-symbol.truck-stop {
+  border-color: #8d9bc0;
+  color: #aeb9d6;
+}
+.poi-symbol.service {
+  border-color: #ae7d73;
+  color: #d29a8f;
+}
+.poi-symbol.yard {
+  border-color: #77927c;
+  color: #9db2a1;
+}
+
+/* Unassigned FreightLink preview locations stay neutral. */
+.freight-preview-marker {
+  pointer-events: none;
+}
+.freight-preview-marker .poi-symbol {
+  width: 46px;
+  height: 46px;
+  border-color: #c8d2da;
+  background: #121b22;
+}
+.freight-preview-marker .poi-symbol b {
+  background: #c8d2da;
+}
+.freight-preview-marker.pickup .poi-symbol {
+  border-radius: 8px;
+}
+.freight-preview-marker.delivery .poi-symbol {
+  border-radius: 50%;
+}
+
+/* Lunch / staging events still inherit the assigned driver's context. */
+.operational-event-marker .poi-symbol {
+  border-color: var(--driver-color);
+}
+.operational-event-marker .poi-symbol b {
+  background: var(--driver-color);
 }
