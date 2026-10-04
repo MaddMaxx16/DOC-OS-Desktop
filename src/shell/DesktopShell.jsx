@@ -30,11 +30,14 @@ export default function DesktopShell({
   operationsInspectorHidden = false,
   freightRoutePreview,
   freightCandidateDriverId,
+  simulationClock,
+  liveDriverStates = {},
   onToggleApp,
   onCloseActiveApp,
   onCloseFocusedTask,
   onRoutePreviewChange,
   onFreightCandidateDriverChange,
+  onSimulationModeChange,
   onRequestRateCon,
   onOpenRateCon,
   onRequestRateConCorrection,
@@ -112,10 +115,17 @@ export default function DesktopShell({
     : null
 
   const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
+  const selectedLiveState = selectedDriver
+    ? liveDriverStates[selectedDriver.id] ?? null
+    : null
 
   return (
     <main className="desktop-shell">
-      <TopBar focused={Boolean(focusedTask)} />
+      <TopBar
+        focused={Boolean(focusedTask)}
+        simulationClock={simulationClock}
+        onSimulationModeChange={onSimulationModeChange}
+      />
 
       {focusedTask?.type === 'rate-confirmation' && focusedLane && focusedDriver && focusedRecord ? (
         <FocusedWorkspace
@@ -213,6 +223,7 @@ export default function DesktopShell({
               selectedStop={selectedStop}
               planning={planningActive}
               planningFeedback={planningFeedback?.driverId === selectedDriver?.id ? planningFeedback : null}
+              liveState={selectedLiveState}
               onStartPlanning={onStartDriverPlanning}
               onStopPlanning={onStopDriverPlanning}
               onMovePlanEvent={onMoveDriverPlanEvent}
