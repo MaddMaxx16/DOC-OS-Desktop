@@ -356,6 +356,15 @@ test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promis
   assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
 })
 
+test('V2.6.5.14 keeps the previous complete route visible while the same driver refreshes', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /driverRouteResult\?\.driverId === selectedDriver\?\.id/)
+  assert.match(map, /driverId: selectedDriver\.id/)
+  assert.doesNotMatch(map, /driverRouteResult\?\.key === driverRouteKey[\s\S]{0,180}\? driverRouteResult\.segments/)
+  assert.match(map, /\[driverRouteResult, selectedDriver\?\.id\]/)
+})
+
 test('V2.6.5.13 publishes the committed route only after the full serialized day resolves', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const hydration = await readFile(new URL('../src/domain/routing/committedRouteHydration.js', import.meta.url), 'utf8')
@@ -483,7 +492,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.13 · ATOMIC ROUTE PUBLISH/)
+  assert.match(top, /DESKTOP V2\.6\.5\.14 · STABLE ROUTE SWAP/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
