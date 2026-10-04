@@ -66,7 +66,7 @@ function currentAbsoluteMinutes(clock = {}) {
 }
 
 function segmentId(fromEvent, toEvent) {
-  return \`\${fromEvent.id}->\${toEvent.id}\`
+  return `${fromEvent.id}->${toEvent.id}`
 }
 
 function completedSegmentIds(schedule = [], currentMinutes) {
