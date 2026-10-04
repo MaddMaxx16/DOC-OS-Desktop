@@ -1249,20 +1249,48 @@ A valid or deliberately warning-bearing Driver Day can be reviewed, sent, and lo
 
 ### V2.7 — Live Operations
 
-Goal: execute the plan cleanly.
+Goal: execute the communicated Driver Day cleanly.
 
-Build/polish:
+#### V2.7.1 — Simulation Clock + Execution Gate
 
-- movement,
-- pickup/delivery handoffs,
-- waiting,
-- driver status,
-- map route ownership,
-- live timing,
-- HOS consequences,
-- exceptions.
+Build:
+
+- real simulation clock beginning at 6:00 AM on Day 1,
+- functional Pause / Play / Fast Forward controls in the existing top-right strip,
+- Play = one game minute per simulation tick,
+- Fast Forward = four game minutes per simulation tick,
+- Focused Workspace freezes simulation time without discarding the player's requested mode,
+- SENT plan → SCHEDULED before shift start,
+- SENT plan → LIVE READY inside the shift window,
+- draft plan → not armed for execution,
+- visible live-state copy in Driver Day after schedule send.
+
+V2.7.1 is an execution foundation only. It does not yet move trucks or complete stops.
 
 Acceptance:
+
+The game clock can run, pause, and fast-forward; Focused work freezes it; and a sent schedule visibly becomes armed Live Operations state at the correct shift window.
+
+#### V2.7.2 — Route Execution + Truck Motion
+
+Next build:
+
+- sent-plan execution position,
+- truck movement along committed road geometry,
+- actual next-stop truth,
+- completed-leg fading,
+- arrival state at the first operational stop.
+
+#### Later V2.7 slices
+
+- pickup/delivery handoffs,
+- waiting/loading/unloading service time,
+- driver status transitions,
+- live timing drift,
+- HOS consequences,
+- exceptions and dispatcher intervention.
+
+Acceptance for V2.7:
 
 The live map accurately reflects the manifest and actual driver state.
 
@@ -1539,7 +1567,7 @@ The following are now considered locked unless deliberately reopened:
 - Every rendered route begins and ends on the exact gameplay POI/asset coordinates so lines visually connect to their endpoint icons.
 - Committed pickup-bound route legs are dashed while delivery-bound route legs remain solid, preserving driver color as ownership language and line style as move-type language.
 - Desktop operational text follows the V2.4.3 readability floor (11/12/14/16/22 px scale).
-- The top-right clock area reserves permanent runway for pause, play, and fast-forward controls; controls may remain disabled until Live Operations is implemented.
+- The top-right clock area reserves permanent runway for pause, play, and fast-forward controls; V2.7 activates those controls without redesigning the header.
 - The game clock should remain visually subordinate to the operational workspace rather than dominating the top bar.
 - FreightLink lane-fit cards must remain fully inset within the browser column at the 1920×1080 reference layout; status text or borders may not disappear under the map edge or scrollbar.
 - The operational basemap is a dark detailed vector style with consumer POI clutter suppressed.
@@ -1550,33 +1578,44 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5.13 are accepted and locked.
-
-The active final V2.6 polish packet is:
-
-# **V2.6.5.14 — Stable Route Swap**
-
-V2.6.5.13 removed leg-by-leg route construction, leaving one minor visual flash: when the Driver Day key changes, the current route result no longer matches the new key, so the map temporarily renders no committed route while the replacement snapshot hydrates.
-
-V2.6.5.14 removes that blank frame:
-
-- a completed route snapshot is retained for the currently selected driver,
-- while that same driver's refreshed route hydrates, the previous complete route remains visible,
-- once the replacement completes, the map swaps atomically to the new route,
-- switching to another driver never displays the prior driver's cached route,
-- no routing, coordinate, timing, HOS, appointment, or planning logic changes are introduced.
-
-Acceptance:
-
-Refreshing a selected driver's route transitions from one complete route to the next without a blank flash and without progressive leg construction.
-
-After visual acceptance:
+V2.5 through V2.6.5.14 are accepted and locked.
 
 # **V2.6 Daily Planning is complete.**
 
-The active build order advances to:
+The active work packet is:
 
-# **V2.7 — Live Operations**
+# **V2.7.1 — Live Operations Foundation**
+
+Build:
+
+- simulation clock state begins at SEP 7 · DAY 1 · 6:00 AM,
+- Pause / Play / Fast Forward controls become functional,
+- Play advances one game minute per tick,
+- Fast Forward advances four game minutes per tick,
+- Focused Rate Con work freezes simulation time,
+- sent schedules become explicit live-operation state:
+  - SCHEDULED before shift start,
+  - LIVE READY inside the shift window,
+  - SHIFT CLOSED after the communicated window,
+- draft plans remain unarmed,
+- Driver Day communicates the live state without unlocking editing.
+
+Non-goals for this packet:
+
+- no truck movement yet,
+- no route-leg completion,
+- no automatic pickup/delivery,
+- no service/loading timers,
+- no HOS mutation,
+- no exception engine.
+
+Acceptance:
+
+The player can send a schedule, run/pause/fast-forward the simulation clock, see Focused work freeze time, and see the sent Driver Day transition into the correct live-operation phase.
+
+After acceptance, proceed to:
+
+# **V2.7.2 — Route Execution + Truck Motion**
 
 ---
 
