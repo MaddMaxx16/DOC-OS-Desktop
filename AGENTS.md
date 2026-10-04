@@ -32,21 +32,26 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.4.1 Closable Driver Inspector
+## Current packet — V2.6.5 Route Visibility + Label Declutter
 
-V2.1 through V2.6.4 remain the locked desktop foundation.
+V2.1 through V2.6.4.1 remain the locked desktop foundation.
 
 Guardrails:
 - preserve the map-first command rail → browser → live map → inspector workstation,
-- preserve V2.6 Daily Planning truth, readiness, and DRAFT → SENT dispatch behavior,
-- the right Operations Inspector must be dismissible with a visible close control,
-- closing the inspector hides only presentation context; it must not clear the selected driver/stop or mutate Driver Day truth,
-- the selected driver's route may remain visible on the map after the inspector closes,
-- selecting a driver/stop again reopens the inspector,
-- if the inspector is closed during Planning Mode, exit the planning presentation cleanly without modifying the draft plan,
-- sent-plan state must survive inspector close/reopen,
-- do not treat inspector visibility as operational selection state,
-- V2.6.4.1 is a final Daily Planning shell polish pass before V2.7 Live Operations.
+- preserve V2.6 Daily Planning truth, readiness, DRAFT → SENT dispatch behavior, and closable inspector behavior,
+- the selected driver's committed route remains visible whether the right inspector is open or closed,
+- inspector visibility must not own route visibility,
+- non-selected drivers remain represented by their truck markers without rendering every committed route at full strength,
+- normal Driver view uses grouped route anchors as the physical POI source instead of separate duplicate freight-stop markers,
+- multiple planned visits to the same facility share one physical marker and combine their P/D/L/S badges,
+- full facility labels are priority-based rather than permanently visible for every stop,
+- selected stop labels are always eligible for full display,
+- before Live Operations exists, the first planned event after shift start is the next-stop label priority,
+- V2.7 must replace that pre-live next-stop heuristic with real execution-position truth,
+- non-priority route anchors remain badge-first and reveal full labels on hover/focus,
+- close facility labels use alternate label placements while keeping the physical POI coordinate exact,
+- do not solve clutter by shrinking operational type below the readability floor,
+- route and marker declutter must preserve driver-color ownership and pickup/delivery route-line semantics.
 
 ## Verification
 
