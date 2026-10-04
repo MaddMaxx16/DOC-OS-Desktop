@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { formatClock } from '../../domain/manifest/driverDayModel.js'
 import {
   canEditDispatchPlan,
@@ -36,19 +37,84 @@ function FreightMeta({ item, capacityPallets }) {
   )
 }
 
+function PlanHealth({ health }) {
+  if (!health) return null
+
+  const primary = health.blockers?.[0] ?? health.warnings?.[0] ?? 'Appointments, capacity, and HOS are clear.'
+  const count = health.blockers?.length || health.warnings?.length || 0
+  const label = health.status === 'blocked'
+    ? 'BLOCKED'
+    : health.status === 'warning'
+      ? `${count} WARNING${count === 1 ? '' : 'S'}`
+      : 'READY'
+
+  return (
+    <div className={`plan-health ${health.status}`}>
+      <span>PLAN CHECK</span>
+      <strong>{label}</strong>
+      <small>{primary}</small>
+    </div>
+  )
+}
+
 export default function DriverDayPanel({
   driver,
   day,
   selection,
   planning = false,
+  planningFeedback = null,
   onStartPlanning,
   onStopPlanning,
+  onReorderStop,
   onSelectSubject,
 }) {
+  const [draggedStopId, setDraggedStopId] = useState(null)
+  const [dropTarget, setDropTarget] = useState(null)
+
   if (!driver || !day) return null
 
   const editable = canEditDispatchPlan(day)
   const planLabel = dispatchPlanStatusLabel(day)
+
+  const clearDragState = () => {
+    setDraggedStopId(null)
+    setDropTarget(null)
+  }
+
+  const startDrag = (event, stopId) => {
+    if (!planning) return
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', stopId)
+    setDraggedStopId(stopId)
+  }
+
+  const setDropPosition = (event, targetStopId) => {
+    if (!planning || !draggedStopId || draggedStopId === targetStopId) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const placement = event.clientY < bounds.top + (bounds.height / 2) ? 'before' : 'after'
+    setDropTarget({ id: targetStopId, placement })
+  }
+
+  const dropStop = (event, targetStopId) => {
+    if (!planning || !draggedStopId || draggedStopId === targetStopId) {
+      clearDragState()
+      return
+    }
+
+    event.preventDefault()
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const placement = event.clientY < bounds.top + (bounds.height / 2) ? 'before' : 'after'
+
+    onReorderStop?.({
+      driverId: driver.id,
+      stopId: draggedStopId,
+      targetStopId,
+      placement,
+    })
+    clearDragState()
+  }
 
   return (
     <section className={`driver-day-panel ${planning ? 'planning' : ''}`}>
@@ -90,16 +156,30 @@ export default function DriverDayPanel({
       </div>
 
       {planning && (
-        <div className="planning-mode-note">
-          <span>PLANNING MODE</span>
-          <strong>Build the driver&apos;s day here while keeping the live map visible.</strong>
-        </div>
+        <>
+          <div className="planning-mode-note">
+            <span>PLANNING MODE · STOP SEQUENCING</span>
+            <strong>Drag freight stops to rebuild the day. Pickup must stay before its matching delivery.</strong>
+          </div>
+
+          <PlanHealth health={day.planHealth} />
+
+          {planningFeedback && (
+            <div className={`planning-feedback ${planningFeedback.tone}`} role="status">
+              {planningFeedback.message}
+            </div>
+          )}
+        </>
       )}
 
       <div className="driver-day-timeline">
         {day.timeline.map((item, index) => {
           const selectable = ['freight-stop', 'lunch', 'staging'].includes(item.kind)
           const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
+          const draggableStop = planning && item.kind === 'freight-stop'
+          const dragging = draggedStopId === item.id
+          const droppingBefore = dropTarget?.id === item.id && dropTarget.placement === 'before'
+          const droppingAfter = dropTarget?.id === item.id && dropTarget.placement === 'after'
 
           const content = (
             <>
@@ -110,6 +190,7 @@ export default function DriverDayPanel({
               <time>{formatClock(item.projectedArrivalMinutes)}</time>
               <div className="timeline-content">
                 <div className="timeline-title">
+                  {draggableStop && <span className="stop-drag-handle" aria-hidden="true">⋮⋮</span>}
                   <b>{eventCode(item)}</b>
                   <strong>{item.locationLabel}</strong>
                 </div>
@@ -143,9 +224,26 @@ export default function DriverDayPanel({
             <button
               type="button"
               key={item.id}
-              className={`driver-day-row selectable ${item.kind} ${selected ? 'selected' : ''}`}
+              className={[
+                'driver-day-row',
+                'selectable',
+                item.kind,
+                selected ? 'selected' : '',
+                draggableStop ? 'draggable-stop' : '',
+                dragging ? 'dragging' : '',
+                droppingBefore ? 'drop-before' : '',
+                droppingAfter ? 'drop-after' : '',
+              ].filter(Boolean).join(' ')}
+              draggable={draggableStop}
+              onDragStart={draggableStop ? (event) => startDrag(event, item.id) : undefined}
+              onDragOver={draggableStop ? (event) => setDropPosition(event, item.id) : undefined}
+              onDrop={draggableStop ? (event) => dropStop(event, item.id) : undefined}
+              onDragEnd={draggableStop ? clearDragState : undefined}
               onClick={() => onSelectSubject(SELECTION_TYPES.STOP, item.id)}
               aria-pressed={selected}
+              aria-label={draggableStop
+                ? `${eventCode(item)} ${item.locationLabel}. Drag to resequence.`
+                : undefined}
             >
               {content}
             </button>

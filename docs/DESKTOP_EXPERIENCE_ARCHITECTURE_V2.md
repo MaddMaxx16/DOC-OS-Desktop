@@ -1430,43 +1430,38 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 is visually accepted and locked.
+V2.5 and V2.6.1 are accepted and locked.
 
 The active implementation packet is:
 
-# **V2.6.1 — Planning Foundation**
+# **V2.6.2 — Stop Sequencing**
 
 It establishes:
 
-- explicit DRAFT PLAN / SENT PLAN truth on each driver plan,
-- DRAFT as the editable state,
-- Planning Mode as UI/presentation state rather than a second schedule,
-- the existing Driver Day inspector as the planning surface,
-- a compact SHIFT / HOS / TRAILER operational strip,
-- EDIT PLAN → PLANNING MODE → DONE interaction,
-- one active planning driver at a time,
-- automatic planning-mode exit when moving into FreightLink or another driver's context,
-- the live map remaining visible throughout ordinary planning.
+- direct drag resequencing of confirmed freight stops inside the Driver Day timeline,
+- committed manifestOrder as the only sequencing truth,
+- pickup-before-delivery as a hard sequencing rule,
+- trailer-capacity overflow as a blocked move,
+- projected-arrival recalculation after accepted moves,
+- capacity snapshots rebuilt from the new order,
+- appointment and HOS consequences surfaced as warnings,
+- committed map-route rebuild from the exact same updated Driver Day timeline,
+- no automatic route optimization; the player remains responsible for solving the day,
+- Lunch retaining its current timeline slot while freight is moved around it.
 
-V2.6.1 deliberately does **not** reorder stops, choose lunch POIs, change staging, validate readiness, or send the schedule.
-
-After V2.6.1 passes functional and visual acceptance, proceed to:
-
-# **V2.6.2 — Stop Sequencing**
-
-Then:
+V2.6.2 deliberately does **not** make Lunch draggable or choose a new lunch/staging POI. Those location decisions belong to:
 
 # **V2.6.3 — Breaks, Places + Staging**
 
-The V2.6.3 lunch rule remains locked:
+V2.6.3 must preserve the locked lunch rule:
 
 > Lunch is a real selected POI whose route/timing consequences become part of Driver Day truth and whose location can later receive RPG metadata.
 
-Finally:
+After V2.6.3, proceed to:
 
 # **V2.6.4 — Readiness + Send Schedule**
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, and V2.5.7 compact fit-badge contract.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, and V2.6.1 planning-state contract.
 
 ---
 

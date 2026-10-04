@@ -265,3 +265,130 @@
 .driver-day-row.shift-start .timeline-dot {
   background: var(--selected-driver-color);
 }
+
+/* V2.6.2: stop sequencing makes the Driver Day timeline the planning game board. */
+.driver-day-panel.planning .driver-day-row.draggable-stop {
+  cursor: grab;
+}
+
+.driver-day-panel.planning .driver-day-row.draggable-stop:active {
+  cursor: grabbing;
+}
+
+.stop-drag-handle {
+  flex: 0 0 auto;
+  color: #708895;
+  font-size: 15px;
+  font-weight: 950;
+  letter-spacing: -3px;
+  line-height: 1;
+  transform: rotate(90deg);
+}
+
+.driver-day-row.dragging {
+  opacity: .45;
+}
+
+.driver-day-row.drop-before .timeline-content,
+.driver-day-row.drop-after .timeline-content {
+  position: relative;
+  border-color: #8b70a0;
+  background: #151c25;
+}
+
+.driver-day-row.drop-before .timeline-content::before,
+.driver-day-row.drop-after .timeline-content::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ad8dbc;
+  box-shadow: 0 0 8px rgba(173, 141, 188, .45);
+}
+
+.driver-day-row.drop-before .timeline-content::before {
+  top: -5px;
+}
+
+.driver-day-row.drop-after .timeline-content::after {
+  bottom: -5px;
+}
+
+.plan-health {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 9px;
+  padding: 8px 10px;
+  border: 1px solid #28404d;
+  background: #0d1820;
+}
+
+.plan-health > span {
+  align-self: center;
+  color: #718697;
+  font-size: var(--type-micro);
+  font-weight: 900;
+  letter-spacing: .09em;
+}
+
+.plan-health > strong {
+  justify-self: end;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .06em;
+}
+
+.plan-health > small {
+  grid-column: 1 / -1;
+  color: #93a5b1;
+  font-size: var(--type-secondary);
+  line-height: 1.35;
+}
+
+.plan-health.ready {
+  border-color: #315647;
+}
+
+.plan-health.ready > strong {
+  color: #77a997;
+}
+
+.plan-health.warning {
+  border-color: #665735;
+}
+
+.plan-health.warning > strong {
+  color: #c7a66b;
+}
+
+.plan-health.blocked {
+  border-color: #704553;
+}
+
+.plan-health.blocked > strong {
+  color: #d78494;
+}
+
+.planning-feedback {
+  padding: 7px 9px;
+  border-left: 3px solid #526a79;
+  background: #0c161d;
+  color: #94a7b4;
+  font-size: var(--type-secondary);
+  line-height: 1.35;
+}
+
+.planning-feedback.success {
+  border-left-color: #4d907d;
+}
+
+.planning-feedback.warning {
+  border-left-color: #aa8753;
+  color: #c0a778;
+}
+
+.planning-feedback.blocked {
+  border-left-color: #a55f70;
+  color: #d59aaa;
+}
