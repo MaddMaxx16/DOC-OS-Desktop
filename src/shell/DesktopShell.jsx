@@ -22,6 +22,7 @@ export default function DesktopShell({
   activeApp,
   focusedTask,
   planningDriverId,
+  planningFeedback,
   freightRoutePreview,
   freightCandidateDriverId,
   onToggleApp,
@@ -35,6 +36,7 @@ export default function DesktopShell({
   onConfirmBooking,
   onStartDriverPlanning,
   onStopDriverPlanning,
+  onReorderDriverStop,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -159,8 +161,10 @@ export default function DesktopShell({
               driverDay={driverDay}
               selectedStop={selectedStop}
               planning={planningDriverId === selectedDriver?.id}
+              planningFeedback={planningFeedback?.driverId === selectedDriver?.id ? planningFeedback : null}
               onStartPlanning={onStartDriverPlanning}
               onStopPlanning={onStopDriverPlanning}
+              onReorderStop={onReorderDriverStop}
               onSelectSubject={onSelectSubject}
             />
           )}
