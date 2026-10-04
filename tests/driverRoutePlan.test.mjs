@@ -123,6 +123,38 @@ test('every seeded route segment endpoint has either a POI anchor or the current
   }
 })
 
+test('every committed POI anchor shares the exact coordinates used by its route segment endpoint', () => {
+  for (const day of days) {
+    const anchors = buildDriverRouteAnchors(day, locations)
+    const anchorByEventId = new Map(
+      anchors.flatMap((anchor) => (
+        anchor.eventIds.map((eventId) => [eventId, anchor])
+      )),
+    )
+    const segments = buildDriverRouteSegments(day, locations)
+
+    for (const segment of segments) {
+      const fromAnchor = anchorByEventId.get(segment.fromId)
+      const toAnchor = anchorByEventId.get(segment.toId)
+
+      if (fromAnchor) {
+        assert.deepEqual(
+          fromAnchor.coordinates,
+          segment.fromCoordinates,
+          `${day.driverId} origin anchor drifted for ${segment.fromId}`,
+        )
+      }
+      if (toAnchor) {
+        assert.deepEqual(
+          toAnchor.coordinates,
+          segment.toCoordinates,
+          `${day.driverId} destination anchor drifted for ${segment.toId}`,
+        )
+      }
+    }
+  }
+})
+
 test('Derrick route begins at Derrick current Brooklyn truck position and keeps later POI anchors', () => {
   const derrickDriver = drivers.find((driver) => driver.id === 'derrick-cole')
   const derrick = days.find((day) => day.driverId === 'derrick-cole')
