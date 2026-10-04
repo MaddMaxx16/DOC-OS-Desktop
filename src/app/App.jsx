@@ -19,6 +19,7 @@ import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import { canEditDispatchPlan } from '../domain/planning/dispatchPlan.js'
+import { resequenceDriverStops } from '../domain/planning/stopSequencing.js'
 import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import DesktopShell from '../shell/DesktopShell.jsx'
 
@@ -32,6 +33,7 @@ export default function App() {
   const [bookingRecords, setBookingRecords] = useState({})
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
+  const [planningFeedback, setPlanningFeedback] = useState(null)
 
   const driverDays = useMemo(
     () => buildDriverDays(drivers, operationalLoads, operationalDriverPlans, locations),
@@ -83,11 +85,51 @@ export default function App() {
   const startDriverPlanning = (driverId) => {
     const day = driverDays.find((item) => item.driverId === driverId)
     if (!day || !canEditDispatchPlan(day)) return
+    setPlanningFeedback(null)
     setPlanningDriverId(driverId)
   }
 
   const stopDriverPlanning = (driverId) => {
+    setPlanningFeedback(null)
     setPlanningDriverId((current) => current === driverId ? null : current)
+  }
+
+  const reorderDriverStop = ({ driverId, stopId, targetStopId, placement }) => {
+    const driver = drivers.find((item) => item.id === driverId)
+    if (!driver || planningDriverId !== driverId) return
+
+    const result = resequenceDriverStops({
+      driver,
+      driverId,
+      loads: operationalLoads,
+      driverPlans: operationalDriverPlans,
+      locations,
+      stopId,
+      targetStopId,
+      placement,
+    })
+
+    if (!result.ok) {
+      setPlanningFeedback({
+        driverId,
+        tone: 'blocked',
+        message: result.reason ?? 'That stop move is not possible.',
+      })
+      return
+    }
+
+    setOperationalLoads(result.loads)
+    setOperationalDriverPlans(result.driverPlans)
+    setSelection(createSelection(SELECTION_TYPES.STOP, stopId))
+
+    const firstWarning = result.driverDay?.planHealth?.warnings?.[0]
+    setPlanningFeedback({
+      driverId,
+      tone: firstWarning ? 'warning' : 'success',
+      message: firstWarning
+        ? `Route updated. ${firstWarning}`
+        : 'Route updated. Appointments, capacity, and timing recalculated.',
+    })
   }
 
   const toggleApp = (appId) => {
@@ -100,6 +142,7 @@ export default function App() {
 
     if (appId === 'freightlink' && opening) {
       setPlanningDriverId(null)
+      setPlanningFeedback(null)
     }
 
     if (activeApp === 'freightlink' && appId !== 'freightlink') {
@@ -272,6 +315,7 @@ export default function App() {
       activeApp={activeApp}
       focusedTask={focusedTask}
       planningDriverId={planningDriverId}
+      planningFeedback={planningFeedback}
       freightRoutePreview={freightRoutePreview}
       freightCandidateDriverId={freightCandidateDriverId}
       onToggleApp={toggleApp}
@@ -285,6 +329,7 @@ export default function App() {
       onConfirmBooking={confirmBooking}
       onStartDriverPlanning={startDriverPlanning}
       onStopDriverPlanning={stopDriverPlanning}
+      onReorderDriverStop={reorderDriverStop}
       onSelectSubject={selectSubject}
     />
   )
