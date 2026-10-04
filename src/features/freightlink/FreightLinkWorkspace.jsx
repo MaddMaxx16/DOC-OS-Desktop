@@ -63,6 +63,7 @@ function bookingActionLabel(record) {
 }
 
 function bookingHelper(record, evaluation) {
+  if (record?.bookingError) return record.bookingError
   switch (record?.status) {
     case BOOKING_STATUS.REQUESTED:
       return 'Request sent. The broker is returning the Rate Confirmation.'
