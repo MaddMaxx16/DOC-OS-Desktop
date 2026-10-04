@@ -18,8 +18,10 @@ export default function OperationsInspector({
   driverDay,
   selectedStop,
   planning = false,
+  planningFeedback = null,
   onStartPlanning,
   onStopPlanning,
+  onReorderStop,
   onSelectSubject,
 }) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
@@ -65,8 +67,10 @@ export default function OperationsInspector({
             day={driverDay}
             selection={selection}
             planning={planning}
+            planningFeedback={planningFeedback}
             onStartPlanning={() => onStartPlanning?.(driver.id)}
             onStopPlanning={() => onStopPlanning?.(driver.id)}
+            onReorderStop={onReorderStop}
             onSelectSubject={onSelectSubject}
           />
         </div>
