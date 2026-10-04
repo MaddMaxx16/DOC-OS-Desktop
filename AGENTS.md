@@ -32,25 +32,28 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.3.2 Contextual Staging
+## Current packet — V2.6.4 Readiness + Send Schedule
 
-V2.1 through V2.6.2 remain the locked desktop foundation. V2.6.3 remains in active visual refinement.
+V2.1 through V2.6.3.2 remain the locked desktop foundation.
 
 Guardrails:
 - preserve the map-first command rail → browser → live map → inspector workstation,
 - preserve V2.5 booking/Rate Con truth and committed freight ownership,
 - preserve V2.6.1 DRAFT/SENT planning truth,
 - preserve V2.6.2 committed-manifest sequencing, pickup-before-delivery, capacity guards, and plan-health feedback,
-- preserve V2.6.3 explicit insertion lanes, movable Lunch, physical place model, and preview/confirm flyout,
-- staging choices must be operationally believable relative to the driver's final real stop,
-- local staging/parking/yard POIs should rank ahead of long reposition choices when they are meaningfully closer,
-- do not automatically hide longer staging choices; the player may intentionally choose a longer reposition,
-- staging candidates may carry gameplay metadata such as local/regional type and overnight capability,
-- draft staging remains unassigned until CONFIRM STAGING,
-- confirming staging writes the real end-of-day truck location and final route leg,
-- contextual staging ranking is not route optimization; it is presentation of consequences and sensible nearby choices,
-- readiness and Send Schedule still belong to V2.6.4,
-- current truck position remains the default route origin.
+- preserve V2.6.3 physical Lunch/Staging places, insertion lanes, preview/confirm flow, and contextual staging,
+- Plan Check remains visible outside Planning Mode so readiness is always legible,
+- readiness blockers and warnings should resolve to actionable Driver Day stops when a specific stop owns the issue,
+- missing required Lunch/Staging place truth is a hard blocker,
+- hard blockers prevent schedule dispatch,
+- warnings remain sendable only through an explicit warning override,
+- a clean plan still requires a deliberate send confirmation,
+- SEND SCHEDULE changes the authoritative driver plan from DRAFT to SENT,
+- a sent plan is not casually editable/resequenceable/place-editable,
+- do not add a post-send revision workflow yet; that belongs with Live Operations,
+- do not let SEND SCHEDULE automatically optimize or repair the plan,
+- player intent remains authoritative for sendable warnings,
+- V2.6.4 completes Daily Planning; V2.7 begins only after this packet passes visual/functional acceptance.
 
 ## Verification
 
