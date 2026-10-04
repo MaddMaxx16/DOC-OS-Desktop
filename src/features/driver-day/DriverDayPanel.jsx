@@ -80,9 +80,6 @@ export default function DriverDayPanel({
 
   const editable = canEditDispatchPlan(day)
   const planLabel = dispatchPlanStatusLabel(day)
-  const selectedPlanningEvent = isSelection(selection, SELECTION_TYPES.STOP)
-    ? day.timeline.find((item) => item.id === selection.id) ?? null
-    : null
 
   const clearDragState = () => {
     setDraggedEventId(null)
