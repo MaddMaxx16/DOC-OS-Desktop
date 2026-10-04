@@ -450,6 +450,23 @@ export default function OperationsMap({
   }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, displayDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
+    if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return
+
+    const marker = markerRefs.current.get(`driver:${selectedDriver.id}`)
+    if (!marker) return
+
+    marker.setLngLat(liveTruckCoordinates)
+    const element = marker.getElement()
+    if (element) {
+      element.dataset.livePhase = liveState?.executionPhase ?? 'planned'
+      element.setAttribute(
+        'aria-label',
+        `Select ${selectedDriver.name}, ${liveState?.label ?? selectedDriver.status}`,
+      )
+    }
+  }, [liveState?.executionPhase, liveState?.label, liveTruckCoordinates, selectedDriver])
+
+  useEffect(() => {
     const map = mapRef.current
     if (!mapReady || !map) return undefined
 
@@ -478,6 +495,7 @@ export default function OperationsMap({
         if (!Array.isArray(coordinates)) return null
 
         const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
+        const completed = completedEventIds.has(stop.id)
         const priority = selected || stop.id === nextStopId
 
         return {
@@ -490,6 +508,7 @@ export default function OperationsMap({
             label: stop.locationLabel,
             priority,
             selected,
+            completed,
           },
           geometry: {
             type: 'Point',
@@ -528,8 +547,18 @@ export default function OperationsMap({
           3,
           2,
         ],
-        'circle-opacity': 0.98,
-        'circle-stroke-opacity': 1,
+        'circle-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.42,
+          0.98,
+        ],
+        'circle-stroke-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.58,
+          1,
+        ],
       },
     })
 
@@ -546,6 +575,12 @@ export default function OperationsMap({
       },
       paint: {
         'text-color': identity.color,
+        'text-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.5,
+          1,
+        ],
         'text-halo-color': '#071019',
         'text-halo-width': 1,
       },
@@ -619,6 +654,7 @@ export default function OperationsMap({
   }, [
     driverDay,
     mapReady,
+    completedEventIds,
     nextStopId,
     displayDriverRoutes,
     selectedDriver,
