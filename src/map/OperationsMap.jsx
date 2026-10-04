@@ -176,10 +176,11 @@ export default function OperationsMap({
     markerRefs.current.forEach((marker) => marker.remove())
     markerRefs.current.clear()
 
+    const loadSelected = isSelection(selection, SELECTION_TYPES.LOAD)
     const freightPreviewActive = Boolean(freightRoutePreview)
 
     drivers.forEach((driver) => {
-      if (freightPreviewActive && driver.id !== selectedDriver?.id) return
+      if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
       const identity = getDriverIdentity(driver.id)
       const selected = selectedDriver?.id === driver.id
       const element = document.createElement('button')
@@ -202,7 +203,7 @@ export default function OperationsMap({
       markerRefs.current.set(`driver:${driver.id}`, marker)
     })
 
-    if (workspaceOpen && !freightPreviewActive) {
+    if (workspaceOpen && !loadSelected) {
       for (const lane of marketLanes) {
         const pickup = locations[lane.pickupLocationId]
         const delivery = locations[lane.deliveryLocationId]
@@ -234,7 +235,7 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
-    for (const stop of freightPreviewActive ? [] : (driverDay?.freightStops ?? [])) {
+    for (const stop of loadSelected ? [] : (driverDay?.freightStops ?? [])) {
       if (!stop.coordinates || !driverIdentity) continue
       const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
       const location = locations[stop.locationId]
@@ -262,7 +263,7 @@ export default function OperationsMap({
     }
 
     if (
-      !freightPreviewActive
+      !loadSelected
       && selectedStop?.coordinates
       && driverIdentity
       && ['lunch', 'staging'].includes(selectedStop.kind)
