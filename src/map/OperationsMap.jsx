@@ -583,24 +583,43 @@ export default function OperationsMap({
       const stopId = event.features?.[0]?.properties?.id
       if (stopId) onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, stopId)
     }
-    const showPointer = () => { map.getCanvas().style.cursor = 'pointer' }
-    const clearPointer = () => { map.getCanvas().style.cursor = '' }
+    const showStopLabel = (event) => {
+      const stopId = event.features?.[0]?.properties?.id
+      map.getCanvas().style.cursor = 'pointer'
+      if (!stopId || !map.getLayer(COMMITTED_STOP_LABEL_LAYER)) return
+      map.setFilter(COMMITTED_STOP_LABEL_LAYER, [
+        'any',
+        ['==', ['get', 'priority'], true],
+        ['==', ['get', 'id'], stopId],
+      ])
+    }
+    const resetStopLabel = () => {
+      map.getCanvas().style.cursor = ''
+      if (!map.getLayer(COMMITTED_STOP_LABEL_LAYER)) return
+      map.setFilter(COMMITTED_STOP_LABEL_LAYER, ['==', ['get', 'priority'], true])
+    }
 
-    map.on('click', COMMITTED_STOP_CIRCLE_LAYER, selectStop)
-    map.on('click', COMMITTED_STOP_BADGE_LAYER, selectStop)
-    map.on('mouseenter', COMMITTED_STOP_CIRCLE_LAYER, showPointer)
-    map.on('mouseenter', COMMITTED_STOP_BADGE_LAYER, showPointer)
-    map.on('mouseleave', COMMITTED_STOP_CIRCLE_LAYER, clearPointer)
-    map.on('mouseleave', COMMITTED_STOP_BADGE_LAYER, clearPointer)
+    for (const layerId of [
+      COMMITTED_STOP_CIRCLE_LAYER,
+      COMMITTED_STOP_BADGE_LAYER,
+      COMMITTED_STOP_LABEL_LAYER,
+    ]) {
+      map.on('click', layerId, selectStop)
+      map.on('mouseenter', layerId, showStopLabel)
+      map.on('mouseleave', layerId, resetStopLabel)
+    }
 
     return () => {
-      map.off('click', COMMITTED_STOP_CIRCLE_LAYER, selectStop)
-      map.off('click', COMMITTED_STOP_BADGE_LAYER, selectStop)
-      map.off('mouseenter', COMMITTED_STOP_CIRCLE_LAYER, showPointer)
-      map.off('mouseenter', COMMITTED_STOP_BADGE_LAYER, showPointer)
-      map.off('mouseleave', COMMITTED_STOP_CIRCLE_LAYER, clearPointer)
-      map.off('mouseleave', COMMITTED_STOP_BADGE_LAYER, clearPointer)
-      clearPointer()
+      for (const layerId of [
+        COMMITTED_STOP_CIRCLE_LAYER,
+        COMMITTED_STOP_BADGE_LAYER,
+        COMMITTED_STOP_LABEL_LAYER,
+      ]) {
+        map.off('click', layerId, selectStop)
+        map.off('mouseenter', layerId, showStopLabel)
+        map.off('mouseleave', layerId, resetStopLabel)
+      }
+      resetStopLabel()
       clearCommittedStops()
     }
   }, [
@@ -681,11 +700,13 @@ export default function OperationsMap({
       data: { type: 'FeatureCollection', features },
     })
 
-    const beforeId = map.getLayer(DEADHEAD_CASING_LAYER)
-      ? DEADHEAD_CASING_LAYER
-      : map.getLayer(LOADED_CASING_LAYER)
-        ? LOADED_CASING_LAYER
-        : undefined
+    const beforeId = map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)
+      ? COMMITTED_STOP_CIRCLE_LAYER
+      : map.getLayer(DEADHEAD_CASING_LAYER)
+        ? DEADHEAD_CASING_LAYER
+        : map.getLayer(LOADED_CASING_LAYER)
+          ? LOADED_CASING_LAYER
+          : undefined
 
     const solidLegFilter = ['!=', ['get', 'destinationRole'], 'pickup']
     const pickupLegFilter = ['==', ['get', 'destinationRole'], 'pickup']
