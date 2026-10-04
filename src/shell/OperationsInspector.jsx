@@ -23,6 +23,7 @@ export default function OperationsInspector({
   onStopPlanning,
   onMovePlanEvent,
   onSendSchedule,
+  onClose,
   onSelectSubject,
 }) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
@@ -53,6 +54,14 @@ export default function OperationsInspector({
               : driver ? driver.locationLabel : selection ? selection.type : 'Select a subject from the map or browser'}
           </small>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close inspector"
+          title="Close inspector"
+        >
+          ×
+        </button>
       </header>
 
       {driver && driverDay ? (
