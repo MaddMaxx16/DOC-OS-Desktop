@@ -266,6 +266,44 @@
   background: var(--selected-driver-color);
 }
 
+.driver-day-row.execution-completed {
+  opacity: .52;
+}
+.driver-day-row.execution-completed .timeline-rail i {
+  background: color-mix(in srgb, var(--selected-driver-color) 35%, #243845);
+}
+.driver-day-row.execution-current .timeline-content {
+  border-color: var(--selected-driver-color);
+  box-shadow: inset 3px 0 var(--selected-driver-color);
+  background: #0d1b24;
+}
+.driver-day-row.execution-current .timeline-dot {
+  background: var(--selected-driver-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--selected-driver-color) 18%, transparent);
+}
+.driver-day-row.execution-next:not(.execution-current) .timeline-content {
+  border-color: #365064;
+}
+.execution-chip {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 2px 5px;
+  border: 1px solid #365064;
+  border-radius: 3px;
+  color: #8ea7b7;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+.execution-chip.current {
+  border-color: var(--selected-driver-color);
+  color: var(--selected-driver-color);
+}
+.execution-chip.next {
+  color: #87a5b6;
+}
+
 /* V2.6.2: stop sequencing makes the Driver Day timeline the planning game board. */
 .driver-day-panel.planning .driver-day-row.draggable-stop {
   cursor: grab;
