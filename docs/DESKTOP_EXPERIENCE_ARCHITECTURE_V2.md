@@ -795,11 +795,56 @@ The player should see why a lane fits or does not fit.
 
 ### System D — Booking and Rate Confirmation
 
-The booking lifecycle should be clear:
+The booking lifecycle is explicit:
 
-candidate freight → approval/booking process where applicable → Rate Confirmation arrives → player verifies → freight becomes fully confirmed operational work.
+candidate freight → Rate Con requested / booking pending → Rate Confirmation arrives → focused document review → correction or acceptance → confirmed operational work.
 
-The player should not feel they committed blindly without seeing confirmation terms.
+The player should never feel they committed blindly without seeing confirmation terms.
+
+#### Booking state language
+
+Freight may occupy these states:
+
+- **AVAILABLE** — still only a marketplace opportunity,
+- **RATE CON REQUESTED** — request sent; not committed,
+- **RATE CON READY** — document arrived; still not committed,
+- **CORRECTION REQUESTED** — discrepancy reported; still not committed,
+- **CONFIRMED** — Rate Con accepted; freight is now operational work.
+
+Requesting paperwork never changes the committed driver plan.
+
+#### Rate Confirmation review
+
+Rate Confirmation review uses Focused Workspace.
+
+Focused review:
+
+- expands beyond the ordinary bottom app drawer,
+- visibly pauses gameplay presentation,
+- shows a readable document,
+- compares the document against the FreightLink lane,
+- flags rate, equipment, facility, and appointment-window mismatches,
+- offers correction when terms do not match.
+
+Verification is gameplay, not an automatic gate.
+
+The player may deliberately accept mismatched terms after a clear warning. If they do, DOC OS preserves the Rate Confirmation exactly as written and records that the booking was accepted with a mismatch.
+
+#### Confirmation handoff
+
+Only Rate Con acceptance commits freight.
+
+On confirmation:
+
+- the marketplace lane is removed from available freight,
+- the Rate Confirmation terms become authoritative booking terms,
+- the freight is assigned to the requested driver,
+- the evaluated insertion is materialized into the real manifest,
+- existing manifest stops are renumbered to preserve actual sequence,
+- lunch placement is updated when the insertion changes which freight stop directly precedes lunch,
+- the driver's committed route rebuilds from the new manifest truth.
+
+V2.5 commits the evaluated insertion as the initial operational placement. V2.6 may later let the player deliberately resequence confirmed work during Daily Planning.
 
 ### System E — Dispatch plan
 
@@ -1013,16 +1058,24 @@ Goal: make freight commitment understandable.
 
 Build:
 
-- booking request/approval state where required,
+- explicit request/pending state,
 - Rate Confirmation arrival,
-- desktop Rate Con review,
-- correction request,
+- focused desktop Rate Con review,
+- lane-vs-document verification,
+- correction request and corrected revision,
+- deliberate bad-document acceptance with warning,
 - confirmation state,
-- handoff into booked manifest work.
+- confirmed terms stored as written,
+- handoff into the real assigned manifest,
+- committed route refresh after confirmation.
 
 Acceptance:
 
-The player never has to wonder whether freight is merely interesting, requested, booked, confirmed, or ready to dispatch.
+The player never has to wonder whether freight is merely interesting, requested, awaiting paperwork, under correction, or confirmed.
+
+A lane does not leave FreightLink until its Rate Confirmation is accepted.
+
+A confirmed lane becomes real manifest work and the map reflects the newly committed driver plan.
 
 ### V2.6 — Daily Planning
 
@@ -1312,6 +1365,9 @@ The following are now considered locked unless deliberately reopened:
 - Interleaved pickups/deliveries remain supported.
 - FreightLink evaluation must use the driver's real manifest/HOS/capacity.
 - Rate Confirmation is a real gameplay checkpoint.
+- Requesting a Rate Confirmation never commits freight.
+- Only Rate Confirmation acceptance turns marketplace freight into committed driver work.
+- The player may deliberately accept a mismatched Rate Confirmation after a warning; DOC OS preserves the document terms exactly as written.
 - Lunch and staging are part of operational planning.
 - Focused work pauses simulation.
 - Map selection and manifest/context selection share one model.
@@ -1325,27 +1381,29 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-The active completion packet is:
-
-# **V2.4.7 — Route Anchors**
-
-It locks:
-
-- compact committed Driver Day anchors in FreightLink,
-- route anchors derived from the authoritative timeline,
-- typed POI shapes plus P/D/L/S/Y badges,
-- duplicate physical locations collapsed into one marker,
-- hover-only facility labels,
-- proposal markers remaining visually dominant,
-- slight offset when committed and proposed markers share a facility.
-
-After V2.4.7 passes visual acceptance, V2.4 is considered complete.
-
-The next gameplay packet is:
+The active packet is:
 
 # **V2.5 — Booking + Rate Confirmation**
 
-V2.5 must preserve the V2.4 route baseline, insertion-preview, and route-anchor visual language.
+It locks:
+
+- explicit marketplace/requested/review-ready/correction/confirmed states,
+- driver ownership of an active booking request,
+- focused Rate Confirmation review,
+- comparison of Rate Con terms against the evaluated FreightLink lane,
+- correction workflow,
+- deliberate mismatched-document acceptance with recorded consequence,
+- Rate Confirmation terms becoming authoritative on confirmation,
+- confirmed freight leaving the marketplace,
+- confirmed freight entering the real driver manifest at the evaluated insertion,
+- lunch placement and manifest renumbering after commitment,
+- committed driver route refresh from manifest truth.
+
+After V2.5 passes functional and visual acceptance, the next packet is:
+
+# **V2.6 — Daily Planning**
+
+V2.6 may add deliberate resequencing/planning tools for confirmed freight but must preserve V2.5 booking/document truth.
 
 
 ---
