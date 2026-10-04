@@ -176,7 +176,7 @@
   background: #05080d;
 }
 .operations-canvas.workspace-open {
-  grid-template-rows: minmax(0, 1fr) clamp(320px, 40vh, 460px) 64px;
+  grid-template-rows: minmax(0, 1fr) clamp(360px, 46vh, 540px) 64px;
 }
 .map-workspace {
   position: relative;
