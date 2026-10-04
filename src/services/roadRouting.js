@@ -1,5 +1,5 @@
 const ROUTER_URL = 'https://router.project-osrm.org/route/v1/driving'
-const REQUEST_TIMEOUT_MS = 4500
+const REQUEST_TIMEOUT_MS = 8000
 const MAX_ROAD_ATTEMPTS = 3
 const RETRY_DELAYS_MS = [0, 250, 700]
 const routeCache = new Map()
@@ -48,6 +48,98 @@ function fallbackRoute(origin, destination) {
 function wait(milliseconds) {
   if (!milliseconds) return Promise.resolve()
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+function validCoordinate(point) {
+  return Array.isArray(point)
+    && point.length >= 2
+    && Number.isFinite(Number(point[0]))
+    && Number.isFinite(Number(point[1]))
+}
+
+function appendShape(target, coordinates = []) {
+  for (const point of coordinates) {
+    if (!validCoordinate(point)) continue
+    const previous = target[target.length - 1]
+    if (previous && sameCoordinate(previous, point)) continue
+    target.push([...point])
+  }
+}
+
+export function roadPlanLegShape(leg = {}, origin, destination) {
+  const shape = []
+
+  for (const step of leg.steps ?? []) {
+    appendShape(shape, step?.geometry?.coordinates ?? [])
+  }
+
+  if (!shape.length) return []
+  return ensureRouteTouchesEndpoints(shape, origin, destination)
+}
+
+export function roadPlanLegs(route = {}, waypoints = []) {
+  if (!Array.isArray(route?.legs) || route.legs.length !== waypoints.length - 1) return []
+
+  return route.legs.map((leg, index) => ({
+    distanceMiles: Number(leg.distance ?? 0) / 1609.344,
+    durationMinutes: Math.max(0, Math.round(Number(leg.duration ?? 0) / 60)),
+    routeShape: roadPlanLegShape(leg, waypoints[index], waypoints[index + 1]),
+    source: 'road',
+  }))
+}
+
+async function requestRoadRoutePlan(waypoints) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  try {
+    const coordinates = waypoints
+      .map(([longitude, latitude]) => `${longitude},${latitude}`)
+      .join(';')
+    const response = await fetch(
+      `${ROUTER_URL}/${coordinates}?overview=false&geometries=geojson&steps=true`,
+      { headers: { Accept: 'application/json' }, signal: controller.signal },
+    )
+    if (!response.ok) throw new Error(`Road plan failed (${response.status})`)
+
+    const data = await response.json()
+    const route = data.routes?.[0]
+    const legs = roadPlanLegs(route, waypoints)
+
+    if (legs.length !== waypoints.length - 1) {
+      throw new Error('Road plan returned incomplete legs')
+    }
+    if (legs.some((leg) => leg.routeShape.length < 2)) {
+      throw new Error('Road plan leg missing geometry')
+    }
+
+    return legs
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+export async function calculateRoadRoutePlan(waypoints = []) {
+  if (!Array.isArray(waypoints) || waypoints.length < 2 || waypoints.some((point) => !validCoordinate(point))) {
+    throw new Error('At least two valid route waypoints are required')
+  }
+
+  const key = `plan:${waypoints.map((point) => point.join(',')).join(';')}`
+  if (routeCache.has(key)) return routeCache.get(key)
+
+  for (let attempt = 0; attempt < MAX_ROAD_ATTEMPTS; attempt += 1) {
+    await wait(RETRY_DELAYS_MS[attempt] ?? 0)
+
+    try {
+      const legs = await requestRoadRoutePlan(waypoints)
+      routeCache.set(key, legs)
+      return legs
+    } catch {
+      // Retry the complete ordered plan so every leg shares one routing calculation.
+    }
+  }
+
+  return null
 }
 
 async function requestRoadRoute(origin, destination) {

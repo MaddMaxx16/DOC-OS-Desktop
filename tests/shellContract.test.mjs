@@ -346,10 +346,34 @@ test('V2.6.5.3 committed routes retry road geometry and never draw estimate diag
   assert.match(routing, /MAX_ROAD_ATTEMPTS = 3/)
   assert.match(routing, /RETRY_DELAYS_MS = \[0, 250, 700\]/)
   assert.match(routing, /Do not cache an estimate/)
-  assert.match(map, /index \+= 2/)
-  assert.match(map, /segmentSpecs\.slice\(index, index \+ 2\)/)
+  assert.match(map, /calculateRoadRoutePlan/)
   assert.match(render, /segment\.route\?\.source !== 'road'/)
   assert.match(render, /return \[\]/)
+})
+
+test('V2.6.5.4 committed Driver Day routing uses one ordered multi-waypoint road plan', async () => {
+  const routing = await readFile(new URL('../src/services/roadRouting.js', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(routing, /calculateRoadRoutePlan/)
+  assert.match(routing, /overview=false&geometries=geojson&steps=true/)
+  assert.match(routing, /roadPlanLegs/)
+  assert.match(map, /calculateRoadRoutePlan\(waypoints\)/)
+  assert.match(map, /segmentSpecs\[0\]\.fromCoordinates/)
+  assert.match(map, /\.\.\.segmentSpecs\.map\(\(segment\) => segment\.toCoordinates\)/)
+  assert.doesNotMatch(map, /for \(let index = 0; index < segmentSpecs\.length; index \+= 2\)/)
+})
+
+test('V2.6.5.4 committed POIs use a fixed shell centered on the same continuous-route coordinate', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
+  assert.match(map, /if \(workspaceOpen && freightRoutePreview\)/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*width: 28px/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*height: 28px/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*padding: 0/)
+  assert.match(css, /\.driver-route-anchor \.poi-symbol \{[\s\S]*box-sizing: border-box/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -427,7 +451,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.3 · ROAD ROUTE RELIABILITY/)
+  assert.match(top, /DESKTOP V2\.6\.5\.4 · CONTINUOUS ROUTE PLAN/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

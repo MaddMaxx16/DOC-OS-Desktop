@@ -529,6 +529,26 @@ This preserves the hierarchy:
 > badge = plan structure  
 > full label = current relevance
 
+### Continuous committed route plan
+
+A SENT/DRAFT Driver Day is one ordered operational route, not a collection of unrelated route requests.
+
+Therefore:
+
+- DOC OS sends the ordered Driver Day waypoints to the road router in one multi-waypoint request,
+- the router returns one coherent route calculation with ordered legs,
+- DOC OS splits those returned legs back into per-segment display semantics,
+- pickup-bound legs may remain dashed while delivery/non-pickup legs remain solid,
+- all legs share one waypoint/snapping context,
+- the committed facility marker uses a fixed coordinate-centered shell so the visible icon center equals the route endpoint pixel,
+- hidden FreightLink preview state must not offset committed markers.
+
+This preserves:
+
+> one Driver Day  
+> one ordered route calculation  
+> many visually typed route legs
+
 ### Road-route reliability
 
 Committed map geometry distinguishes **real road geometry** from **timing-only estimates**.
@@ -1504,25 +1524,25 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5.2 are accepted and locked.
+V2.5 through V2.6.5.3 are accepted and locked.
 
-The active map-correction packet is:
+The active route-correction packet is:
 
-# **V2.6.5.3 — Road Route Reliability**
+# **V2.6.5.4 — Continuous Route Plan**
 
-V2.6.5.2 made endpoint normalization explicit, but visual acceptance exposed the actual remaining failure mode: some public OSRM calls were failing while several Driver Day legs were requested concurrently. Those failures fell back to straight-line estimate geometry, which was then rendered with the same blue committed-route treatment as real road geometry.
+Repeated visual acceptance showed that independent per-leg routing was the remaining structural weakness. Even with exact endpoint normalization, separate route calls can fail or snap independently and produce a Driver Day that does not read as one continuous operating plan.
 
-V2.6.5.3 corrects that distinction:
+V2.6.5.4 changes the committed routing model:
 
-- road routing retries before timing fallback,
-- Driver Day legs route with intentionally low concurrency,
-- timing-only estimate results are not cached as permanent road truth,
-- committed-map rendering rejects estimate geometry,
-- failed road legs temporarily remain absent rather than appearing as fake diagonal roads,
-- successful road geometry still normalizes to exact gameplay POI endpoints,
-- V2.6.5 map declutter remains intact.
+- the full ordered Driver Day is sent to OSRM as one multi-waypoint route request,
+- the returned ordered legs are mapped back to DOC OS segment semantics,
+- pickup-bound dashed and delivery-bound solid styling remain intact,
+- all committed legs share one road-route calculation,
+- the committed POI icon sits inside a fixed 28×28 coordinate-centered shell,
+- facility labels remain outside marker geometry,
+- preview-only marker offsets are disabled unless the FreightLink preview is actually visible.
 
-After V2.6.5.3 passes visual acceptance, proceed to:
+After V2.6.5.4 passes visual acceptance, proceed to:
 
 # **V2.7 — Live Operations**
 
