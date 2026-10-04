@@ -18,6 +18,7 @@ export default function DesktopShell({
   selection,
   activeApp,
   freightRoutePreview,
+  freightCandidateDriverId,
   leftOpen,
   rightOpen,
   onToggleLeft,
@@ -27,6 +28,7 @@ export default function DesktopShell({
   onToggleApp,
   onCloseActiveApp,
   onRoutePreviewChange,
+  onFreightCandidateDriverChange,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -41,10 +43,15 @@ export default function DesktopShell({
   ) ? freightRoutePreview : null
 
   const freightDriver = activeFreightRoutePreview?.driver ?? null
-  const mapDriver = selectedDriver ?? freightDriver
-  const mapDriverDay = driverDay ?? (
-    freightDriver ? driverDays.find((day) => day.driverId === freightDriver.id) ?? null : null
-  )
+  const freightCandidateDriver = activeApp === 'freightlink'
+    ? drivers.find((driver) => driver.id === freightCandidateDriverId) ?? null
+    : null
+  const mapDriver = activeApp === 'freightlink'
+    ? (freightDriver ?? freightCandidateDriver)
+    : (selectedDriver ?? freightDriver)
+  const mapDriverDay = mapDriver
+    ? driverDays.find((day) => day.driverId === mapDriver.id) ?? null
+    : driverDay
 
   const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
   const operationsHandleStyle = selectedDriverIdentity
@@ -131,6 +138,8 @@ export default function DesktopShell({
               lanes={marketLanes}
               locations={locations}
               selection={selection}
+              candidateDriverId={freightCandidateDriverId}
+              onCandidateDriverChange={onFreightCandidateDriverChange}
               onSelectSubject={onSelectSubject}
               onClose={onCloseActiveApp}
               onRoutePreviewChange={onRoutePreviewChange}
