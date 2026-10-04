@@ -338,6 +338,20 @@ test('V2.6.5.2 committed route geometry and POI markers share exact endpoint coo
   assert.match(css, /pointer-events: none/)
 })
 
+test('V2.6.5.3 committed routes retry road geometry and never draw estimate diagonals as roads', async () => {
+  const routing = await readFile(new URL('../src/services/roadRouting.js', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const render = await readFile(new URL('../src/domain/routing/routeRenderGeometry.js', import.meta.url), 'utf8')
+
+  assert.match(routing, /MAX_ROAD_ATTEMPTS = 3/)
+  assert.match(routing, /RETRY_DELAYS_MS = \[0, 250, 700\]/)
+  assert.match(routing, /Do not cache an estimate/)
+  assert.match(map, /index \+= 2/)
+  assert.match(map, /segmentSpecs\.slice\(index, index \+ 2\)/)
+  assert.match(render, /segment\.route\?\.source !== 'road'/)
+  assert.match(render, /return \[\]/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -413,7 +427,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.2 · ROUTE ENDPOINT FIX/)
+  assert.match(top, /DESKTOP V2\.6\.5\.3 · ROAD ROUTE RELIABILITY/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

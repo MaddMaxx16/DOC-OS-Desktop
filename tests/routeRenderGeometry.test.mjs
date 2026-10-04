@@ -7,6 +7,7 @@ test('exactSegmentRouteShape prepends and appends exact gameplay endpoints aroun
     fromCoordinates: [-74.0107, 40.6562],
     toCoordinates: [-74.0170, 40.6470],
     route: {
+      source: 'road',
       routeShape: [
         [-74.0090, 40.6580],
         [-74.0150, 40.6490],
@@ -21,17 +22,20 @@ test('exactSegmentRouteShape prepends and appends exact gameplay endpoints aroun
   assert.equal(shape.length, 4)
 })
 
-test('exactSegmentRouteShape falls back to a direct visible segment when routed geometry is missing', () => {
+test('exactSegmentRouteShape does not paint estimate fallback as a committed road', () => {
   const segment = {
     fromCoordinates: [-73.9171, 40.7282],
     toCoordinates: [-74.0107, 40.6562],
-    route: null,
+    route: {
+      source: 'estimate',
+      routeShape: [
+        [-73.9171, 40.7282],
+        [-74.0107, 40.6562],
+      ],
+    },
   }
 
-  assert.deepEqual(
-    exactSegmentRouteShape(segment),
-    [segment.fromCoordinates, segment.toCoordinates],
-  )
+  assert.deepEqual(exactSegmentRouteShape(segment), [])
 })
 
 test('exactSegmentRouteShape preserves valid road geometry that already touches exact endpoints', () => {
@@ -39,6 +43,7 @@ test('exactSegmentRouteShape preserves valid road geometry that already touches 
     fromCoordinates: [-74.0732, 40.7901],
     toCoordinates: [-74.0107, 40.6562],
     route: {
+      source: 'road',
       routeShape: [
         [-74.0732, 40.7901],
         [-74.0500, 40.7300],

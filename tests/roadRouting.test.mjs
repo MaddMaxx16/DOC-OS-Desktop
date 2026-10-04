@@ -29,3 +29,18 @@ test('exact route endpoints are not duplicated', () => {
 
   assert.equal(shape.length, 3)
 })
+
+test('road-routing source keeps exact endpoint normalization separate from estimate display policy', () => {
+  const origin = [-74.0107, 40.6562]
+  const destination = [-74.0170, 40.6470]
+  const roadShape = [
+    origin,
+    [-74.0140, 40.6510],
+    destination,
+  ]
+
+  assert.deepEqual(
+    ensureRouteTouchesEndpoints(roadShape, origin, destination),
+    roadShape,
+  )
+})
