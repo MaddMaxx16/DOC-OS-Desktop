@@ -14,7 +14,7 @@
   position: relative;
   z-index: 50;
   display: grid;
-  grid-template-columns: 270px minmax(320px, 1fr) 170px;
+  grid-template-columns: 270px minmax(320px, 1fr) 300px;
   align-items: center;
   gap: 16px;
   padding: 0 16px;
@@ -55,7 +55,7 @@
 }
 .clock-block strong {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
 }
 .clock-time-row em {
   padding: 3px 6px;
@@ -67,6 +67,34 @@
   font-style: normal;
   font-weight: 950;
   letter-spacing: .1em;
+}
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 2px;
+}
+.time-controls button {
+  width: 28px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #293b49;
+  border-radius: 4px;
+  background: #0b141c;
+  color: #6f8291;
+  font-size: 11px;
+  font-weight: 950;
+  cursor: default;
+}
+.time-controls button.active {
+  border-color: #6f557c;
+  background: #17101c;
+  color: #b898c9;
+}
+.time-controls button:disabled {
+  opacity: 1;
 }
 .operations-status {
   height: 36px;
