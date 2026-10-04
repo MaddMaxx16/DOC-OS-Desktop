@@ -169,6 +169,17 @@ test('V2.5.6 FreightLink rows keep a right gutter and collapse the empty booking
   assert.match(css, /margin-right: 2px/)
 })
 
+test('V2.5.7 FreightLink fit treatment is a compact inset badge', async () => {
+  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+
+  assert.match(css, /V2\.5\.7: the fit treatment is a compact badge/)
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) 76px/)
+  assert.match(css, /padding: 10px 28px 10px 13px/)
+  assert.match(css, /width: 76px/)
+  assert.match(css, /align-self: center/)
+  assert.match(css, /gap: 2px/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -244,7 +255,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.6 · FREIGHTLINK SPACING/)
+  assert.match(top, /DESKTOP V2\.5\.7 · FIT BADGE/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
