@@ -45,7 +45,7 @@ export default function RateConfirmationReview({
       setAcceptRiskArmed(true)
       return
     }
-    onConfirm()
+    onConfirm({ acceptedWithMismatch: hasMismatch })
   }
 
   const correctionReason = mismatches
