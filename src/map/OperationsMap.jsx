@@ -8,6 +8,10 @@ import {
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import {
+  routeExecutionPosition,
+  routeSegmentExecutionPhase,
+} from '../domain/live/routeExecution.js'
+import {
   buildDriverRouteAnchors,
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
@@ -112,6 +116,31 @@ function poiSvg(type) {
   return '<svg viewBox="0 0 48 48" focusable="false"><path d="M6 18 24 7l18 11v23H6z"/><path d="M12 24h7v17h-7zm11 0h7v17h-7zm11 0h4v17h-4z"/><path d="M10 18h28"/></svg>'
 }
 
+function committedRouteGeoJson(segments = [], execution = null) {
+  return {
+    type: 'FeatureCollection',
+    features: segments
+      .filter((segment) => (
+        segment.route?.source === 'road'
+        && Array.isArray(segment.route?.routeShape)
+        && segment.route.routeShape.length >= 2
+      ))
+      .map((segment) => ({
+        type: 'Feature',
+        properties: {
+          id: segment.id,
+          affected: segment.affected,
+          destinationRole: segment.toRole ?? '',
+          executionPhase: routeSegmentExecutionPhase(segment.id, execution),
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: segment.route.routeShape,
+        },
+      })),
+  }
+}
+
 function locationType(location, fallback = 'warehouse') {
   return location?.poiType ?? fallback
 }
@@ -133,6 +162,7 @@ export default function OperationsMap({
   selectedDriver,
   selectedStop,
   selection,
+  liveState = null,
   freightRoutePreview,
   planningPlaceOptions = [],
   pendingPlanningPlace = null,
@@ -172,7 +202,20 @@ export default function OperationsMap({
     () => stitchCommittedRouteSegments(plannedDriverRoutes),
     [plannedDriverRoutes],
   )
-  const nextStopId = nextOperationalEventId(driverDay)
+  const nextStopId = liveState?.nextEventId ?? nextOperationalEventId(driverDay)
+  const completedEventKey = (liveState?.completedEventIds ?? []).join('|')
+  const completedEventIds = useMemo(
+    () => new Set(completedEventKey ? completedEventKey.split('|') : []),
+    [completedEventKey],
+  )
+  const liveTruckCoordinates = useMemo(
+    () => routeExecutionPosition(
+      liveState,
+      displayDriverRoutes,
+      selectedDriver?.coordinates ?? null,
+    ),
+    [displayDriverRoutes, liveState, selectedDriver?.coordinates],
+  )
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
