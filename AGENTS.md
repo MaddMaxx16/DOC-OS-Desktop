@@ -32,28 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.4 Readiness + Send Schedule
+## Current packet — V2.6.4.1 Closable Driver Inspector
 
-V2.1 through V2.6.3.2 remain the locked desktop foundation.
+V2.1 through V2.6.4 remain the locked desktop foundation.
 
 Guardrails:
 - preserve the map-first command rail → browser → live map → inspector workstation,
-- preserve V2.5 booking/Rate Con truth and committed freight ownership,
-- preserve V2.6.1 DRAFT/SENT planning truth,
-- preserve V2.6.2 committed-manifest sequencing, pickup-before-delivery, capacity guards, and plan-health feedback,
-- preserve V2.6.3 physical Lunch/Staging places, insertion lanes, preview/confirm flow, and contextual staging,
-- Plan Check remains visible outside Planning Mode so readiness is always legible,
-- readiness blockers and warnings should resolve to actionable Driver Day stops when a specific stop owns the issue,
-- missing required Lunch/Staging place truth is a hard blocker,
-- hard blockers prevent schedule dispatch,
-- warnings remain sendable only through an explicit warning override,
-- a clean plan still requires a deliberate send confirmation,
-- SEND SCHEDULE changes the authoritative driver plan from DRAFT to SENT,
-- a sent plan is not casually editable/resequenceable/place-editable,
-- do not add a post-send revision workflow yet; that belongs with Live Operations,
-- do not let SEND SCHEDULE automatically optimize or repair the plan,
-- player intent remains authoritative for sendable warnings,
-- V2.6.4 completes Daily Planning; V2.7 begins only after this packet passes visual/functional acceptance.
+- preserve V2.6 Daily Planning truth, readiness, and DRAFT → SENT dispatch behavior,
+- the right Operations Inspector must be dismissible with a visible close control,
+- closing the inspector hides only presentation context; it must not clear the selected driver/stop or mutate Driver Day truth,
+- the selected driver's route may remain visible on the map after the inspector closes,
+- selecting a driver/stop again reopens the inspector,
+- if the inspector is closed during Planning Mode, exit the planning presentation cleanly without modifying the draft plan,
+- sent-plan state must survive inspector close/reopen,
+- do not treat inspector visibility as operational selection state,
+- V2.6.4.1 is a final Daily Planning shell polish pass before V2.7 Live Operations.
 
 ## Verification
 
