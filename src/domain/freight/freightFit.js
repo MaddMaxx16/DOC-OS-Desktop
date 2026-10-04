@@ -96,15 +96,27 @@ function candidateGap({ lane, driver, day, locations, index, baselineDrive }) {
   const nextCoordinates = eventCoordinates(next, locations)
   const pickupCoordinates = locations[lane.pickupLocationId]?.coordinates
   const deliveryCoordinates = locations[lane.deliveryLocationId]?.coordinates
+  const unresolvedStaging = next?.kind === 'staging' && !nextCoordinates
 
-  if (!previousCoordinates || !nextCoordinates || !pickupCoordinates || !deliveryCoordinates) return null
+  if (
+    !previousCoordinates
+    || !pickupCoordinates
+    || !deliveryCoordinates
+    || (!nextCoordinates && !unresolvedStaging)
+  ) return null
 
   const previousReady = eventReadyMinute(previous)
-  const nextArrival = finite(next.projectedArrivalMinutes)
+  const nextArrival = unresolvedStaging
+    ? finite(day.shift?.endMinutes)
+    : finite(next.projectedArrivalMinutes)
   const deadhead = estimateRoadLeg(previousCoordinates, pickupCoordinates)
   const loaded = estimateRoadLeg(pickupCoordinates, deliveryCoordinates)
-  const reposition = estimateRoadLeg(deliveryCoordinates, nextCoordinates)
-  const direct = estimateRoadLeg(previousCoordinates, nextCoordinates)
+  const reposition = unresolvedStaging
+    ? { miles: 0, minutes: 0 }
+    : estimateRoadLeg(deliveryCoordinates, nextCoordinates)
+  const direct = unresolvedStaging
+    ? { miles: 0, minutes: 0 }
+    : estimateRoadLeg(previousCoordinates, nextCoordinates)
 
   const pickupArrival = Math.max(previousReady + deadhead.minutes, lane.pickupWindow.startMinutes)
   const pickupDeparture = pickupArrival + PICKUP_SERVICE_MINUTES
@@ -170,7 +182,7 @@ function candidateGap({ lane, driver, day, locations, index, baselineDrive }) {
       originCoordinates: previousCoordinates,
       nextCoordinates,
       originLocationLabel: previous.locationLabel,
-      nextLocationLabel: next.locationLabel,
+      nextLocationLabel: unresolvedStaging ? 'Unassigned staging' : next.locationLabel,
       pickupArrival,
       deliveryArrival,
       returnArrival,
