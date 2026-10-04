@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { formatClock } from '../../domain/manifest/driverDayModel.js'
 import {
   canEditDispatchPlan,
@@ -162,6 +162,12 @@ export default function DriverDayPanel({
   const [draggedEventId, setDraggedEventId] = useState(null)
   const [activeGap, setActiveGap] = useState(null)
   const [sendReviewOpen, setSendReviewOpen] = useState(false)
+
+  useEffect(() => {
+    setDraggedEventId(null)
+    setActiveGap(null)
+    setSendReviewOpen(false)
+  }, [driver?.id, planning])
 
   if (!driver || !day) return null
 
