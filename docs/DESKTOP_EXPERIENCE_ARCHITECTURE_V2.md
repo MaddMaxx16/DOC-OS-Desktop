@@ -416,6 +416,25 @@ The map system must support at least:
 
 Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
+### Atomic committed-route publication
+
+Committed Driver Day routing may hydrate multiple road legs serially, but route loading is not gameplay and should not read as vehicle motion.
+
+Rules:
+
+- road requests remain serialized for router reliability,
+- the map does not publish each successful leg as soon as it returns,
+- the hydration pass completes first, including its retry wave,
+- the map then receives one completed committed-route snapshot,
+- partially resolved legs are internal loading state, not visible operational state,
+- opening FreightLink or another map presentation must reuse the completed committed route rather than replaying route construction,
+- this rule affects presentation only and does not change route distance, duration, HOS, appointments, or plan truth.
+
+This creates the presentation invariant:
+
+> route calculation may happen leg-by-leg  
+> route presentation appears as one stable plan
+
 ### Route seam continuity
 
 A Driver Day is calculated as ordered road legs, but separate road calls may snap the same stop to slightly different access points depending on whether that stop is an origin or destination.
@@ -1514,33 +1533,32 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5.11 are accepted and locked.
+V2.5 through V2.6.5.12 are accepted and locked.
 
-The active final route-polish packet is:
+The active final presentation-polish packet is:
 
-# **V2.6.5.12 — Route Seam Continuity**
+# **V2.6.5.13 — Atomic Route Publish**
 
-After committed stop alignment was corrected in both Live Map and FreightLink, visual acceptance exposed one remaining presentation issue: route legs can appear to hop or jump as they pass through a stop.
+After route geometry, access points, native committed stops, FreightLink parity, and route seams were corrected, visual acceptance exposed a different kind of jumpiness: the route visibly builds itself one leg at a time.
 
-The cause is expected behavior from independent road-route calls:
+That behavior came from V2.6.5.7's `onProgress` publication:
 
-- an incoming leg may snap a stop to access point A,
-- the outgoing leg may snap the same stop to a nearby access point B,
-- the native stop badge correctly uses the canonical incoming access point,
-- without display stitching, the next line may begin a few pixels away.
+- road requests correctly hydrate serially,
+- each successful leg was immediately pushed into React state,
+- MapLibre then rebuilt the committed route after every leg,
+- the player therefore watched the route pop across the map in chunks.
 
-V2.6.5.12 resolves the seam without changing simulation truth:
+V2.6.5.13 keeps the reliable serialized requests but changes presentation:
 
-- build one canonical access map from the resolved Driver Day,
-- stitch each rendered committed leg to the canonical access coordinates at both ends,
-- retain original route distance/duration for all planning calculations,
-- apply the same visual stitching to FreightLink deadhead → loaded → rejoin seams,
-- preserve dashed pickup-bound and solid delivery/non-pickup line semantics,
-- use normal rounded MapLibre joins rather than decorative curves.
+- no intermediate route snapshots are published,
+- the full hydration/retry pass completes first,
+- one completed Driver Day route snapshot is then published,
+- FreightLink reuses the same stable committed route,
+- no route geometry, coordinates, timing, HOS, appointments, or planning math changes are introduced.
 
 Acceptance:
 
-Committed routes and FreightLink candidate previews read as continuous road paths through their stop markers, without small visual hops at P/D transition points.
+Selecting a driver or opening the map does not show the committed route assembling leg-by-leg. The completed route appears as one stable path once road hydration is ready.
 
 After visual acceptance, lock V2.6 Daily Planning and proceed to:
 
