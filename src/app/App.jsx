@@ -18,6 +18,7 @@ import { commitBookedFreight } from '../domain/booking/commitBookedFreight.js'
 import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
+import { canEditDispatchPlan } from '../domain/planning/dispatchPlan.js'
 import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import DesktopShell from '../shell/DesktopShell.jsx'
 
@@ -30,6 +31,7 @@ export default function App() {
   const [operationalDriverPlans, setOperationalDriverPlans] = useState(() => ({ ...seedDriverPlans }))
   const [bookingRecords, setBookingRecords] = useState({})
   const [focusedTask, setFocusedTask] = useState(null)
+  const [planningDriverId, setPlanningDriverId] = useState(null)
 
   const driverDays = useMemo(
     () => buildDriverDays(drivers, operationalLoads, operationalDriverPlans, locations),
@@ -48,6 +50,20 @@ export default function App() {
   const selectSubject = (type, id) => {
     setSelection(createSelection(type, id))
 
+    const subjectDriverId = type === SELECTION_TYPES.DRIVER
+      ? id
+      : type === SELECTION_TYPES.STOP
+        ? driverDays.find((day) => day.timeline.some((item) => item.id === id))?.driverId ?? null
+        : null
+
+    if (
+      planningDriverId
+      && subjectDriverId
+      && subjectDriverId !== planningDriverId
+    ) {
+      setPlanningDriverId(null)
+    }
+
     if (type === SELECTION_TYPES.DRIVER || type === SELECTION_TYPES.STOP) {
       return
     }
@@ -64,12 +80,26 @@ export default function App() {
     }
   }
 
+  const startDriverPlanning = (driverId) => {
+    const day = driverDays.find((item) => item.driverId === driverId)
+    if (!day || !canEditDispatchPlan(day)) return
+    setPlanningDriverId(driverId)
+  }
+
+  const stopDriverPlanning = (driverId) => {
+    setPlanningDriverId((current) => current === driverId ? null : current)
+  }
+
   const toggleApp = (appId) => {
     if (!['drivers', 'freightlink'].includes(appId)) return
 
     const opening = activeApp !== appId
     if (appId === 'freightlink' && opening && selection?.type === SELECTION_TYPES.DRIVER) {
       setFreightCandidateDriverId(selection.id)
+    }
+
+    if (appId === 'freightlink' && opening) {
+      setPlanningDriverId(null)
     }
 
     if (activeApp === 'freightlink' && appId !== 'freightlink') {
@@ -241,6 +271,7 @@ export default function App() {
       selection={selection}
       activeApp={activeApp}
       focusedTask={focusedTask}
+      planningDriverId={planningDriverId}
       freightRoutePreview={freightRoutePreview}
       freightCandidateDriverId={freightCandidateDriverId}
       onToggleApp={toggleApp}
@@ -252,6 +283,8 @@ export default function App() {
       onOpenRateCon={openRateCon}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}
+      onStartDriverPlanning={startDriverPlanning}
+      onStopDriverPlanning={stopDriverPlanning}
       onSelectSubject={selectSubject}
     />
   )

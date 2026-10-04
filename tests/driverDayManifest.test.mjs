@@ -9,6 +9,12 @@ import { resolveSelectionContext } from '../src/domain/selection/selectionContex
 const days = buildDriverDays(drivers, loads, driverPlans, locations)
 const marcus = days.find((day) => day.driverId === 'marcus-reed')
 
+test('seeded Driver Days expose draft dispatch-plan truth', () => {
+  for (const day of days) {
+    assert.equal(day.dispatchStatus, 'draft')
+  }
+})
+
 test('Marcus day exposes the intended interleaved three-load sequence', () => {
   assert.deepEqual(
     marcus.timeline.map((item) => (

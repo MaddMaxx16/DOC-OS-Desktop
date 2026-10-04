@@ -1432,24 +1432,39 @@ The following are now considered locked unless deliberately reopened:
 
 V2.5 is visually accepted and locked.
 
-The active gameplay packet is:
+The active implementation packet is:
 
-# **V2.6 — Daily Planning**
+# **V2.6.1 — Planning Foundation**
 
-The implementation sequence is:
+It establishes:
 
-1. **V2.6.1 — Planning Foundation**
-2. **V2.6.2 — Stop Sequencing**
-3. **V2.6.3 — Breaks, Places + Staging**
-4. **V2.6.4 — Readiness + Send Schedule**
+- explicit DRAFT PLAN / SENT PLAN truth on each driver plan,
+- DRAFT as the editable state,
+- Planning Mode as UI/presentation state rather than a second schedule,
+- the existing Driver Day inspector as the planning surface,
+- a compact SHIFT / HOS / TRAILER operational strip,
+- EDIT PLAN → PLANNING MODE → DONE interaction,
+- one active planning driver at a time,
+- automatic planning-mode exit when moving into FreightLink or another driver's context,
+- the live map remaining visible throughout ordinary planning.
 
-V2.6.3 explicitly owns the lunch-POI/RPG bridge:
+V2.6.1 deliberately does **not** reorder stops, choose lunch POIs, change staging, validate readiness, or send the schedule.
 
-- Lunch is a real place.
-- The player chooses it.
-- The detour affects the operating plan.
-- The chosen place persists.
-- Future RPG systems enrich that place rather than replacing the lunch mechanic.
+After V2.6.1 passes functional and visual acceptance, proceed to:
+
+# **V2.6.2 — Stop Sequencing**
+
+Then:
+
+# **V2.6.3 — Breaks, Places + Staging**
+
+The V2.6.3 lunch rule remains locked:
+
+> Lunch is a real selected POI whose route/timing consequences become part of Driver Day truth and whose location can later receive RPG metadata.
+
+Finally:
+
+# **V2.6.4 — Readiness + Send Schedule**
 
 V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, and V2.5.7 compact fit-badge contract.
 
