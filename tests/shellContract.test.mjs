@@ -241,3 +241,16 @@ test('V2.4.6 map symbols shrink without reducing operational text scale', async 
   assert.match(globalCss, /--type-micro:\s*11px/)
   assert.match(globalCss, /--type-body:\s*14px/)
 })
+
+
+test('V2.4.7 FreightLink keeps compact committed route anchors visible', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /buildDriverRouteAnchors/)
+  assert.match(map, /workspaceOpen && driverIdentity && driverDay/)
+  assert.match(map, /driver-route-anchor/)
+  assert.match(map, /route-anchor:/)
+  assert.match(css, /\.driver-route-anchor \{[\s\S]*opacity: \.76;/)
+  assert.match(css, /\.driver-route-anchor \.poi-symbol \{[\s\S]*width: 27px;[\s\S]*height: 27px;/)
+})

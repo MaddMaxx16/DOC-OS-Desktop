@@ -588,7 +588,10 @@ When FreightLink opens without a selected lane:
 - show available lanes as compact selectable marketplace markers,
 - show driver assets without permanent name cards,
 - show the candidate driver's existing planned route in that driver's identity color,
-- avoid rendering the candidate driver's individual manifest stop markers while shopping.
+- show compact committed route anchors for the candidate driver's meaningful Driver Day locations,
+- route anchors use typed POI shapes and small P/D/L/S/Y badges,
+- duplicate timeline events at the same physical location collapse into one anchor,
+- facility names remain hidden until hover so the map stays calm.
 
 **Selected-lane focus**
 
@@ -598,7 +601,9 @@ When a lane is selected:
 - hide unrelated marketplace opportunity markers,
 - hide unrelated drivers,
 - keep the candidate driver's colored existing route visible as the baseline plan,
-- hide the candidate driver's individual manifest stop markers,
+- keep the candidate driver's committed route anchors visible as small spatial references,
+- keep route-anchor labels hidden until hover,
+- offset a committed anchor slightly when it shares the exact facility with the proposed pickup/delivery marker,
 - identify the exact existing route leg between the evaluated insertion's AFTER and BEFORE events,
 - visually subdue that direct leg,
 - overlay the proposed insertion in neutral as AFTER → pickup → delivery → BEFORE,
@@ -607,7 +612,7 @@ When a lane is selected:
 - reject stale route/marker data from a previously selected lane,
 - keep the app drawer visible below while the map shows the geography above.
 
-The inspector owns the detailed insertion explanation. The map's job is to make **current plan vs proposed plan** readable spatially without recreating manifest-label clutter.
+The inspector owns the detailed insertion explanation. The map's job is to make **current plan vs proposed plan** readable spatially while preserving just enough committed stop context to understand why the route goes where it goes.
 
 ### Focused workspace
 
@@ -1322,24 +1327,25 @@ The following are now considered locked unless deliberately reopened:
 
 The active completion packet is:
 
-# **V2.4.6 — Driver Route + Load Insertion Preview**
+# **V2.4.7 — Route Anchors**
 
 It locks:
 
-- FreightLink candidate-driver context at the shell/map level,
-- persistent colored planned-driver routes,
-- route order derived from the authoritative Driver Day timeline,
-- neutral three-leg insertion preview: entry → loaded freight → rejoin,
-- dimming only the existing direct leg replaced by the proposal,
-- smaller truck/facility symbol bodies without shrinking readable text.
+- compact committed Driver Day anchors in FreightLink,
+- route anchors derived from the authoritative timeline,
+- typed POI shapes plus P/D/L/S/Y badges,
+- duplicate physical locations collapsed into one marker,
+- hover-only facility labels,
+- proposal markers remaining visually dominant,
+- slight offset when committed and proposed markers share a facility.
 
-After V2.4.6 passes visual acceptance, V2.4 is considered complete.
+After V2.4.7 passes visual acceptance, V2.4 is considered complete.
 
 The next gameplay packet is:
 
 # **V2.5 — Booking + Rate Confirmation**
 
-V2.5 must preserve the V2.4 map/readability/focus contracts and convert accepted neutral proposal geometry into the driver's committed colored route only after successful booking/assignment.
+V2.5 must preserve the V2.4 route baseline, insertion-preview, and route-anchor visual language.
 
 
 ---

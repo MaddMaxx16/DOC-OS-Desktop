@@ -8,6 +8,7 @@ import {
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import {
+  buildDriverRouteAnchors,
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
 } from '../domain/routing/driverRoutePlan.js'
@@ -254,6 +255,38 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
+
+    if (workspaceOpen && driverIdentity && driverDay) {
+      const routeAnchors = buildDriverRouteAnchors(driverDay, locations)
+      const previewPickupId = freightRoutePreview?.pickup?.id ?? null
+      const previewDeliveryId = freightRoutePreview?.delivery?.id ?? null
+
+      for (const anchor of routeAnchors) {
+        const element = document.createElement('div')
+        element.className = `poi-marker driver-route-anchor ${anchor.poiType}`
+        element.style.setProperty('--driver-color', driverIdentity.color)
+        element.setAttribute('role', 'img')
+        element.setAttribute(
+          'aria-label',
+          `${anchor.badge ? `${anchor.badge} · ` : ''}${anchor.locationLabel}`,
+        )
+        element.innerHTML = `${facilityMarkup({
+          type: anchor.poiType,
+          badge: anchor.badge,
+        })}<small>${anchor.locationLabel}</small>`
+
+        let offset = [0, 0]
+        if (anchor.locationId && anchor.locationId === previewPickupId) offset = [-18, 0]
+        else if (anchor.locationId && anchor.locationId === previewDeliveryId) offset = [18, 0]
+
+        const marker = new Marker({ element, anchor: 'bottom', offset })
+          .setLngLat(anchor.coordinates)
+          .addTo(map)
+
+        markerRefs.current.set(`route-anchor:${anchor.id}`, marker)
+      }
+    }
+
     for (const stop of workspaceOpen ? [] : (driverDay?.freightStops ?? [])) {
       if (!stop.coordinates || !driverIdentity) continue
       const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)

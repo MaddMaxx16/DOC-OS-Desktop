@@ -32,27 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.6 Driver Route + Load Insertion Preview
+## Current packet — V2.4.7 Route Anchors
 
-V2.1 through V2.4.5 are structurally locked.
+V2.1 through V2.4.6 are structurally locked.
 
-V2.4.6 turns the FreightLink map from isolated lane preview into a before/after planning board.
+V2.4.7 restores spatial anchors for the candidate driver's committed day without reintroducing map clutter.
 
 Guardrails:
-- preserve the V2.4.4 flat north-up camera, shared drawer, map style, POI language, and readability scale,
-- FreightLink candidate driver context is shared with the shell even before a load is selected,
-- the candidate driver's existing planned day is rendered as a continuous route in that driver's persistent identity color,
-- existing route order follows the authoritative Driver Day timeline,
-- FreightLink evaluation keeps the committed driver route visible,
-- the direct existing leg replaced by a proposed insertion is visually subdued rather than removed from the model,
-- a proposed insertion renders in neutral from existing stop → pickup → delivery → next existing stop,
-- deadhead and rejoin portions use neutral dashed treatment,
-- loaded proposed freight uses a stronger neutral solid treatment,
-- neutral proposal routes do not inherit driver color until booking/assignment actually commits the work,
-- FreightLink hides the driver's individual manifest POI markers while shopping so route context does not recreate map clutter,
-- truck and facility symbol bodies are reduced roughly 15–20% without reducing gameplay text,
-- do not change FreightLink fit truth, manifest order, HOS, capacity, appointments, shell structure, or typography,
-- do not add booking or Rate Confirmation behavior until V2.5.
+- preserve the V2.4.6 colored committed route + neutral insertion preview,
+- while FreightLink is open, render compact route anchors for the candidate driver's meaningful Driver Day locations,
+- route anchors are derived from the authoritative Driver Day timeline,
+- pickup/delivery anchors retain P1/P2/P3 and D1/D2/D3 badges,
+- shift-start/yard, lunch, and staging retain typed POI symbols,
+- multiple timeline events at the same physical location collapse into one marker with combined badges,
+- existing route anchors are smaller and quieter than selected FreightLink pickup/delivery markers,
+- route-anchor facility names stay hidden until hover,
+- selected FreightLink pickup/delivery markers remain visually dominant,
+- when an existing route anchor shares the exact facility with the proposed pickup/delivery, offset the committed anchor slightly instead of stacking it directly underneath,
+- unrelated marketplace opportunities and unrelated drivers remain hidden during selected-lane focus,
+- do not change route truth, fit evaluation, map camera, drawer layout, typography, or booking behavior.
 
 ## Verification
 
