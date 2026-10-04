@@ -32,19 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.14 Stable Route Swap
+## Current packet — V2.7.1 Live Operations Foundation
 
-V2.1 through V2.6.5.13 remain the locked gameplay and map foundation.
+V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete.
 
 Guardrails:
-- preserve atomic committed-route publication from V2.6.5.13,
-- preserve serialized road hydration, native committed stops, access-point truth, route seam continuity, and shared Live Map/FreightLink rendering,
-- when a selected driver's Driver Day changes and a replacement route begins hydrating, keep that same driver's last complete committed route visible,
-- swap to the replacement route only after the new complete hydration snapshot is ready,
-- never show one driver's cached route while a different driver is selected,
-- this is presentation continuity only; do not change route coordinates, route requests, route math, HOS, appointments, capacity, sequence, or sent-plan truth,
-- do not reintroduce progressive leg-by-leg publication,
-- once V2.6.5.14 passes visual acceptance, V2.6 Daily Planning is complete and the active build order advances to V2.7 Live Operations.
+- preserve every locked planning, routing, map, booking, and Rate Con invariant from V2.1–V2.6,
+- activate the existing top-right pause/play/fast-forward runway instead of redesigning the header,
+- simulation begins at 6:00 AM, Day 1, paused,
+- Play advances one game minute per simulation tick; Fast Forward advances four game minutes per tick,
+- Focused Workspace freezes simulation time regardless of the requested clock mode,
+- closing Focused Workspace may resume the previously requested Play/Fast mode,
+- only SENT Driver Days are armed for Live Operations,
+- before shift start a sent plan is SCHEDULED; inside the shift window it becomes LIVE READY,
+- draft plans remain planning truth only and are not live-executable,
+- V2.7.1 does not move trucks, complete route legs, consume service time, mutate HOS, or auto-complete stops,
+- truck movement and execution-position truth belong to the next V2.7 slice,
+- do not let clock activation mutate route timing, Driver Day order, appointments, capacity, or sent-plan contents.
 
 ## Verification
 
