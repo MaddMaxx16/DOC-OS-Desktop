@@ -688,9 +688,9 @@ Create one coherent selection contract for:
 This selection should drive:
 
 - map emphasis,
-- left/right drawers,
+- left browser / right inspector context,
 - manifest highlight,
-- app context.
+- active workstation section.
 
 Avoid screen-specific copies of selection state.
 
@@ -759,16 +759,17 @@ Rate Confirmation review uses Focused Workspace.
 
 Focused review:
 
-- expands beyond the ordinary bottom app drawer,
+- replaces the ordinary workstation navigation surfaces for the duration of the task,
 - visibly pauses gameplay presentation,
-- shows a readable document,
-- compares the document against the FreightLink lane,
-- flags rate, equipment, facility, and appointment-window mismatches,
-- offers correction when terms do not match.
+- shows readable broker-style paperwork,
+- places FreightLink reference values beside document values,
+- begins with no term pre-verified,
+- requires the player to mark each comparison **MATCH** or **ISSUE**,
+- offers correction when the player flags an issue.
 
-Verification is gameplay, not an automatic gate.
+Verification is gameplay, not an automatic answer key.
 
-The player may deliberately accept mismatched terms after a clear warning. If they do, DOC OS preserves the Rate Confirmation exactly as written and records that the booking was accepted with a mismatch.
+If the player flags an issue, they may request correction or deliberately accept the document as written. If the player fails to notice a real mismatch and marks it MATCH, the game may still accept that mistake and preserve the Rate Confirmation terms exactly as written.
 
 #### Confirmation handoff
 
@@ -913,28 +914,19 @@ This is the intended v2 build order.
 
 ### V2.1 — Shell Reset
 
-Goal: make DOC OS feel like the mockup structurally.
+Goal: establish the map-first desktop direction and remove the inherited mobile-shell assumptions.
 
-Build:
+This milestone proved the map-first concept but its temporary side-drawer/bottom-dock presentation was later superseded by **V2.5.1 Workstation Navigation**.
 
-- map-first default state,
-- compact top bar,
-- left drawer closed by default,
-- right drawer closed by default,
-- smooth independent slide-in/out behavior,
-- compact bottom dock,
-- map stays geographically stable while side drawers overlay it,
-- remove permanent side-panel squeeze,
-- remove the always-open bottom workspace,
-- remove active Jordan tutorial presentation/gating.
+The retained V2.1 truth is:
 
-Acceptance:
+- desktop-first workstation,
+- map as the main operational canvas,
+- compact global top bar,
+- no active Jordan tutorial gating,
+- no permanent mobile-shell layout.
 
-When the workstation opens, the map feels dominant and calm.
-
-The player can open and close both side drawers without the entire layout jumping.
-
-No tutorial card interrupts the shell test.
+The active navigation/layout contract is defined by V2.5.1.
 
 ### V2.2 — Shared Selection + Driver Identity
 
@@ -948,8 +940,8 @@ Build:
 - selected stop,
 - selected facility,
 - selected route leg,
-- map/drawer/manifest synchronization,
-- contextual right drawer content.
+- map/browser/inspector/manifest synchronization,
+- contextual right inspector content.
 
 Acceptance:
 
