@@ -22,6 +22,8 @@ setWorkerUrl(maplibreWorkerUrl)
 const DRIVER_ROUTE_SOURCE = 'driver-plan-source'
 const DRIVER_ROUTE_CASING_LAYER = 'driver-plan-casing'
 const DRIVER_ROUTE_LAYER = 'driver-plan-layer'
+const DRIVER_ROUTE_PICKUP_CASING_LAYER = 'driver-plan-pickup-casing'
+const DRIVER_ROUTE_PICKUP_LAYER = 'driver-plan-pickup-layer'
 
 const DEADHEAD_SOURCE = 'freightlink-deadhead-source'
 const DEADHEAD_CASING_LAYER = 'freightlink-deadhead-casing'
@@ -36,6 +38,8 @@ const REJOIN_LAYER = 'freightlink-rejoin-layer'
 const PREVIEW_ROUTE = '#c8d2da'
 const PREVIEW_DEADHEAD = '#8797a4'
 const ROUTE_CASING = '#111a22'
+const PICKUP_ROUTE_DASH = [2, 1.5]
+const PICKUP_CASING_DASH = [1.15, 0.85]
 
 function tuneBaseMap(map) {
   const layers = map.getStyle()?.layers ?? []
@@ -364,6 +368,8 @@ export default function OperationsMap({
     if (!mapReady || !map) return undefined
 
     const clearDriverRoute = () => {
+      if (map.getLayer(DRIVER_ROUTE_PICKUP_LAYER)) map.removeLayer(DRIVER_ROUTE_PICKUP_LAYER)
+      if (map.getLayer(DRIVER_ROUTE_PICKUP_CASING_LAYER)) map.removeLayer(DRIVER_ROUTE_PICKUP_CASING_LAYER)
       if (map.getLayer(DRIVER_ROUTE_LAYER)) map.removeLayer(DRIVER_ROUTE_LAYER)
       if (map.getLayer(DRIVER_ROUTE_CASING_LAYER)) map.removeLayer(DRIVER_ROUTE_CASING_LAYER)
       if (map.getSource(DRIVER_ROUTE_SOURCE)) map.removeSource(DRIVER_ROUTE_SOURCE)
@@ -380,7 +386,10 @@ export default function OperationsMap({
       .filter((segment) => Array.isArray(segment.route?.routeShape) && segment.route.routeShape.length >= 2)
       .map((segment) => ({
         type: 'Feature',
-        properties: { affected: segment.affected },
+        properties: {
+          affected: segment.affected,
+          destinationRole: segment.toRole ?? '',
+        },
         geometry: { type: 'LineString', coordinates: segment.route.routeShape },
       }))
 
@@ -397,10 +406,14 @@ export default function OperationsMap({
         ? LOADED_CASING_LAYER
         : undefined
 
+    const solidLegFilter = ['!=', ['get', 'destinationRole'], 'pickup']
+    const pickupLegFilter = ['==', ['get', 'destinationRole'], 'pickup']
+
     map.addLayer({
       id: DRIVER_ROUTE_CASING_LAYER,
       type: 'line',
       source: DRIVER_ROUTE_SOURCE,
+      filter: solidLegFilter,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': ROUTE_CASING,
@@ -418,6 +431,7 @@ export default function OperationsMap({
       id: DRIVER_ROUTE_LAYER,
       type: 'line',
       source: DRIVER_ROUTE_SOURCE,
+      filter: solidLegFilter,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': identity.color,
@@ -428,6 +442,44 @@ export default function OperationsMap({
           0.14,
           freightRoutePreview ? 0.62 : 0.88,
         ],
+      },
+    }, beforeId)
+
+    map.addLayer({
+      id: DRIVER_ROUTE_PICKUP_CASING_LAYER,
+      type: 'line',
+      source: DRIVER_ROUTE_SOURCE,
+      filter: pickupLegFilter,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': ROUTE_CASING,
+        'line-width': 7,
+        'line-opacity': [
+          'case',
+          ['boolean', ['get', 'affected'], false],
+          0.22,
+          freightRoutePreview ? 0.62 : 0.82,
+        ],
+        'line-dasharray': PICKUP_CASING_DASH,
+      },
+    }, beforeId)
+
+    map.addLayer({
+      id: DRIVER_ROUTE_PICKUP_LAYER,
+      type: 'line',
+      source: DRIVER_ROUTE_SOURCE,
+      filter: pickupLegFilter,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': identity.color,
+        'line-width': 4,
+        'line-opacity': [
+          'case',
+          ['boolean', ['get', 'affected'], false],
+          0.14,
+          freightRoutePreview ? 0.62 : 0.88,
+        ],
+        'line-dasharray': PICKUP_ROUTE_DASH,
       },
     }, beforeId)
 
