@@ -1492,39 +1492,29 @@ The following are now considered locked unless deliberately reopened:
 
 V2.5 through V2.6.4.1 are accepted and locked.
 
-The active corrective packet is:
+The active final map-cleanup packet is:
 
-# **V2.6.5.9 — Native Operational Stops**
+# **V2.6.5.10 — Clean Native Stops**
 
-V2.6.5.8 diagnostics finally isolated the remaining route/marker failure.
+V2.6.5.8 diagnostics conclusively proved that committed route endpoints and operational marker-access coordinates were identical. V2.6.5.9 then moved committed pickup/delivery badges onto MapLibre-native layers so they share the same projection as the route.
 
-The browser showed:
+The first V2.6.5.9 visual test showed the diagnostic pink dots/yellow rings were rendered above the native P/D badges, obscuring the new presentation.
 
-- all 7 Marcus route legs were real ROAD geometry,
-- route endpoint and marker-access coordinates matched exactly,
-- diagnostic route-end dots and marker-access rings rendered on top of each other,
-- the HTML pickup/delivery stop icons still appeared visibly displaced from those exact coordinates.
+V2.6.5.10 therefore performs cleanup only:
 
-That proves the remaining fault is the DOM-marker rendering layer, not routing, snapping, Driver Day order, or access-point data.
-
-V2.6.5.9 therefore removes committed P/D stops from the HTML Marker path:
-
-- committed freight stops render from one GeoJSON source,
-- their visual badge is a MapLibre-native circle + symbol layer,
-- labels are a MapLibre-native symbol layer,
-- route and stop use the same access coordinates and the same projection engine,
-- selected/next labels remain visible,
-- secondary facility labels reveal on hover,
-- native stop layers remain clickable and preserve STOP selection,
-- route layers render below the committed stop layers,
-- retired committed `.facility-stop` DOM CSS is removed,
-- V2.6.5.8 diagnostics remain dev-only for visual proof during acceptance.
+- remove the route-diagnostics panel,
+- remove diagnostic endpoint dots and access rings,
+- remove diagnostic CSS and debug-only map sources/layers,
+- keep the MapLibre-native P/D stop source, circle layer, badge layer, and label layer,
+- keep native stop layers above committed route lines,
+- keep selected/next facility labels and hover disclosure,
+- make no routing or coordinate-model changes.
 
 Acceptance:
 
-D1, P3, and every other committed P/D badge visually sit on the same pink/yellow diagnostic endpoint coordinate that the blue route reaches.
+Normal Driver view shows clear P1/P2/P3/D1/D2/D3 badges directly on the blue committed route with no pink/yellow diagnostic markers visible.
 
-After visual acceptance, remove the diagnostics UI, lock V2.6 map polish, and proceed to:
+After visual acceptance, lock V2.6 map polish and proceed to:
 
 # **V2.7 — Live Operations**
 
