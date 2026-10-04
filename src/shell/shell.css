@@ -328,10 +328,16 @@
   width: 32px;
   height: 32px;
   border: 1px solid #314652;
+  border-radius: 3px;
   background: #0e1921;
   color: #afc0cb;
   font-size: 20px;
   cursor: pointer;
+}
+.workstation-panel-header > button:hover {
+  border-color: #607b8e;
+  background: #13232d;
+  color: #edf4f8;
 }
 
 .driver-browser {
