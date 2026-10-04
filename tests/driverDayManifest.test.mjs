@@ -58,6 +58,14 @@ test('capacity snapshots carry multiple loads and release them at delivery', () 
   assert.equal(d3.capacityAfter.palletsUsed, 0)
 })
 
+test('Driver Day exposes plan-health feedback for sequencing decisions', () => {
+  assert.ok(['ready', 'warning', 'blocked'].includes(marcus.planHealth.status))
+  assert.ok(Array.isArray(marcus.planHealth.blockers))
+  assert.ok(Array.isArray(marcus.planHealth.warnings))
+  assert.equal(Number.isFinite(marcus.planHealth.driveMinutes), true)
+  assert.equal(Number.isFinite(marcus.planHealth.dutyMinutes), true)
+})
+
 test('driver day exposes HOS and trailer peak state', () => {
   assert.equal(marcus.hos.drive, '11:00')
   assert.equal(marcus.hos.duty, '14:00')
