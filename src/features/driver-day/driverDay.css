@@ -143,3 +143,35 @@
 .driver-day-row.staging .timeline-dot { border-color: #788690; }
 .driver-day-row.staging .timeline-title b { color: #85929c; }
 .driver-day-row.shift-start .timeline-dot { background: var(--selected-driver-color); }
+
+
+/* V2.4.3 readability contract */
+.driver-day-summary span,
+.driver-day-heading span,
+.driver-day-row time,
+.timeline-title b,
+.day-row-meta,
+.day-row-meta b,
+.capacity-after span {
+  font-size: var(--type-micro);
+}
+.driver-day-summary strong,
+.driver-day-summary small,
+.driver-day-heading small,
+.day-row-meta em {
+  font-size: var(--type-secondary);
+}
+.driver-day-heading strong,
+.timeline-title strong {
+  font-size: var(--type-body);
+}
+.driver-day-summary > div {
+  min-height: 72px;
+}
+.driver-day-row {
+  min-height: 82px;
+  grid-template-columns: 18px 72px 1fr;
+}
+.timeline-content {
+  padding: 12px;
+}
