@@ -158,11 +158,11 @@ export default function OperationsMap({
     : null
   const plannedDriverRoutes = useMemo(
     () => (
-      driverRouteResult?.key === driverRouteKey
+      driverRouteResult?.driverId === selectedDriver?.id
         ? driverRouteResult.segments
         : []
     ),
-    [driverRouteKey, driverRouteResult],
+    [driverRouteResult, selectedDriver?.id],
   )
   const displayDriverRoutes = useMemo(
     () => stitchCommittedRouteSegments(plannedDriverRoutes),
@@ -589,13 +589,17 @@ export default function OperationsMap({
       isActive: () => active,
     }).then((segments) => {
       if (!active) return
-      setDriverRouteResult({ key: driverRouteKey, segments })
+      setDriverRouteResult({
+        key: driverRouteKey,
+        driverId: selectedDriver.id,
+        segments,
+      })
     })
 
     return () => {
       active = false
     }
-  }, [driverDay, driverRouteKey, locations])
+  }, [driverDay, driverRouteKey, locations, selectedDriver])
 
   useEffect(() => {
     const map = mapRef.current

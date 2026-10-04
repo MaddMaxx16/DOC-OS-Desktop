@@ -32,21 +32,19 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.13 Atomic Route Publish
+## Current packet — V2.6.5.14 Stable Route Swap
 
-V2.1 through V2.6.5.12 remain the locked gameplay and map foundation.
+V2.1 through V2.6.5.13 remain the locked gameplay and map foundation.
 
 Guardrails:
-- preserve Driver Day order, route mileage, duration, HOS, appointments, capacity, sent-plan truth, access-point truth, native stop rendering, and route seam continuity,
-- keep committed road hydration serialized so the public router is never burst with all Driver Day legs at once,
-- do not publish partially hydrated committed routes to the map,
-- the player should not watch the committed day appear leg-by-leg as individual route requests finish,
-- publish one completed committed-route snapshot after the hydration pass finishes,
-- unresolved estimate legs may still receive the existing retry wave before the final snapshot is published,
-- estimate fallback geometry remains timing-only and must not render as committed road truth,
-- opening FreightLink must reuse the same stable committed-route snapshot rather than triggering a progressive redraw,
-- FreightLink candidate preview behavior is unchanged by this packet,
-- do not change routing requests, route coordinates, route styling, Driver Day sequencing, or planning math in this packet.
+- preserve atomic committed-route publication from V2.6.5.13,
+- preserve serialized road hydration, native committed stops, access-point truth, route seam continuity, and shared Live Map/FreightLink rendering,
+- when a selected driver's Driver Day changes and a replacement route begins hydrating, keep that same driver's last complete committed route visible,
+- swap to the replacement route only after the new complete hydration snapshot is ready,
+- never show one driver's cached route while a different driver is selected,
+- this is presentation continuity only; do not change route coordinates, route requests, route math, HOS, appointments, capacity, sequence, or sent-plan truth,
+- do not reintroduce progressive leg-by-leg publication,
+- once V2.6.5.14 passes visual acceptance, V2.6 Daily Planning is complete and the active build order advances to V2.7 Live Operations.
 
 ## Verification
 
