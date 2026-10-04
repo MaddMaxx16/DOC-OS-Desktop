@@ -366,12 +366,20 @@
 
 /* V2.4.7 route anchors — committed driver stops stay visible without label clutter. */
 .driver-route-anchor {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  overflow: visible;
   pointer-events: auto;
   opacity: .76;
 }
 .driver-route-anchor .poi-symbol {
-  width: 27px;
-  height: 27px;
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
   border-width: 1px;
   border-color: var(--driver-color);
   border-radius: 7px;
