@@ -821,6 +821,29 @@ The game should distinguish:
 - plan sent to the driver,
 - freight currently executing.
 
+#### Lunch is a place, not a generic break node
+
+Lunch is part of both the dispatch simulation and the future RPG layer.
+
+Therefore:
+
+- every planned lunch must resolve to a real selectable gameplay POI,
+- lunch placement determines **when** the break occurs in the Driver Day,
+- lunch location determines **where** the driver leaves the committed route to take the break,
+- routing to the lunch POI and back into the remaining plan must affect projected arrival times, HOS, appointment risk, and route geometry,
+- lunch POIs may include restaurants, food locations, truck stops, or other valid break locations,
+- the selected lunch POI must persist as part of the driver's plan rather than being reconstructed from a generic break slot,
+- lunch POIs should be represented through the shared location/POI model so future RPG metadata can be layered onto the same physical places,
+- future RPG metadata may include driver preference, favorite locations, cost, food quality, service speed, relationship effects, morale/fatigue effects, dialogue/events, or other character-facing consequences,
+- V2.6 does **not** need to implement those RPG stats yet; it must preserve the data and interaction foundation so they can be added without replacing the lunch system.
+
+This creates an intentional bridge:
+
+> dispatch choice now  
+> character consequence later
+
+A lunch plan such as **P2 → lunch POI → D1** is real route truth. It must never collapse back into an abstract “break after P2” once a location has been chosen.
+
 ### System F — Live operations
 
 Execution should include:
@@ -1032,14 +1055,77 @@ Goal: build a coherent dispatch plan.
 Build:
 
 - stop sequencing,
-- lunch placement,
+- physical lunch-place selection,
 - staging,
 - schedule readiness checks,
 - send schedule to driver.
 
 Acceptance:
 
-A multi-load day such as P1 → P2 → Lunch → D1 → P3 → D2 → D3 can be built and sent.
+A multi-load day such as P1 → P2 → Lunch → D1 → P3 → D2 → D3 can be built and sent, with Lunch resolving to a real selected POI that affects the route and timing.
+
+#### V2.6.1 — Planning Foundation
+
+Build:
+
+- explicit DRAFT PLAN / SENT PLAN state,
+- planning mode inside the existing Driver Day inspector,
+- compact Driver Day operational summary,
+- editable-plan state separated from sent/executing state,
+- no new full-screen planner and no bottom drawer.
+
+Acceptance:
+
+A selected driver can enter and exit planning mode without changing committed freight ownership or duplicating simulation truth.
+
+#### V2.6.2 — Stop Sequencing
+
+Build:
+
+- direct stop reordering in the Driver Day timeline,
+- pickup-before-delivery hard rule,
+- trailer-capacity recalculation,
+- timing / appointment / HOS recalculation,
+- live committed-route rebuild from the edited order,
+- warnings for risky but possible plans,
+- blockers for physically impossible plans.
+
+Acceptance:
+
+The player can deliberately build and repair an interleaved multi-load sequence while the map and Driver Day remain synchronized.
+
+#### V2.6.3 — Breaks, Places + Staging
+
+Build:
+
+- lunch as a draggable Driver Day event,
+- selectable physical lunch POIs near the relevant route/time position,
+- lunch-route detour and rejoin calculations,
+- lunch duration and downstream timing effects,
+- persisted lunch POI identity in the driver plan,
+- staging/end-location selection,
+- staging-route effect and end-of-day truck-position truth,
+- location data structured so later RPG metadata can be added without replacing the planning model.
+
+Acceptance:
+
+The player can place Lunch in the day, choose an actual lunch location, see the route/timing consequences, choose an end-of-day staging location, and preserve both locations as real plan truth.
+
+#### V2.6.4 — Readiness + Send Schedule
+
+Build:
+
+- always-visible plan readiness state,
+- hard blockers vs sendable warnings,
+- warning selection/highlight on timeline and map,
+- send schedule confirmation,
+- deliberate SEND ANYWAY path for warnings,
+- sent-plan lock before Live Operations,
+- no casual post-send rearranging.
+
+Acceptance:
+
+A valid or deliberately warning-bearing Driver Day can be reviewed, sent, and locked as the driver's communicated operating plan.
 
 ### V2.7 — Live Operations
 
@@ -1323,6 +1409,10 @@ The following are now considered locked unless deliberately reopened:
 - The player marks each comparison MATCH or ISSUE before acceptance.
 - The player may deliberately accept flagged mismatched terms; DOC OS preserves the document terms exactly as written.
 - Lunch and staging are part of operational planning.
+- Lunch is always tied to a real selectable gameplay POI; it is not stored or presented as a generic break-only node once a location is chosen.
+- Lunch POI choice affects route geometry, timing, appointments, and HOS in the same Driver Day truth used by the map.
+- Lunch locations use the shared POI/location model so future RPG preferences, favorite places, cost/quality, dialogue/events, morale/fatigue, and relationship effects can be layered onto the same locations without rebuilding the lunch system.
+- V2.6 establishes the RPG-ready lunch foundation but does not require the RPG consequence systems themselves.
 - Focused work pauses simulation.
 - Map selection and manifest/context selection share one model.
 - Drivers use truck markers; operational locations use typed POI icons rather than generic circles.
@@ -1340,23 +1430,26 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-The active polish packet is:
+V2.5 is visually accepted and locked.
 
-# **V2.5.7 — Compact FreightLink Fit Badge**
-
-It locks:
-
-- the lane-fit treatment as a compact status badge rather than a secondary panel,
-- a 76 px fit column at the reference desktop layout,
-- a larger right-side gutter so the badge sits clearly inside the FreightLink browser,
-- vertical centering instead of stretching the badge across the full lane row,
-- compact internal padding around TIGHT/GOOD/POOR and the insertion cue,
-- the V2.5.6 compact row and booking-state behavior,
-- the V2.5.5 clock and disabled pause / play / fast-forward control strip.
-
-After V2.5.7 passes visual acceptance, the next gameplay packet is:
+The active gameplay packet is:
 
 # **V2.6 — Daily Planning**
+
+The implementation sequence is:
+
+1. **V2.6.1 — Planning Foundation**
+2. **V2.6.2 — Stop Sequencing**
+3. **V2.6.3 — Breaks, Places + Staging**
+4. **V2.6.4 — Readiness + Send Schedule**
+
+V2.6.3 explicitly owns the lunch-POI/RPG bridge:
+
+- Lunch is a real place.
+- The player chooses it.
+- The detour affects the operating plan.
+- The chosen place persists.
+- Future RPG systems enrich that place rather than replacing the lunch mechanic.
 
 V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, and V2.5.7 compact fit-badge contract.
 
