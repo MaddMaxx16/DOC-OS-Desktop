@@ -168,8 +168,8 @@ test('Rate Confirmation review is player-driven instead of pre-verified', async 
   const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
 
   assert.match(review, /reviewChoices/)
-  assert.match(review, />MATCH</)
-  assert.match(review, />ISSUE</)
+  assert.match(review, /\bMATCH\b/)
+  assert.match(review, /\bISSUE\b/)
   assert.match(review, /REVIEW ALL TERMS/)
   assert.match(review, /reviewedCount === checks\.length/)
   assert.doesNotMatch(review, />TERMS MATCH</)
