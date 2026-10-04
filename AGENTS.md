@@ -32,25 +32,31 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.7 Route Anchors
+## Current packet — V2.5 Booking + Rate Confirmation
 
-V2.1 through V2.4.6 are structurally locked.
+V2.1 through V2.4.7 are structurally locked.
 
-V2.4.7 restores spatial anchors for the candidate driver's committed day without reintroducing map clutter.
+V2.5 makes freight commitment explicit and document-driven.
 
 Guardrails:
-- preserve the V2.4.6 colored committed route + neutral insertion preview,
-- while FreightLink is open, render compact route anchors for the candidate driver's meaningful Driver Day locations,
-- route anchors are derived from the authoritative Driver Day timeline,
-- pickup/delivery anchors retain P1/P2/P3 and D1/D2/D3 badges,
-- shift-start/yard, lunch, and staging retain typed POI symbols,
-- multiple timeline events at the same physical location collapse into one marker with combined badges,
-- existing route anchors are smaller and quieter than selected FreightLink pickup/delivery markers,
-- route-anchor facility names stay hidden until hover,
-- selected FreightLink pickup/delivery markers remain visually dominant,
-- when an existing route anchor shares the exact facility with the proposed pickup/delivery, offset the committed anchor slightly instead of stacking it directly underneath,
-- unrelated marketplace opportunities and unrelated drivers remain hidden during selected-lane focus,
-- do not change route truth, fit evaluation, map camera, drawer layout, typography, or booking behavior.
+- selecting/evaluating freight does not commit it,
+- requesting a Rate Confirmation creates a distinct requested state,
+- requested freight remains tied to the driver used for that request,
+- Rate Confirmation arrival creates a distinct review-ready state,
+- Rate Confirmation review uses Focused Workspace and pauses ordinary gameplay presentation,
+- the player compares Rate Con terms against the FreightLink lane before confirmation,
+- mismatches are clearly flagged,
+- the player may request correction,
+- the player may deliberately accept mismatched terms after a warning,
+- accepting mismatched terms records that decision rather than silently fixing the document,
+- confirmed booking uses the Rate Confirmation terms exactly as written,
+- only confirmed freight leaves the marketplace,
+- confirmation inserts the freight into the real driver manifest at the evaluated gap,
+- manifest order is renumbered from authoritative Driver Day sequence,
+- lunch placement updates when a confirmed insertion occurs before lunch,
+- confirmed freight becomes part of the driver's committed operational route,
+- do not begin editable Daily Planning behavior until V2.6,
+- do not build the full Documents app until V2.8.
 
 ## Verification
 
