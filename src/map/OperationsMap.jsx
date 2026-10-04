@@ -158,11 +158,14 @@ export default function OperationsMap({
     : null
   const plannedDriverRoutes = useMemo(
     () => (
-      driverRouteResult?.driverId === selectedDriver?.id
+      driverRouteResult
+      && selectedDriver
+      && driverRouteResult.driverId === selectedDriver.id
+      && Array.isArray(driverRouteResult.segments)
         ? driverRouteResult.segments
         : []
     ),
-    [driverRouteResult, selectedDriver?.id],
+    [driverRouteResult, selectedDriver],
   )
   const displayDriverRoutes = useMemo(
     () => stitchCommittedRouteSegments(plannedDriverRoutes),

@@ -1582,38 +1582,22 @@ V2.5 through V2.6.5.14 are accepted and locked.
 
 # **V2.6 Daily Planning is complete.**
 
-The active work packet is:
+The current verification hotfix is:
 
-# **V2.7.1 — Live Operations Foundation**
+# **V2.7.1.1 — Startup Route Guard**
 
-Build:
+V2.7.1 activated Live Operations clock state. Initial browser startup exposed a null-state route bug: with no selected driver and no hydrated route result, both optional IDs evaluated as undefined and the old same-driver comparison incorrectly passed before reading `driverRouteResult.segments`.
 
-- simulation clock state begins at SEP 7 · DAY 1 · 6:00 AM,
-- Pause / Play / Fast Forward controls become functional,
-- Play advances one game minute per tick,
-- Fast Forward advances four game minutes per tick,
-- Focused Rate Con work freezes simulation time,
-- sent schedules become explicit live-operation state:
-  - SCHEDULED before shift start,
-  - LIVE READY inside the shift window,
-  - SHIFT CLOSED after the communicated window,
-- draft plans remain unarmed,
-- Driver Day communicates the live state without unlocking editing.
+Locked startup invariant:
 
-Non-goals for this packet:
+- no selected driver = no committed route segments,
+- no route result = no committed route segments,
+- a cached route may be reused only when both objects exist and their driver IDs match,
+- route segments must be an array before the map reads them.
 
-- no truck movement yet,
-- no route-leg completion,
-- no automatic pickup/delivery,
-- no service/loading timers,
-- no HOS mutation,
-- no exception engine.
+The V2.7.1 clock/execution-gate behavior remains unchanged.
 
-Acceptance:
-
-The player can send a schedule, run/pause/fast-forward the simulation clock, see Focused work freeze time, and see the sent Driver Day transition into the correct live-operation phase.
-
-After acceptance, proceed to:
+After this hotfix is visually accepted, continue with:
 
 # **V2.7.2 — Route Execution + Truck Motion**
 
