@@ -18,10 +18,7 @@ import {
 } from '../domain/routing/mapRouteDisplay.js'
 import { exactSegmentRouteShape } from '../domain/routing/routeRenderGeometry.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
-import {
-  calculateRoadRoute,
-  calculateRoadRoutePlan,
-} from '../services/roadRouting.js'
+import { calculateRoadRoutePlan } from '../services/roadRouting.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
