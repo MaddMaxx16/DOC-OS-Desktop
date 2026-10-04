@@ -152,6 +152,8 @@ export function buildDriverDay({ driver, loads = [], plan, locations = {} } = {}
   const staging = timelineStaging(driver, plan, locations)
   const timeline = [timelineStart(driver, plan, locations)]
 
+  if (lunch && Number(lunch.afterManifestOrder) < 0) timeline.push(lunch)
+
   for (const stop of freightStops) {
     timeline.push(stop)
     if (lunch && lunch.afterManifestOrder === stop.manifestOrder) timeline.push(lunch)

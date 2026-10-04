@@ -10,20 +10,17 @@ function eventCoordinates(event, locations = {}) {
   return locations[event?.locationId]?.coordinates ?? null
 }
 
-function moveItem(ids, stopId, targetStopId, placement) {
-  const next = ids.filter((id) => id !== stopId)
-  const targetIndex = next.indexOf(targetStopId)
-  if (targetIndex < 0) return ids
-
-  const insertIndex = placement === 'after' ? targetIndex + 1 : targetIndex
-  next.splice(insertIndex, 0, stopId)
-  return next
+function movableSequence(day) {
+  return (day?.timeline ?? [])
+    .filter((event) => event.kind === 'freight-stop' || event.kind === 'lunch')
+    .map((event) => event.id)
 }
 
-function validatePickupBeforeDelivery(orderedStopIds = []) {
-  const positions = new Map(orderedStopIds.map((id, index) => [id, index]))
+function validatePickupBeforeDelivery(sequenceIds = []) {
+  const freightIds = sequenceIds.filter((id) => /:(pickup|delivery)$/.test(id))
+  const positions = new Map(freightIds.map((id, index) => [id, index]))
   const loadIds = new Set(
-    orderedStopIds
+    freightIds
       .map((id) => id.match(/^(.*):(pickup|delivery)$/)?.[1])
       .filter(Boolean),
   )
@@ -46,23 +43,53 @@ function validatePickupBeforeDelivery(orderedStopIds = []) {
   return { ok: true, reason: null }
 }
 
-function applyManifestOrder(loads, driverId, orderedStopIds) {
-  const orderByStopId = new Map(orderedStopIds.map((id, index) => [id, index]))
+function applyManifestOrder(loads, driverId, sequenceIds) {
+  const freightIds = sequenceIds.filter((id) => /:(pickup|delivery)$/.test(id))
+  const orderByStopId = new Map(freightIds.map((id, index) => [id, index]))
 
-  return loads.map((load) => {
-    if (load.assignedDriverId !== driverId) return load
-    return {
-      ...load,
-      pickup: {
-        ...load.pickup,
-        manifestOrder: orderByStopId.get(`${load.id}:pickup`),
-      },
-      delivery: {
-        ...load.delivery,
-        manifestOrder: orderByStopId.get(`${load.id}:delivery`),
-      },
+  return {
+    loads: loads.map((load) => {
+      if (load.assignedDriverId !== driverId) return load
+      return {
+        ...load,
+        pickup: {
+          ...load.pickup,
+          manifestOrder: orderByStopId.get(`${load.id}:pickup`),
+        },
+        delivery: {
+          ...load.delivery,
+          manifestOrder: orderByStopId.get(`${load.id}:delivery`),
+        },
+      }
+    }),
+    orderByStopId,
+    orderedStopIds: freightIds,
+  }
+}
+
+function updateLunchSequence(plan, sequenceIds, orderByStopId) {
+  if (!plan?.lunch) return plan
+
+  const lunchIndex = sequenceIds.findIndex((id) => id.endsWith(':lunch'))
+  if (lunchIndex < 0) return plan
+
+  let previousFreightId = null
+  for (let index = lunchIndex - 1; index >= 0; index -= 1) {
+    if (/:(pickup|delivery)$/.test(sequenceIds[index])) {
+      previousFreightId = sequenceIds[index]
+      break
     }
-  })
+  }
+
+  return {
+    ...plan,
+    lunch: {
+      ...plan.lunch,
+      afterManifestOrder: previousFreightId
+        ? orderByStopId.get(previousFreightId)
+        : -1,
+    },
+  }
 }
 
 function updateLoadArrival(loads, loadId, role, arrivalMinutes) {
@@ -79,7 +106,7 @@ function updateLoadArrival(loads, loadId, role, arrivalMinutes) {
   ))
 }
 
-function recalculateTimeline({
+export function recalculateDriverTimeline({
   driver,
   loads,
   plan,
@@ -150,47 +177,60 @@ function recalculateTimeline({
   return { loads: nextLoads, plan: nextPlan }
 }
 
-export function resequenceDriverStops({
+function insertionIndexForGap(sequenceWithoutMoving, beforeId, afterId, driverId) {
+  if (afterId && sequenceWithoutMoving.includes(afterId)) {
+    return sequenceWithoutMoving.indexOf(afterId)
+  }
+
+  if (beforeId && sequenceWithoutMoving.includes(beforeId)) {
+    return sequenceWithoutMoving.indexOf(beforeId) + 1
+  }
+
+  if (!beforeId || beforeId === `${driverId}:shift-start`) return 0
+  if (!afterId || afterId === `${driverId}:staging`) return sequenceWithoutMoving.length
+
+  return -1
+}
+
+export function moveDriverPlanEventToGap({
   driver,
   driverId,
   loads = [],
   driverPlans = {},
   locations = {},
-  stopId,
-  targetStopId,
-  placement = 'before',
+  eventId,
+  beforeId = null,
+  afterId = null,
 } = {}) {
   const plan = driverPlans[driverId]
   if (!driver || !plan || !canEditDispatchPlan(plan)) {
     return { ok: false, reason: 'This Driver Day is not editable.' }
   }
 
-  if (stopId === targetStopId) {
-    return { ok: false, reason: 'Choose a different stop position.' }
+  const currentDay = buildDriverDay({ driver, loads, plan, locations })
+  const currentSequence = movableSequence(currentDay)
+
+  if (!currentSequence.includes(eventId)) {
+    return { ok: false, reason: 'Only freight stops and Lunch can be moved in V2.6.3.' }
   }
 
-  const driverLoads = loads
-    .filter((load) => load.assignedDriverId === driverId)
-    .flatMap((load) => [
-      { id: `${load.id}:pickup`, order: Number(load.pickup.manifestOrder) },
-      { id: `${load.id}:delivery`, order: Number(load.delivery.manifestOrder) },
-    ])
-    .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
-
-  const currentIds = driverLoads.map((item) => item.id)
-  if (!currentIds.includes(stopId) || !currentIds.includes(targetStopId)) {
-    return { ok: false, reason: 'Only freight stops can be resequenced in V2.6.2.' }
+  const nextSequence = currentSequence.filter((id) => id !== eventId)
+  const insertIndex = insertionIndexForGap(nextSequence, beforeId, afterId, driverId)
+  if (insertIndex < 0) {
+    return { ok: false, reason: 'That insertion gap is no longer available.' }
   }
 
-  const orderedStopIds = moveItem(currentIds, stopId, targetStopId, placement)
-  const orderCheck = validatePickupBeforeDelivery(orderedStopIds)
+  nextSequence.splice(insertIndex, 0, eventId)
+
+  const orderCheck = validatePickupBeforeDelivery(nextSequence)
   if (!orderCheck.ok) return orderCheck
 
-  const reorderedLoads = applyManifestOrder(loads, driverId, orderedStopIds)
-  const recalculated = recalculateTimeline({
+  const reordered = applyManifestOrder(loads, driverId, nextSequence)
+  const sequencedPlan = updateLunchSequence(plan, nextSequence, reordered.orderByStopId)
+  const recalculated = recalculateDriverTimeline({
     driver,
-    loads: reorderedLoads,
-    plan,
+    loads: reordered.loads,
+    plan: sequencedPlan,
     locations,
   })
 
@@ -215,9 +255,50 @@ export function resequenceDriverStops({
   return {
     ok: true,
     reason: null,
-    orderedStopIds,
+    sequenceIds: nextSequence,
+    orderedStopIds: reordered.orderedStopIds,
     loads: recalculated.loads,
     driverPlans: nextDriverPlans,
     driverDay: nextDay,
   }
+}
+
+export function resequenceDriverStops({
+  driver,
+  driverId,
+  loads = [],
+  driverPlans = {},
+  locations = {},
+  stopId,
+  targetStopId,
+  placement = 'before',
+} = {}) {
+  const plan = driverPlans[driverId]
+  const day = driver && plan
+    ? buildDriverDay({ driver, loads, plan, locations })
+    : null
+  const sequence = movableSequence(day)
+
+  if (!sequence.includes(stopId) || !sequence.includes(targetStopId)) {
+    return { ok: false, reason: 'Only planned freight stops can be resequenced.' }
+  }
+
+  const targetIndex = sequence.indexOf(targetStopId)
+  const beforeId = placement === 'after'
+    ? targetStopId
+    : sequence[targetIndex - 1] ?? `${driverId}:shift-start`
+  const afterId = placement === 'after'
+    ? sequence[targetIndex + 1] ?? `${driverId}:staging`
+    : targetStopId
+
+  return moveDriverPlanEventToGap({
+    driver,
+    driverId,
+    loads,
+    driverPlans,
+    locations,
+    eventId: stopId,
+    beforeId,
+    afterId,
+  })
 }

@@ -19,9 +19,11 @@ export default function OperationsInspector({
   selectedStop,
   planning = false,
   planningFeedback = null,
+  planningPlaceOptions = [],
   onStartPlanning,
   onStopPlanning,
-  onReorderStop,
+  onMovePlanEvent,
+  onChoosePlanningPlace,
   onSelectSubject,
 }) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
@@ -68,9 +70,11 @@ export default function OperationsInspector({
             selection={selection}
             planning={planning}
             planningFeedback={planningFeedback}
+            planningPlaceOptions={planningPlaceOptions}
             onStartPlanning={() => onStartPlanning?.(driver.id)}
             onStopPlanning={() => onStopPlanning?.(driver.id)}
-            onReorderStop={onReorderStop}
+            onMovePlanEvent={onMovePlanEvent}
+            onChoosePlanningPlace={onChoosePlanningPlace}
             onSelectSubject={onSelectSubject}
           />
         </div>

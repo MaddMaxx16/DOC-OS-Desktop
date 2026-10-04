@@ -122,9 +122,11 @@ export default function OperationsMap({
   selectedStop,
   selection,
   freightRoutePreview,
+  planningPlaceOptions = [],
   workspaceOpen,
   marketLanes = [],
   locations = {},
+  onChoosePlanningPlace,
   onSelectSubject,
 }) {
   const mapContainerRef = useRef(null)
@@ -132,11 +134,14 @@ export default function OperationsMap({
   const markerRefs = useRef(new globalThis.Map())
   const previewMarkerRefs = useRef([])
   const onSelectSubjectRef = useRef(onSelectSubject)
+  const onChoosePlanningPlaceRef = useRef(onChoosePlanningPlace)
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
 
   const driverRouteKey = selectedDriver && driverDay
-    ? `${selectedDriver.id}:${driverDay.timeline.map((event) => event.id).join('|')}`
+    ? `${selectedDriver.id}:${driverDay.timeline.map((event) => (
+        `${event.id}@${event.locationId ?? 'truck'}@${Array.isArray(event.coordinates) ? event.coordinates.join(',') : ''}`
+      )).join('|')}`
     : null
   const plannedDriverRoutes = driverRouteResult?.key === driverRouteKey
     ? driverRouteResult.segments
@@ -145,6 +150,10 @@ export default function OperationsMap({
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
   }, [onSelectSubject])
+
+  useEffect(() => {
+    onChoosePlanningPlaceRef.current = onChoosePlanningPlace
+  }, [onChoosePlanningPlace])
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return undefined
@@ -313,6 +322,44 @@ export default function OperationsMap({
       }
     }
 
+    if (
+      !workspaceOpen
+      && selectedDriver
+      && (selectedStop?.kind === 'lunch' || selectedStop?.kind === 'staging')
+    ) {
+      for (const option of planningPlaceOptions) {
+        if (!Array.isArray(option.coordinates) || option.id === selectedStop.locationId) continue
+
+        const element = document.createElement('button')
+        element.type = 'button'
+        element.className = `poi-marker planning-place-option ${option.poiType}`
+        element.style.setProperty('--driver-color', driverIdentity?.color ?? '#8ea3b0')
+        element.setAttribute(
+          'aria-label',
+          `Choose ${option.label} for ${selectedStop.kind}`,
+        )
+        element.innerHTML = `${facilityMarkup({
+          type: option.poiType,
+          badge: selectedStop.kind === 'lunch' ? 'L?' : 'S?',
+        })}<small>${option.label}</small>`
+        element.addEventListener('click', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onChoosePlanningPlaceRef.current?.({
+            driverId: selectedDriver.id,
+            kind: selectedStop.kind,
+            locationId: option.id,
+          })
+        })
+
+        const marker = new Marker({ element, anchor: 'bottom' })
+          .setLngLat(option.coordinates)
+          .addTo(map)
+
+        markerRefs.current.set(`planning-place:${option.id}`, marker)
+      }
+    }
+
     for (const stop of workspaceOpen ? [] : (driverDay?.freightStops ?? [])) {
       if (!stop.coordinates || !driverIdentity) continue
       const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
@@ -340,7 +387,7 @@ export default function OperationsMap({
       markerRefs.current.set(`stop:${stop.id}`, marker)
     }
 
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     if (!driverRouteKey || !driverDay) return undefined

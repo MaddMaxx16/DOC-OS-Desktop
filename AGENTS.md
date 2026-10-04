@@ -32,28 +32,27 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.2 Stop Sequencing
+## Current packet — V2.6.3 Breaks, Places + Staging
 
-V2.1 through V2.6.1 remain the locked desktop foundation.
+V2.1 through V2.6.2 remain the locked desktop foundation.
 
 Guardrails:
 - preserve the map-first command rail → browser → live map → inspector workstation,
 - preserve V2.5 booking/Rate Con truth and committed freight ownership,
-- the committed manifest remains the only stop-order source of truth,
-- Planning Mode may reorder freight stops only while the driver plan is DRAFT,
-- moving a stop rewrites manifestOrder on the committed loads; do not create a parallel draft-manifest copy,
-- pickup must remain before its matching delivery,
-- reject resequences that would exceed trailer capacity,
-- risky-but-possible appointment or HOS outcomes remain visible warnings rather than automatic optimization,
-- every accepted resequence recalculates projected arrivals and capacity state,
-- the committed map route rebuilds from the same updated Driver Day timeline,
-- the player chooses the order; do not add an Optimize Route button,
-- Lunch is not draggable yet; its timeline slot remains fixed during V2.6.2,
-- physical lunch POI selection and movable Lunch belong to V2.6.3,
-- staging selection belongs to V2.6.3,
-- readiness and Send Schedule belong to V2.6.4,
-- current truck position remains the default route origin,
-- the V2.6 lunch-POI/RPG bridge remains locked.
+- preserve V2.6.1 DRAFT/SENT planning truth,
+- preserve V2.6.2 committed-manifest sequencing, pickup-before-delivery, capacity guards, and plan-health feedback,
+- replace card-half drop targeting with explicit insertion lanes between Driver Day events,
+- freight stops and Lunch are movable planning events; Staging remains the end-of-day event,
+- moving freight around Lunch must preserve the visible event order rather than treating Lunch as a fixed numeric slot,
+- Lunch always resolves to a real selectable gameplay POI,
+- Lunch place selection affects the committed route, downstream timing, appointments, and HOS,
+- staging selection chooses the truck's real planned end-of-day location and changes the final route leg,
+- lunch and staging candidates come from the shared gameplay location model and carry stable IDs,
+- the same physical place records must be reusable by later RPG preference/favorite/cost/event systems,
+- do not implement RPG consequence stats yet,
+- do not auto-optimize place or stop choices; show consequences and let the player decide,
+- readiness and Send Schedule still belong to V2.6.4,
+- current truck position remains the default route origin.
 
 ## Verification
 

@@ -19,7 +19,8 @@ import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import { canEditDispatchPlan } from '../domain/planning/dispatchPlan.js'
-import { resequenceDriverStops } from '../domain/planning/stopSequencing.js'
+import { choosePlanningPlace } from '../domain/planning/planningPlaces.js'
+import { moveDriverPlanEventToGap } from '../domain/planning/stopSequencing.js'
 import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import DesktopShell from '../shell/DesktopShell.jsx'
 
@@ -95,41 +96,78 @@ export default function App() {
     setPlanningDriverId((current) => current === driverId ? null : current)
   }
 
-  const reorderDriverStop = ({ driverId, stopId, targetStopId, placement }) => {
+  const moveDriverPlanEvent = ({ driverId, eventId, beforeId, afterId }) => {
     const driver = drivers.find((item) => item.id === driverId)
     if (!driver || planningDriverId !== driverId) return
 
-    const result = resequenceDriverStops({
+    const result = moveDriverPlanEventToGap({
       driver,
       driverId,
       loads: operationalLoads,
       driverPlans: operationalDriverPlans,
       locations,
-      stopId,
-      targetStopId,
-      placement,
+      eventId,
+      beforeId,
+      afterId,
     })
 
     if (!result.ok) {
       setPlanningFeedback({
         driverId,
         tone: 'blocked',
-        message: result.reason ?? 'That stop move is not possible.',
+        message: result.reason ?? 'That planning move is not possible.',
       })
       return
     }
 
     setOperationalLoads(result.loads)
     setOperationalDriverPlans(result.driverPlans)
-    setSelection(createSelection(SELECTION_TYPES.STOP, stopId))
+    setSelection(createSelection(SELECTION_TYPES.STOP, eventId))
 
     const firstWarning = result.driverDay?.planHealth?.warnings?.[0]
     setPlanningFeedback({
       driverId,
       tone: firstWarning ? 'warning' : 'success',
       message: firstWarning
-        ? `Route updated. ${firstWarning}`
-        : 'Route updated. Appointments, capacity, and timing recalculated.',
+        ? `Plan updated. ${firstWarning}`
+        : 'Plan updated. Route, timing, and capacity recalculated.',
+    })
+  }
+
+  const chooseDriverPlanningPlace = ({ driverId, kind, locationId }) => {
+    const driver = drivers.find((item) => item.id === driverId)
+    if (!driver || planningDriverId !== driverId) return
+
+    const result = choosePlanningPlace({
+      driver,
+      driverId,
+      loads: operationalLoads,
+      driverPlans: operationalDriverPlans,
+      locations,
+      kind,
+      locationId,
+    })
+
+    if (!result.ok) {
+      setPlanningFeedback({
+        driverId,
+        tone: 'blocked',
+        message: result.reason ?? 'That location cannot be used here.',
+      })
+      return
+    }
+
+    setOperationalLoads(result.loads)
+    setOperationalDriverPlans(result.driverPlans)
+    setSelection(createSelection(SELECTION_TYPES.STOP, `${driverId}:${kind}`))
+
+    const firstWarning = result.driverDay?.planHealth?.warnings?.[0]
+    setPlanningFeedback({
+      driverId,
+      tone: firstWarning ? 'warning' : 'success',
+      message: firstWarning
+        ? `${result.location.label} selected. ${firstWarning}`
+        : `${result.location.label} selected. Route and timing recalculated.`,
     })
   }
 
@@ -330,7 +368,8 @@ export default function App() {
       onConfirmBooking={confirmBooking}
       onStartDriverPlanning={startDriverPlanning}
       onStopDriverPlanning={stopDriverPlanning}
-      onReorderDriverStop={reorderDriverStop}
+      onMoveDriverPlanEvent={moveDriverPlanEvent}
+      onChooseDriverPlanningPlace={chooseDriverPlanningPlace}
       onSelectSubject={selectSubject}
     />
   )

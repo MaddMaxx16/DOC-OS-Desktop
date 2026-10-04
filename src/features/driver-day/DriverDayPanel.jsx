@@ -11,6 +11,11 @@ function formatWeight(value) {
   return `${Math.round(Number(value || 0) / 1000)}k lb`
 }
 
+function formatMiles(value) {
+  if (!Number.isFinite(value)) return '—'
+  return `${value.toFixed(value >= 10 ? 0 : 1)} mi`
+}
+
 function eventCode(item) {
   if (item.kind === 'shift-start') return 'START'
   if (item.kind === 'lunch') return 'LUNCH'
@@ -57,64 +62,210 @@ function PlanHealth({ health }) {
   )
 }
 
+function PlanningPlacePicker({ driverId, event, options, onChoosePlanningPlace }) {
+  if (!event || !['lunch', 'staging'].includes(event.kind)) return null
+
+  const lunch = event.kind === 'lunch'
+
+  return (
+    <section className="planning-place-picker">
+      <header>
+        <div>
+          <span>{lunch ? 'LUNCH PLACE' : 'END-OF-DAY STAGING'}</span>
+          <strong>{event.locationLabel}</strong>
+        </div>
+        <small>{lunch ? 'Choose a real stop. Route detour updates immediately.' : 'Choose where the truck finishes the day.'}</small>
+      </header>
+
+      <div className="planning-place-list">
+        {options.map((option) => (
+          <button
+            type="button"
+            key={option.id}
+            className={option.isCurrent ? 'current' : ''}
+            disabled={option.isCurrent}
+            onClick={() => onChoosePlanningPlace?.({
+              driverId,
+              kind: event.kind,
+              locationId: option.id,
+            })}
+          >
+            <div>
+              <strong>{option.label}</strong>
+              <span>{option.poiType.replace('-', ' ').toUpperCase()}</span>
+            </div>
+            <small>
+              {lunch
+                ? `+${option.detourMinutes} min · ${formatMiles(option.detourMiles)} detour`
+                : `${option.travelMinutes} min · ${formatMiles(option.travelMiles)} from final stop`}
+            </small>
+            <em>
+              {option.truckAccess.toUpperCase()} TRUCK ACCESS
+              {option.parking ? ' · PARKING' : ' · NO TRUCK PARKING'}
+            </em>
+            {option.isCurrent && <b>CURRENT</b>}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function DriverDayPanel({
   driver,
   day,
   selection,
   planning = false,
   planningFeedback = null,
+  planningPlaceOptions = [],
   onStartPlanning,
   onStopPlanning,
-  onReorderStop,
+  onMovePlanEvent,
+  onChoosePlanningPlace,
   onSelectSubject,
 }) {
-  const [draggedStopId, setDraggedStopId] = useState(null)
-  const [dropTarget, setDropTarget] = useState(null)
+  const [draggedEventId, setDraggedEventId] = useState(null)
+  const [activeGap, setActiveGap] = useState(null)
 
   if (!driver || !day) return null
 
   const editable = canEditDispatchPlan(day)
   const planLabel = dispatchPlanStatusLabel(day)
+  const selectedPlanningEvent = isSelection(selection, SELECTION_TYPES.STOP)
+    ? day.timeline.find((item) => item.id === selection.id) ?? null
+    : null
 
   const clearDragState = () => {
-    setDraggedStopId(null)
-    setDropTarget(null)
+    setDraggedEventId(null)
+    setActiveGap(null)
   }
 
-  const startDrag = (event, stopId) => {
+  const startDrag = (event, eventId) => {
     if (!planning) return
     event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('text/plain', stopId)
-    setDraggedStopId(stopId)
+    event.dataTransfer.setData('text/plain', eventId)
+    setDraggedEventId(eventId)
   }
 
-  const setDropPosition = (event, targetStopId) => {
-    if (!planning || !draggedStopId || draggedStopId === targetStopId) return
+  const dropIntoGap = (event, beforeId, afterId, gapKey) => {
+    if (!planning || !draggedEventId) return
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const placement = event.clientY < bounds.top + (bounds.height / 2) ? 'before' : 'after'
-    setDropTarget({ id: targetStopId, placement })
-  }
-
-  const dropStop = (event, targetStopId) => {
-    if (!planning || !draggedStopId || draggedStopId === targetStopId) {
-      clearDragState()
-      return
-    }
-
-    event.preventDefault()
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const placement = event.clientY < bounds.top + (bounds.height / 2) ? 'before' : 'after'
-
-    onReorderStop?.({
+    onMovePlanEvent?.({
       driverId: driver.id,
-      stopId: draggedStopId,
-      targetStopId,
-      placement,
+      eventId: draggedEventId,
+      beforeId,
+      afterId,
     })
+    setActiveGap(gapKey)
     clearDragState()
   }
+
+  const renderGap = (beforeItem, afterItem, index) => {
+    if (!planning || !afterItem || beforeItem?.kind === 'staging') return null
+    const gapKey = `${beforeItem?.id ?? 'start'}->${afterItem.id}`
+    const active = activeGap === gapKey
+
+    return (
+      <div
+        key={`gap:${gapKey}`}
+        className={`timeline-insert-gap ${draggedEventId ? 'drag-active' : ''} ${active ? 'active' : ''}`}
+        onDragOver={(event) => {
+          if (!draggedEventId) return
+          event.preventDefault()
+          event.dataTransfer.dropEffect = 'move'
+          setActiveGap(gapKey)
+        }}
+        onDragLeave={() => setActiveGap((current) => current === gapKey ? null : current)}
+        onDrop={(event) => dropIntoGap(event, beforeItem?.id ?? null, afterItem.id, gapKey)}
+      >
+        <span>{draggedEventId ? 'DROP HERE' : 'INSERT'}</span>
+        <i />
+        <small>{index === 0 ? 'start of plan' : 'between events'}</small>
+      </div>
+    )
+  }
+
+  const renderRow = (item, index) => {
+    const selectable = ['freight-stop', 'lunch', 'staging'].includes(item.kind)
+    const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
+    const draggableEvent = planning && ['freight-stop', 'lunch'].includes(item.kind)
+    const dragging = draggedEventId === item.id
+
+    const content = (
+      <>
+        <div className="timeline-rail">
+          <span className="timeline-dot" />
+          {index < day.timeline.length - 1 && <i />}
+        </div>
+        <time>{formatClock(item.projectedArrivalMinutes)}</time>
+        <div className="timeline-content">
+          <div className="timeline-title">
+            {draggableEvent && <span className="stop-drag-handle" aria-hidden="true">⋮⋮</span>}
+            <b>{eventCode(item)}</b>
+            <strong>{item.locationLabel}</strong>
+          </div>
+          {item.kind === 'freight-stop' && <FreightMeta item={item} capacityPallets={day.trailer.capacityPallets} />}
+          {item.kind === 'lunch' && (
+            <div className="day-row-meta">
+              <span>OFF DUTY</span>
+              <b>30 MIN</b>
+              <em>{planning ? 'click to choose place' : `until ${formatClock(item.endMinutes)}`}</em>
+            </div>
+          )}
+          {item.kind === 'staging' && (
+            <div className="day-row-meta">
+              <span>SHIFT END</span>
+              <b>STAGING</b>
+              <em>{planning ? 'click to choose place' : 'planned'}</em>
+            </div>
+          )}
+          {item.kind === 'shift-start' && (
+            <div className="day-row-meta">
+              <span>ON DUTY</span>
+              <b>{driver.name}</b>
+              <em>{day.trailer.label}</em>
+            </div>
+          )}
+        </div>
+      </>
+    )
+
+    return selectable ? (
+      <button
+        type="button"
+        key={item.id}
+        className={[
+          'driver-day-row',
+          'selectable',
+          item.kind,
+          selected ? 'selected' : '',
+          draggableEvent ? 'draggable-stop' : '',
+          dragging ? 'dragging' : '',
+        ].filter(Boolean).join(' ')}
+        draggable={draggableEvent}
+        onDragStart={draggableEvent ? (event) => startDrag(event, item.id) : undefined}
+        onDragEnd={draggableEvent ? clearDragState : undefined}
+        onClick={() => onSelectSubject(SELECTION_TYPES.STOP, item.id)}
+        aria-pressed={selected}
+        aria-label={draggableEvent
+          ? `${eventCode(item)} ${item.locationLabel}. Drag into an insertion lane to move.`
+          : undefined}
+      >
+        {content}
+      </button>
+    ) : (
+      <div key={item.id} className={`driver-day-row ${item.kind}`}>
+        {content}
+      </div>
+    )
+  }
+
+  const timelineNodes = []
+  day.timeline.forEach((item, index) => {
+    timelineNodes.push(renderRow(item, index))
+    const next = day.timeline[index + 1]
+    if (next) timelineNodes.push(renderGap(item, next, index))
+  })
 
   return (
     <section className={`driver-day-panel ${planning ? 'planning' : ''}`}>
@@ -158,8 +309,8 @@ export default function DriverDayPanel({
       {planning && (
         <>
           <div className="planning-mode-note">
-            <span>PLANNING MODE · STOP SEQUENCING</span>
-            <strong>Drag freight stops to rebuild the day. Pickup must stay before its matching delivery.</strong>
+            <span>PLANNING MODE · BREAKS, PLACES + STAGING</span>
+            <strong>Drag freight or Lunch into the insertion lanes. Select Lunch or Stage to choose a real location.</strong>
           </div>
 
           <PlanHealth health={day.planHealth} />
@@ -169,90 +320,18 @@ export default function DriverDayPanel({
               {planningFeedback.message}
             </div>
           )}
+
+          <PlanningPlacePicker
+            driverId={driver.id}
+            event={selectedPlanningEvent}
+            options={planningPlaceOptions}
+            onChoosePlanningPlace={onChoosePlanningPlace}
+          />
         </>
       )}
 
       <div className="driver-day-timeline">
-        {day.timeline.map((item, index) => {
-          const selectable = ['freight-stop', 'lunch', 'staging'].includes(item.kind)
-          const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
-          const draggableStop = planning && item.kind === 'freight-stop'
-          const dragging = draggedStopId === item.id
-          const droppingBefore = dropTarget?.id === item.id && dropTarget.placement === 'before'
-          const droppingAfter = dropTarget?.id === item.id && dropTarget.placement === 'after'
-
-          const content = (
-            <>
-              <div className="timeline-rail">
-                <span className="timeline-dot" />
-                {index < day.timeline.length - 1 && <i />}
-              </div>
-              <time>{formatClock(item.projectedArrivalMinutes)}</time>
-              <div className="timeline-content">
-                <div className="timeline-title">
-                  {draggableStop && <span className="stop-drag-handle" aria-hidden="true">⋮⋮</span>}
-                  <b>{eventCode(item)}</b>
-                  <strong>{item.locationLabel}</strong>
-                </div>
-                {item.kind === 'freight-stop' && <FreightMeta item={item} capacityPallets={day.trailer.capacityPallets} />}
-                {item.kind === 'lunch' && (
-                  <div className="day-row-meta">
-                    <span>OFF DUTY</span>
-                    <b>30 MIN</b>
-                    <em>until {formatClock(item.endMinutes)}</em>
-                  </div>
-                )}
-                {item.kind === 'staging' && (
-                  <div className="day-row-meta">
-                    <span>SHIFT END</span>
-                    <b>STAGING</b>
-                    <em>planned</em>
-                  </div>
-                )}
-                {item.kind === 'shift-start' && (
-                  <div className="day-row-meta">
-                    <span>ON DUTY</span>
-                    <b>{driver.name}</b>
-                    <em>{day.trailer.label}</em>
-                  </div>
-                )}
-              </div>
-            </>
-          )
-
-          return selectable ? (
-            <button
-              type="button"
-              key={item.id}
-              className={[
-                'driver-day-row',
-                'selectable',
-                item.kind,
-                selected ? 'selected' : '',
-                draggableStop ? 'draggable-stop' : '',
-                dragging ? 'dragging' : '',
-                droppingBefore ? 'drop-before' : '',
-                droppingAfter ? 'drop-after' : '',
-              ].filter(Boolean).join(' ')}
-              draggable={draggableStop}
-              onDragStart={draggableStop ? (event) => startDrag(event, item.id) : undefined}
-              onDragOver={draggableStop ? (event) => setDropPosition(event, item.id) : undefined}
-              onDrop={draggableStop ? (event) => dropStop(event, item.id) : undefined}
-              onDragEnd={draggableStop ? clearDragState : undefined}
-              onClick={() => onSelectSubject(SELECTION_TYPES.STOP, item.id)}
-              aria-pressed={selected}
-              aria-label={draggableStop
-                ? `${eventCode(item)} ${item.locationLabel}. Drag to resequence.`
-                : undefined}
-            >
-              {content}
-            </button>
-          ) : (
-            <div key={item.id} className={`driver-day-row ${item.kind}`}>
-              {content}
-            </div>
-          )
-        })}
+        {timelineNodes}
       </div>
     </section>
   )
