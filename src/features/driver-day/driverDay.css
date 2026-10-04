@@ -726,3 +726,28 @@
   opacity: .74;
   pointer-events: none;
 }
+
+.sent-plan-note.live-scheduled {
+  border-color: #3e5260;
+  border-left-color: #6f8a9a;
+  background: #0d171d;
+}
+.sent-plan-note.live-scheduled span {
+  color: #8ba8b8;
+}
+.sent-plan-note.live-active {
+  border-color: #315f53;
+  border-left-color: #67a98e;
+  background: #0c1d18;
+}
+.sent-plan-note.live-active span {
+  color: #84c3a9;
+}
+.sent-plan-note.live-closed {
+  border-color: #544b42;
+  border-left-color: #8c7861;
+  background: #18140f;
+}
+.sent-plan-note.live-closed span {
+  color: #b69c7d;
+}
