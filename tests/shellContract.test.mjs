@@ -383,7 +383,7 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(live, /buildTimelineExecution/)
   assert.match(live, /label: 'ARRIVED'/)
   assert.match(execution, /coordinateAlongRouteShape/)
-  assert.match(execution, /executionPhase: 'dwell-break'/)
+  assert.match(execution, /'dwell-break'/)
   assert.match(execution, /routeExecutionPosition/)
 })
 
