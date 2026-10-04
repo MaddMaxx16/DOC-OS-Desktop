@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { formatClock } from '../../domain/manifest/driverDayModel.js'
 import {
   canEditDispatchPlan,
+  dispatchPlanReadiness,
   dispatchPlanStatusLabel,
 } from '../../domain/planning/dispatchPlan.js'
 import { isSelection, SELECTION_TYPES } from '../../domain/selection/selectionModel.js'
@@ -42,23 +43,107 @@ function FreightMeta({ item, capacityPallets }) {
   )
 }
 
-function PlanHealth({ health }) {
+function PlanHealth({ health, expanded = false, onSelectIssue }) {
   if (!health) return null
 
-  const primary = health.blockers?.[0] ?? health.warnings?.[0] ?? 'Appointments, capacity, and HOS are clear.'
-  const count = health.blockers?.length || health.warnings?.length || 0
+  const issues = health.status === 'blocked'
+    ? health.blockerIssues ?? []
+    : health.status === 'warning'
+      ? health.warningIssues ?? []
+      : []
+
+  const primary = issues[0]?.message ?? 'Appointments, capacity, HOS, Lunch, and Staging are clear.'
+  const count = issues.length
   const label = health.status === 'blocked'
-    ? 'BLOCKED'
+    ? `${count} BLOCKER${count === 1 ? '' : 'S'}`
     : health.status === 'warning'
       ? `${count} WARNING${count === 1 ? '' : 'S'}`
       : 'READY'
 
   return (
-    <div className={`plan-health ${health.status}`}>
+    <section className={`plan-health ${health.status}`} aria-label="Schedule readiness">
       <span>PLAN CHECK</span>
       <strong>{label}</strong>
       <small>{primary}</small>
-    </div>
+
+      {expanded && issues.length > 0 && (
+        <div className="plan-issue-list">
+          {issues.map((issue) => (
+            <button
+              type="button"
+              key={issue.id}
+              disabled={!issue.stopId}
+              onClick={() => issue.stopId && onSelectIssue?.(issue.stopId)}
+            >
+              <span>{health.status === 'blocked' ? 'BLOCKER' : 'WARNING'}</span>
+              <strong>{issue.message}</strong>
+              {issue.stopId && <em>SHOW STOP</em>}
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function ScheduleSendReview({ driver, day, readiness, onBack, onSend }) {
+  const lunch = day.timeline.find((event) => event.kind === 'lunch')
+  const staging = day.timeline.find((event) => event.kind === 'staging')
+  const loadCount = new Set(day.freightStops.map((stop) => stop.loadId)).size
+  const warning = readiness.requiresWarningOverride
+
+  return (
+    <section className={`schedule-send-review ${warning ? 'warning' : 'ready'}`}>
+      <header>
+        <div>
+          <span>{warning ? 'WARNING REVIEW' : 'READY TO SEND'}</span>
+          <strong>{driver.name}</strong>
+        </div>
+        <small>
+          {warning
+            ? 'This schedule is sendable, but the driver will receive the plan with the risks shown below.'
+            : 'This schedule is complete and ready to become the driver\'s communicated plan.'}
+        </small>
+      </header>
+
+      <div className="schedule-send-summary">
+        <div>
+          <span>WORK</span>
+          <strong>{loadCount} loads · {day.freightStops.length} stops</strong>
+        </div>
+        <div>
+          <span>LUNCH</span>
+          <strong>{lunch?.locationLabel ?? 'Not planned'}</strong>
+        </div>
+        <div>
+          <span>STAGE</span>
+          <strong>{staging?.locationLabel ?? 'Not selected'}</strong>
+        </div>
+        <div>
+          <span>EST. FINISH</span>
+          <strong>{staging?.locationId ? formatClock(staging.projectedArrivalMinutes) : 'TBD'}</strong>
+        </div>
+      </div>
+
+      {warning && (
+        <div className="schedule-send-warnings">
+          {readiness.warnings.map((message) => (
+            <p key={message}>{message}</p>
+          ))}
+        </div>
+      )}
+
+      <footer>
+        <button type="button" className="secondary" onClick={onBack}>BACK TO PLAN</button>
+        <button
+          type="button"
+          className={warning ? 'warning-action' : 'primary'}
+          onClick={() => onSend?.({ driverId: driver.id, allowWarnings: warning })}
+        >
+          {warning ? 'SEND ANYWAY' : `SEND TO ${driver.name.split(' ')[0].toUpperCase()}`}
+        </button>
+      </footer>
+    </section>
   )
 }
 
@@ -71,15 +156,19 @@ export default function DriverDayPanel({
   onStartPlanning,
   onStopPlanning,
   onMovePlanEvent,
+  onSendSchedule,
   onSelectSubject,
 }) {
   const [draggedEventId, setDraggedEventId] = useState(null)
   const [activeGap, setActiveGap] = useState(null)
+  const [sendReviewOpen, setSendReviewOpen] = useState(false)
 
   if (!driver || !day) return null
 
   const editable = canEditDispatchPlan(day)
   const planLabel = dispatchPlanStatusLabel(day)
+  const readiness = dispatchPlanReadiness(day)
+  const planningEditable = planning && editable && !sendReviewOpen
 
   const clearDragState = () => {
     setDraggedEventId(null)
@@ -87,14 +176,14 @@ export default function DriverDayPanel({
   }
 
   const startDrag = (event, eventId) => {
-    if (!planning) return
+    if (!planningEditable) return
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', eventId)
     setDraggedEventId(eventId)
   }
 
   const dropIntoGap = (event, beforeId, afterId, gapKey) => {
-    if (!planning || !draggedEventId) return
+    if (!planningEditable || !draggedEventId) return
     event.preventDefault()
     onMovePlanEvent?.({
       driverId: driver.id,
@@ -107,7 +196,7 @@ export default function DriverDayPanel({
   }
 
   const renderGap = (beforeItem, afterItem, index) => {
-    if (!planning || !afterItem || beforeItem?.kind === 'staging') return null
+    if (!planningEditable || !afterItem || beforeItem?.kind === 'staging') return null
     const gapKey = `${beforeItem?.id ?? 'start'}->${afterItem.id}`
     const active = activeGap === gapKey
 
@@ -134,7 +223,7 @@ export default function DriverDayPanel({
   const renderRow = (item, index) => {
     const selectable = ['freight-stop', 'lunch', 'staging'].includes(item.kind)
     const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
-    const draggableEvent = planning && ['freight-stop', 'lunch'].includes(item.kind)
+    const draggableEvent = planningEditable && ['freight-stop', 'lunch'].includes(item.kind)
     const dragging = draggedEventId === item.id
 
     const content = (
@@ -155,14 +244,14 @@ export default function DriverDayPanel({
             <div className="day-row-meta">
               <span>OFF DUTY</span>
               <b>30 MIN</b>
-              <em>{planning ? 'click to open lunch planner' : `until ${formatClock(item.endMinutes)}`}</em>
+              <em>{planningEditable ? 'click to open lunch planner' : `until ${formatClock(item.endMinutes)}`}</em>
             </div>
           )}
           {item.kind === 'staging' && (
             <div className="day-row-meta">
               <span>SHIFT END</span>
               <b>STAGING</b>
-              <em>{planning ? 'click to choose end location' : item.locationId ? 'planned' : 'not selected'}</em>
+              <em>{planningEditable ? 'click to choose end location' : item.locationId ? 'planned' : 'not selected'}</em>
             </div>
           )}
           {item.kind === 'shift-start' && (
@@ -214,7 +303,7 @@ export default function DriverDayPanel({
   })
 
   return (
-    <section className={`driver-day-panel ${planning ? 'planning' : ''}`}>
+    <section className={`driver-day-panel ${planning ? 'planning' : ''} ${sendReviewOpen ? 'send-reviewing' : ''}`}>
       <div className="driver-day-summary" aria-label="Driver day operational summary">
         <div>
           <span>SHIFT</span>
@@ -243,7 +332,11 @@ export default function DriverDayPanel({
           <button
             type="button"
             className={planning ? 'planning-active' : ''}
-            onClick={planning ? onStopPlanning : onStartPlanning}
+            onClick={() => {
+              setSendReviewOpen(false)
+              if (planning) onStopPlanning?.()
+              else onStartPlanning?.()
+            }}
           >
             {planning ? 'DONE' : 'EDIT PLAN'}
           </button>
@@ -253,26 +346,70 @@ export default function DriverDayPanel({
       </div>
 
       {planning && (
-        <>
-          <div className="planning-mode-note">
-            <span>PLANNING MODE · BREAKS, PLACES + STAGING</span>
-            <strong>Drag freight or Lunch into the insertion lanes. Select Lunch or Stage to choose a real location.</strong>
-          </div>
+        <div className="planning-mode-note">
+          <span>PLANNING MODE · READINESS + SEND</span>
+          <strong>Finish the day, resolve blockers, review any warnings, then send the schedule to the driver.</strong>
+        </div>
+      )}
 
-          <PlanHealth health={day.planHealth} />
+      <PlanHealth
+        health={day.planHealth}
+        expanded={planning}
+        onSelectIssue={(stopId) => {
+          setSendReviewOpen(false)
+          onSelectSubject?.(SELECTION_TYPES.STOP, stopId)
+        }}
+      />
 
-          {planningFeedback && (
-            <div className={`planning-feedback ${planningFeedback.tone}`} role="status">
-              {planningFeedback.message}
-            </div>
-          )}
+      {planning && planningFeedback && (
+        <div className={`planning-feedback ${planningFeedback.tone}`} role="status">
+          {planningFeedback.message}
+        </div>
+      )}
 
-        </>
+      {!editable && (
+        <div className="sent-plan-note">
+          <span>SCHEDULE SENT</span>
+          <strong>{driver.name} now owns this communicated plan.</strong>
+          <small>Editing is locked until the Live Operations revision workflow is built.</small>
+        </div>
       )}
 
       <div className="driver-day-timeline">
         {timelineNodes}
       </div>
+
+      {planning && editable && (
+        sendReviewOpen ? (
+          <ScheduleSendReview
+            driver={driver}
+            day={day}
+            readiness={readiness}
+            onBack={() => setSendReviewOpen(false)}
+            onSend={onSendSchedule}
+          />
+        ) : (
+          <footer className={`driver-day-send-bar ${readiness.status}`}>
+            <div>
+              <span>SCHEDULE READINESS</span>
+              <strong>
+                {readiness.status === 'blocked'
+                  ? `FIX ${readiness.blockers.length} BLOCKER${readiness.blockers.length === 1 ? '' : 'S'}`
+                  : readiness.status === 'warning'
+                    ? `${readiness.warnings.length} WARNING${readiness.warnings.length === 1 ? '' : 'S'} · SENDABLE`
+                    : 'READY TO SEND'}
+              </strong>
+            </div>
+            <button
+              type="button"
+              disabled={!readiness.canSend}
+              onClick={() => setSendReviewOpen(true)}
+            >
+              {readiness.canSend ? 'SEND SCHEDULE' : 'FIX PLAN'}
+            </button>
+          </footer>
+        )
+      )}
     </section>
   )
 }
