@@ -67,16 +67,16 @@
 }
 .driver-truck-icon {
   position: relative;
-  width: 52px;
-  height: 38px;
+  width: 42px;
+  height: 31px;
   display: grid;
   place-items: center;
   filter: drop-shadow(0 7px 12px rgba(0, 0, 0, .5));
   transition: transform .16s ease, filter .16s ease;
 }
 .driver-truck-icon svg {
-  width: 52px;
-  height: 36px;
+  width: 42px;
+  height: 30px;
   overflow: visible;
 }
 .driver-truck-icon .truck-box,
@@ -97,11 +97,11 @@
 }
 .driver-truck-icon b {
   position: absolute;
-  left: 8px;
-  top: 9px;
-  width: 27px;
+  left: 6px;
+  top: 7px;
+  width: 23px;
   color: #071019;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 950;
   line-height: 1;
   text-align: center;
@@ -214,8 +214,8 @@
 }
 .poi-symbol {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   border: 2px solid #748795;
@@ -224,8 +224,8 @@
   box-shadow: 0 7px 20px rgba(0, 0, 0, .48);
 }
 .poi-symbol svg {
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2.6;
@@ -239,10 +239,10 @@
 }
 .poi-symbol b {
   position: absolute;
-  right: -7px;
-  top: -7px;
-  min-width: 22px;
-  height: 22px;
+  right: -6px;
+  top: -6px;
+  min-width: 19px;
+  height: 19px;
   padding: 0 4px;
   display: grid;
   place-items: center;
@@ -250,7 +250,7 @@
   border-radius: 999px;
   background: #d5dee4;
   color: #0a1118;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 950;
 }
 .poi-marker > em {
@@ -322,8 +322,8 @@
   pointer-events: none;
 }
 .freight-preview-marker .poi-symbol {
-  width: 46px;
-  height: 46px;
+  width: 36px;
+  height: 36px;
   border-color: #c8d2da;
   background: #121b22;
 }
@@ -351,12 +351,12 @@
   display: none;
 }
 .freight-preview-marker .poi-symbol {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
 }
 .freight-preview-marker .poi-symbol svg {
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 22px;
 }
 .freight-preview-marker > small {
   max-width: 180px;
