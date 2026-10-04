@@ -327,6 +327,21 @@ test('V2.6.5.5 keeps route persistence while restoring proven freight-stop marke
   assert.match(css, /\.facility-stop\.priority-label > small/)
 })
 
+test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-access coordinates', async () => {
+  const routing = await readFile(new URL('../src/services/roadRouting.js', import.meta.url), 'utf8')
+  const access = await readFile(new URL('../src/domain/routing/routeAccessPoints.js', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(routing, /originAccessCoordinates/)
+  assert.match(routing, /destinationAccessCoordinates/)
+  assert.match(routing, /data\?\.waypoints\?\.\[0\]\?\.location/)
+  assert.match(routing, /data\?\.waypoints\?\.\[1\]\?\.location/)
+  assert.match(map, /buildRouteAccessByEventId\(plannedDriverRoutes\)/)
+  assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*stop\.coordinates/)
+  assert.match(map, /plannedDriverRoutes, planningPlaceOptions/)
+  assert.match(access, /Prefer the incoming leg's destination access point/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -402,7 +417,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.5 · PROVEN ROUTE MARKERS/)
+  assert.match(top, /DESKTOP V2\.6\.5\.6 · OPERATIONAL ACCESS POINTS/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

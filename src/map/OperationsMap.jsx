@@ -13,6 +13,10 @@ import {
   markInsertionAffectedSegment,
 } from '../domain/routing/driverRoutePlan.js'
 import { nextOperationalEventId } from '../domain/routing/mapRouteDisplay.js'
+import {
+  buildRouteAccessByEventId,
+  routeAccessCoordinate,
+} from '../domain/routing/routeAccessPoints.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { calculateRoadRoute } from '../services/roadRouting.js'
 import { mapStyle } from '../data/mapStyle.js'
@@ -213,6 +217,7 @@ export default function OperationsMap({
     markerRefs.current.clear()
 
     const loadSelected = isSelection(selection, SELECTION_TYPES.LOAD)
+    const routeAccessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
 
     drivers.forEach((driver) => {
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
@@ -307,8 +312,20 @@ export default function OperationsMap({
       if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
       else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
 
+      const anchorEventId = (
+        selectedStop
+        && routeAnchor.eventIds.includes(selectedStop.id)
+      )
+        ? selectedStop.id
+        : routeAnchor.eventIds[0]
+      const markerCoordinates = routeAccessCoordinate(
+        routeAccessByEventId,
+        anchorEventId,
+        routeAnchor.coordinates,
+      )
+
       const marker = new Marker({ element, anchor: 'bottom', offset })
-        .setLngLat(routeAnchor.coordinates)
+        .setLngLat(markerCoordinates)
         .addTo(map)
 
       markerRefs.current.set(`route-anchor:${routeAnchor.id}`, marker)
@@ -388,14 +405,20 @@ export default function OperationsMap({
         onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, stop.id)
       })
 
+      const markerCoordinates = routeAccessCoordinate(
+        routeAccessByEventId,
+        stop.id,
+        stop.coordinates,
+      )
+
       const marker = new Marker({ element, anchor: 'bottom' })
-        .setLngLat(stop.coordinates)
+        .setLngLat(markerCoordinates)
         .addTo(map)
 
       markerRefs.current.set(`stop:${stop.id}`, marker)
     }
 
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, plannedDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     if (!driverRouteKey || !driverDay) return undefined
@@ -645,7 +668,7 @@ export default function OperationsMap({
       dashed: true,
     })
 
-    const addPreviewMarker = (location, role) => {
+    const addPreviewMarker = (location, role, accessCoordinates = null) => {
       if (!location?.coordinates) return
 
       const element = document.createElement('div')
@@ -658,13 +681,24 @@ export default function OperationsMap({
 
       previewMarkerRefs.current.push(
         new Marker({ element, anchor: 'bottom' })
-          .setLngLat(location.coordinates)
+          .setLngLat(accessCoordinates ?? location.coordinates)
           .addTo(map),
       )
     }
 
-    addPreviewMarker(freightRoutePreview.pickup, 'pickup')
-    addPreviewMarker(freightRoutePreview.delivery, 'delivery')
+    const pickupAccess = (
+      freightRoutePreview.deadheadRoute?.destinationAccessCoordinates
+      ?? freightRoutePreview.loadedRoute?.originAccessCoordinates
+      ?? null
+    )
+    const deliveryAccess = (
+      freightRoutePreview.loadedRoute?.destinationAccessCoordinates
+      ?? freightRoutePreview.rejoinRoute?.originAccessCoordinates
+      ?? null
+    )
+
+    addPreviewMarker(freightRoutePreview.pickup, 'pickup', pickupAccess)
+    addPreviewMarker(freightRoutePreview.delivery, 'delivery', deliveryAccess)
 
     const points = []
     for (const route of [

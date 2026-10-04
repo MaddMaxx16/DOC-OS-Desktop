@@ -416,25 +416,35 @@ The map system must support at least:
 
 Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
-### Route / POI endpoint integrity
+### Facility coordinates vs operational truck access
 
-Every visible route must terminate on visible operational context.
+Every visible route must terminate on visible operational context, but a facility's geographic identity and the truck's routable access point are not always the same coordinate.
 
-Routing engines may snap requested coordinates onto the road network internally, but rendered route geometry must be extended back to the exact gameplay coordinates at both ends.
+DOC OS therefore distinguishes:
+
+- **facility coordinate** — the canonical location of the gameplay place,
+- **truck-access coordinate** — the road-network point where the routing engine can actually deliver the truck.
+
+Routing engines such as OSRM may snap a requested facility coordinate onto the drivable road network. That snapped waypoint is operational route truth for the road-facing marker.
 
 Therefore:
 
-- no visible route may stop short of its pickup/delivery/yard/staging marker,
-- proposal entry/rejoin legs must visibly connect to the committed route anchor they reference,
-- every event that owns an endpoint of a visible committed route segment must have a visible map anchor,
-- normal Driver view keeps the richer pickup/delivery markers and supplements them with compact typed anchors for non-freight events such as Yard, Lunch, and Staging,
-- FreightLink may use the quieter compact anchor treatment for the candidate driver's whole committed day,
-- route-anchor coverage must be data-driven for every driver rather than special-cased per seed driver.
-- the current truck marker is itself a valid route-origin anchor,
+- committed road geometry begins and ends at truck-access coordinates returned by the router,
+- the operational pickup/delivery/lunch/staging marker shown as a route endpoint uses that same access coordinate,
+- the canonical facility record is not rewritten when routing snaps to an access point,
+- do not extend a road route with an artificial straight segment into the middle of a facility property merely to touch its canonical coordinate,
+- no visible route may stop short of the operational marker that represents its routed access point,
+- proposal entry/rejoin legs and preview markers follow the same access-point rule,
+- every event that owns an endpoint of a visible committed route segment must have a visible operational marker,
+- the current truck marker remains a valid route-origin context,
 - home base must not be assumed to be shift start,
 - Driver Day begins at the current operational truck position unless the plan explicitly defines a start facility,
-- an explicit start facility renders as a typed POI anchor and the route begins there,
-- there must be no invisible teleport between the truck's current position and the first planned event.
+- there must be no invisible teleport between operational route state and the marker presented to the player.
+
+This creates the invariant:
+
+> facility identity may live inside the property  
+> truck route + operational marker meet at the routable entrance/access point
 
 ### Pickup / delivery marker
 
@@ -514,8 +524,8 @@ Therefore:
 Committed freight stops retain the proven V2.6.4.1 marker geometry:
 
 - pickup/delivery markers come directly from the authoritative Driver Day freight stops,
-- those markers remain bottom-anchored to their gameplay coordinates,
-- label declutter must never replace or move the underlying P/D marker,
+- the stop retains its canonical facility identity while the operational marker may resolve to the route's truck-access coordinate,
+- label declutter must never independently move the underlying P/D marker away from route-access truth,
 - normal committed markers do not show redundant PICKUP / DELIVERY text below the icon,
 - the selected stop and next planned stop may show their full facility names,
 - other freight stops remain badge-first until hover/focus.
@@ -1462,24 +1472,27 @@ V2.5 through V2.6.4.1 are accepted and locked.
 
 The active corrective packet is:
 
-# **V2.6.5.5 — Proven Route Markers**
+# **V2.6.5.6 — Operational Access Points**
 
-Repeated visual testing showed that the route/marker relationship was trustworthy before V2.6.5. The regression began when normal Driver view replaced the original freight-stop markers with grouped route-anchor markers. Subsequent route experiments did not restore the visual connection.
+Repeated visual testing showed that marker CSS, grouped anchors, endpoint extension, continuous-route requests, and rollback to the older freight marker implementation did not solve the disconnect.
 
-V2.6.5.5 therefore restores the last proven route/marker architecture:
+The remaining model error is now explicit: DOC OS was treating a facility's canonical coordinate as if it were guaranteed to be a drivable truck endpoint.
 
-- committed P/D markers again render directly from Driver Day freight stops,
-- those markers use the original bottom-anchor behavior,
-- committed route legs again route per authoritative Driver Day segment,
-- only real road geometry renders as the committed route,
-- V2.6.5 label declutter remains, but only as text visibility:
-  - redundant PICKUP / DELIVERY text is hidden,
-  - selected/next facility names stay visible,
-  - other facility names appear on hover/focus,
-- Lunch/Staging keep their separate non-freight route anchors,
-- grouped committed freight markers are explicitly retired for now.
+V2.6.5.6 separates those truths:
 
-If V2.6.5.5 restores the proven route-to-marker connection while keeping the cleaner label treatment, lock V2.6 map polish and proceed to:
+- OSRM's returned waypoint locations are retained as truck-access coordinates,
+- real road geometry is normalized to those access coordinates rather than the facility centroid,
+- operational P/D/L/S markers resolve to the same access coordinates as the route,
+- the underlying facility keeps its canonical gameplay coordinate and identity,
+- FreightLink preview markers use route-access coordinates when available,
+- no artificial straight connector is added from the road to the facility centroid,
+- V2.6.5 label declutter remains presentation-only.
+
+Acceptance:
+
+A stop such as Harborline Logistics or Brooklyn Industrial Terminal may keep a facility location inside the industrial property, while Marcus's blue route and the visible operational stop marker meet at the actual routable truck entrance/access point.
+
+After visual acceptance, lock V2.6 map polish and proceed to:
 
 # **V2.7 — Live Operations**
 
