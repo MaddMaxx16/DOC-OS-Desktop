@@ -32,20 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.3 Breaks, Places + Staging
+## Current packet — V2.6.3.1 Place Flyout + Confirmation
 
-V2.1 through V2.6.2 remain the locked desktop foundation.
+V2.1 through V2.6.2 remain the locked desktop foundation. V2.6.3 is in active visual refinement.
 
 Guardrails:
 - preserve the map-first command rail → browser → live map → inspector workstation,
 - preserve V2.5 booking/Rate Con truth and committed freight ownership,
 - preserve V2.6.1 DRAFT/SENT planning truth,
 - preserve V2.6.2 committed-manifest sequencing, pickup-before-delivery, capacity guards, and plan-health feedback,
-- replace card-half drop targeting with explicit insertion lanes between Driver Day events,
-- freight stops and Lunch are movable planning events; Staging remains the end-of-day event,
-- moving freight around Lunch must preserve the visible event order rather than treating Lunch as a fixed numeric slot,
-- Lunch always resolves to a real selectable gameplay POI,
-- Lunch place selection affects the committed route, downstream timing, appointments, and HOS,
+- preserve V2.6.3 explicit insertion lanes and movable Lunch,
+- Lunch/Staging place choices must open in a side flyout adjacent to the right inspector; do not consume Driver Day timeline height,
+- selecting a place is preview state only,
+- a preview may update the map route but must not mutate committed Driver Day truth,
+- actual lunch/staging truth changes only after explicit CONFIRM LUNCH or CONFIRM STAGING,
+- cancelling a place preview leaves the committed plan untouched,
+- draft staging begins unassigned; do not seed a default end-of-day staging location,
+- unresolved staging remains visible as a selectable Driver Day placeholder,
 - staging selection chooses the truck's real planned end-of-day location and changes the final route leg,
 - lunch and staging candidates come from the shared gameplay location model and carry stable IDs,
 - the same physical place records must be reusable by later RPG preference/favorite/cost/event systems,
