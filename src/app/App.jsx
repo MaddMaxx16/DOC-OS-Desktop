@@ -35,11 +35,31 @@ export default function App() {
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
   const [planningFeedback, setPlanningFeedback] = useState(null)
+  const [pendingPlanningPlace, setPendingPlanningPlace] = useState(null)
 
   const driverDays = useMemo(
     () => buildDriverDays(drivers, operationalLoads, operationalDriverPlans, locations),
     [operationalDriverPlans, operationalLoads],
   )
+
+  const planningPlacePreviewDay = useMemo(() => {
+    if (!pendingPlanningPlace) return null
+
+    const driver = drivers.find((item) => item.id === pendingPlanningPlace.driverId)
+    if (!driver) return null
+
+    const result = choosePlanningPlace({
+      driver,
+      driverId: driver.id,
+      loads: operationalLoads,
+      driverPlans: operationalDriverPlans,
+      locations,
+      kind: pendingPlanningPlace.kind,
+      locationId: pendingPlanningPlace.locationId,
+    })
+
+    return result.ok ? result.driverDay : null
+  }, [operationalDriverPlans, operationalLoads, pendingPlanningPlace])
 
   const marketLanes = useMemo(() => {
     const confirmedLaneIds = new Set(
@@ -51,6 +71,7 @@ export default function App() {
   }, [bookingRecords])
 
   const selectSubject = (type, id) => {
+    setPendingPlanningPlace(null)
     setSelection(createSelection(type, id))
 
     const subjectDriverId = type === SELECTION_TYPES.DRIVER
@@ -88,15 +109,18 @@ export default function App() {
     const day = driverDays.find((item) => item.driverId === driverId)
     if (!day || !canEditDispatchPlan(day)) return
     setPlanningFeedback(null)
+    setPendingPlanningPlace(null)
     setPlanningDriverId(driverId)
   }
 
   const stopDriverPlanning = (driverId) => {
     setPlanningFeedback(null)
+    setPendingPlanningPlace(null)
     setPlanningDriverId((current) => current === driverId ? null : current)
   }
 
   const moveDriverPlanEvent = ({ driverId, eventId, beforeId, afterId }) => {
+    setPendingPlanningPlace(null)
     const driver = drivers.find((item) => item.id === driverId)
     if (!driver || planningDriverId !== driverId) return
 
@@ -134,7 +158,20 @@ export default function App() {
     })
   }
 
-  const chooseDriverPlanningPlace = ({ driverId, kind, locationId }) => {
+  const previewDriverPlanningPlace = ({ driverId, kind, locationId }) => {
+    if (planningDriverId !== driverId) return
+    setPlanningFeedback(null)
+    setPendingPlanningPlace({ driverId, kind, locationId })
+  }
+
+  const cancelDriverPlanningPlace = () => {
+    setPendingPlanningPlace(null)
+  }
+
+  const confirmDriverPlanningPlace = () => {
+    if (!pendingPlanningPlace) return
+
+    const { driverId, kind, locationId } = pendingPlanningPlace
     const driver = drivers.find((item) => item.id === driverId)
     if (!driver || planningDriverId !== driverId) return
 
@@ -159,6 +196,7 @@ export default function App() {
 
     setOperationalLoads(result.loads)
     setOperationalDriverPlans(result.driverPlans)
+    setPendingPlanningPlace(null)
     setSelection(createSelection(SELECTION_TYPES.STOP, `${driverId}:${kind}`))
 
     const firstWarning = result.driverDay?.planHealth?.warnings?.[0]
@@ -166,8 +204,8 @@ export default function App() {
       driverId,
       tone: firstWarning ? 'warning' : 'success',
       message: firstWarning
-        ? `${result.location.label} selected. ${firstWarning}`
-        : `${result.location.label} selected. Route and timing recalculated.`,
+        ? `${result.location.label} confirmed. ${firstWarning}`
+        : `${result.location.label} confirmed. Route and timing recalculated.`,
     })
   }
 
@@ -182,6 +220,7 @@ export default function App() {
     if (appId === 'freightlink' && opening) {
       setPlanningDriverId(null)
       setPlanningFeedback(null)
+      setPendingPlanningPlace(null)
     }
 
     if (activeApp === 'freightlink' && appId !== 'freightlink') {
@@ -200,6 +239,7 @@ export default function App() {
   const closeActiveApp = () => {
     setActiveApp(null)
     setFreightRoutePreview(null)
+    setPendingPlanningPlace(null)
     if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
   }
 
@@ -355,6 +395,8 @@ export default function App() {
       focusedTask={focusedTask}
       planningDriverId={planningDriverId}
       planningFeedback={planningFeedback}
+      pendingPlanningPlace={pendingPlanningPlace}
+      planningPlacePreviewDay={planningPlacePreviewDay}
       freightRoutePreview={freightRoutePreview}
       freightCandidateDriverId={freightCandidateDriverId}
       onToggleApp={toggleApp}
@@ -369,7 +411,9 @@ export default function App() {
       onStartDriverPlanning={startDriverPlanning}
       onStopDriverPlanning={stopDriverPlanning}
       onMoveDriverPlanEvent={moveDriverPlanEvent}
-      onChooseDriverPlanningPlace={chooseDriverPlanningPlace}
+      onPreviewDriverPlanningPlace={previewDriverPlanningPlace}
+      onCancelDriverPlanningPlace={cancelDriverPlanningPlace}
+      onConfirmDriverPlanningPlace={confirmDriverPlanningPlace}
       onSelectSubject={selectSubject}
     />
   )
