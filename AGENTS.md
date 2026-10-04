@@ -32,20 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.1.2 Camera Ownership
+## Current packet — V2.7.2 Route Execution + Truck Motion
 
-V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete. V2.7.1 Live Operations clock/execution-gate behavior is visually accepted.
+V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete. V2.7.1/.1.1/.1.2 clock, startup, and camera behavior are accepted and locked.
 
 Guardrails:
-- preserve every locked planning, routing, map, booking, Rate Con, startup-guard, and V2.7.1 live-clock invariant,
-- selecting a driver or stop may frame that target once,
-- after intentional framing, manual pan/zoom belongs to the player and ordinary React rerenders or simulation-clock ticks must not reclaim the camera,
-- a moving selected truck must not automatically drag the camera in future Live Operations unless a separate explicit Follow Driver mode is added,
-- camera framing keys are based on selection/planning target identity, not continuously changing truck coordinates,
-- clearing selection resets the frame key so a later re-selection may intentionally frame again,
-- FreightLink preview/planning modes may still intentionally fit their own relevant geometry,
-- stabilize planning-place option identity so the live clock does not manufacture false camera-change signals,
-- do not change routing, route geometry, simulation speed, Driver Day sequencing, HOS, appointments, capacity, or sent-plan truth in this packet.
+- preserve every locked planning, booking, routing, native-stop, camera-ownership, and live-clock invariant,
+- only SENT Driver Days execute; draft plans never move,
+- every sent driver derives execution state from the shared simulation clock and communicated Driver Day,
+- execution phases include SCHEDULED, EN ROUTE, ARRIVED, ON BREAK/AT STOP, ROUTE COMPLETE, and SHIFT CLOSED presentation,
+- route execution uses Driver Day event times; Lunch is a true dwell window and the truck remains parked until lunch end,
+- pickup/delivery loading and unloading service timers are not part of V2.7.2 and must not be invented here,
+- the currently hydrated map driver moves along the real committed road geometry using cumulative route distance, never straight-line interpolation between facilities,
+- native committed stop emphasis follows the live next-event truth,
+- completed committed route legs fade; the active leg remains strongest; future legs remain visible but subordinate,
+- the Driver Day timeline exposes completed / NOW / NEXT state from the same live execution truth,
+- manual pan/zoom remains player-owned while the truck moves; truck motion must not recenter the camera,
+- execution state may advance for all sent drivers even when only the currently hydrated map driver's precise road motion is rendered,
+- do not mutate HOS, appointments, capacity, load onboard state, paperwork, or service completion in this packet,
+- do not automatically complete pickups or deliveries; V2.7.2 proves movement and arrival state only.
 
 ## Verification
 
