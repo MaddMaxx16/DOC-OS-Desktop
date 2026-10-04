@@ -282,7 +282,7 @@ export default function FreightLinkWorkspace({
               <button
                 type="button"
                 key={lane.id}
-                className={`lane-row ${selected ? 'selected' : ''}`}
+                className={`lane-row ${selected ? 'selected' : ''} ${bookingRecord ? 'has-booking-state' : ''}`}
                 onClick={() => onSelectSubject(SELECTION_TYPES.LOAD, lane.id)}
                 aria-pressed={selected}
               >
