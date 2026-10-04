@@ -500,6 +500,35 @@ Target type scale:
 
 If important information requires leaning toward the monitor or squinting at normal desktop distance, the presentation fails.
 
+### Route visibility and label priority
+
+The selected driver's committed route is part of the operational picture, not part of the inspector.
+
+Therefore:
+
+- a selected driver's sent route remains visible when the right inspector is dismissed,
+- inspector visibility and route visibility are independent presentation concerns,
+- other drivers remain visible as truck assets without painting every sent route at equal strength by default,
+- selecting another driver transfers full committed-route emphasis to that driver.
+
+Committed-stop labels use progressive disclosure:
+
+- every physical facility keeps its typed POI marker and P/D/L/S badge,
+- the selected stop may show its full facility label,
+- the next operational stop may show its full facility label,
+- other stops remain badge-first until hover/focus,
+- multiple planned visits at the same facility share one physical facility marker and combine their visit badges,
+- close important labels may be placed left/right/above/below their exact marker with a short connector rather than overlapping,
+- the physical marker coordinate itself must remain exact.
+
+Before V2.7 execution state exists, "next operational stop" may use the first planned event after shift start as a temporary priority heuristic. V2.7 must replace that heuristic with the driver's real current execution position.
+
+This preserves the hierarchy:
+
+> truck + route = operational ownership  
+> badge = plan structure  
+> full label = current relevance
+
 ### Selection synchronization
 
 Map, manifest, load, and driver selection share one selection model.
@@ -1430,33 +1459,30 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.4 are accepted and locked.
+V2.5 through V2.6.4.1 are accepted and locked.
 
-The active polish packet is:
+The active final Daily Planning map-polish packet is:
 
-# **V2.6.4.1 — Closable Driver Inspector**
+# **V2.6.5 — Route Visibility + Label Declutter**
 
-It locks one shell interaction rule discovered during final Daily Planning acceptance:
+It locks:
 
-> operational selection and inspector visibility are separate concerns
+- selected-driver committed route persistence independent of inspector visibility,
+- non-selected driver trucks visible without all routes competing at full strength,
+- grouped physical facility anchors for committed Driver Day events,
+- same-facility P/D/L/S visits sharing one marker,
+- selected-stop and next-stop label priority,
+- badge-first presentation for non-priority stops,
+- hover/focus disclosure of secondary facility names,
+- alternate label placement for geographically close priority labels while keeping POI coordinates exact.
 
-Therefore:
+V2.6.5 does not add live execution state. Until V2.7, the first planned event after shift start is used as the temporary "next stop" label priority.
 
-- the right Operations Inspector has an explicit close control,
-- closing it returns that width to the live map,
-- closing it does **not** clear the selected driver or stop,
-- the selected driver's committed route can remain visible after the inspector is dismissed,
-- selecting a driver or stop again reopens the inspector,
-- closing during Planning Mode exits the planning presentation without mutating the underlying draft,
-- a SENT plan remains SENT after close/reopen.
-
-This completes the desktop Daily Planning interaction contract.
-
-After V2.6.4.1 passes functional and visual acceptance, proceed to:
+After V2.6.5 passes functional and visual acceptance, proceed to:
 
 # **V2.7 — Live Operations**
 
-V2.7 may activate the clock controls and execute the sent plan rather than rebuilding planning truth.
+V2.7 may activate the clock controls, move drivers through their SENT plans, fade completed route legs, and replace the temporary next-stop label heuristic with real execution truth.
 
 ---
 
