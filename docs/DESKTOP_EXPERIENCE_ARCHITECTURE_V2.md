@@ -571,17 +571,31 @@ The app does not own the map. It supplies context to the shared map.
 
 ### FreightLink shopping mode
 
-When FreightLink opens:
+FreightLink has two distinct map states.
+
+**Marketplace overview**
+
+When FreightLink opens without a selected lane:
 
 - zoom out enough to understand the marketplace geography,
-- show available lanes as selectable marketplace markers,
-- preserve relevant driver/manifest context where practical.
+- show available lanes as compact selectable marketplace markers,
+- show driver assets without permanent name cards,
+- avoid rendering the candidate driver's full manifest stop set.
 
-Selecting a lane:
+**Selected-lane focus**
 
-- selects the same `LOAD` object in the board and map,
-- frames the driver insertion point, deadhead, pickup, loaded route, and delivery,
-- keeps the app drawer visible below while the map shows the geography above.
+When a lane is selected:
+
+- select the same `LOAD` object in the board and map,
+- hide unrelated marketplace opportunity markers,
+- hide unrelated drivers,
+- hide the candidate driver's full manifest stop set,
+- render only the selected lane's neutral deadhead / loaded route and selected pickup / delivery facilities as dominant geography,
+- keep route preview data synchronized to the currently selected LOAD id,
+- reject stale route/marker data from a previously selected lane,
+- keep the app drawer visible below while the map shows the geography above.
+
+The inspector owns the detailed insertion explanation. The map should not duplicate every manifest stop merely because a lane is being evaluated.
 
 ### Focused workspace
 
@@ -1296,24 +1310,23 @@ The following are now considered locked unless deliberately reopened:
 
 The active completion packet is:
 
-# **V2.4.4 — Map Interaction + Drawer Layout Polish**
+# **V2.4.5 — FreightLink Map Focus Cleanup**
 
 It locks:
 
-- flat north-up map interaction,
-- pan + zoom only,
-- no accidental rotate / tilt / perspective state,
-- 46% shared app drawer target,
-- 360–540 px shared drawer bounds,
-- normal-desktop FreightLink evaluation visibility without shrinking text.
+- clear separation between marketplace overview and selected-lane focus,
+- selected-lane map decluttering,
+- no unrelated driver / manifest overlays while evaluating a lane,
+- stale route-preview rejection when lane selection changes,
+- compact selected pickup / delivery facility markers.
 
-After V2.4.4 passes visual acceptance, V2.4 is considered complete.
+After V2.4.5 passes visual acceptance, V2.4 is considered complete.
 
 The next gameplay packet is:
 
 # **V2.5 — Booking + Rate Confirmation**
 
-V2.5 must preserve the V2.4.3 map language, readability floor, and the V2.4.4 flat-camera/shared-drawer contract.
+V2.5 must preserve the V2.4.3 map language, V2.4.4 flat-camera/shared-drawer contract, and V2.4.5 focus-mode rules.
 
 
 ---
