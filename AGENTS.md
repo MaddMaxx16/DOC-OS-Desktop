@@ -32,23 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.6 Operational Access Points
+## Current packet — V2.6.5.7 Serialized Route Hydration
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 label declutter remains accepted, while route/marker correctness is being corrected at the coordinate-model level.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 label declutter and V2.6.5.6 operational access-point truth remain active.
 
 Guardrails:
-- preserve selected-driver committed route persistence when the inspector closes,
-- preserve the proven Driver Day freight-stop marker interaction and V2.6.5 text declutter,
-- separate a facility's canonical map coordinate from the truck's routable access coordinate,
-- canonical facility coordinates identify the place and remain valid planning/facility truth,
-- OSRM waypoint locations are operational truck-access coordinates,
-- committed road geometry begins/ends at OSRM truck-access coordinates rather than being artificially extended to a facility centroid,
-- the operational P/D/L/S route marker uses the same truck-access coordinate as its incoming road leg,
-- if road access is unavailable, marker presentation may fall back to the facility coordinate until routing succeeds,
-- never draw a fake straight connector from a road access point to a facility centroid just to make geometry visually touch,
-- FreightLink preview P/D markers should use the same route-access coordinates as their preview road geometry when available,
-- Driver Day sequencing, facility identity, appointments, HOS, capacity, sent-plan truth, and selected-driver ownership remain unchanged,
-- route-access data is presentation/routing truth, not a mutation of the facility record itself.
+- preserve selected-driver route persistence and Driver Day plan truth,
+- preserve facility-coordinate vs truck-access-coordinate separation,
+- committed Driver Day road legs must not be requested in one Promise.all burst against the public OSRM endpoint,
+- hydrate committed segments strictly in Driver Day order with at most one active road request at a time,
+- successful road legs may appear progressively as they resolve,
+- estimate fallbacks remain timing-only and must not render as committed blue roads,
+- unresolved estimate legs receive a later retry wave automatically without requiring the player to refresh or edit the plan,
+- successful route results remain cached; estimate failures remain uncached,
+- operational P/D/L/S markers follow resolved truck-access coordinates and fall back to facility coordinates only while their road leg is unresolved,
+- do not restore the retired continuous multi-waypoint routing experiment,
+- remove retired routing helpers/tests that are no longer used by runtime code,
+- do not alter sequencing, HOS, appointments, capacity, sent-plan truth, or driver ownership in this packet.
 
 ## Verification
 

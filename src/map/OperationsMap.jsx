@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Map as MapLibreMap,
   Marker,
@@ -12,6 +12,7 @@ import {
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
 } from '../domain/routing/driverRoutePlan.js'
+import { hydrateCommittedRouteSegments } from '../domain/routing/committedRouteHydration.js'
 import { nextOperationalEventId } from '../domain/routing/mapRouteDisplay.js'
 import {
   buildRouteAccessByEventId,
@@ -149,9 +150,14 @@ export default function OperationsMap({
         `${event.id}@${event.locationId ?? 'truck'}@${Array.isArray(event.coordinates) ? event.coordinates.join(',') : ''}`
       )).join('|')}`
     : null
-  const plannedDriverRoutes = driverRouteResult?.key === driverRouteKey
-    ? driverRouteResult.segments
-    : []
+  const plannedDriverRoutes = useMemo(
+    () => (
+      driverRouteResult?.key === driverRouteKey
+        ? driverRouteResult.segments
+        : []
+    ),
+    [driverRouteKey, driverRouteResult],
+  )
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -426,12 +432,14 @@ export default function OperationsMap({
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
 
-    Promise.all(
-      segmentSpecs.map(async (segment) => ({
-        ...segment,
-        route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
-      })),
-    ).then((segments) => {
+    hydrateCommittedRouteSegments(segmentSpecs, {
+      routeSegment: calculateRoadRoute,
+      isActive: () => active,
+      onProgress: (segments) => {
+        if (!active) return
+        setDriverRouteResult({ key: driverRouteKey, segments })
+      },
+    }).then((segments) => {
       if (!active) return
       setDriverRouteResult({ key: driverRouteKey, segments })
     })

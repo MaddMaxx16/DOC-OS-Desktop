@@ -319,7 +319,8 @@ test('V2.6.5.5 keeps route persistence while restoring proven freight-stop marke
   assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
   assert.match(map, /poi-marker facility-stop/)
   assert.match(map, /new Marker\(\{ element, anchor: 'bottom' \}\)/)
-  assert.match(map, /calculateRoadRoute\(segment\.fromCoordinates, segment\.toCoordinates\)/)
+  assert.match(map, /hydrateCommittedRouteSegments/)
+  assert.match(map, /routeSegment: calculateRoadRoute/)
   assert.match(map, /segment\.route\?\.source === 'road'/)
   assert.match(css, /\.facility-stop \{[\s\S]*width: 34px/)
   assert.match(css, /\.facility-stop > em \{[\s\S]*display: none/)
@@ -340,6 +341,20 @@ test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-acce
   assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*stop\.coordinates/)
   assert.match(map, /plannedDriverRoutes, planningPlaceOptions/)
   assert.match(access, /Prefer the incoming leg's destination access point/)
+})
+
+test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promise.all bursts', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const hydration = await readFile(new URL('../src/domain/routing/committedRouteHydration.js', import.meta.url), 'utf8')
+
+  assert.match(map, /hydrateCommittedRouteSegments/)
+  assert.match(map, /routeSegment: calculateRoadRoute/)
+  assert.match(map, /onProgress/)
+  assert.doesNotMatch(map, /Promise\.all\(\s*segmentSpecs\.map/)
+  assert.match(hydration, /for \(let index = 0; index < segments\.length; index \+= 1\)/)
+  assert.match(hydration, /RETRY_WAVES = 2/)
+  assert.match(hydration, /BETWEEN_SEGMENTS_MS = 140/)
+  assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -417,7 +432,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.6 · OPERATIONAL ACCESS POINTS/)
+  assert.match(top, /DESKTOP V2\.6\.5\.7 · SERIAL ROUTE HYDRATION/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
