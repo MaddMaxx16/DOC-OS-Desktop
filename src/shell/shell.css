@@ -86,7 +86,11 @@
   color: #6f8291;
   font-size: 11px;
   font-weight: 950;
-  cursor: default;
+  cursor: pointer;
+}
+.time-controls button:hover:not(:disabled) {
+  border-color: #4c6473;
+  color: #b7c7d1;
 }
 .time-controls button.active {
   border-color: #6f557c;
@@ -94,7 +98,18 @@
   color: #b898c9;
 }
 .time-controls button:disabled {
-  opacity: 1;
+  opacity: .52;
+  cursor: default;
+}
+.clock-time-row em.playing {
+  border-color: #356b86;
+  background: #0b1820;
+  color: #83bdd8;
+}
+.clock-time-row em.fast {
+  border-color: #765d31;
+  background: #1b160c;
+  color: #d5b86c;
 }
 .operations-status {
   height: 36px;
