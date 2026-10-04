@@ -416,6 +416,27 @@ The map system must support at least:
 
 Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
+### Route seam continuity
+
+A Driver Day is calculated as ordered road legs, but separate road calls may snap the same stop to slightly different access points depending on whether that stop is an origin or destination.
+
+DOC OS keeps one canonical operational access point per event and uses it to stitch the **rendered** route across leg boundaries.
+
+Rules:
+
+- the incoming leg's destination access point remains the preferred canonical stop access point,
+- the next outgoing leg is visually stitched from that same canonical coordinate,
+- native P/D stop badges use that same canonical coordinate,
+- FreightLink preview seams use the same rule for deadhead → loaded and loaded → rejoin,
+- stitching may add a short display-only connector between two near-identical road snaps,
+- route distance, duration, HOS, appointment calculations, and fit evaluation remain based on the original road-route results,
+- line joins remain round and styling semantics remain intact,
+- DOC OS must not invent decorative splines or curves that leave road geometry merely to look smooth.
+
+This creates the visual invariant:
+
+> one operational stop = one map coordinate = one continuous route seam
+
 ### Serialized committed-route hydration
 
 The public OSRM endpoint is a runtime dependency with practical throttling/availability limits. DOC OS must not burst every committed Driver Day leg simultaneously.
@@ -1493,35 +1514,35 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.4.1 are accepted and locked.
+V2.5 through V2.6.5.11 are accepted and locked.
 
-The active final map-correction packet is:
+The active final route-polish packet is:
 
-# **V2.6.5.11 — Shared Native Stops**
+# **V2.6.5.12 — Route Seam Continuity**
 
-V2.6.5.10 visually confirmed that the Live Map's MapLibre-native P/D stop layer is correct.
+After committed stop alignment was corrected in both Live Map and FreightLink, visual acceptance exposed one remaining presentation issue: route legs can appear to hop or jump as they pass through a stop.
 
-The FreightLink screenshot exposed one remaining mode split:
+The cause is expected behavior from independent road-route calls:
 
-- Live Map used the new native committed-stop source/layers,
-- opening FreightLink disabled those layers with a `workspaceOpen` guard,
-- FreightLink then rendered the old DOM route anchors for all committed events,
-- the retired DOM freight markers reproduced the route/marker disconnect only inside FreightLink.
+- an incoming leg may snap a stop to access point A,
+- the outgoing leg may snap the same stop to a nearby access point B,
+- the native stop badge correctly uses the canonical incoming access point,
+- without display stitching, the next line may begin a few pixels away.
 
-V2.6.5.11 removes that split:
+V2.6.5.12 resolves the seam without changing simulation truth:
 
-- native committed P/D layers remain active while FreightLink is open,
-- FreightLink no longer renders committed freight events through DOM route anchors,
-- non-freight Lunch/Staging anchors may remain DOM-based,
-- marketplace lane markers and candidate-route visuals remain FreightLink-specific overlays,
-- committed Driver Day stops, route-access coordinates, and route ownership remain identical across Live Map and FreightLink,
-- no routing or planning logic changes are introduced.
+- build one canonical access map from the resolved Driver Day,
+- stitch each rendered committed leg to the canonical access coordinates at both ends,
+- retain original route distance/duration for all planning calculations,
+- apply the same visual stitching to FreightLink deadhead → loaded → rejoin seams,
+- preserve dashed pickup-bound and solid delivery/non-pickup line semantics,
+- use normal rounded MapLibre joins rather than decorative curves.
 
 Acceptance:
 
-Opening FreightLink for Marcus shows the same correctly aligned committed P1/P2/P3/D1/D2/D3 badges as the Live Map, with FL marketplace overlays layered around them rather than replacing them.
+Committed routes and FreightLink candidate previews read as continuous road paths through their stop markers, without small visual hops at P/D transition points.
 
-After visual acceptance, lock V2.6 map polish and proceed to:
+After visual acceptance, lock V2.6 Daily Planning and proceed to:
 
 # **V2.7 — Live Operations**
 

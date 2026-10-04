@@ -32,22 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.11 Shared Native Stops
+## Current packet — V2.6.5.12 Route Seam Continuity
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5.6 truck-access coordinates, V2.6.5.7 serialized road hydration, and V2.6.5.9/.10 MapLibre-native committed stops remain active.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5.6 truck-access coordinates, V2.6.5.7 serialized road hydration, V2.6.5.9/.10 native committed stops, and V2.6.5.11 shared Live Map/FreightLink stop rendering remain active.
 
 Guardrails:
-- preserve selected-driver route persistence and Driver Day plan truth,
-- preserve facility-coordinate vs truck-access-coordinate separation,
-- preserve serialized committed road hydration and real-road-only rendering,
-- committed pickup/delivery stop badges use one MapLibre-native renderer in every ordinary map mode,
-- opening FreightLink must not disable the native committed-stop source/layers,
-- FreightLink marketplace markers and candidate-route preview are overlays only; they must not replace Marcus's committed stop renderer,
-- DOM route-anchor markers are reserved for non-freight plan events such as Lunch and Staging,
-- committed freight route anchors must not return to the old DOM Marker path in FreightLink,
-- native P/D badges remain above committed route lines and continue using the route-access coordinate truth,
-- selected/next labels and STOP selection behavior remain shared between Live Map and FreightLink,
-- do not change routing, lane evaluation, sequencing, HOS, capacity, appointments, or sent-plan truth in this packet.
+- preserve Driver Day order, route mileage, duration, HOS, appointments, capacity, and sent-plan truth,
+- preserve real-road-only rendering and serialized road hydration,
+- preserve one canonical operational access coordinate per Driver Day event,
+- adjacent committed route legs must visually meet at that same canonical access coordinate,
+- route-seam stitching is rendering truth only; it must not mutate the route's calculated distance or duration,
+- the outgoing leg may receive a short display-only connector from the canonical stop access point to its OSRM-snapped first road point,
+- committed pickup/delivery badges remain on the same canonical access coordinates used by the stitched route,
+- FreightLink deadhead → loaded → rejoin preview legs must use the same seam-continuity rule at pickup and delivery,
+- candidate preview timing and fit math continue to use the original routed results,
+- preserve pickup-bound dashed styling and delivery/non-pickup solid styling,
+- do not introduce interpolation, splines, or curves that leave the routed road geometry,
+- do not alter routing requests or reintroduce multi-waypoint/continuous-route experiments in this packet.
 
 ## Verification
 

@@ -17,6 +17,8 @@ import { nextOperationalEventId } from '../domain/routing/mapRouteDisplay.js'
 import {
   buildRouteAccessByEventId,
   routeAccessCoordinate,
+  stitchCommittedRouteSegments,
+  stitchFreightPreviewRoutes,
 } from '../domain/routing/routeAccessPoints.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { calculateRoadRoute } from '../services/roadRouting.js'
@@ -162,6 +164,10 @@ export default function OperationsMap({
     ),
     [driverRouteKey, driverRouteResult],
   )
+  const displayDriverRoutes = useMemo(
+    () => stitchCommittedRouteSegments(plannedDriverRoutes),
+    [plannedDriverRoutes],
+  )
   const nextStopId = nextOperationalEventId(driverDay)
 
   useEffect(() => {
@@ -228,7 +234,7 @@ export default function OperationsMap({
     markerRefs.current.clear()
 
     const loadSelected = isSelection(selection, SELECTION_TYPES.LOAD)
-    const routeAccessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
+    const routeAccessByEventId = buildRouteAccessByEventId(displayDriverRoutes)
 
     drivers.forEach((driver) => {
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
@@ -394,7 +400,7 @@ export default function OperationsMap({
 
 
 
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, plannedDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, displayDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     const map = mapRef.current
@@ -414,7 +420,7 @@ export default function OperationsMap({
     }
 
     const identity = getDriverIdentity(selectedDriver.id)
-    const accessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
+    const accessByEventId = buildRouteAccessByEventId(displayDriverRoutes)
     const features = driverDay.freightStops
       .map((stop) => {
         const coordinates = routeAccessCoordinate(
@@ -567,7 +573,7 @@ export default function OperationsMap({
     driverDay,
     mapReady,
     nextStopId,
-    plannedDriverRoutes,
+    displayDriverRoutes,
     selectedDriver,
     selection,
   ])
@@ -613,7 +619,7 @@ export default function OperationsMap({
 
     const identity = getDriverIdentity(selectedDriver.id)
     const insertion = freightRoutePreview?.evaluation?.insertion ?? null
-    const segments = markInsertionAffectedSegment(plannedDriverRoutes, insertion)
+    const segments = markInsertionAffectedSegment(displayDriverRoutes, insertion)
     const features = segments
       .filter((segment) => (
         segment.route?.source === 'road'
@@ -724,7 +730,7 @@ export default function OperationsMap({
 
 
     return clearDriverRoute
-  }, [freightRoutePreview, mapReady, plannedDriverRoutes, selectedDriver])
+  }, [displayDriverRoutes, freightRoutePreview, mapReady, selectedDriver])
 
   useEffect(() => {
     const map = mapRef.current
@@ -751,6 +757,8 @@ export default function OperationsMap({
     previewMarkerRefs.current = []
 
     if (!freightRoutePreview) return clearRoute
+
+    const displayPreview = stitchFreightPreviewRoutes(freightRoutePreview)
 
     const addRoute = ({
       sourceId,
@@ -803,7 +811,7 @@ export default function OperationsMap({
       sourceId: DEADHEAD_SOURCE,
       casingLayerId: DEADHEAD_CASING_LAYER,
       layerId: DEADHEAD_LAYER,
-      route: freightRoutePreview.deadheadRoute,
+      route: displayPreview.deadheadRoute,
       color: PREVIEW_DEADHEAD,
       width: 3,
       dashed: true,
@@ -812,7 +820,7 @@ export default function OperationsMap({
       sourceId: LOADED_SOURCE,
       casingLayerId: LOADED_CASING_LAYER,
       layerId: LOADED_LAYER,
-      route: freightRoutePreview.loadedRoute,
+      route: displayPreview.loadedRoute,
       color: PREVIEW_ROUTE,
       width: 6,
     })
@@ -820,7 +828,7 @@ export default function OperationsMap({
       sourceId: REJOIN_SOURCE,
       casingLayerId: REJOIN_CASING_LAYER,
       layerId: REJOIN_LAYER,
-      route: freightRoutePreview.rejoinRoute,
+      route: displayPreview.rejoinRoute,
       color: PREVIEW_DEADHEAD,
       width: 3,
       dashed: true,
@@ -845,13 +853,17 @@ export default function OperationsMap({
     }
 
     const pickupAccess = (
-      freightRoutePreview.deadheadRoute?.destinationAccessCoordinates
-      ?? freightRoutePreview.loadedRoute?.originAccessCoordinates
+      displayPreview.deadheadRoute?.renderDestinationAccessCoordinates
+      ?? displayPreview.deadheadRoute?.destinationAccessCoordinates
+      ?? displayPreview.loadedRoute?.renderOriginAccessCoordinates
+      ?? displayPreview.loadedRoute?.originAccessCoordinates
       ?? null
     )
     const deliveryAccess = (
-      freightRoutePreview.loadedRoute?.destinationAccessCoordinates
-      ?? freightRoutePreview.rejoinRoute?.originAccessCoordinates
+      displayPreview.loadedRoute?.renderDestinationAccessCoordinates
+      ?? displayPreview.loadedRoute?.destinationAccessCoordinates
+      ?? displayPreview.rejoinRoute?.renderOriginAccessCoordinates
+      ?? displayPreview.rejoinRoute?.originAccessCoordinates
       ?? null
     )
 
@@ -860,9 +872,9 @@ export default function OperationsMap({
 
     const points = []
     for (const route of [
-      freightRoutePreview.deadheadRoute,
-      freightRoutePreview.loadedRoute,
-      freightRoutePreview.rejoinRoute,
+      displayPreview.deadheadRoute,
+      displayPreview.loadedRoute,
+      displayPreview.rejoinRoute,
     ]) {
       if (Array.isArray(route?.routeShape)) points.push(...route.routeShape)
     }
