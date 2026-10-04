@@ -64,6 +64,7 @@ export default function OperationsInspector({
           </div>
 
           <DriverDayPanel
+            key={driver.id}
             driver={driver}
             day={driverDay}
             selection={selection}
