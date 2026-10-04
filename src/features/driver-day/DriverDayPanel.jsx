@@ -403,7 +403,10 @@ export default function DriverDayPanel({
             <button
               type="button"
               disabled={!readiness.canSend}
-              onClick={() => setSendReviewOpen(true)}
+              onClick={() => {
+                onSelectSubject?.(SELECTION_TYPES.DRIVER, driver.id)
+                setSendReviewOpen(true)
+              }}
             >
               {readiness.canSend ? 'SEND SCHEDULE' : 'FIX PLAN'}
             </button>
