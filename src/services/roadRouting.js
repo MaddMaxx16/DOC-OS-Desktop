@@ -142,6 +142,33 @@ export async function calculateRoadRoutePlan(waypoints = []) {
   return null
 }
 
+export function buildRoadRouteResult(data, origin, destination) {
+  const route = data?.routes?.[0]
+  if (!route?.geometry?.coordinates?.length) throw new Error('Road route missing geometry')
+
+  const originAccessCoordinates = validCoordinate(data?.waypoints?.[0]?.location)
+    ? [...data.waypoints[0].location]
+    : [...origin]
+  const destinationAccessCoordinates = validCoordinate(data?.waypoints?.[1]?.location)
+    ? [...data.waypoints[1].location]
+    : [...destination]
+
+  return {
+    distanceMiles: route.distance / 1609.344,
+    durationMinutes: Math.max(1, Math.round(route.duration / 60)),
+    routeShape: ensureRouteTouchesEndpoints(
+      route.geometry.coordinates,
+      originAccessCoordinates,
+      destinationAccessCoordinates,
+    ),
+    originAccessCoordinates,
+    destinationAccessCoordinates,
+    requestedOriginCoordinates: [...origin],
+    requestedDestinationCoordinates: [...destination],
+    source: 'road',
+  }
+}
+
 async function requestRoadRoute(origin, destination) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
@@ -154,15 +181,7 @@ async function requestRoadRoute(origin, destination) {
     )
     if (!response.ok) throw new Error(`Road route failed (${response.status})`)
     const data = await response.json()
-    const route = data.routes?.[0]
-    if (!route?.geometry?.coordinates?.length) throw new Error('Road route missing geometry')
-
-    return {
-      distanceMiles: route.distance / 1609.344,
-      durationMinutes: Math.max(1, Math.round(route.duration / 60)),
-      routeShape: ensureRouteTouchesEndpoints(route.geometry.coordinates, origin, destination),
-      source: 'road',
-    }
+    return buildRoadRouteResult(data, origin, destination)
   } finally {
     clearTimeout(timeout)
   }
