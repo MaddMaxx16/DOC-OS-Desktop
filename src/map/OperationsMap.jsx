@@ -30,10 +30,6 @@ const DRIVER_ROUTE_CASING_LAYER = 'driver-plan-casing'
 const DRIVER_ROUTE_LAYER = 'driver-plan-layer'
 const DRIVER_ROUTE_PICKUP_CASING_LAYER = 'driver-plan-pickup-casing'
 const DRIVER_ROUTE_PICKUP_LAYER = 'driver-plan-pickup-layer'
-const ROUTE_DEBUG_ENDPOINT_SOURCE = 'route-debug-endpoint-source'
-const ROUTE_DEBUG_ENDPOINT_LAYER = 'route-debug-endpoint-layer'
-const ROUTE_DEBUG_MARKER_SOURCE = 'route-debug-marker-source'
-const ROUTE_DEBUG_MARKER_LAYER = 'route-debug-marker-layer'
 const COMMITTED_STOP_SOURCE = 'committed-stop-source'
 const COMMITTED_STOP_CIRCLE_LAYER = 'committed-stop-circle-layer'
 const COMMITTED_STOP_BADGE_LAYER = 'committed-stop-badge-layer'
@@ -114,27 +110,6 @@ function poiSvg(type) {
   return '<svg viewBox="0 0 48 48" focusable="false"><path d="M6 18 24 7l18 11v23H6z"/><path d="M12 24h7v17h-7zm11 0h7v17h-7zm11 0h4v17h-4z"/><path d="M10 18h28"/></svg>'
 }
 
-function coordinateDistanceMiles(left, right) {
-  if (!Array.isArray(left) || !Array.isArray(right)) return null
-  const radians = (value) => Number(value) * Math.PI / 180
-  const [lon1, lat1] = left
-  const [lon2, lat2] = right
-  const dLat = radians(lat2 - lat1)
-  const dLon = radians(lon2 - lon1)
-  const a = (
-    Math.sin(dLat / 2) ** 2
-    + Math.cos(radians(lat1))
-      * Math.cos(radians(lat2))
-      * Math.sin(dLon / 2) ** 2
-  )
-  return 3958.8 * 2 * Math.asin(Math.sqrt(a))
-}
-
-function shortCoordinate(point) {
-  if (!Array.isArray(point)) return '—'
-  return point.map((value) => Number(value).toFixed(4)).join(',')
-}
-
 function locationType(location, fallback = 'warehouse') {
   return location?.poiType ?? fallback
 }
@@ -188,39 +163,6 @@ export default function OperationsMap({
     [driverRouteKey, driverRouteResult],
   )
   const nextStopId = nextOperationalEventId(driverDay)
-
-  const routeDebugRows = useMemo(() => {
-    const accessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
-
-    return plannedDriverRoutes.map((segment) => {
-      const routeStart = segment.route?.routeShape?.[0] ?? null
-      const routeEnd = segment.route?.routeShape?.at?.(-1) ?? null
-      const markerStart = routeAccessCoordinate(
-        accessByEventId,
-        segment.fromId,
-        segment.fromCoordinates,
-      )
-      const markerEnd = routeAccessCoordinate(
-        accessByEventId,
-        segment.toId,
-        segment.toCoordinates,
-      )
-
-      return {
-        id: segment.id,
-        fromId: segment.fromId,
-        toId: segment.toId,
-        source: segment.route?.source ?? 'pending',
-        routeStart,
-        routeEnd,
-        markerStart,
-        markerEnd,
-        startDeltaMiles: coordinateDistanceMiles(routeStart, markerStart),
-        endDeltaMiles: coordinateDistanceMiles(routeEnd, markerEnd),
-        destinationSnapMiles: coordinateDistanceMiles(segment.toCoordinates, markerEnd),
-      }
-    })
-  }, [plannedDriverRoutes])
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -663,12 +605,8 @@ export default function OperationsMap({
     const clearDriverRoute = () => {
       if (map.getLayer(DRIVER_ROUTE_PICKUP_LAYER)) map.removeLayer(DRIVER_ROUTE_PICKUP_LAYER)
       if (map.getLayer(DRIVER_ROUTE_PICKUP_CASING_LAYER)) map.removeLayer(DRIVER_ROUTE_PICKUP_CASING_LAYER)
-      if (map.getLayer(ROUTE_DEBUG_ENDPOINT_LAYER)) map.removeLayer(ROUTE_DEBUG_ENDPOINT_LAYER)
-      if (map.getLayer(ROUTE_DEBUG_MARKER_LAYER)) map.removeLayer(ROUTE_DEBUG_MARKER_LAYER)
       if (map.getLayer(DRIVER_ROUTE_LAYER)) map.removeLayer(DRIVER_ROUTE_LAYER)
       if (map.getLayer(DRIVER_ROUTE_CASING_LAYER)) map.removeLayer(DRIVER_ROUTE_CASING_LAYER)
-      if (map.getSource(ROUTE_DEBUG_ENDPOINT_SOURCE)) map.removeSource(ROUTE_DEBUG_ENDPOINT_SOURCE)
-      if (map.getSource(ROUTE_DEBUG_MARKER_SOURCE)) map.removeSource(ROUTE_DEBUG_MARKER_SOURCE)
       if (map.getSource(DRIVER_ROUTE_SOURCE)) map.removeSource(DRIVER_ROUTE_SOURCE)
     }
 
@@ -786,65 +724,7 @@ export default function OperationsMap({
       },
     }, beforeId)
 
-    if (import.meta.env.DEV) {
-      const accessByEventId = buildRouteAccessByEventId(segments)
-      const endpointFeatures = segments
-        .filter((segment) => segment.route?.source === 'road' && segment.route?.routeShape?.length)
-        .map((segment) => ({
-          type: 'Feature',
-          properties: { id: segment.toId },
-          geometry: {
-            type: 'Point',
-            coordinates: segment.route.routeShape.at(-1),
-          },
-        }))
-      const markerFeatures = segments
-        .map((segment) => ({
-          id: segment.toId,
-          coordinates: routeAccessCoordinate(
-            accessByEventId,
-            segment.toId,
-            segment.toCoordinates,
-          ),
-        }))
-        .filter((item) => Array.isArray(item.coordinates))
-        .map((item) => ({
-          type: 'Feature',
-          properties: { id: item.id },
-          geometry: { type: 'Point', coordinates: item.coordinates },
-        }))
 
-      map.addSource(ROUTE_DEBUG_ENDPOINT_SOURCE, {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: endpointFeatures },
-      })
-      map.addSource(ROUTE_DEBUG_MARKER_SOURCE, {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: markerFeatures },
-      })
-      map.addLayer({
-        id: ROUTE_DEBUG_MARKER_LAYER,
-        type: 'circle',
-        source: ROUTE_DEBUG_MARKER_SOURCE,
-        paint: {
-          'circle-radius': 9,
-          'circle-color': 'rgba(0,0,0,0)',
-          'circle-stroke-color': '#ffd85c',
-          'circle-stroke-width': 2,
-        },
-      })
-      map.addLayer({
-        id: ROUTE_DEBUG_ENDPOINT_LAYER,
-        type: 'circle',
-        source: ROUTE_DEBUG_ENDPOINT_SOURCE,
-        paint: {
-          'circle-radius': 4,
-          'circle-color': '#ff4fd8',
-          'circle-stroke-color': '#190f1a',
-          'circle-stroke-width': 1,
-        },
-      })
-    }
 
     return clearDriverRoute
   }, [freightRoutePreview, mapReady, plannedDriverRoutes, selectedDriver])
@@ -1108,36 +988,7 @@ export default function OperationsMap({
         <span>LIVE MAP</span>
         <strong>New York Metro</strong>
       </div>
-      {import.meta.env.DEV && selectedDriver && (
-        <aside className="route-debug-panel" aria-label="Route diagnostics">
-          <header>
-            <span>ROUTE DIAGNOSTICS</span>
-            <strong>
-              {routeDebugRows.filter((row) => row.source === 'road').length}/{routeDebugRows.length} ROAD
-            </strong>
-          </header>
-          <div className="route-debug-legend">
-            <span><i className="route-end-dot" /> route end</span>
-            <span><i className="marker-access-dot" /> marker access</span>
-          </div>
-          <div className="route-debug-rows">
-            {routeDebugRows.map((row, index) => (
-              <div key={row.id} className={`route-debug-row ${row.source}`}>
-                <b>{index + 1}</b>
-                <span>{row.fromId} → {row.toId}</span>
-                <strong>{row.source.toUpperCase()}</strong>
-                <small>
-                  endΔ {row.endDeltaMiles == null ? '—' : row.endDeltaMiles.toFixed(3)} mi
-                  {' · '}snap {row.destinationSnapMiles == null ? '—' : row.destinationSnapMiles.toFixed(3)} mi
-                </small>
-                <code>
-                  R {shortCoordinate(row.routeEnd)} · M {shortCoordinate(row.markerEnd)}
-                </code>
-              </div>
-            ))}
-          </div>
-        </aside>
-      )}
+
     </div>
   )
 }
