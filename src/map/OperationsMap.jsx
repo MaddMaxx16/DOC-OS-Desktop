@@ -730,6 +730,32 @@ export default function OperationsMap({
     const map = mapRef.current
     if (!map || freightRoutePreview || workspaceOpen) return
 
+    if (
+      selectedStop
+      && ['lunch', 'staging'].includes(selectedStop.kind)
+      && planningPlaceOptions.length
+    ) {
+      const points = planningPlaceOptions
+        .map((option) => option.coordinates)
+        .filter((coordinates) => Array.isArray(coordinates))
+
+      if (Array.isArray(selectedStop.coordinates)) points.push(selectedStop.coordinates)
+
+      if (points.length >= 2) {
+        const lngs = points.map((point) => point[0])
+        const lats = points.map((point) => point[1])
+        map.fitBounds(
+          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+          {
+            padding: { top: 64, right: 440, bottom: 70, left: 70 },
+            maxZoom: 10.4,
+            duration: 450,
+          },
+        )
+        return
+      }
+    }
+
     if (selectedStop?.coordinates) {
       map.easeTo({
         center: selectedStop.coordinates,
@@ -750,7 +776,7 @@ export default function OperationsMap({
         duration: 500,
       })
     }
-  }, [freightRoutePreview, selectedDriver, selectedStop, workspaceOpen])
+  }, [freightRoutePreview, planningPlaceOptions, selectedDriver, selectedStop, workspaceOpen])
 
   return (
     <div className="map-stage">
