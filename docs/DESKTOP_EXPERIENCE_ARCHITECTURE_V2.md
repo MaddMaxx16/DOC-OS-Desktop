@@ -416,6 +416,25 @@ The map system must support at least:
 
 Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
+### Serialized committed-route hydration
+
+The public OSRM endpoint is a runtime dependency with practical throttling/availability limits. DOC OS must not burst every committed Driver Day leg simultaneously.
+
+Rules:
+
+- committed road legs hydrate in authoritative Driver Day order,
+- only one committed road request is active at a time,
+- resolved road legs may render progressively rather than waiting for the entire day,
+- a timing-only estimate remains non-renderable as committed road truth,
+- any unresolved estimate leg receives a delayed retry wave automatically,
+- successful routes are cacheable; estimate failures are not,
+- the player must not have to refresh the app or mutate the plan to retry a missing leg.
+
+The visual contract is:
+
+> incomplete router response = temporarily incomplete route  
+> never a fake route, and never a permanently missing leg after one transient failure
+
 ### Facility coordinates vs operational truck access
 
 Every visible route must terminate on visible operational context, but a facility's geographic identity and the truck's routable access point are not always the same coordinate.
@@ -1472,25 +1491,25 @@ V2.5 through V2.6.4.1 are accepted and locked.
 
 The active corrective packet is:
 
-# **V2.6.5.6 — Operational Access Points**
+# **V2.6.5.7 — Serialized Route Hydration**
 
-Repeated visual testing showed that marker CSS, grouped anchors, endpoint extension, continuous-route requests, and rollback to the older freight marker implementation did not solve the disconnect.
+V2.6.5.6 correctly separated facility coordinates from routable truck-access coordinates, but visual acceptance exposed the remaining runtime failure: V2.6.5.5 had restored a `Promise.all` burst that requests every committed Driver Day leg from the public OSRM endpoint at once.
 
-The remaining model error is now explicit: DOC OS was treating a facility's canonical coordinate as if it were guaranteed to be a drivable truck endpoint.
+That produces partial days when some requests fail or throttle. Because estimate geometry is intentionally hidden, those failed legs appear as missing route connections.
 
-V2.6.5.6 separates those truths:
+V2.6.5.7 corrects that runtime behavior:
 
-- OSRM's returned waypoint locations are retained as truck-access coordinates,
-- real road geometry is normalized to those access coordinates rather than the facility centroid,
-- operational P/D/L/S markers resolve to the same access coordinates as the route,
-- the underlying facility keeps its canonical gameplay coordinate and identity,
-- FreightLink preview markers use route-access coordinates when available,
-- no artificial straight connector is added from the road to the facility centroid,
-- V2.6.5 label declutter remains presentation-only.
+- committed road segments hydrate one at a time in Driver Day order,
+- successful legs render progressively,
+- each road request retains the existing internal retry behavior,
+- any leg still returning an estimate receives a second delayed hydration wave,
+- estimate failures remain uncached so recovery is possible,
+- operational stop markers update to the resolved truck-access coordinate as each road leg succeeds,
+- the retired continuous-route experiment and its unused render helpers are removed.
 
 Acceptance:
 
-A stop such as Harborline Logistics or Brooklyn Industrial Terminal may keep a facility location inside the industrial property, while Marcus's blue route and the visible operational stop marker meet at the actual routable truck entrance/access point.
+Marcus's full committed day resolves all real-road legs without D1/P3 disappearing simply because several OSRM calls were made simultaneously.
 
 After visual acceptance, lock V2.6 map polish and proceed to:
 
