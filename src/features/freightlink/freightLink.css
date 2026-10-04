@@ -207,3 +207,86 @@
   height: 36px;
   font-size: 8px;
 }
+
+
+/* V2.4.3 readability contract — no operational microtext below 11px. */
+.freightlink-title > span,
+.freightlink-driver-select > span,
+.freightlink-filters span,
+.lane-board-head,
+.lane-route-copy span,
+.lane-fit-pill small,
+.lane-detail-hero > div:first-child span,
+.detail-fit-badge span,
+.lane-money-strip span,
+.lane-section header span,
+.manifest-insertion-card span,
+.route-stats span,
+.freight-signal span,
+.freightlink-footer span {
+  font-size: var(--type-micro);
+}
+
+.freightlink-title strong {
+  font-size: 24px;
+}
+.freightlink-title small,
+.freightlink-driver-select select,
+.freightlink-filters b,
+.lane-route-copy small,
+.lane-pickup-copy small,
+.lane-rate-copy small,
+.lane-detail-hero > div:first-child small,
+.lane-section header small,
+.manifest-insertion-card small,
+.freight-signal small,
+.route-stats small,
+.freightlink-footer strong {
+  font-size: var(--type-secondary);
+}
+
+.lane-route-copy strong,
+.lane-pickup-copy strong,
+.lane-rate-copy strong,
+.lane-fit-pill strong,
+.lane-money-strip strong,
+.manifest-insertion-card strong,
+.freight-signal strong,
+.route-stats strong {
+  font-size: var(--type-body);
+}
+
+.lane-detail-hero > div:first-child strong {
+  font-size: 18px;
+}
+.detail-fit-badge strong {
+  font-size: 18px;
+}
+
+.freightlink-header {
+  min-height: 68px;
+}
+.freightlink-filters button {
+  min-width: 84px;
+  height: 34px;
+}
+.lane-board-head {
+  height: 34px;
+}
+.lane-row {
+  min-height: 72px;
+  padding: 9px 12px;
+}
+.lane-fit-pill {
+  min-height: 48px;
+}
+.lane-money-strip > div,
+.route-stats > div {
+  min-height: 58px;
+}
+.freight-signal {
+  min-height: 64px;
+}
+.freightlink-footer button {
+  font-size: var(--type-micro);
+}
