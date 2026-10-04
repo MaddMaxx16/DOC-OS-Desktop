@@ -409,3 +409,13 @@
   transform: translateY(-1px) scale(1.05);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--driver-color) 16%, transparent), 0 6px 15px rgba(0, 0, 0, .4);
 }
+
+
+/* V2.5.2 normal Driver view may select non-freight route anchors. */
+.driver-route-anchor.selected .poi-symbol {
+  opacity: 1;
+  transform: translateY(-1px) scale(1.08);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--driver-color) 22%, transparent),
+    0 7px 16px rgba(0, 0, 0, .42);
+}

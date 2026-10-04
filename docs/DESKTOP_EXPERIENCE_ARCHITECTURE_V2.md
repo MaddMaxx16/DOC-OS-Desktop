@@ -418,7 +418,7 @@ Pickup and delivery are roles applied to the underlying facility type. They shou
 
 ### Route / POI endpoint integrity
 
-Every visible route must terminate on a visible operational POI or driver asset.
+Every visible route must terminate on visible operational context.
 
 Routing engines may snap requested coordinates onto the road network internally, but rendered route geometry must be extended back to the exact gameplay coordinates at both ends.
 
@@ -426,7 +426,10 @@ Therefore:
 
 - no visible route may stop short of its pickup/delivery/yard/staging marker,
 - proposal entry/rejoin legs must visibly connect to the committed route anchor they reference,
-- if a route endpoint exists, its typed POI must also be rendered when that route is visible.
+- every event that owns an endpoint of a visible committed route segment must have a visible map anchor,
+- normal Driver view keeps the richer pickup/delivery markers and supplements them with compact typed anchors for non-freight events such as Yard, Lunch, and Staging,
+- FreightLink may use the quieter compact anchor treatment for the candidate driver's whole committed day,
+- route-anchor coverage must be data-driven for every driver rather than special-cased per seed driver.
 
 ### Pickup / delivery marker
 
@@ -755,16 +758,20 @@ Requesting paperwork never changes the committed driver plan.
 
 #### Rate Confirmation review
 
-Rate Confirmation review uses Focused Workspace.
+Rate Confirmation review uses Focused Workspace and the shared physical **Document Desk**.
 
 Focused review:
 
 - replaces the ordinary workstation navigation surfaces for the duration of the task,
 - visibly pauses gameplay presentation,
-- shows readable broker-style paperwork,
-- places FreightLink reference values beside document values,
+- presents the Rate Confirmation as loose broker paperwork on a desk,
+- allows the paper to be dragged and brought to the front,
+- preserves a reusable X/Y + z-order model so future BOL/POD/invoice sheets can stack on the same desk,
+- shows FreightLink's agreed reference value in the verification panel,
+- does **not** repeat the Rate Confirmation answer beside that reference value,
+- requires the player to visually read the paper and mark each comparison **MATCH** or **ISSUE**,
 - begins with no term pre-verified,
-- requires the player to mark each comparison **MATCH** or **ISSUE**,
+- briefly highlights the corresponding paper field when the player chooses ISSUE without revealing whether that judgment is correct,
 - offers correction when the player flags an issue.
 
 Verification is gameplay, not an automatic answer key.
@@ -1299,6 +1306,9 @@ The following are now considered locked unless deliberately reopened:
 - Requesting a Rate Confirmation never commits freight.
 - Only Rate Confirmation acceptance turns marketplace freight into committed driver work.
 - Rate Confirmation verification is player-driven; no term begins pre-verified.
+- The verification panel shows only the FreightLink reference value; the player reads the Rate Con value from the paper.
+- Rate Confirmation paper uses the shared draggable Document Desk and stacking model.
+- ISSUE may highlight the referenced paper field but must not reveal correctness.
 - The player marks each comparison MATCH or ISSUE before acceptance.
 - The player may deliberately accept flagged mismatched terms; DOC OS preserves the document terms exactly as written.
 - Lunch and staging are part of operational planning.
@@ -1317,26 +1327,27 @@ The following are now considered locked unless deliberately reopened:
 
 The active correction packet is:
 
-# **V2.5.1 — Workstation Navigation + Rate Con Review**
+# **V2.5.2 — Document Desk + POI Completeness**
 
 It locks:
 
-- left command rail as the workstation navigation surface,
-- Drivers and FreightLink as the first live rail sections,
-- left browser → center full-height map → right inspector interaction grammar,
-- retirement of the bottom app bar/shared bottom drawer,
-- FreightLink marketplace browser on the left,
-- FreightLink selected-lane evaluation on the right,
-- Focused Workspace as the exception for deep document work,
-- player-driven Rate Confirmation verification using MATCH / ISSUE choices,
-- broker-document presentation rather than pre-verified DOC OS paperwork,
-- exact route-to-POI endpoint connection.
+- reusable physical Document Desk infrastructure,
+- draggable document sheets with bring-to-front / z-order behavior,
+- more authentic broker-paper presentation,
+- FreightLink-reference-only verification,
+- player-read Rate Con values,
+- MATCH / ISSUE without correctness reveal,
+- quick paper-field highlight when ISSUE is selected,
+- full route-endpoint anchor coverage for every seeded driver,
+- normal Driver view supplementation with Y/L/S and other non-freight anchors,
+- richer P/D facility markers remaining intact,
+- exact route-to-POI endpoint connection from V2.5.1.
 
-After V2.5.1 passes functional and visual acceptance, the next gameplay packet is:
+After V2.5.2 passes functional and visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 must preserve the V2.5 booking truth and the V2.5.1 workstation/POI contracts.
+V2.6 must preserve the V2.5 booking truth plus the V2.5.1 workstation and V2.5.2 document/POI contracts.
 
 
 ---

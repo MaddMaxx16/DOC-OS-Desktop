@@ -32,26 +32,29 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.5.1 Workstation Navigation + Rate Con Review
+## Current packet — V2.5.2 Document Desk + POI Completeness
 
-V2.1 through V2.5 remain the gameplay foundation. V2.5.1 deliberately replaces the V2.4 bottom-drawer presentation contract.
+V2.1 through V2.5.1 remain the active desktop foundation.
 
 Guardrails:
-- the bottom app bar and shared bottom app drawer are retired from active runtime,
-- normal workstation layout is left command rail → optional left browser → full-height map → optional right inspector,
-- Drivers is a first-class command-rail section,
-- FreightLink uses the left browser for lane shopping and the right inspector for selected-lane evaluation,
-- future Email/Documents/Messages/Banking surfaces inherit the same browser/inspector grammar where appropriate,
-- Focused Workspace remains the deliberate exception for deep document/task work,
-- opening ordinary workstation sections must not consume vertical map height,
-- Rate Confirmation review is player-driven: no term begins pre-verified,
-- the player must mark each comparison MATCH or ISSUE before acceptance,
-- flagged issues may be corrected or deliberately accepted as written,
-- a missed real mismatch may still be committed and recorded as a player mistake,
-- Rate Confirmation should read visually like broker paperwork rather than a DOC OS-generated form,
-- every rendered road route must begin/end at the exact gameplay POI coordinates,
-- routing-engine road snapping may affect the route interior but never leave visible lines floating short of a POI,
-- committed and proposal endpoint POIs remain visible whenever their route is visible,
+- preserve the V2.5.1 command rail → browser → full-height map → inspector workstation,
+- Focused Workspace remains the deliberate deep-task exception,
+- Rate Confirmation paper lives on a reusable physical Document Desk,
+- document sheets have persistent-in-session X/Y position and z-order behavior,
+- dragging a document brings it to the front,
+- stacking infrastructure must support future BOL/POD/invoice/document sheets without replacing the desk model,
+- Rate Confirmation should visually read as a loose broker document rather than a dashboard card,
+- the verification panel shows FreightLink reference values only,
+- the Rate Con value must be read from the paper itself,
+- MATCH / ISSUE is the player's judgment and must not reveal correctness,
+- choosing ISSUE briefly highlights the corresponding area of the paper without confirming whether the player is right,
+- acceptance remains blocked until every required comparison has been reviewed,
+- the game may preserve a missed mismatch as a player mistake,
+- every visible committed route segment must have visible endpoint context,
+- the selected driver's normal map renders non-freight route anchors for yard, lunch, staging, and other route-owning events,
+- freight pickup/delivery markers remain the richer P/D markers in normal Driver view,
+- FreightLink may continue using the quieter compact route-anchor treatment,
+- route/anchor completeness is validated for every seeded driver, not special-cased for Derrick,
 - V2.5 booking/manifest truth remains authoritative,
 - do not begin editable Daily Planning behavior until V2.6.
 

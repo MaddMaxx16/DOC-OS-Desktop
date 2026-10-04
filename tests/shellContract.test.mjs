@@ -164,7 +164,7 @@ test('V2.5 booking lifecycle remains explicit and Rate Con request does not comm
   assert.match(app, /commitBookedFreight/)
 })
 
-test('Rate Confirmation review is player-driven instead of pre-verified', async () => {
+test('Rate Confirmation review is player-driven and hides the document answer from the verifier', async () => {
   const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
 
   assert.match(review, /reviewChoices/)
@@ -172,6 +172,8 @@ test('Rate Confirmation review is player-driven instead of pre-verified', async 
   assert.match(review, /\bISSUE\b/)
   assert.match(review, /REVIEW ALL TERMS/)
   assert.match(review, /reviewedCount === checks\.length/)
+  assert.match(review, /referenceValue\(check, locations\)/)
+  assert.doesNotMatch(review, /check\.actual/)
   assert.doesNotMatch(review, />TERMS MATCH</)
   assert.doesNotMatch(review, /check\.matches \? '✓'/)
 })
@@ -184,7 +186,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.1 · WORKSTATION/)
+  assert.match(top, /DESKTOP V2\.5\.2 · DOCUMENT DESK/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -197,4 +199,43 @@ test('confirmed freight rebuilds operational load and driver-plan truth', async 
   assert.match(app, /setOperationalLoads\(committed\.loads\)/)
   assert.match(app, /setOperationalDriverPlans\(committed\.driverPlans\)/)
   assert.match(app, /freightMarket\.filter\(\(lane\) => !confirmedLaneIds\.has\(lane\.id\)\)/)
+})
+
+
+test('V2.5.2 Rate Con uses the reusable draggable stacking Document Desk', async () => {
+  const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+  const desk = await readFile(new URL('../src/features/documents/DocumentDesk.jsx', import.meta.url), 'utf8')
+  const deskCss = await readFile(new URL('../src/features/documents/documentDesk.css', import.meta.url), 'utf8')
+
+  assert.match(review, /<DocumentDesk/)
+  assert.match(review, /<DraggableDocument/)
+  assert.match(desk, /zOrder/)
+  assert.match(desk, /bringToFront/)
+  assert.match(desk, /onPointerDown/)
+  assert.match(desk, /onPointerMove/)
+  assert.match(deskCss, /\.draggable-document/)
+  assert.match(deskCss, /cursor: grab/)
+})
+
+test('V2.5.2 ISSUE highlights the paper field without revealing correctness', async () => {
+  const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/rate-confirmation/rateConfirmation.css', import.meta.url), 'utf8')
+
+  assert.match(review, /pulsePaperField/)
+  assert.match(review, /choice === 'issue'\) pulsePaperField\(checkId\)/)
+  assert.match(review, /data-ratecon-field="rate"/)
+  assert.match(review, /data-ratecon-field="equipment"/)
+  assert.match(review, /data-ratecon-field="pickup"/)
+  assert.match(review, /data-ratecon-field="delivery"/)
+  assert.match(css, /\.ratecon-field-highlight/)
+  assert.match(css, /@keyframes rateconIssueFlash/)
+})
+
+test('V2.5.2 normal Driver view renders non-freight route endpoints instead of unexplained lines', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /const routeAnchors = driverIdentity && driverDay/)
+  assert.match(map, /routeAnchor\.eventKinds\.includes\('freight-stop'\)/)
+  assert.match(map, /if \(!isFreightLocation\) addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
+  assert.match(map, /workspaceOpen && driverIdentity/)
 })
