@@ -179,6 +179,7 @@ test('V2.4.5 shell rejects stale route preview data from another selected lane',
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
 
   assert.match(shell, /freightRoutePreview\?\.lane\?\.id === selection\.id/)
+  assert.match(shell, /freightRoutePreview\?\.driver\?\.id === freightCandidateDriverId/)
   assert.match(shell, /activeFreightRoutePreview/)
   assert.match(shell, /freightRoutePreview=\{activeFreightRoutePreview\}/)
 })
