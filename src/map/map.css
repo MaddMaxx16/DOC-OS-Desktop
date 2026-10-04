@@ -444,3 +444,83 @@
   border-color: #c3a9cf;
   box-shadow: 0 0 0 4px rgba(183, 155, 197, .16), 0 9px 22px rgba(0, 0, 0, .5);
 }
+
+/* V2.6.5: selected/next labels earn space; the rest stay badge-first until hover. */
+.driver-route-anchor {
+  position: relative;
+}
+
+.driver-route-anchor.priority-label > small {
+  display: block;
+  border-color: color-mix(in srgb, var(--driver-color) 56%, #344652);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--driver-color) 10%, transparent);
+}
+
+.driver-route-anchor.crowded-label > small {
+  position: absolute;
+  z-index: 5;
+  margin: 0;
+}
+
+.driver-route-anchor.crowded-label.label-right > small {
+  left: 36px;
+  bottom: 8px;
+}
+
+.driver-route-anchor.crowded-label.label-left > small {
+  right: 36px;
+  bottom: 8px;
+}
+
+.driver-route-anchor.crowded-label.label-above > small {
+  left: 50%;
+  bottom: 39px;
+  transform: translateX(-50%);
+}
+
+.driver-route-anchor.crowded-label.label-below > small {
+  left: 50%;
+  top: 35px;
+  transform: translateX(-50%);
+}
+
+.driver-route-anchor.crowded-label > small::after {
+  content: '';
+  position: absolute;
+  background: color-mix(in srgb, var(--driver-color) 46%, #52626d);
+  opacity: .82;
+}
+
+.driver-route-anchor.crowded-label.label-right > small::after {
+  left: -9px;
+  top: 50%;
+  width: 9px;
+  height: 1px;
+}
+
+.driver-route-anchor.crowded-label.label-left > small::after {
+  right: -9px;
+  top: 50%;
+  width: 9px;
+  height: 1px;
+}
+
+.driver-route-anchor.crowded-label.label-above > small::after {
+  left: 50%;
+  bottom: -9px;
+  width: 1px;
+  height: 9px;
+}
+
+.driver-route-anchor.crowded-label.label-below > small::after {
+  left: 50%;
+  top: -9px;
+  width: 1px;
+  height: 9px;
+}
+
+/* Same-facility visits share one physical marker and a combined P/D badge. */
+.driver-route-anchor .poi-symbol b {
+  max-width: 58px;
+  white-space: nowrap;
+}

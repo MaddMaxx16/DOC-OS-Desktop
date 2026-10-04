@@ -307,6 +307,25 @@ test('V2.6.4.1 Operations Inspector can close without clearing operational selec
   assert.match(css, /\.workstation-panel-header > button:hover/)
 })
 
+test('V2.6.5 selected sent route persists independently of inspector visibility and labels declutter by priority', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(app, /operationsInspectorHidden/)
+  assert.match(shell, /operationsInspectorHidden/)
+  assert.match(shell, /driverDay=\{mapDriverDay\}/)
+  assert.match(map, /if \(!selectedDriver \|\| !plannedDriverRoutes\.length\)/)
+  assert.match(map, /priority-label/)
+  assert.match(map, /crowded-label/)
+  assert.match(map, /labelPlacement/)
+  assert.match(css, /\.driver-route-anchor\.priority-label > small/)
+  assert.match(css, /\.driver-route-anchor\.crowded-label\.label-right > small/)
+  assert.match(css, /\.driver-route-anchor\.crowded-label\.label-left > small/)
+  assert.match(css, /Same-facility visits share one physical marker/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -382,7 +401,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.4\.1 · CLOSABLE INSPECTOR/)
+  assert.match(top, /DESKTOP V2\.6\.5 · MAP DECLUTTER/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -427,13 +446,14 @@ test('V2.5.2 ISSUE highlights the paper field without revealing correctness', as
   assert.match(css, /@keyframes rateconIssueFlash/)
 })
 
-test('V2.5.2 normal Driver view renders non-freight route endpoints instead of unexplained lines', async () => {
+test('normal Driver view renders grouped committed route anchors for every physical stop', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
   assert.match(map, /const routeAnchors = driverIdentity && driverDay/)
-  assert.match(map, /routeAnchor\.eventKinds\.includes\('freight-stop'\)/)
-  assert.match(map, /if \(!isFreightLocation\) addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
-  assert.match(map, /workspaceOpen && driverIdentity/)
+  assert.match(map, /buildRouteAnchorDisplayPlan/)
+  assert.match(map, /for \(const routeAnchor of routeAnchorDisplay\)/)
+  assert.match(map, /addRouteAnchorMarker\(routeAnchor, \{ interactive: true \}\)/)
+  assert.doesNotMatch(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops/)
 })
 
 
