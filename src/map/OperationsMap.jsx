@@ -18,7 +18,10 @@ import {
 } from '../domain/routing/mapRouteDisplay.js'
 import { exactSegmentRouteShape } from '../domain/routing/routeRenderGeometry.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
-import { calculateRoadRoute } from '../services/roadRouting.js'
+import {
+  calculateRoadRoute,
+  calculateRoadRoutePlan,
+} from '../services/roadRouting.js'
 import { mapStyle } from '../data/mapStyle.js'
 import './map.css'
 
@@ -394,22 +397,23 @@ export default function OperationsMap({
     let active = true
 
     const loadRoutes = async () => {
-      const segments = []
-
-      // Keep concurrency intentionally low. The public road router is a rendering dependency,
-      // not a reason to burst every Driver Day leg at once and fall back to fake straight lines.
-      for (let index = 0; index < segmentSpecs.length; index += 2) {
-        const batch = segmentSpecs.slice(index, index + 2)
-        const routedBatch = await Promise.all(
-          batch.map(async (segment) => ({
-            ...segment,
-            route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
-          })),
-        )
-
-        if (!active) return
-        segments.push(...routedBatch)
+      if (!segmentSpecs.length) {
+        setDriverRouteResult({ key: driverRouteKey, segments: [] })
+        return
       }
+
+      const waypoints = [
+        segmentSpecs[0].fromCoordinates,
+        ...segmentSpecs.map((segment) => segment.toCoordinates),
+      ]
+      const routedLegs = await calculateRoadRoutePlan(waypoints)
+
+      if (!active) return
+
+      const segments = segmentSpecs.map((segment, index) => ({
+        ...segment,
+        route: routedLegs?.[index] ?? null,
+      }))
 
       setDriverRouteResult({ key: driverRouteKey, segments })
     }
