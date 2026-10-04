@@ -1,14 +1,14 @@
 export const locations = Object.freeze({
-  'metroline-yard': Object.freeze({ id: 'metroline-yard', label: 'Metroline Yard', coordinates: [-74.1695, 40.7311] }),
-  'empire-freight-terminal': Object.freeze({ id: 'empire-freight-terminal', label: 'Empire Freight Terminal', coordinates: [-74.1890, 40.6758] }),
-  'queens-freight-center': Object.freeze({ id: 'queens-freight-center', label: 'Queens Freight Center', coordinates: [-73.9171, 40.7282] }),
-  'harborline-logistics': Object.freeze({ id: 'harborline-logistics', label: 'Harborline Logistics', coordinates: [-74.0107, 40.6562] }),
-  'brooklyn-industrial-terminal': Object.freeze({ id: 'brooklyn-industrial-terminal', label: 'Brooklyn Industrial Terminal', coordinates: [-74.0170, 40.6470] }),
-  'freshway-grocery-dc': Object.freeze({ id: 'freshway-grocery-dc', label: 'Freshway Grocery DC', coordinates: [-73.8781, 40.8368] }),
-  'bronx-commerce-terminal': Object.freeze({ id: 'bronx-commerce-terminal', label: 'Bronx Commerce Terminal', coordinates: [-73.8862, 40.8205] }),
-  'meadowlands-staging': Object.freeze({ id: 'meadowlands-staging', label: 'Meadowlands Staging', coordinates: [-74.0732, 40.7901] }),
-  'huntspoint-terminal': Object.freeze({ id: 'huntspoint-terminal', label: 'Hunts Point Terminal', coordinates: [-73.8852, 40.8101] }),
-  'jersey-city-crossdock': Object.freeze({ id: 'jersey-city-crossdock', label: 'Jersey City Crossdock', coordinates: [-74.0799, 40.7178] }),
+  'metroline-yard': Object.freeze({ id: 'metroline-yard', label: 'Metroline Yard', poiType: 'yard', coordinates: [-74.1695, 40.7311] }),
+  'empire-freight-terminal': Object.freeze({ id: 'empire-freight-terminal', label: 'Empire Freight Terminal', poiType: 'warehouse', coordinates: [-74.1890, 40.6758] }),
+  'queens-freight-center': Object.freeze({ id: 'queens-freight-center', label: 'Queens Freight Center', poiType: 'warehouse', coordinates: [-73.9171, 40.7282] }),
+  'harborline-logistics': Object.freeze({ id: 'harborline-logistics', label: 'Harborline Logistics', poiType: 'warehouse', coordinates: [-74.0107, 40.6562] }),
+  'brooklyn-industrial-terminal': Object.freeze({ id: 'brooklyn-industrial-terminal', label: 'Brooklyn Industrial Terminal', poiType: 'warehouse', coordinates: [-74.0170, 40.6470] }),
+  'freshway-grocery-dc': Object.freeze({ id: 'freshway-grocery-dc', label: 'Freshway Grocery DC', poiType: 'warehouse', coordinates: [-73.8781, 40.8368] }),
+  'bronx-commerce-terminal': Object.freeze({ id: 'bronx-commerce-terminal', label: 'Bronx Commerce Terminal', poiType: 'warehouse', coordinates: [-73.8862, 40.8205] }),
+  'meadowlands-staging': Object.freeze({ id: 'meadowlands-staging', label: 'Meadowlands Staging', poiType: 'staging', coordinates: [-74.0732, 40.7901] }),
+  'huntspoint-terminal': Object.freeze({ id: 'huntspoint-terminal', label: 'Hunts Point Terminal', poiType: 'warehouse', coordinates: [-73.8852, 40.8101] }),
+  'jersey-city-crossdock': Object.freeze({ id: 'jersey-city-crossdock', label: 'Jersey City Crossdock', poiType: 'warehouse', coordinates: [-74.0799, 40.7178] }),
 })
 
 export const loads = Object.freeze([
