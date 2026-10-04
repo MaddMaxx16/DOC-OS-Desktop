@@ -11,7 +11,6 @@ export async function hydrateCommittedRouteSegments(
   segmentSpecs = [],
   {
     routeSegment,
-    onProgress = null,
     isActive = () => true,
     waitFn = wait,
   } = {},
@@ -47,8 +46,6 @@ export async function hydrateCommittedRouteSegments(
       }
 
       if (route?.source !== 'road') unresolved += 1
-
-      onProgress?.(segments.map((item) => ({ ...item })))
 
       if (index < segments.length - 1) {
         await waitFn(BETWEEN_SEGMENTS_MS)
