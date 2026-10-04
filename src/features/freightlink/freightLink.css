@@ -428,3 +428,89 @@
   cursor: default;
   opacity: .58;
 }
+
+/* V2.5.4 visual cleanup: preserve readable copy inside the 340/430px desktop columns. */
+.freightlink-browser,
+.freightlink-inspector,
+.freightlink-inspector-scroll,
+.lane-row > *,
+.lane-money-strip > *,
+.route-stats > *,
+.freight-signal-grid > * {
+  min-width: 0;
+}
+
+.freightlink-browser-header,
+.freightlink-inspector-header {
+  height: auto;
+}
+
+.freightlink-browser-header small,
+.freightlink-inspector-header small {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.lane-row {
+  grid-template-columns: minmax(0, 1fr) 94px;
+}
+
+.lane-route-copy strong,
+.lane-route-copy small {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.lane-browser-meta {
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.lane-fit-pill {
+  width: 94px;
+  min-width: 0;
+}
+
+.lane-fit-pill small {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
+  line-height: 1.25;
+}
+
+.lane-section header small {
+  max-width: 66%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
+  line-height: 1.25;
+}
+
+.manifest-insertion-card strong,
+.manifest-insertion-card small {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.freight-signal small {
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.freightlink-footer button {
+  padding: 7px 10px;
+  white-space: normal;
+  line-height: 1.2;
+}

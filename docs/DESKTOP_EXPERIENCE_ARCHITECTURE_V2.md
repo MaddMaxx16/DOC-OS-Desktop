@@ -455,6 +455,9 @@ Color must communicate ownership.
 **Assigned / committed driver plan**
 - the driver's existing planned day renders continuously in the owning driver's persistent identity color,
 - route order follows the authoritative Driver Day timeline,
+- committed legs whose destination is a pickup render dashed,
+- committed delivery-bound legs render solid,
+- lunch, staging, yard, and other non-pickup operational moves remain solid,
 - when evaluating a candidate insertion, the existing direct leg being replaced is subdued rather than treated as the proposal.
 
 **Unassigned / marketplace freight**
@@ -1324,6 +1327,7 @@ The following are now considered locked unless deliberately reopened:
 - Map selection and manifest/context selection share one model.
 - Drivers use truck markers; operational locations use typed POI icons rather than generic circles.
 - Every rendered route begins and ends on the exact gameplay POI/asset coordinates so lines visually connect to their endpoint icons.
+- Committed pickup-bound route legs are dashed while delivery-bound route legs remain solid, preserving driver color as ownership language and line style as move-type language.
 - Desktop operational text follows the V2.4.3 readability floor (11/12/14/16/22 px scale).
 - The operational basemap is a dark detailed vector style with consumer POI clutter suppressed.
 - Browser previews remain intentional checkpoints, not automatic per-push deployments.
@@ -1333,26 +1337,24 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-The active correction packet is:
+The active cleanup packet is:
 
-# **V2.5.3 — Persistent Issue Markup + Route Origin Truth**
+# **V2.5.4 — Desktop Cleanup + Route Leg Readability**
 
 It locks:
 
-- persistent Rate Con ISSUE markings on the physical paper,
-- initial ISSUE feedback pulse without correctness reveal,
-- MATCH clearing the corresponding issue mark,
-- current operational truck position as the default Driver Day origin,
-- home base as reference data rather than automatic shift start,
-- optional explicit plan startLocationId for true facility-based starts,
-- current truck asset as the visible route-origin anchor,
-- no invisible reposition/teleport between current position and first planned stop.
+- PAUSED status beside the game clock rather than at the bottom of the command rail,
+- removal of the dead command-rail status footer,
+- FreightLink browser and inspector copy wrapping cleanly inside the desktop columns,
+- committed pickup-bound route legs rendered dashed,
+- committed delivery-bound route legs rendered solid,
+- driver color preserved as the ownership signal across both line styles.
 
-After V2.5.3 passes functional and visual acceptance, the next gameplay packet is:
+After V2.5.4 passes functional and visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, and V2.5.3 route-origin truth.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, and V2.5.4 route-leg language.
 
 
 ---

@@ -10,12 +10,15 @@ export default function TopBar({ focused = false }) {
         <span className="status-dot" />
         <strong>{focused ? 'FOCUSED' : 'NO ALERTS'}</strong>
         <span className="status-divider" />
-        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5.3 · ROUTE ORIGIN'}</small>
+        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.5.4 · CLEANUP'}</small>
       </div>
 
       <div className="clock-block">
         <span>SEP 7 · DAY 1</span>
-        <strong>6:00 AM</strong>
+        <div className="clock-time-row">
+          <strong>6:00 AM</strong>
+          <em>PAUSED</em>
+        </div>
       </div>
     </header>
   )

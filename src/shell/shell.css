@@ -46,9 +46,27 @@
   font-weight: 900;
   letter-spacing: .12em;
 }
-.clock-block strong {
+.clock-time-row {
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.clock-block strong {
+  margin: 0;
   font-size: 20px;
+}
+.clock-time-row em {
+  padding: 3px 6px;
+  border: 1px solid #6f557c;
+  border-radius: 4px;
+  background: #17101c;
+  color: #b898c9;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: .1em;
 }
 .operations-status {
   height: 36px;
@@ -127,7 +145,7 @@
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-rows: 72px minmax(0, 1fr) 46px;
+  grid-template-rows: 72px minmax(0, 1fr);
   border-right: 1px solid #22333f;
   background: #070d13;
   z-index: 30;
@@ -214,16 +232,6 @@
   font-size: 8px;
   font-weight: 900;
 }
-.command-rail-status {
-  display: grid;
-  place-items: center;
-  border-top: 1px solid #1a2933;
-  color: #a483b8;
-  font-size: 9px;
-  font-weight: 950;
-  letter-spacing: .1em;
-}
-
 .workstation-browser {
   grid-column: 2;
   grid-row: 1;

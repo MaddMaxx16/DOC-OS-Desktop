@@ -24,6 +24,23 @@ test('Marcus planned route follows authoritative timeline order', () => {
   )
 })
 
+test('route segments preserve pickup and delivery destination roles for map styling', () => {
+  const segments = buildDriverRouteSegments(marcus, locations)
+  const pickupLeg = segments.find((segment) => segment.toRole === 'pickup')
+  const deliveryLeg = segments.find((segment) => segment.toRole === 'delivery')
+
+  assert.ok(pickupLeg)
+  assert.ok(deliveryLeg)
+  assert.equal(
+    marcus.timeline.find((event) => event.id === pickupLeg.toId)?.role,
+    'pickup',
+  )
+  assert.equal(
+    marcus.timeline.find((event) => event.id === deliveryLeg.toId)?.role,
+    'delivery',
+  )
+})
+
 test('load insertion dims only the direct leg being replaced', () => {
   const segments = buildDriverRouteSegments(marcus, locations)
   const affected = markInsertionAffectedSegment(segments, {

@@ -68,7 +68,6 @@ export default function CommandRail({ activeSection, onToggleSection }) {
         })}
       </div>
 
-      <div className="command-rail-status">PAUSED</div>
     </nav>
   )
 }
