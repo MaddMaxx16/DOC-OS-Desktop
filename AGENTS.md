@@ -32,26 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.5.3 Persistent Issue Markup + Route Origin Truth
+## Current packet — V2.6.1 Planning Foundation
 
-V2.1 through V2.5.2 remain the active desktop foundation.
+V2.1 through V2.5 remain the locked desktop foundation.
 
 Guardrails:
 - preserve the V2.5.1 command rail → browser → full-height map → inspector workstation,
-- preserve V2.5.2 Document Desk dragging/stacking and reference-only Rate Con verification,
-- choosing ISSUE keeps the corresponding paper field visibly marked until the player changes that judgment,
-- the initial ISSUE click may still animate/pulse the marked area,
-- MATCH removes any persistent issue markup for that field,
-- the driver/truck map marker represents current operational position,
-- home base is identity/reference data and must not automatically become shift start,
-- Driver Day begins at the current truck position by default,
-- a plan may explicitly provide startLocationId when the operational day truly begins at a facility such as Metroline Yard,
-- the current truck asset counts as the visible anchor for a default shift-start route origin,
-- route geometry must visibly leave the current truck marker toward the first planned event,
-- explicit facility starts use a typed POI anchor instead,
-- no teleporting between current truck position and the first Driver Day event,
-- V2.5 booking/manifest truth remains authoritative,
-- do not begin editable Daily Planning behavior until V2.6.
+- preserve V2.5 booking/Rate Con truth and committed freight ownership,
+- dispatch-plan status is gameplay truth stored with the driver plan,
+- Planning Mode is presentation state only and must not create a second manifest or schedule,
+- DRAFT PLAN is editable; SENT PLAN is not casually editable,
+- the selected Driver Day inspector is the planning surface; do not add a full-screen planner or bottom drawer,
+- keep the live map visible during ordinary planning,
+- compact the Driver Day summary so the timeline owns most inspector height,
+- no stop reordering in V2.6.1; sequencing belongs to V2.6.2,
+- no lunch-place picker in V2.6.1; physical lunch POI selection belongs to V2.6.3,
+- no Send Schedule behavior in V2.6.1; readiness/send belongs to V2.6.4,
+- current truck position remains the default route origin,
+- lunch and staging remain real operational locations,
+- the V2.6 lunch-POI/RPG bridge in the architecture document is locked.
 
 ## Verification
 
