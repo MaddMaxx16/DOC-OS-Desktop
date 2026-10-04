@@ -970,7 +970,11 @@ export default function OperationsMap({
       frameKey = `driver:${selectedDriver.id}`
     }
 
-    if (!frameKey || cameraFrameKeyRef.current === frameKey) return
+    if (!frameKey) {
+      cameraFrameKeyRef.current = null
+      return
+    }
+    if (cameraFrameKeyRef.current === frameKey) return
     cameraFrameKeyRef.current = frameKey
 
     if (
