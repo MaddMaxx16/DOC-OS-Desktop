@@ -145,7 +145,6 @@ export default function DriverDayPanel({
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', eventId)
     setDraggedEventId(eventId)
-    onSelectSubject?.(SELECTION_TYPES.STOP, eventId)
   }
 
   const dropIntoGap = (event, beforeId, afterId, gapKey) => {
