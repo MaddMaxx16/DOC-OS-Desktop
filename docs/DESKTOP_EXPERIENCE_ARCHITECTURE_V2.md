@@ -529,6 +529,23 @@ This preserves the hierarchy:
 > badge = plan structure  
 > full label = current relevance
 
+### Route/POI endpoint integrity
+
+Committed route geometry and committed POI geometry share one coordinate truth.
+
+For every rendered committed segment:
+
+- the road-router may return road-snapped geometry,
+- DOC OS must explicitly prepend the exact gameplay origin when needed,
+- DOC OS must explicitly append the exact gameplay destination when needed,
+- if routed geometry is unavailable, the segment must fall back to a direct visible connection rather than disappear,
+- grouped route-anchor markers use the same endpoint coordinates as the segment,
+- committed facility markers are center-anchored on that coordinate.
+
+The visual invariant is:
+
+> if a stop badge exists, the committed route physically reaches that badge's exact gameplay coordinate
+
 ### Label-anchor integrity
 
 Facility labels are presentation only.
@@ -1471,23 +1488,24 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.5 are accepted and locked.
+V2.5 through V2.6.5.1 are accepted and locked.
 
 The active visual-correction packet is:
 
-# **V2.6.5.1 — Label Anchor Integrity**
+# **V2.6.5.2 — Route Endpoint Integrity**
 
-V2.6.5 successfully establishes the cleaner map language, but acceptance exposed one presentation regression: an always-visible DOM label increased the marker element's height, which caused MapLibre's bottom-anchored POI icon to shift away from the route coordinate.
+Acceptance of V2.6.5.1 showed that label geometry was no longer moving the POI, but several committed route legs still failed to visibly meet their D/P facility markers.
 
-V2.6.5.1 locks the correction:
+V2.6.5.2 locks the deeper route invariant:
 
-- labels are absolutely positioned outside route-anchor layout geometry,
-- label visibility cannot move the physical P/D/L/S marker,
-- exact route/POI endpoint integrity remains preserved,
-- selected/next/hover label behavior and crowded-label declutter remain intact,
-- the cleaner V2.6.5 map is retained.
+- every committed segment renders with the exact gameplay origin and destination coordinates,
+- road-snapped geometry is normalized back to those exact endpoints,
+- missing routed geometry falls back to a direct visible segment instead of dropping a leg,
+- grouped route anchors and route-segment endpoints are regression-tested to share identical coordinates,
+- committed facility icons are center-anchored on their gameplay coordinate,
+- V2.6.5 label declutter and grouped-marker behavior remain intact.
 
-After V2.6.5.1 passes visual acceptance, proceed to:
+After V2.6.5.2 passes visual acceptance, proceed to:
 
 # **V2.7 — Live Operations**
 

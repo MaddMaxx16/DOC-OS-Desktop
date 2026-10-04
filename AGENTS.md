@@ -32,20 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.1 Label Anchor Integrity
+## Current packet — V2.6.5.2 Route Endpoint Integrity
 
-V2.1 through V2.6.5 remain the locked desktop foundation.
+V2.1 through V2.6.5.1 remain the locked desktop foundation.
 
 Guardrails:
 - preserve V2.6.5 route visibility, grouped facility anchors, priority labels, and map declutter,
-- route/POI endpoint integrity is non-negotiable,
-- a visible label must never change the physical screen position of its POI marker,
-- MapLibre marker anchoring must be based on the icon geometry, not label height,
-- route-anchor labels therefore float outside marker layout geometry,
-- selected/next/hover labels may move around the POI, but the typed P/D/L/S marker remains on the exact gameplay coordinate,
-- close-label placement may use leader lines without changing the marker coordinate,
-- do not restore duplicate per-stop labels to solve this bug,
-- do not change Driver Day route order or routing truth in this polish packet.
+- preserve V2.6.5.1 floating label geometry,
+- every committed route segment must render from its exact gameplay origin coordinate to its exact gameplay destination coordinate,
+- routed road geometry may be snapped by the router, but the rendered shape must explicitly prepend/append the exact gameplay endpoints,
+- if routed geometry is unavailable, render a direct fallback segment rather than silently dropping the committed leg,
+- grouped P/D/L/S facility markers must use the exact same coordinates as the route-segment endpoints they represent,
+- committed facility markers are center-anchored on the gameplay coordinate so the route visibly meets the icon,
+- labels may move around the marker; the POI coordinate may not move,
+- do not restore duplicate per-stop markers,
+- do not change Driver Day order, scheduling truth, or route semantics in this correction packet.
 
 ## Verification
 

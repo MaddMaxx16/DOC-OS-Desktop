@@ -16,6 +16,7 @@ import {
   buildRouteAnchorDisplayPlan,
   nextOperationalEventId,
 } from '../domain/routing/mapRouteDisplay.js'
+import { exactSegmentRouteShape } from '../domain/routing/routeRenderGeometry.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { calculateRoadRoute } from '../services/roadRouting.js'
 import { mapStyle } from '../data/mapStyle.js'
@@ -323,7 +324,7 @@ export default function OperationsMap({
       if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
       else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
 
-      const marker = new Marker({ element, anchor: 'bottom', offset })
+      const marker = new Marker({ element, anchor: 'center', offset })
         .setLngLat(routeAnchor.coordinates)
         .addTo(map)
 
@@ -427,14 +428,20 @@ export default function OperationsMap({
     const insertion = freightRoutePreview?.evaluation?.insertion ?? null
     const segments = markInsertionAffectedSegment(plannedDriverRoutes, insertion)
     const features = segments
-      .filter((segment) => Array.isArray(segment.route?.routeShape) && segment.route.routeShape.length >= 2)
       .map((segment) => ({
+        segment,
+        routeShape: exactSegmentRouteShape(segment),
+      }))
+      .filter(({ routeShape }) => routeShape.length >= 2)
+      .map(({ segment, routeShape }) => ({
         type: 'Feature',
         properties: {
           affected: segment.affected,
           destinationRole: segment.toRole ?? '',
+          fromId: segment.fromId,
+          toId: segment.toId,
         },
-        geometry: { type: 'LineString', coordinates: segment.route.routeShape },
+        geometry: { type: 'LineString', coordinates: routeShape },
       }))
 
     if (!features.length) return clearDriverRoute

@@ -326,15 +326,16 @@ test('V2.6.5 selected sent route persists independently of inspector visibility 
   assert.match(css, /Same-facility visits share one physical marker/)
 })
 
-test('V2.6.5.1 route labels cannot change the physical MapLibre marker anchor', async () => {
+test('V2.6.5.2 committed route geometry and POI markers share exact endpoint coordinates', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
-  assert.match(map, /new Marker\(\{ element, anchor: 'bottom', offset \}\)/)
+  assert.match(map, /exactSegmentRouteShape/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
+  assert.match(map, /fromId: segment\.fromId/)
+  assert.match(map, /toId: segment\.toId/)
   assert.match(css, /\.driver-route-anchor > small \{[\s\S]*position: absolute/)
-  assert.match(css, /\.driver-route-anchor > small \{[\s\S]*top: 35px/)
   assert.match(css, /pointer-events: none/)
-  assert.match(css, /MapLibre's bottom anchor stays on the POI/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -412,7 +413,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.1 · LABEL ANCHOR FIX/)
+  assert.match(top, /DESKTOP V2\.6\.5\.2 · ROUTE ENDPOINT FIX/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
