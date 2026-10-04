@@ -120,6 +120,7 @@
 .planning-place-flyout-list span,
 .planning-place-flyout-list small,
 .planning-place-flyout-list em,
+.planning-place-flyout-list i,
 .planning-place-flyout-list b {
   font-size: var(--type-micro);
 }
@@ -134,6 +135,17 @@
   color: #6f8491;
   font-style: normal;
   font-weight: 800;
+}
+.planning-place-flyout-list i {
+  width: max-content;
+  padding: 2px 5px;
+  border: 1px solid #2c424e;
+  border-radius: 3px;
+  background: #0d1a22;
+  color: #84a0b0;
+  font-style: normal;
+  font-weight: 950;
+  letter-spacing: .05em;
 }
 .planning-place-flyout-list b {
   position: absolute;
