@@ -1,5 +1,6 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
+import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
 import AppDock from './AppDock.jsx'
@@ -34,7 +35,12 @@ export default function DesktopShell({
     driverDays,
   )
 
-  const freightDriver = freightRoutePreview?.driver ?? null
+  const activeFreightRoutePreview = (
+    isSelection(selection, SELECTION_TYPES.LOAD)
+    && freightRoutePreview?.lane?.id === selection.id
+  ) ? freightRoutePreview : null
+
+  const freightDriver = activeFreightRoutePreview?.driver ?? null
   const mapDriver = selectedDriver ?? freightDriver
   const mapDriverDay = driverDay ?? (
     freightDriver ? driverDays.find((day) => day.driverId === freightDriver.id) ?? null : null
@@ -62,7 +68,7 @@ export default function DesktopShell({
             selectedDriver={mapDriver}
             selectedStop={selectedStop}
             selection={selection}
-            freightRoutePreview={freightRoutePreview}
+            freightRoutePreview={activeFreightRoutePreview}
             workspaceOpen={workspaceOpen}
             marketLanes={marketLanes}
             locations={locations}
