@@ -37,11 +37,11 @@ test('MapLibre map class does not shadow the native Map registry', async () => {
 })
 
 
-test('V2.4.1 shared app drawer owns the bottom workstation region', async () => {
+test('V2.4.4 shared app drawer owns the taller bottom workstation region', async () => {
   assert.equal(SHELL_CONFIG.dockHeight, 64)
-  assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.40)
-  assert.equal(SHELL_CONFIG.appDrawerMinHeight, 320)
-  assert.equal(SHELL_CONFIG.appDrawerMaxHeight, 460)
+  assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.46)
+  assert.equal(SHELL_CONFIG.appDrawerMinHeight, 360)
+  assert.equal(SHELL_CONFIG.appDrawerMaxHeight, 540)
 
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const drawer = await readFile(new URL('../src/shell/DesktopAppDrawer.jsx', import.meta.url), 'utf8')
@@ -50,7 +50,7 @@ test('V2.4.1 shared app drawer owns the bottom workstation region', async () => 
   assert.match(shell, /<div className="map-workspace">/)
   assert.match(shell, /<DesktopAppDrawer activeApp=\{activeApp\}>/)
   assert.match(drawer, /className="desktop-app-drawer"/)
-  assert.match(css, /grid-template-rows: minmax\(0, 1fr\) clamp\(320px, 40vh, 460px\) 64px/)
+  assert.match(css, /grid-template-rows: minmax\(0, 1fr\) clamp\(360px, 46vh, 540px\) 64px/)
   assert.match(css, /width: 100%/)
 })
 
@@ -141,5 +141,35 @@ test('V2.4.3 desktop type scale has an 11px readability floor', async () => {
   assert.match(globalCss, /--type-emphasis:\s*16px/)
   assert.match(globalCss, /--type-heading:\s*22px/)
   assert.match(freightCss, /font-size:\s*var\(--type-micro\)/)
+  assert.match(freightCss, /font-size:\s*var\(--type-body\)/)
+})
+
+
+test('V2.4.4 operations map is locked flat, north-up, and pan-and-zoom only', async () => {
+  const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(source, /bearing:\s*0/)
+  assert.match(source, /pitch:\s*0/)
+  assert.match(source, /maxPitch:\s*0/)
+  assert.match(source, /dragRotate:\s*false/)
+  assert.match(source, /pitchWithRotate:\s*false/)
+  assert.match(source, /touchPitch:\s*false/)
+  assert.match(source, /keyboard:\s*false/)
+  assert.match(source, /map\.dragRotate\.disable\(\)/)
+  assert.match(source, /map\.touchZoomRotate\.disableRotation\(\)/)
+  assert.match(source, /map\.touchPitch\.disable\(\)/)
+  assert.match(source, /new NavigationControl\(\{ showCompass: false \}\)/)
+})
+
+test('V2.4.4 shared app drawer uses the taller desktop target without shrinking type', async () => {
+  const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8')
+  const freightCss = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+  const shellCss = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.equal(SHELL_CONFIG.appDrawerViewportRatio, 0.46)
+  assert.equal(SHELL_CONFIG.appDrawerMinHeight, 360)
+  assert.equal(SHELL_CONFIG.appDrawerMaxHeight, 540)
+  assert.match(shellCss, /clamp\(360px, 46vh, 540px\)/)
+  assert.match(globalCss, /--type-micro:\s*11px/)
   assert.match(freightCss, /font-size:\s*var\(--type-body\)/)
 })

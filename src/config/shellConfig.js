@@ -6,9 +6,9 @@ export const SHELL_CONFIG = Object.freeze({
   leftDrawerWidth: 300,
   rightDrawerWidth: 390,
   dockHeight: 64,
-  appDrawerViewportRatio: 0.40,
-  appDrawerMinHeight: 320,
-  appDrawerMaxHeight: 460,
+  appDrawerViewportRatio: 0.46,
+  appDrawerMinHeight: 360,
+  appDrawerMaxHeight: 540,
 })
 
 export const DOCK_APPS = Object.freeze([

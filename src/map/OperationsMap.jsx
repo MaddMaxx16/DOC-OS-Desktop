@@ -129,12 +129,27 @@ export default function OperationsMap({
       style: mapStyle,
       center: [-74.02, 40.755],
       zoom: 9.1,
+      bearing: 0,
+      pitch: 0,
+      maxPitch: 0,
+      dragRotate: false,
+      pitchWithRotate: false,
+      touchPitch: false,
+      keyboard: false,
       attributionControl: false,
       renderWorldCopies: false,
     })
 
+    map.dragRotate.disable()
+    map.touchZoomRotate.disableRotation()
+    map.touchPitch.disable()
+    map.setBearing(0)
+    map.setPitch(0)
+
     map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right')
     map.on('load', () => {
+      map.setBearing(0)
+      map.setPitch(0)
       tuneBaseMap(map)
       setMapReady(true)
     })
@@ -390,6 +405,8 @@ export default function OperationsMap({
     if (points.length >= 2) {
       const lngs = points.map((point) => point[0])
       const lats = points.map((point) => point[1])
+      map.setBearing(0)
+      map.setPitch(0)
       map.fitBounds(
         [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
         {
@@ -427,6 +444,8 @@ export default function OperationsMap({
     const lngs = points.map((point) => point[0])
     const lats = points.map((point) => point[1])
     map.resize()
+    map.setBearing(0)
+    map.setPitch(0)
     map.fitBounds(
       [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
       {
@@ -442,12 +461,24 @@ export default function OperationsMap({
     if (!map || freightRoutePreview || workspaceOpen) return
 
     if (selectedStop?.coordinates) {
-      map.easeTo({ center: selectedStop.coordinates, zoom: Math.max(map.getZoom(), 10.7), duration: 450 })
+      map.easeTo({
+        center: selectedStop.coordinates,
+        zoom: Math.max(map.getZoom(), 10.7),
+        bearing: 0,
+        pitch: 0,
+        duration: 450,
+      })
       return
     }
 
     if (selectedDriver) {
-      map.easeTo({ center: selectedDriver.coordinates, zoom: Math.max(map.getZoom(), 10), duration: 500 })
+      map.easeTo({
+        center: selectedDriver.coordinates,
+        zoom: Math.max(map.getZoom(), 10),
+        bearing: 0,
+        pitch: 0,
+        duration: 500,
+      })
     }
   }, [freightRoutePreview, selectedDriver, selectedStop, workspaceOpen])
 
