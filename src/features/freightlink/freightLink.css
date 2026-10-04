@@ -583,3 +583,30 @@
 .lane-browser-meta {
   align-self: end;
 }
+
+/* V2.5.7: the fit treatment is a compact badge, not a second panel. */
+.lane-row {
+  grid-template-columns: minmax(0, 1fr) 76px;
+  gap: 6px 14px;
+  padding: 10px 28px 10px 13px;
+}
+
+.lane-fit-pill {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
+  min-height: 0;
+  align-self: center;
+  justify-self: end;
+  margin-right: 0;
+  padding: 6px 6px;
+  gap: 2px;
+}
+
+.lane-fit-pill strong {
+  line-height: 1.05;
+}
+
+.lane-fit-pill small {
+  line-height: 1.1;
+}
