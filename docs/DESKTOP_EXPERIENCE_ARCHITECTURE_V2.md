@@ -529,6 +529,18 @@ This preserves the hierarchy:
 > badge = plan structure  
 > full label = current relevance
 
+### Label-anchor integrity
+
+Facility labels are presentation only.
+
+A label becoming visible must **never** change the marker's physical anchor position. In particular:
+
+- MapLibre's route/POI coordinate belongs to the typed facility icon,
+- selected, next-stop, and hover labels float outside the marker's layout geometry,
+- leader lines may connect an offset label back to the exact POI,
+- label height/width must not move the P/D/L/S icon away from the route endpoint,
+- route geometry and facility marker geometry must continue to meet at the exact gameplay coordinate.
+
 ### Selection synchronization
 
 Map, manifest, load, and driver selection share one selection model.
@@ -1459,30 +1471,25 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-V2.5 through V2.6.4.1 are accepted and locked.
+V2.5 through V2.6.5 are accepted and locked.
 
-The active final Daily Planning map-polish packet is:
+The active visual-correction packet is:
 
-# **V2.6.5 — Route Visibility + Label Declutter**
+# **V2.6.5.1 — Label Anchor Integrity**
 
-It locks:
+V2.6.5 successfully establishes the cleaner map language, but acceptance exposed one presentation regression: an always-visible DOM label increased the marker element's height, which caused MapLibre's bottom-anchored POI icon to shift away from the route coordinate.
 
-- selected-driver committed route persistence independent of inspector visibility,
-- non-selected driver trucks visible without all routes competing at full strength,
-- grouped physical facility anchors for committed Driver Day events,
-- same-facility P/D/L/S visits sharing one marker,
-- selected-stop and next-stop label priority,
-- badge-first presentation for non-priority stops,
-- hover/focus disclosure of secondary facility names,
-- alternate label placement for geographically close priority labels while keeping POI coordinates exact.
+V2.6.5.1 locks the correction:
 
-V2.6.5 does not add live execution state. Until V2.7, the first planned event after shift start is used as the temporary "next stop" label priority.
+- labels are absolutely positioned outside route-anchor layout geometry,
+- label visibility cannot move the physical P/D/L/S marker,
+- exact route/POI endpoint integrity remains preserved,
+- selected/next/hover label behavior and crowded-label declutter remain intact,
+- the cleaner V2.6.5 map is retained.
 
-After V2.6.5 passes functional and visual acceptance, proceed to:
+After V2.6.5.1 passes visual acceptance, proceed to:
 
 # **V2.7 — Live Operations**
-
-V2.7 may activate the clock controls, move drivers through their SENT plans, fade completed route legs, and replace the temporary next-stop label heuristic with real execution truth.
 
 ---
 

@@ -32,26 +32,20 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5 Route Visibility + Label Declutter
+## Current packet — V2.6.5.1 Label Anchor Integrity
 
-V2.1 through V2.6.4.1 remain the locked desktop foundation.
+V2.1 through V2.6.5 remain the locked desktop foundation.
 
 Guardrails:
-- preserve the map-first command rail → browser → live map → inspector workstation,
-- preserve V2.6 Daily Planning truth, readiness, DRAFT → SENT dispatch behavior, and closable inspector behavior,
-- the selected driver's committed route remains visible whether the right inspector is open or closed,
-- inspector visibility must not own route visibility,
-- non-selected drivers remain represented by their truck markers without rendering every committed route at full strength,
-- normal Driver view uses grouped route anchors as the physical POI source instead of separate duplicate freight-stop markers,
-- multiple planned visits to the same facility share one physical marker and combine their P/D/L/S badges,
-- full facility labels are priority-based rather than permanently visible for every stop,
-- selected stop labels are always eligible for full display,
-- before Live Operations exists, the first planned event after shift start is the next-stop label priority,
-- V2.7 must replace that pre-live next-stop heuristic with real execution-position truth,
-- non-priority route anchors remain badge-first and reveal full labels on hover/focus,
-- close facility labels use alternate label placements while keeping the physical POI coordinate exact,
-- do not solve clutter by shrinking operational type below the readability floor,
-- route and marker declutter must preserve driver-color ownership and pickup/delivery route-line semantics.
+- preserve V2.6.5 route visibility, grouped facility anchors, priority labels, and map declutter,
+- route/POI endpoint integrity is non-negotiable,
+- a visible label must never change the physical screen position of its POI marker,
+- MapLibre marker anchoring must be based on the icon geometry, not label height,
+- route-anchor labels therefore float outside marker layout geometry,
+- selected/next/hover labels may move around the POI, but the typed P/D/L/S marker remains on the exact gameplay coordinate,
+- close-label placement may use leader lines without changing the marker coordinate,
+- do not restore duplicate per-stop labels to solve this bug,
+- do not change Driver Day route order or routing truth in this polish packet.
 
 ## Verification
 
