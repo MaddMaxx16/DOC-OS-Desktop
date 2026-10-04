@@ -32,24 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.5 Proven Route Markers
+## Current packet — V2.6.5.6 Operational Access Points
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 map declutter remains accepted in intent, but its grouped committed-freight marker implementation is retired after visual regression.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 label declutter remains accepted, while route/marker correctness is being corrected at the coordinate-model level.
 
 Guardrails:
 - preserve selected-driver committed route persistence when the inspector closes,
-- restore the proven V2.6.4.1 committed freight-stop marker architecture,
-- normal Driver view renders freight pickups/deliveries from driverDay.freightStops,
-- committed freight markers use their original bottom-anchored MapLibre marker geometry,
-- route rendering returns to per-segment road routing from the authoritative Driver Day order,
-- timing-only estimate geometry must not be drawn as a committed blue road,
-- label declutter is presentation-only and must not replace or reposition committed freight-stop markers,
-- PICKUP / DELIVERY text beneath normal committed markers stays hidden to reduce clutter,
-- selected stop and next planned stop may expose the facility name,
-- other committed freight stops remain badge-first and reveal facility name on hover/focus,
-- non-freight Lunch/Staging route anchors remain separate from committed freight markers,
-- same-facility marker grouping is deferred; do not reintroduce it until it can be implemented without changing proven route/marker geometry,
-- do not alter Driver Day sequencing, plan truth, route ownership, or sent-plan behavior in this packet.
+- preserve the proven Driver Day freight-stop marker interaction and V2.6.5 text declutter,
+- separate a facility's canonical map coordinate from the truck's routable access coordinate,
+- canonical facility coordinates identify the place and remain valid planning/facility truth,
+- OSRM waypoint locations are operational truck-access coordinates,
+- committed road geometry begins/ends at OSRM truck-access coordinates rather than being artificially extended to a facility centroid,
+- the operational P/D/L/S route marker uses the same truck-access coordinate as its incoming road leg,
+- if road access is unavailable, marker presentation may fall back to the facility coordinate until routing succeeds,
+- never draw a fake straight connector from a road access point to a facility centroid just to make geometry visually touch,
+- FreightLink preview P/D markers should use the same route-access coordinates as their preview road geometry when available,
+- Driver Day sequencing, facility identity, appointments, HOS, capacity, sent-plan truth, and selected-driver ownership remain unchanged,
+- route-access data is presentation/routing truth, not a mutation of the facility record itself.
 
 ## Verification
 
