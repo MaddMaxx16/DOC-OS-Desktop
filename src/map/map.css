@@ -445,9 +445,19 @@
   box-shadow: 0 0 0 4px rgba(183, 155, 197, .16), 0 9px 22px rgba(0, 0, 0, .5);
 }
 
-/* V2.6.5: selected/next labels earn space; the rest stay badge-first until hover. */
+/* V2.6.5.1: labels float outside marker geometry so MapLibre's bottom anchor stays on the POI. */
 .driver-route-anchor {
   position: relative;
+}
+
+.driver-route-anchor > small {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 35px;
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 .driver-route-anchor.priority-label > small {
@@ -457,8 +467,6 @@
 }
 
 .driver-route-anchor.crowded-label > small {
-  position: absolute;
-  z-index: 5;
   margin: 0;
 }
 
