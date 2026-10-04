@@ -342,6 +342,20 @@ test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-acce
   assert.match(access, /Prefer the incoming leg's destination access point/)
 })
 
+test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promise.all bursts', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const hydration = await readFile(new URL('../src/domain/routing/committedRouteHydration.js', import.meta.url), 'utf8')
+
+  assert.match(map, /hydrateCommittedRouteSegments/)
+  assert.match(map, /routeSegment: calculateRoadRoute/)
+  assert.match(map, /onProgress/)
+  assert.doesNotMatch(map, /Promise\.all\(\s*segmentSpecs\.map/)
+  assert.match(hydration, /for \(let index = 0; index < segments\.length; index \+= 1\)/)
+  assert.match(hydration, /RETRY_WAVES = 2/)
+  assert.match(hydration, /BETWEEN_SEGMENTS_MS = 140/)
+  assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -417,7 +431,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.6 · OPERATIONAL ACCESS POINTS/)
+  assert.match(top, /DESKTOP V2\.6\.5\.7 · SERIAL ROUTE HYDRATION/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
