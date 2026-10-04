@@ -135,8 +135,8 @@ function timelineStaging(driver, plan, locations) {
     kind: 'staging',
     label: 'STAGING',
     projectedArrivalMinutes: plan.staging.arrivalMinutes,
-    locationId: plan.staging.locationId,
-    locationLabel: location?.label ?? plan.staging.locationId,
+    locationId: plan.staging.locationId ?? null,
+    locationLabel: location?.label ?? 'Choose Staging Location',
     coordinates: location?.coordinates ?? null,
   }
 }
