@@ -226,8 +226,15 @@ export default function DriverDayPanel({
     const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
     const draggableEvent = planningEditable && ['freight-stop', 'lunch'].includes(item.kind)
     const dragging = draggedEventId === item.id
-    const completed = Boolean(liveState?.completedEventIds?.includes(item.id))
-    const current = liveState?.phase === 'active' && liveState?.currentEventId === item.id
+    const current = Boolean(
+      liveState?.phase === 'active'
+      && liveState?.executionPhase !== 'en-route'
+      && liveState?.currentEventId === item.id
+    )
+    const completed = Boolean(
+      liveState?.completedEventIds?.includes(item.id)
+      && !current
+    )
     const next = liveState?.sent && liveState?.nextEventId === item.id
 
     const content = (
