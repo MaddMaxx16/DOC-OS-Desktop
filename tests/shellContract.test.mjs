@@ -69,14 +69,14 @@ test('FreightLink marketplace mode exposes map-selectable lane markers', async (
 })
 
 
-test('V2.4.2 marketplace keeps labels quiet until interaction', async () => {
+test('V2.4.3 marketplace keeps labels quiet until interaction', async () => {
   const source = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
-  assert.match(source, /market-mode/)
   assert.match(source, /anotherLaneSelected/)
-  assert.match(css, /\.driver-marker\.market-mode:not\(\.selected\) > small/)
-  assert.match(css, /\.market-lane-marker > small \{\s*display: none;/)
+  assert.match(css, /\.driver-marker > small \{[\s\S]*display: none;/)
+  assert.match(css, /\.driver-marker:hover > small,[\s\S]*\.driver-marker\.selected > small/)
+  assert.match(css, /\.market-lane-marker > small \{[\s\S]*display: none;/)
   assert.match(css, /\.market-lane-marker\.muted/)
 })
 
@@ -88,4 +88,58 @@ test('V2.4.2 FreightLink inspector uses two desktop columns', async () => {
   assert.match(source, /className="lane-detail-column"/)
   assert.match(css, /\.lane-detail-columns \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\)/)
   assert.match(css, /\.lane-route-copy strong \{\s*font-size: 11px;/)
+})
+
+
+test('V2.4.3 local Vite setup owns the MapLibre worker explicitly', async () => {
+  const vite = await readFile(new URL('../vite.config.js', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(vite, /exclude: \['maplibre-gl'\]/)
+  assert.match(map, /maplibre-gl-worker\.mjs\?worker&url/)
+  assert.match(map, /setWorkerUrl\(maplibreWorkerUrl\)/)
+})
+
+test('V2.4.3 uses a dark vector basemap instead of filtered raster OSM', async () => {
+  const style = await readFile(new URL('../src/data/mapStyle.js', import.meta.url), 'utf8')
+
+  assert.match(style, /tiles\.openfreemap\.org\/styles\/dark/)
+  assert.doesNotMatch(style, /tile\.openstreetmap\.org/)
+  assert.doesNotMatch(style, /type:\s*['"]raster['"]/)
+})
+
+test('V2.4.3 map language uses trucks, typed POIs, and neutral preview routes', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /function truckMarkup/)
+  assert.match(map, /driver-truck-icon/)
+  assert.match(map, /function poiSvg/)
+  assert.match(map, /type === 'fuel'/)
+  assert.match(map, /type === 'food'/)
+  assert.match(map, /type === 'truck-stop'/)
+  assert.match(map, /type === 'service'/)
+  assert.match(map, /const PREVIEW_ROUTE = '#c8d2da'/)
+  assert.match(map, /const PREVIEW_DEADHEAD = '#8797a4'/)
+  assert.doesNotMatch(map, /addLine\(DEADHEAD_SOURCE[\s\S]*identity\.color/)
+})
+
+test('V2.4.3 operational seed classifies facility POIs', async () => {
+  const { locations } = await import('../src/data/operationsSeed.js')
+
+  assert.equal(locations['metroline-yard'].poiType, 'yard')
+  assert.equal(locations['meadowlands-staging'].poiType, 'staging')
+  assert.equal(locations['queens-freight-center'].poiType, 'warehouse')
+})
+
+test('V2.4.3 desktop type scale has an 11px readability floor', async () => {
+  const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8')
+  const freightCss = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+
+  assert.match(globalCss, /--type-micro:\s*11px/)
+  assert.match(globalCss, /--type-secondary:\s*12px/)
+  assert.match(globalCss, /--type-body:\s*14px/)
+  assert.match(globalCss, /--type-emphasis:\s*16px/)
+  assert.match(globalCss, /--type-heading:\s*22px/)
+  assert.match(freightCss, /font-size:\s*var\(--type-micro\)/)
+  assert.match(freightCss, /font-size:\s*var\(--type-body\)/)
 })
