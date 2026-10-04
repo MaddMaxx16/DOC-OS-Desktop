@@ -357,6 +357,24 @@ test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promis
   assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
 })
 
+test('V2.6.5.8 exposes browser-runtime route evidence only in dev mode', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /import\.meta\.env\.DEV/)
+  assert.match(map, /ROUTE DIAGNOSTICS/)
+  assert.match(map, /route-debug-panel/)
+  assert.match(map, /ROUTE_DEBUG_ENDPOINT_SOURCE/)
+  assert.match(map, /ROUTE_DEBUG_MARKER_SOURCE/)
+  assert.match(map, /endDeltaMiles/)
+  assert.match(map, /destinationSnapMiles/)
+  assert.match(map, /shortCoordinate\(row\.routeEnd\)/)
+  assert.match(map, /shortCoordinate\(row\.markerEnd\)/)
+  assert.match(css, /\.route-debug-panel/)
+  assert.match(css, /\.route-end-dot/)
+  assert.match(css, /\.marker-access-dot/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -432,7 +450,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.6\.5\.7 · SERIAL ROUTE HYDRATION/)
+  assert.match(top, /DESKTOP V2\.6\.5\.8 · ROUTE DIAGNOSTICS/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
