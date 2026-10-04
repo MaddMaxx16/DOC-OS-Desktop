@@ -393,15 +393,28 @@ export default function OperationsMap({
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
 
-    Promise.all(
-      segmentSpecs.map(async (segment) => ({
-        ...segment,
-        route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
-      })),
-    ).then((segments) => {
-      if (!active) return
+    const loadRoutes = async () => {
+      const segments = []
+
+      // Keep concurrency intentionally low. The public road router is a rendering dependency,
+      // not a reason to burst every Driver Day leg at once and fall back to fake straight lines.
+      for (let index = 0; index < segmentSpecs.length; index += 2) {
+        const batch = segmentSpecs.slice(index, index + 2)
+        const routedBatch = await Promise.all(
+          batch.map(async (segment) => ({
+            ...segment,
+            route: await calculateRoadRoute(segment.fromCoordinates, segment.toCoordinates),
+          })),
+        )
+
+        if (!active) return
+        segments.push(...routedBatch)
+      }
+
       setDriverRouteResult({ key: driverRouteKey, segments })
-    })
+    }
+
+    loadRoutes()
 
     return () => {
       active = false
