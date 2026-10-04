@@ -1432,40 +1432,47 @@ The following are now considered locked unless deliberately reopened:
 
 V2.5, V2.6.1, and V2.6.2 are accepted and locked.
 
-The active implementation packet is:
+The active refinement is:
 
-# **V2.6.3 — Breaks, Places + Staging**
+# **V2.6.3.1 — Place Flyout + Confirmation**
 
-It establishes:
+V2.6.3 retains:
 
-- explicit insertion lanes between Driver Day events instead of card-half drop targeting,
-- freight stops and Lunch as movable planning events,
-- full-sequence ordering so inserting freight before/after Lunch preserves the visible schedule order,
-- Lunch as a real selected gameplay POI,
-- route-aware lunch choices ranked by detour from the surrounding Driver Day events,
-- lunch-place metadata including POI type, truck access, parking, and stable location identity,
-- lunch location changes rebuilding the committed route and downstream timing,
-- staging/end-location selection from real valid staging POIs,
-- staging location changes rebuilding the final route leg,
-- selected staging identity persisting as the planned end-of-day truck location,
-- candidate lunch/staging POIs visible and selectable on the live map,
-- the shared location model as the future RPG bridge rather than a separate RPG-only lunch database.
+- explicit insertion lanes,
+- movable freight stops and Lunch,
+- route-aware physical lunch POIs,
+- physical end-of-day staging POIs,
+- shared RPG-ready location identity.
 
-V2.6.3 deliberately does **not** implement driver favorite-place bonuses, food quality effects, morale/fatigue rewards, relationship changes, random place events, or other RPG consequences yet. Those systems must enrich these same POIs later rather than replace them.
+The V2.6.3.1 interaction correction locks:
 
-The locked interaction rule is:
+- Lunch/Staging choices open in a side flyout immediately beside the right Driver Day inspector,
+- the flyout has substantially more vertical room than the inspector timeline and exposes the full valid option set,
+- selecting a candidate is a **preview**, not an immediate commit,
+- the preview may redraw the map route so the player can see the operational effect,
+- actual Driver Day truth changes only after **CONFIRM LUNCH** or **CONFIRM STAGING**,
+- cancelling closes the flyout and restores the unchanged committed plan,
+- confirming closes the flyout and returns to the Driver Day,
+- draft staging starts **unassigned** rather than silently defaulting to Meadowlands Staging,
+- the staging row remains visible as **Choose Staging Location** until the player makes and confirms that decision,
+- unresolved staging does not create a fake committed route leg,
+- once confirmed, the staging POI becomes the real planned end-of-day truck location.
+
+The locked interaction rule remains:
 
 > timeline decides when  
-> map/place selection decides where  
-> Driver Day truth records what actually happens
+> place flyout/map preview decides where  
+> confirmation writes Driver Day truth
 
-After V2.6.3 passes functional and visual acceptance, proceed to:
+V2.6.3 still does **not** implement driver favorite-place bonuses, food quality effects, morale/fatigue rewards, relationship changes, random place events, or other RPG consequences. Those systems must enrich these same POIs later.
+
+After V2.6.3.1 passes functional and visual acceptance, proceed to:
 
 # **V2.6.4 — Readiness + Send Schedule**
 
 V2.6.4 owns final plan blockers/warnings, review, SEND SCHEDULE, SEND ANYWAY for warnings, and sent-plan locking.
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, V2.6.1 planning-state contract, and V2.6.2 committed stop-sequencing contract.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, V2.6.1 planning-state contract, V2.6.2 committed stop-sequencing contract, and V2.6.3 insertion-lane/place-model contract.
 
 ---
 
