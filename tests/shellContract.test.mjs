@@ -193,3 +193,50 @@ test('V2.4.5 selected-lane focus hides unrelated marketplace and manifest clutte
   assert.match(map, /if \(loadSelected && \(!selectedDriver \|\| driver\.id !== selectedDriver\.id\)\) return/)
   assert.match(css, /\.freight-preview-marker > em \{\s*display: none;/)
 })
+
+
+test('V2.4.6 FreightLink candidate driver is shared with the shell map', async () => {
+  const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
+
+  assert.match(app, /freightCandidateDriverId/)
+  assert.match(app, /onFreightCandidateDriverChange=\{setFreightCandidateDriverId\}/)
+  assert.match(shell, /freightCandidateDriver/)
+  assert.match(shell, /activeApp === 'freightlink'/)
+  assert.match(freight, /candidateDriverId/)
+  assert.match(freight, /onCandidateDriverChange/)
+})
+
+test('V2.4.6 map renders committed driver plan under neutral insertion preview', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /DRIVER_ROUTE_SOURCE/)
+  assert.match(map, /buildDriverRouteSegments/)
+  assert.match(map, /markInsertionAffectedSegment/)
+  assert.match(map, /'line-color': identity\.color/)
+  assert.match(map, /REJOIN_SOURCE/)
+  assert.match(map, /freightRoutePreview\.rejoinRoute/)
+  assert.match(map, /color: PREVIEW_ROUTE/)
+  assert.match(map, /color: PREVIEW_DEADHEAD/)
+})
+
+test('V2.4.6 FreightLink proposal includes entry loaded and rejoin legs', async () => {
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
+
+  assert.match(freight, /selectedEvaluation\.insertion\.nextCoordinates/)
+  assert.match(freight, /calculateRoadRoute\(originCoordinates, pickup\.coordinates\)/)
+  assert.match(freight, /calculateRoadRoute\(pickup\.coordinates, delivery\.coordinates\)/)
+  assert.match(freight, /calculateRoadRoute\(delivery\.coordinates, nextCoordinates\)/)
+  assert.match(freight, /rejoinRoute: rejoin/)
+})
+
+test('V2.4.6 map symbols shrink without reducing operational text scale', async () => {
+  const mapCss = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+  const globalCss = await readFile(new URL('../src/styles/global.css', import.meta.url), 'utf8')
+
+  assert.match(mapCss, /\.driver-truck-icon \{[\s\S]*width: 42px;[\s\S]*height: 31px;/)
+  assert.match(mapCss, /\.poi-symbol \{[\s\S]*width: 34px;[\s\S]*height: 34px;/)
+  assert.match(globalCss, /--type-micro:\s*11px/)
+  assert.match(globalCss, /--type-body:\s*14px/)
+})
