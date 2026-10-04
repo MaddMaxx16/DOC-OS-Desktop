@@ -22,6 +22,7 @@ export default function OperationsInspector({
   onStartPlanning,
   onStopPlanning,
   onMovePlanEvent,
+  onSendSchedule,
   onSelectSubject,
 }) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
@@ -71,6 +72,7 @@ export default function OperationsInspector({
             onStartPlanning={() => onStartPlanning?.(driver.id)}
             onStopPlanning={() => onStopPlanning?.(driver.id)}
             onMovePlanEvent={onMovePlanEvent}
+            onSendSchedule={onSendSchedule}
             onSelectSubject={onSelectSubject}
           />
         </div>
