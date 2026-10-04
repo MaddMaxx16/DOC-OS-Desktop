@@ -400,7 +400,7 @@ export default function OperationsMap({
 
 
 
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, plannedDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, displayDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     const map = mapRef.current
@@ -573,7 +573,7 @@ export default function OperationsMap({
     driverDay,
     mapReady,
     nextStopId,
-    plannedDriverRoutes,
+    displayDriverRoutes,
     selectedDriver,
     selection,
   ])
