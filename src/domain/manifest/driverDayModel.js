@@ -1,4 +1,5 @@
 import { normalizeDispatchPlanStatus } from '../planning/dispatchPlan.js'
+import { analyzeDriverDay } from '../planning/planAnalysis.js'
 
 function finite(value, fallback = 0) {
   const number = Number(value)
@@ -163,7 +164,7 @@ export function buildDriverDay({ driver, loads = [], plan, locations = {} } = {}
   const peakPalletsUsed = Math.max(0, ...capacitySnapshots.map((item) => item.palletsUsed))
   const peakWeightUsedLbs = Math.max(0, ...capacitySnapshots.map((item) => item.weightUsedLbs))
 
-  return {
+  const day = {
     driverId: driver.id,
     dispatchStatus: normalizeDispatchPlanStatus(plan),
     shift: plan.shift,
@@ -178,6 +179,11 @@ export function buildDriverDay({ driver, loads = [], plan, locations = {} } = {}
     freightStops,
     timeline,
     staging,
+  }
+
+  return {
+    ...day,
+    planHealth: analyzeDriverDay(day, driver, locations),
   }
 }
 
