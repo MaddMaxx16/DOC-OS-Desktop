@@ -32,25 +32,27 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.4.5 FreightLink Map Focus Cleanup
+## Current packet — V2.4.6 Driver Route + Load Insertion Preview
 
-V2.1 through V2.4.4 are structurally locked.
+V2.1 through V2.4.5 are structurally locked.
 
-V2.4.5 removes visual overlap and stale-preview risk discovered during final FreightLink testing.
+V2.4.6 turns the FreightLink map from isolated lane preview into a before/after planning board.
 
 Guardrails:
-- preserve the V2.4.4 flat north-up camera and 46% shared app drawer,
-- FreightLink has two map modes: marketplace overview and selected-lane focus,
-- marketplace overview may show compact load opportunities and driver assets,
-- selected-lane focus hides unrelated marketplace opportunity markers,
-- selected-lane focus hides the candidate driver's full manifest stop set,
-- selected-lane focus hides unrelated drivers,
-- selected-lane focus shows the selected neutral route and its pickup/delivery facilities as the dominant map objects,
-- FreightLink route preview data is rendered only when its lane id matches the currently selected LOAD id,
-- stale route/marker data from a previous lane must never remain visible after selection changes,
-- selected pickup/delivery facility markers stay compact and do not repeat redundant PICKUP/DELIVERY text,
-- do not change FreightLink fit truth, map style, route semantics, shell structure, or typography scale,
-- do not begin booking or Rate Confirmation behavior until V2.5.
+- preserve the V2.4.4 flat north-up camera, shared drawer, map style, POI language, and readability scale,
+- FreightLink candidate driver context is shared with the shell even before a load is selected,
+- the candidate driver's existing planned day is rendered as a continuous route in that driver's persistent identity color,
+- existing route order follows the authoritative Driver Day timeline,
+- FreightLink evaluation keeps the committed driver route visible,
+- the direct existing leg replaced by a proposed insertion is visually subdued rather than removed from the model,
+- a proposed insertion renders in neutral from existing stop → pickup → delivery → next existing stop,
+- deadhead and rejoin portions use neutral dashed treatment,
+- loaded proposed freight uses a stronger neutral solid treatment,
+- neutral proposal routes do not inherit driver color until booking/assignment actually commits the work,
+- FreightLink hides the driver's individual manifest POI markers while shopping so route context does not recreate map clutter,
+- truck and facility symbol bodies are reduced roughly 15–20% without reducing gameplay text,
+- do not change FreightLink fit truth, manifest order, HOS, capacity, appointments, shell structure, or typography,
+- do not add booking or Rate Confirmation behavior until V2.5.
 
 ## Verification
 
