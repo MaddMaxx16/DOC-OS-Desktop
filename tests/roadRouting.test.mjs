@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  buildRoadRouteResult,
   ensureRouteTouchesEndpoints,
   roadPlanLegs,
 } from '../src/services/roadRouting.js'
@@ -96,4 +97,38 @@ test('continuous road plan rejects incomplete leg counts', () => {
   )
 
   assert.deepEqual(legs, [])
+})
+
+
+test('road route result uses OSRM snapped access points instead of forcing road geometry to facility centroids', () => {
+  const requestedOrigin = [-74.0732, 40.7901]
+  const requestedDestination = [-74.0107, 40.6562]
+  const originAccess = [-74.0728, 40.7897]
+  const destinationAccess = [-74.0089, 40.6604]
+
+  const result = buildRoadRouteResult({
+    waypoints: [
+      { location: originAccess },
+      { location: destinationAccess },
+    ],
+    routes: [{
+      distance: 16093.44,
+      duration: 1800,
+      geometry: {
+        coordinates: [
+          [-74.0726, 40.7896],
+          [-74.0400, 40.7200],
+          [-74.0092, 40.6607],
+        ],
+      },
+    }],
+  }, requestedOrigin, requestedDestination)
+
+  assert.deepEqual(result.originAccessCoordinates, originAccess)
+  assert.deepEqual(result.destinationAccessCoordinates, destinationAccess)
+  assert.deepEqual(result.routeShape[0], originAccess)
+  assert.deepEqual(result.routeShape.at(-1), destinationAccess)
+  assert.deepEqual(result.requestedOriginCoordinates, requestedOrigin)
+  assert.deepEqual(result.requestedDestinationCoordinates, requestedDestination)
+  assert.notDeepEqual(result.routeShape.at(-1), requestedDestination)
 })
