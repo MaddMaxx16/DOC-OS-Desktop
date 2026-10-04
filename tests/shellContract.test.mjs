@@ -190,7 +190,7 @@ test('V2.4.5 selected-lane focus hides unrelated marketplace and manifest clutte
 
   assert.match(map, /const loadSelected = isSelection\(selection, SELECTION_TYPES\.LOAD\)/)
   assert.match(map, /workspaceOpen && !loadSelected/)
-  assert.match(map, /for \(const stop of loadSelected \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
+  assert.match(map, /for \(const stop of workspaceOpen \? \[\] : \(driverDay\?\.freightStops \?\? \[\]\)\)/)
   assert.match(map, /if \(loadSelected && \(!selectedDriver \|\| driver\.id !== selectedDriver\.id\)\) return/)
   assert.match(css, /\.freight-preview-marker > em \{\s*display: none;/)
 })
