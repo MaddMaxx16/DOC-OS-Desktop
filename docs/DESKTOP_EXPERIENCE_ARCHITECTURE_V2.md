@@ -1329,6 +1329,9 @@ The following are now considered locked unless deliberately reopened:
 - Every rendered route begins and ends on the exact gameplay POI/asset coordinates so lines visually connect to their endpoint icons.
 - Committed pickup-bound route legs are dashed while delivery-bound route legs remain solid, preserving driver color as ownership language and line style as move-type language.
 - Desktop operational text follows the V2.4.3 readability floor (11/12/14/16/22 px scale).
+- The top-right clock area reserves permanent runway for pause, play, and fast-forward controls; controls may remain disabled until Live Operations is implemented.
+- The game clock should remain visually subordinate to the operational workspace rather than dominating the top bar.
+- FreightLink lane-fit cards must remain fully inset within the browser column at the 1920×1080 reference layout; status text or borders may not disappear under the map edge or scrollbar.
 - The operational basemap is a dark detailed vector style with consumer POI clutter suppressed.
 - Browser previews remain intentional checkpoints, not automatic per-push deployments.
 - PC/Steam remains the long-term target.
@@ -1337,25 +1340,24 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-The active cleanup packet is:
+The active polish packet is:
 
-# **V2.5.4 — Desktop Cleanup + Route Leg Readability**
+# **V2.5.5 — FreightLink Fit + Time Control Strip**
 
 It locks:
 
-- PAUSED status beside the game clock rather than at the bottom of the command rail,
-- removal of the dead command-rail status footer,
-- FreightLink browser and inspector copy wrapping cleanly inside the desktop columns,
-- committed pickup-bound route legs rendered dashed,
-- committed delivery-bound route legs rendered solid,
-- driver color preserved as the ownership signal across both line styles.
+- lane-fit cards fully inside the FreightLink browser column,
+- no clipped TIGHT/GOOD/POOR labels or fit-card borders,
+- slightly smaller game-clock typography,
+- PAUSED retained beside the game time,
+- reserved pause / play / fast-forward controls in the top-right shell,
+- time-control buttons visible but disabled until Live Operations owns game-speed behavior.
 
-After V2.5.4 passes functional and visual acceptance, the next gameplay packet is:
+After V2.5.5 passes visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, and V2.5.4 route-leg language.
-
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, and V2.5.5 top-bar/FreightLink spacing contract.
 
 ---
 

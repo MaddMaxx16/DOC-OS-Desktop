@@ -144,6 +144,28 @@ test('V2.5.4 pause status lives beside the clock instead of at the bottom of the
   assert.doesNotMatch(css, /\.command-rail-status/)
 })
 
+test('V2.5.5 top bar reserves a compact disabled time-control strip beside the smaller clock', async () => {
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+
+  assert.match(top, /className="time-controls"/)
+  assert.match(top, /aria-label="Pause"/)
+  assert.match(top, /aria-label="Play"/)
+  assert.match(top, /aria-label="Fast forward"/)
+  assert.match(css, /grid-template-columns: 270px minmax\(320px, 1fr\) 300px/)
+  assert.match(css, /\.clock-block strong \{[\s\S]*font-size: 18px/)
+  assert.match(css, /\.time-controls button/)
+})
+
+test('V2.5.5 FreightLink fit cards remain inset inside the browser column', async () => {
+  const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
+
+  assert.match(css, /V2\.5\.5: keep lane fit cards fully inside the browser/)
+  assert.match(css, /\.freightlink-browser-list \{[\s\S]*padding-right: 8px/)
+  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(78px, 84px\)/)
+  assert.match(css, /\.lane-fit-pill \{[\s\S]*max-width: 84px/)
+})
+
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
@@ -219,7 +241,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.4 · CLEANUP/)
+  assert.match(top, /DESKTOP V2\.5\.5 · CONTROL STRIP/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
