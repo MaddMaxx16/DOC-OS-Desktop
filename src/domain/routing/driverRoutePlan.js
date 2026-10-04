@@ -86,6 +86,8 @@ export function buildDriverRouteSegments(driverDay, locations = {}) {
       toId: to.id,
       fromKind: from.kind,
       toKind: to.kind,
+      fromRole: from.role ?? null,
+      toRole: to.role ?? null,
       fromCoordinates,
       toCoordinates,
     })
