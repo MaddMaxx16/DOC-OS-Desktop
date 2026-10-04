@@ -255,35 +255,57 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
+    const routeAnchors = driverIdentity && driverDay
+      ? buildDriverRouteAnchors(driverDay, locations)
+      : []
+    const previewPickupId = freightRoutePreview?.pickup?.id ?? null
+    const previewDeliveryId = freightRoutePreview?.delivery?.id ?? null
 
-    if (workspaceOpen && driverIdentity && driverDay) {
-      const routeAnchors = buildDriverRouteAnchors(driverDay, locations)
-      const previewPickupId = freightRoutePreview?.pickup?.id ?? null
-      const previewDeliveryId = freightRoutePreview?.delivery?.id ?? null
+    const addRouteAnchorMarker = (routeAnchor, { interactive = false } = {}) => {
+      const selected = Boolean(
+        selectedStop
+        && routeAnchor.eventIds.includes(selectedStop.id),
+      )
+      const element = document.createElement(interactive ? 'button' : 'div')
+      if (interactive) element.type = 'button'
+      element.className = `poi-marker driver-route-anchor ${routeAnchor.poiType} ${selected ? 'selected' : ''}`
+      element.style.setProperty('--driver-color', driverIdentity.color)
+      element.setAttribute(
+        'aria-label',
+        `${routeAnchor.badge ? `${routeAnchor.badge} · ` : ''}${routeAnchor.locationLabel}`,
+      )
+      element.innerHTML = `${facilityMarkup({
+        type: routeAnchor.poiType,
+        badge: routeAnchor.badge,
+      })}<small>${routeAnchor.locationLabel}</small>`
 
-      for (const anchor of routeAnchors) {
-        const element = document.createElement('div')
-        element.className = `poi-marker driver-route-anchor ${anchor.poiType}`
-        element.style.setProperty('--driver-color', driverIdentity.color)
-        element.setAttribute('role', 'img')
-        element.setAttribute(
-          'aria-label',
-          `${anchor.badge ? `${anchor.badge} · ` : ''}${anchor.locationLabel}`,
-        )
-        element.innerHTML = `${facilityMarkup({
-          type: anchor.poiType,
-          badge: anchor.badge,
-        })}<small>${anchor.locationLabel}</small>`
+      if (interactive && routeAnchor.eventIds.length) {
+        element.addEventListener('click', (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, routeAnchor.eventIds[0])
+        })
+      }
 
-        let offset = [0, 0]
-        if (anchor.locationId && anchor.locationId === previewPickupId) offset = [-18, 0]
-        else if (anchor.locationId && anchor.locationId === previewDeliveryId) offset = [18, 0]
+      let offset = [0, 0]
+      if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
+      else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
 
-        const marker = new Marker({ element, anchor: 'bottom', offset })
-          .setLngLat(anchor.coordinates)
-          .addTo(map)
+      const marker = new Marker({ element, anchor: 'bottom', offset })
+        .setLngLat(routeAnchor.coordinates)
+        .addTo(map)
 
-        markerRefs.current.set(`route-anchor:${anchor.id}`, marker)
+      markerRefs.current.set(`route-anchor:${routeAnchor.id}`, marker)
+    }
+
+    if (workspaceOpen && driverIdentity) {
+      for (const routeAnchor of routeAnchors) {
+        addRouteAnchorMarker(routeAnchor)
+      }
+    } else if (driverIdentity) {
+      for (const routeAnchor of routeAnchors) {
+        const isFreightLocation = routeAnchor.eventKinds.includes('freight-stop')
+        if (!isFreightLocation) addRouteAnchorMarker(routeAnchor, { interactive: true })
       }
     }
 
@@ -314,31 +336,7 @@ export default function OperationsMap({
       markerRefs.current.set(`stop:${stop.id}`, marker)
     }
 
-    if (
-      !workspaceOpen
-      && selectedStop?.coordinates
-      && driverIdentity
-      && ['lunch', 'staging'].includes(selectedStop.kind)
-    ) {
-      const location = locations[selectedStop.locationId]
-      const eventType = selectedStop.kind === 'lunch' ? 'food' : locationType(location, 'staging')
-      const element = document.createElement('button')
-      element.type = 'button'
-      element.className = `poi-marker operational-event-marker ${selectedStop.kind} selected`
-      element.style.setProperty('--driver-color', driverIdentity.color)
-      element.setAttribute('aria-label', `${selectedStop.label} at ${selectedStop.locationLabel}`)
-      element.innerHTML = `${facilityMarkup({
-        type: eventType,
-        badge: selectedStop.kind === 'lunch' ? 'L' : 'S',
-      })}<small>${selectedStop.locationLabel}</small>`
-
-      const marker = new Marker({ element, anchor: 'bottom' })
-        .setLngLat(selectedStop.coordinates)
-        .addTo(map)
-
-      markerRefs.current.set(`event:${selectedStop.id}`, marker)
-    }
-  }, [driverDay, drivers, locations, marketLanes, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
     if (!driverRouteKey || !driverDay) return undefined
