@@ -157,13 +157,16 @@ test('V2.5.5 top bar reserves a compact disabled time-control strip beside the s
   assert.match(css, /\.time-controls button/)
 })
 
-test('V2.5.5 FreightLink fit cards remain inset inside the browser column', async () => {
+test('V2.5.6 FreightLink rows keep a right gutter and collapse the empty booking row', async () => {
+  const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/features/freightlink/freightLink.css', import.meta.url), 'utf8')
 
-  assert.match(css, /V2\.5\.5: keep lane fit cards fully inside the browser/)
-  assert.match(css, /\.freightlink-browser-list \{[\s\S]*padding-right: 8px/)
-  assert.match(css, /grid-template-columns: minmax\(0, 1fr\) minmax\(78px, 84px\)/)
-  assert.match(css, /\.lane-fit-pill \{[\s\S]*max-width: 84px/)
+  assert.match(freight, /has-booking-state/)
+  assert.match(css, /V2\.5\.6: give fit cards breathing room/)
+  assert.match(css, /grid-template-areas:\s*"route fit"\s*"meta fit";/)
+  assert.match(css, /\.lane-row\.has-booking-state/)
+  assert.match(css, /padding: 10px 18px 10px 13px/)
+  assert.match(css, /margin-right: 2px/)
 })
 
 test('FreightLink candidate driver and selected lane stay synchronized with the map', async () => {
@@ -241,7 +244,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.5\.5 · CONTROL STRIP/)
+  assert.match(top, /DESKTOP V2\.5\.6 · FREIGHTLINK SPACING/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
