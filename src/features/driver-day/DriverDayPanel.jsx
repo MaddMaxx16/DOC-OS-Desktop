@@ -1,4 +1,8 @@
 import { formatClock } from '../../domain/manifest/driverDayModel.js'
+import {
+  canEditDispatchPlan,
+  dispatchPlanStatusLabel,
+} from '../../domain/planning/dispatchPlan.js'
 import { isSelection, SELECTION_TYPES } from '../../domain/selection/selectionModel.js'
 import './driverDay.css'
 
@@ -32,34 +36,65 @@ function FreightMeta({ item, capacityPallets }) {
   )
 }
 
-export default function DriverDayPanel({ driver, day, selection, onSelectSubject }) {
+export default function DriverDayPanel({
+  driver,
+  day,
+  selection,
+  planning = false,
+  onStartPlanning,
+  onStopPlanning,
+  onSelectSubject,
+}) {
   if (!driver || !day) return null
 
+  const editable = canEditDispatchPlan(day)
+  const planLabel = dispatchPlanStatusLabel(day)
+
   return (
-    <section className="driver-day-panel">
-      <div className="driver-day-summary">
+    <section className={`driver-day-panel ${planning ? 'planning' : ''}`}>
+      <div className="driver-day-summary" aria-label="Driver day operational summary">
         <div>
           <span>SHIFT</span>
           <strong>{formatClock(day.shift.startMinutes)}–{formatClock(day.shift.endMinutes)}</strong>
         </div>
         <div>
           <span>HOS</span>
-          <strong>{day.hos.drive} DRIVE · {day.hos.duty} DUTY</strong>
+          <strong>{day.hos.drive} / {day.hos.duty}</strong>
+          <small>DRIVE / DUTY</small>
         </div>
         <div>
           <span>TRAILER</span>
-          <strong>{day.trailer.peakPalletsUsed}/{day.trailer.capacityPallets} PLT PEAK</strong>
+          <strong>{day.trailer.peakPalletsUsed}/{day.trailer.capacityPallets} PLT</strong>
           <small>{formatWeight(day.trailer.peakWeightUsedLbs)} / {formatWeight(day.trailer.maxWeightLbs)}</small>
         </div>
       </div>
 
       <div className="driver-day-heading">
         <div>
-          <span>DRIVER DAY</span>
-          <strong>Manifest</strong>
+          <span>{planLabel}</span>
+          <strong>Driver Day</strong>
+          <small>{day.freightStops.length} freight stops</small>
         </div>
-        <small>{day.freightStops.length} freight stops</small>
+
+        {editable ? (
+          <button
+            type="button"
+            className={planning ? 'planning-active' : ''}
+            onClick={planning ? onStopPlanning : onStartPlanning}
+          >
+            {planning ? 'DONE' : 'EDIT PLAN'}
+          </button>
+        ) : (
+          <em className="driver-day-sent-lock">SENT</em>
+        )}
       </div>
+
+      {planning && (
+        <div className="planning-mode-note">
+          <span>PLANNING MODE</span>
+          <strong>Build the driver&apos;s day here while keeping the live map visible.</strong>
+        </div>
+      )}
 
       <div className="driver-day-timeline">
         {day.timeline.map((item, index) => {
