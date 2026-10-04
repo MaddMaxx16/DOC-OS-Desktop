@@ -226,6 +226,16 @@ export default function DriverDayPanel({
     const selected = selectable && isSelection(selection, SELECTION_TYPES.STOP, item.id)
     const draggableEvent = planningEditable && ['freight-stop', 'lunch'].includes(item.kind)
     const dragging = draggedEventId === item.id
+    const current = Boolean(
+      liveState?.phase === 'active'
+      && liveState?.executionPhase !== 'en-route'
+      && liveState?.currentEventId === item.id
+    )
+    const completed = Boolean(
+      liveState?.completedEventIds?.includes(item.id)
+      && !current
+    )
+    const next = liveState?.sent && liveState?.nextEventId === item.id
 
     const content = (
       <>
@@ -239,6 +249,8 @@ export default function DriverDayPanel({
             {draggableEvent && <span className="stop-drag-handle" aria-hidden="true">⋮⋮</span>}
             <b>{eventCode(item)}</b>
             <strong>{item.locationLabel}</strong>
+            {current && <em className="execution-chip current">NOW</em>}
+            {!current && next && <em className="execution-chip next">NEXT</em>}
           </div>
           {item.kind === 'freight-stop' && <FreightMeta item={item} capacityPallets={day.trailer.capacityPallets} />}
           {item.kind === 'lunch' && (
@@ -277,6 +289,9 @@ export default function DriverDayPanel({
           selected ? 'selected' : '',
           draggableEvent ? 'draggable-stop' : '',
           dragging ? 'dragging' : '',
+          completed ? 'execution-completed' : '',
+          current ? 'execution-current' : '',
+          next ? 'execution-next' : '',
         ].filter(Boolean).join(' ')}
         draggable={draggableEvent}
         onDragStart={draggableEvent ? (event) => startDrag(event, item.id) : undefined}
@@ -290,7 +305,16 @@ export default function DriverDayPanel({
         {content}
       </button>
     ) : (
-      <div key={item.id} className={`driver-day-row ${item.kind}`}>
+      <div
+        key={item.id}
+        className={[
+          'driver-day-row',
+          item.kind,
+          completed ? 'execution-completed' : '',
+          current ? 'execution-current' : '',
+          next ? 'execution-next' : '',
+        ].filter(Boolean).join(' ')}
+      >
         {content}
       </div>
     )
@@ -375,11 +399,19 @@ export default function DriverDayPanel({
           <small>
             {liveState?.phase === 'scheduled'
               ? `Shift starts at ${formatClock(liveState.shiftStartMinutes)}. Live execution is armed.`
-              : liveState?.phase === 'active'
-                ? 'Clock is inside the sent shift window. Route execution is ready for Live Operations.'
-                : liveState?.phase === 'closed'
-                  ? 'The communicated shift window has passed.'
-                  : 'Editing remains locked after dispatch.'}
+              : liveState?.executionPhase === 'en-route'
+                ? `Next: ${liveState.nextEventLabel ?? 'planned stop'} · ETA ${formatClock(liveState.nextEventArrivalMinutes)}`
+                : liveState?.executionPhase === 'arrived'
+                  ? `At ${liveState.currentEventLabel ?? 'planned stop'} · next movement begins on the live clock.`
+                  : liveState?.executionPhase === 'dwell-break'
+                    ? `Lunch holds until ${formatClock(liveState.currentEventDepartureMinutes)}.`
+                    : liveState?.executionPhase === 'complete'
+                      ? 'All planned route legs are complete.'
+                      : liveState?.phase === 'active'
+                        ? 'Clock is inside the sent shift window.'
+                        : liveState?.phase === 'closed'
+                          ? 'The communicated shift window has passed.'
+                          : 'Editing remains locked after dispatch.'}
           </small>
         </div>
       )}

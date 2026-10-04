@@ -8,6 +8,10 @@ import {
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import {
+  routeExecutionPosition,
+  routeSegmentExecutionPhase,
+} from '../domain/live/routeExecution.js'
+import {
   buildDriverRouteAnchors,
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
@@ -112,6 +116,31 @@ function poiSvg(type) {
   return '<svg viewBox="0 0 48 48" focusable="false"><path d="M6 18 24 7l18 11v23H6z"/><path d="M12 24h7v17h-7zm11 0h7v17h-7zm11 0h4v17h-4z"/><path d="M10 18h28"/></svg>'
 }
 
+function committedRouteGeoJson(segments = [], execution = null) {
+  return {
+    type: 'FeatureCollection',
+    features: segments
+      .filter((segment) => (
+        segment.route?.source === 'road'
+        && Array.isArray(segment.route?.routeShape)
+        && segment.route.routeShape.length >= 2
+      ))
+      .map((segment) => ({
+        type: 'Feature',
+        properties: {
+          id: segment.id,
+          affected: segment.affected,
+          destinationRole: segment.toRole ?? '',
+          executionPhase: routeSegmentExecutionPhase(segment.id, execution),
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: segment.route.routeShape,
+        },
+      })),
+  }
+}
+
 function locationType(location, fallback = 'warehouse') {
   return location?.poiType ?? fallback
 }
@@ -133,6 +162,7 @@ export default function OperationsMap({
   selectedDriver,
   selectedStop,
   selection,
+  liveState = null,
   freightRoutePreview,
   planningPlaceOptions = [],
   pendingPlanningPlace = null,
@@ -172,7 +202,20 @@ export default function OperationsMap({
     () => stitchCommittedRouteSegments(plannedDriverRoutes),
     [plannedDriverRoutes],
   )
-  const nextStopId = nextOperationalEventId(driverDay)
+  const nextStopId = liveState?.nextEventId ?? nextOperationalEventId(driverDay)
+  const completedEventKey = (liveState?.completedEventIds ?? []).join('|')
+  const completedEventIds = useMemo(
+    () => new Set(completedEventKey ? completedEventKey.split('|') : []),
+    [completedEventKey],
+  )
+  const liveTruckCoordinates = useMemo(
+    () => routeExecutionPosition(
+      liveState,
+      displayDriverRoutes,
+      selectedDriver?.coordinates ?? null,
+    ),
+    [displayDriverRoutes, liveState, selectedDriver],
+  )
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -407,6 +450,23 @@ export default function OperationsMap({
   }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, displayDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
+    if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return
+
+    const marker = markerRefs.current.get(`driver:${selectedDriver.id}`)
+    if (!marker) return
+
+    marker.setLngLat(liveTruckCoordinates)
+    const element = marker.getElement()
+    if (element) {
+      element.dataset.livePhase = liveState?.executionPhase ?? 'planned'
+      element.setAttribute(
+        'aria-label',
+        `Select ${selectedDriver.name}, ${liveState?.label ?? selectedDriver.status}`,
+      )
+    }
+  }, [liveState?.executionPhase, liveState?.label, liveTruckCoordinates, selectedDriver])
+
+  useEffect(() => {
     const map = mapRef.current
     if (!mapReady || !map) return undefined
 
@@ -435,6 +495,7 @@ export default function OperationsMap({
         if (!Array.isArray(coordinates)) return null
 
         const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
+        const completed = completedEventIds.has(stop.id)
         const priority = selected || stop.id === nextStopId
 
         return {
@@ -447,6 +508,7 @@ export default function OperationsMap({
             label: stop.locationLabel,
             priority,
             selected,
+            completed,
           },
           geometry: {
             type: 'Point',
@@ -485,8 +547,18 @@ export default function OperationsMap({
           3,
           2,
         ],
-        'circle-opacity': 0.98,
-        'circle-stroke-opacity': 1,
+        'circle-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.42,
+          0.98,
+        ],
+        'circle-stroke-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.58,
+          1,
+        ],
       },
     })
 
@@ -503,6 +575,12 @@ export default function OperationsMap({
       },
       paint: {
         'text-color': identity.color,
+        'text-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.5,
+          1,
+        ],
         'text-halo-color': '#071019',
         'text-halo-width': 1,
       },
@@ -576,6 +654,7 @@ export default function OperationsMap({
   }, [
     driverDay,
     mapReady,
+    completedEventIds,
     nextStopId,
     displayDriverRoutes,
     selectedDriver,
@@ -619,31 +698,18 @@ export default function OperationsMap({
 
     clearDriverRoute()
 
-    if (!selectedDriver || !plannedDriverRoutes.length) return clearDriverRoute
+    if (!selectedDriver || !displayDriverRoutes.length) return clearDriverRoute
 
     const identity = getDriverIdentity(selectedDriver.id)
     const insertion = freightRoutePreview?.evaluation?.insertion ?? null
     const segments = markInsertionAffectedSegment(displayDriverRoutes, insertion)
-    const features = segments
-      .filter((segment) => (
-        segment.route?.source === 'road'
-        && Array.isArray(segment.route?.routeShape)
-        && segment.route.routeShape.length >= 2
-      ))
-      .map((segment) => ({
-        type: 'Feature',
-        properties: {
-          affected: segment.affected,
-          destinationRole: segment.toRole ?? '',
-        },
-        geometry: { type: 'LineString', coordinates: segment.route.routeShape },
-      }))
+    const routeData = committedRouteGeoJson(segments)
 
-    if (!features.length) return clearDriverRoute
+    if (!routeData.features.length) return clearDriverRoute
 
     map.addSource(DRIVER_ROUTE_SOURCE, {
       type: 'geojson',
-      data: { type: 'FeatureCollection', features },
+      data: routeData,
     })
 
     const beforeId = map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)
@@ -670,6 +736,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.22,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.14,
+          ['==', ['get', 'executionPhase'], 'active'],
+          0.96,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.34,
           freightRoutePreview ? 0.62 : 0.82,
         ],
       },
@@ -688,6 +760,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.14,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.2,
+          ['==', ['get', 'executionPhase'], 'active'],
+          1,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.46,
           freightRoutePreview ? 0.62 : 0.88,
         ],
       },
@@ -706,6 +784,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.22,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.14,
+          ['==', ['get', 'executionPhase'], 'active'],
+          0.96,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.34,
           freightRoutePreview ? 0.62 : 0.82,
         ],
         'line-dasharray': PICKUP_CASING_DASH,
@@ -725,6 +809,12 @@ export default function OperationsMap({
           'case',
           ['boolean', ['get', 'affected'], false],
           0.14,
+          ['==', ['get', 'executionPhase'], 'completed'],
+          0.2,
+          ['==', ['get', 'executionPhase'], 'active'],
+          1,
+          ['==', ['get', 'executionPhase'], 'future'],
+          0.46,
           freightRoutePreview ? 0.62 : 0.88,
         ],
         'line-dasharray': PICKUP_ROUTE_DASH,
@@ -735,6 +825,18 @@ export default function OperationsMap({
 
     return clearDriverRoute
   }, [displayDriverRoutes, freightRoutePreview, mapReady, selectedDriver])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map || !selectedDriver || !displayDriverRoutes.length) return
+
+    const source = map.getSource(DRIVER_ROUTE_SOURCE)
+    if (!source?.setData) return
+
+    const insertion = freightRoutePreview?.evaluation?.insertion ?? null
+    const segments = markInsertionAffectedSegment(displayDriverRoutes, insertion)
+    source.setData(committedRouteGeoJson(segments, liveState))
+  }, [displayDriverRoutes, freightRoutePreview, liveState, mapReady, selectedDriver])
 
   useEffect(() => {
     const map = mapRef.current

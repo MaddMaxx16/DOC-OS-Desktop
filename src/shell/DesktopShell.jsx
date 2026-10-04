@@ -120,6 +120,9 @@ export default function DesktopShell({
   const selectedLiveState = selectedDriver
     ? liveDriverStates[selectedDriver.id] ?? null
     : null
+  const mapLiveState = mapDriver
+    ? liveDriverStates[mapDriver.id] ?? null
+    : null
 
   return (
     <main className="desktop-shell">
@@ -162,6 +165,7 @@ export default function DesktopShell({
             <DriverBrowser
               drivers={drivers}
               activeDriverId={selectedDriver?.id ?? null}
+              liveDriverStates={liveDriverStates}
               onSelectSubject={onSelectSubject}
             />
           )}
@@ -191,6 +195,7 @@ export default function DesktopShell({
               selectedDriver={mapDriver}
               selectedStop={selectedStop}
               selection={selection}
+              liveState={mapLiveState}
               freightRoutePreview={activeFreightRoutePreview}
               planningPlaceOptions={planningPlaceOptions}
               pendingPlanningPlace={pendingPlanningPlace}

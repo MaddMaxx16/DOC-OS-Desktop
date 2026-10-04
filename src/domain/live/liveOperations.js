@@ -1,4 +1,5 @@
 import { DISPATCH_PLAN_STATUS } from '../planning/dispatchPlan.js'
+import { buildTimelineExecution } from './routeExecution.js'
 
 export const SIMULATION_MODE = Object.freeze({
   PAUSED: 'paused',
@@ -86,11 +87,62 @@ function isInsideShiftWindow(shift = {}, currentMinutes) {
   return currentMinutes >= start && currentMinutes <= end
 }
 
+function activePresentation(execution = {}) {
+  if (execution.executionPhase === 'en-route') {
+    return {
+      label: 'EN ROUTE',
+      detail: execution.nextEventLabel
+        ? `Driving to ${execution.nextEventLabel}.`
+        : 'Executing the communicated route.',
+    }
+  }
+
+  if (execution.executionPhase === 'arrived') {
+    return {
+      label: 'ARRIVED',
+      detail: execution.currentEventLabel
+        ? `Arrived at ${execution.currentEventLabel}.`
+        : 'Arrived at the next planned stop.',
+    }
+  }
+
+  if (execution.executionPhase === 'dwell-break') {
+    return {
+      label: 'ON BREAK',
+      detail: execution.currentEventLabel
+        ? `Lunch at ${execution.currentEventLabel}.`
+        : 'Driver is on the planned lunch break.',
+    }
+  }
+
+  if (execution.executionPhase === 'dwell') {
+    return {
+      label: 'AT STOP',
+      detail: execution.currentEventLabel
+        ? `Stopped at ${execution.currentEventLabel}.`
+        : 'Driver is at a planned stop.',
+    }
+  }
+
+  if (execution.executionPhase === 'complete') {
+    return {
+      label: 'ROUTE COMPLETE',
+      detail: 'The communicated Driver Day has reached its final planned event.',
+    }
+  }
+
+  return {
+    label: 'LIVE READY',
+    detail: 'The sent plan is armed inside the driver\'s shift window.',
+  }
+}
+
 export function buildLiveDriverState(day = {}, clock = {}) {
   const normalizedClock = createSimulationClock(clock)
   const shift = day?.shift ?? {}
   const shiftStartMinutes = finite(shift.startMinutes)
   const shiftEndMinutes = finite(shift.endMinutes)
+  const timelineExecution = buildTimelineExecution(day, normalizedClock)
 
   if (!isSent(day)) {
     return {
@@ -101,6 +153,19 @@ export function buildLiveDriverState(day = {}, clock = {}) {
       detail: 'Send the schedule to arm Live Operations.',
       shiftStartMinutes,
       shiftEndMinutes,
+      executionPhase: 'draft',
+      activeSegmentId: null,
+      activeSegmentProgress: 0,
+      currentEventId: null,
+      currentEventKind: null,
+      currentEventLabel: null,
+      currentEventDepartureMinutes: null,
+      nextEventId: null,
+      nextEventKind: null,
+      nextEventLabel: null,
+      nextEventArrivalMinutes: null,
+      completedSegmentIds: [],
+      completedEventIds: [],
     }
   }
 
@@ -113,18 +178,20 @@ export function buildLiveDriverState(day = {}, clock = {}) {
       detail: 'This communicated shift window has ended.',
       shiftStartMinutes,
       shiftEndMinutes,
+      ...timelineExecution,
     }
   }
 
   if (isInsideShiftWindow(shift, normalizedClock.currentMinutes)) {
+    const presentation = activePresentation(timelineExecution)
     return {
       driverId: day?.driverId ?? null,
       phase: 'active',
       sent: true,
-      label: 'LIVE READY',
-      detail: 'The sent plan is armed inside the driver\'s shift window.',
+      ...presentation,
       shiftStartMinutes,
       shiftEndMinutes,
+      ...timelineExecution,
     }
   }
 
@@ -142,6 +209,7 @@ export function buildLiveDriverState(day = {}, clock = {}) {
       detail: 'The sent plan is armed and waiting for shift start.',
       shiftStartMinutes,
       shiftEndMinutes,
+      ...timelineExecution,
     }
   }
 
@@ -153,6 +221,7 @@ export function buildLiveDriverState(day = {}, clock = {}) {
     detail: 'This communicated shift window has ended.',
     shiftStartMinutes,
     shiftEndMinutes,
+    ...timelineExecution,
   }
 }
 
