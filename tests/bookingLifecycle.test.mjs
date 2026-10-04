@@ -41,9 +41,10 @@ test('booking lifecycle keeps requested, document-ready, correction, and confirm
   assert.equal(corrected.status, BOOKING_STATUS.RATE_CON_READY)
   assert.equal(corrected.correctionCount, 1)
 
-  const confirmed = confirmBookingRecord(corrected)
+  const confirmed = confirmBookingRecord(corrected, { acceptedWithMismatch: true })
   assert.equal(confirmed.status, BOOKING_STATUS.CONFIRMED)
   assert.equal(confirmed.confirmedRateConfirmationId, correctedDoc.id)
+  assert.equal(confirmed.acceptedWithMismatch, true)
 })
 
 test('FL-401 initial Rate Con matches marketplace terms', () => {
