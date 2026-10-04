@@ -1,5 +1,5 @@
 const ROUTER_URL = 'https://router.project-osrm.org/route/v1/driving'
-const REQUEST_TIMEOUT_MS = 4500
+const REQUEST_TIMEOUT_MS = 8000
 const MAX_ROAD_ATTEMPTS = 3
 const RETRY_DELAYS_MS = [0, 250, 700]
 const routeCache = new Map()
