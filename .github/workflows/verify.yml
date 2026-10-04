@@ -13,6 +13,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
+      - run: node scripts/diagnoseMarcusRoutes.mjs
       - run: npm run lint
       - run: npm test
       - run: npm run build
