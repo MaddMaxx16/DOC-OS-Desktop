@@ -32,23 +32,22 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.9 Native Operational Stops
+## Current packet — V2.6.5.10 Clean Native Stops
 
-V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5 label declutter, V2.6.5.6 truck-access coordinates, and V2.6.5.7 serialized road hydration remain active.
+V2.1 through V2.6.4.1 remain the locked gameplay foundation. V2.6.5.6 truck-access coordinates, V2.6.5.7 serialized road hydration, and V2.6.5.9 MapLibre-native committed stops remain active.
 
 Guardrails:
 - preserve selected-driver route persistence and Driver Day plan truth,
 - preserve facility-coordinate vs truck-access-coordinate separation,
 - preserve serialized committed road hydration and real-road-only rendering,
-- committed pickup/delivery stop badges must render as MapLibre-native layers, not HTML DOM markers,
-- committed route lines and committed P/D stop badges must share the same map projection and route-access coordinate source,
-- do not reintroduce DOM Marker rendering for committed freight stops,
-- native committed-stop layers must remain clickable and feed the existing shared STOP selection model,
-- selected and next planned stops may expose facility labels; other committed stops remain badge-first and reveal labels on hover,
-- native committed-stop layers render above committed route lines,
-- Lunch/Staging may remain DOM route anchors for now; this packet specifically replaces freight P/D stop markers proven to drift on screen,
-- V2.6.5.8 diagnostics remain dev-only until this native-stop correction passes visual acceptance,
-- do not alter sequencing, appointments, HOS, capacity, sent-plan truth, route ownership, or facility identity in this packet.
+- committed P/D stop badges remain MapLibre-native and must not return to HTML DOM Marker rendering,
+- route lines and committed stop badges use the same route-access coordinates and map projection,
+- native P/D badges and selected/next facility labels remain above committed route lines,
+- native committed-stop layers remain clickable and feed the shared STOP selection model,
+- V2.6.5.8 route diagnostics have completed their purpose and must not remain in the normal dev UI,
+- remove diagnostic map dots/rings, diagnostic panel, and diagnostic CSS after proof is established,
+- do not change routing, sequencing, appointments, HOS, capacity, sent-plan truth, or facility identity in this cleanup packet,
+- visual acceptance should confirm ordinary P/D badges are visible directly on their blue route endpoints without diagnostic overlays.
 
 ## Verification
 
