@@ -187,6 +187,8 @@ export default function OperationsMap({
     ),
     [driverRouteKey, driverRouteResult],
   )
+  const nextStopId = nextOperationalEventId(driverDay)
+
   const routeDebugRows = useMemo(() => {
     const accessByEventId = buildRouteAccessByEventId(plannedDriverRoutes)
 
@@ -342,7 +344,6 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
-    const nextStopId = nextOperationalEventId(driverDay)
     const routeAnchors = driverIdentity && driverDay
       ? buildDriverRouteAnchors(driverDay, locations)
       : []
