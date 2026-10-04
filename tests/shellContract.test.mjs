@@ -189,7 +189,7 @@ test('V2.6.1 Driver Day exposes draft planning mode without replacing the map-fi
 
   assert.match(app, /planningDriverId/)
   assert.match(app, /startDriverPlanning/)
-  assert.match(shell, /planning=\{planningDriverId === selectedDriver\?\.id\}/)
+  assert.match(shell, /const planningActive = planningDriverId === selectedDriver\?\.id/)
   assert.match(inspector, /planning-context/)
   assert.match(panel, /dispatchPlanStatusLabel/)
   assert.match(panel, /EDIT PLAN/)
