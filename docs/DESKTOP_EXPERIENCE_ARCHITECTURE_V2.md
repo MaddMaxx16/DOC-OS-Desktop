@@ -546,6 +546,9 @@ Committed freight stops render as MapLibre-native operational layers:
 - each feature resolves to the route's truck-access coordinate when road truth is available,
 - committed route lines and committed P/D stop badges use the same MapLibre projection,
 - DOM Marker positioning must not be used for committed freight-stop badges,
+- the same native committed-stop source/layers are used in Live Map and FreightLink,
+- opening FreightLink never swaps committed freight stops back to a separate DOM rendering path,
+- FreightLink marketplace/candidate visuals are overlays around the same committed Driver Day map truth,
 - normal committed stop presentation is badge-first rather than redundant PICKUP / DELIVERY copy,
 - the selected stop and next planned stop may show their full facility names,
 - other freight stops reveal facility labels on hover/focus,
@@ -1492,27 +1495,31 @@ The following are now considered locked unless deliberately reopened:
 
 V2.5 through V2.6.4.1 are accepted and locked.
 
-The active final map-cleanup packet is:
+The active final map-correction packet is:
 
-# **V2.6.5.10 — Clean Native Stops**
+# **V2.6.5.11 — Shared Native Stops**
 
-V2.6.5.8 diagnostics conclusively proved that committed route endpoints and operational marker-access coordinates were identical. V2.6.5.9 then moved committed pickup/delivery badges onto MapLibre-native layers so they share the same projection as the route.
+V2.6.5.10 visually confirmed that the Live Map's MapLibre-native P/D stop layer is correct.
 
-The first V2.6.5.9 visual test showed the diagnostic pink dots/yellow rings were rendered above the native P/D badges, obscuring the new presentation.
+The FreightLink screenshot exposed one remaining mode split:
 
-V2.6.5.10 therefore performs cleanup only:
+- Live Map used the new native committed-stop source/layers,
+- opening FreightLink disabled those layers with a `workspaceOpen` guard,
+- FreightLink then rendered the old DOM route anchors for all committed events,
+- the retired DOM freight markers reproduced the route/marker disconnect only inside FreightLink.
 
-- remove the route-diagnostics panel,
-- remove diagnostic endpoint dots and access rings,
-- remove diagnostic CSS and debug-only map sources/layers,
-- keep the MapLibre-native P/D stop source, circle layer, badge layer, and label layer,
-- keep native stop layers above committed route lines,
-- keep selected/next facility labels and hover disclosure,
-- make no routing or coordinate-model changes.
+V2.6.5.11 removes that split:
+
+- native committed P/D layers remain active while FreightLink is open,
+- FreightLink no longer renders committed freight events through DOM route anchors,
+- non-freight Lunch/Staging anchors may remain DOM-based,
+- marketplace lane markers and candidate-route visuals remain FreightLink-specific overlays,
+- committed Driver Day stops, route-access coordinates, and route ownership remain identical across Live Map and FreightLink,
+- no routing or planning logic changes are introduced.
 
 Acceptance:
 
-Normal Driver view shows clear P1/P2/P3/D1/D2/D3 badges directly on the blue committed route with no pink/yellow diagnostic markers visible.
+Opening FreightLink for Marcus shows the same correctly aligned committed P1/P2/P3/D1/D2/D3 badges as the Live Map, with FL marketplace overlays layered around them rather than replacing them.
 
 After visual acceptance, lock V2.6 map polish and proceed to:
 
