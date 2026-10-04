@@ -18,11 +18,13 @@ export function exactSegmentRouteShape(segment = {}) {
 
   if (!validCoordinate(origin) || !validCoordinate(destination)) return []
 
+  if (segment.route?.source !== 'road') return []
+
   const routeShape = Array.isArray(segment.route?.routeShape)
     ? segment.route.routeShape.filter(validCoordinate).map((point) => [...point])
     : []
 
-  if (!routeShape.length) return [[...origin], [...destination]]
+  if (!routeShape.length) return []
 
   if (!sameCoordinate(routeShape[0], origin)) routeShape.unshift([...origin])
   if (!sameCoordinate(routeShape[routeShape.length - 1], destination)) {
