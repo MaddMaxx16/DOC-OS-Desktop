@@ -4,11 +4,10 @@ import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
-import AppDock from './AppDock.jsx'
-import DesktopAppDrawer from './DesktopAppDrawer.jsx'
-import DriverDrawer from './DriverDrawer.jsx'
+import CommandRail from './CommandRail.jsx'
+import DriverBrowser from './DriverBrowser.jsx'
 import FocusedWorkspace from './FocusedWorkspace.jsx'
-import OperationsDrawer from './OperationsDrawer.jsx'
+import OperationsInspector from './OperationsInspector.jsx'
 import TopBar from './TopBar.jsx'
 import './shell.css'
 
@@ -24,12 +23,6 @@ export default function DesktopShell({
   focusedTask,
   freightRoutePreview,
   freightCandidateDriverId,
-  leftOpen,
-  rightOpen,
-  onToggleLeft,
-  onToggleRight,
-  onCloseLeft,
-  onCloseRight,
   onToggleApp,
   onCloseActiveApp,
   onCloseFocusedTask,
@@ -53,23 +46,22 @@ export default function DesktopShell({
     && freightRoutePreview?.driver?.id === freightCandidateDriverId
   ) ? freightRoutePreview : null
 
+  const freightlinkOpen = activeApp === 'freightlink'
   const freightDriver = activeFreightRoutePreview?.driver ?? null
-  const freightCandidateDriver = activeApp === 'freightlink'
+  const freightCandidateDriver = freightlinkOpen
     ? drivers.find((driver) => driver.id === freightCandidateDriverId) ?? null
     : null
-  const mapDriver = activeApp === 'freightlink'
+  const mapDriver = freightlinkOpen
     ? (freightDriver ?? freightCandidateDriver)
-    : (selectedDriver ?? freightDriver)
+    : selectedDriver
   const mapDriverDay = mapDriver
     ? driverDays.find((day) => day.driverId === mapDriver.id) ?? null
     : driverDay
 
-  const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
-  const operationsHandleStyle = selectedDriverIdentity
-    ? { '--selected-driver-color': selectedDriverIdentity.color }
-    : undefined
-
-  const workspaceOpen = Boolean(activeApp)
+  const hasBrowser = activeApp === 'drivers' || freightlinkOpen
+  const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)
+  const hasOperationsInspector = !freightlinkOpen && Boolean(selection)
+  const hasInspector = hasFreightInspector || hasOperationsInspector
 
   const focusedRecord = focusedTask?.type === 'rate-confirmation'
     ? bookingRecords[focusedTask.laneId] ?? null
@@ -80,6 +72,8 @@ export default function DesktopShell({
   const focusedDriver = focusedRecord
     ? drivers.find((driver) => driver.id === focusedRecord.driverId) ?? null
     : null
+
+  const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
 
   return (
     <main className="desktop-shell">
@@ -103,9 +97,43 @@ export default function DesktopShell({
         </FocusedWorkspace>
       ) : (
         <section
-          className={`operations-canvas ${workspaceOpen ? 'workspace-open' : ''}`}
+          className={[
+            'operations-canvas',
+            hasBrowser ? 'browser-open' : '',
+            hasInspector ? 'inspector-open' : '',
+            freightlinkOpen ? 'freightlink-open' : '',
+          ].filter(Boolean).join(' ')}
+          style={selectedDriverIdentity ? { '--selected-driver-color': selectedDriverIdentity.color } : undefined}
           aria-label="DOC OS operations workstation"
         >
+          <CommandRail activeSection={activeApp} onToggleSection={onToggleApp} />
+
+          {activeApp === 'drivers' && (
+            <DriverBrowser
+              drivers={drivers}
+              activeDriverId={selectedDriver?.id ?? null}
+              onSelectSubject={onSelectSubject}
+            />
+          )}
+
+          {freightlinkOpen && (
+            <FreightLinkWorkspace
+              drivers={drivers}
+              driverDays={driverDays}
+              lanes={marketLanes}
+              locations={locations}
+              bookingRecords={bookingRecords}
+              selection={selection}
+              candidateDriverId={freightCandidateDriverId}
+              onCandidateDriverChange={onFreightCandidateDriverChange}
+              onRequestRateCon={onRequestRateCon}
+              onOpenRateCon={onOpenRateCon}
+              onSelectSubject={onSelectSubject}
+              onClose={onCloseActiveApp}
+              onRoutePreviewChange={onRoutePreviewChange}
+            />
+          )}
+
           <div className="map-workspace">
             <OperationsMap
               drivers={drivers}
@@ -114,81 +142,22 @@ export default function DesktopShell({
               selectedStop={selectedStop}
               selection={selection}
               freightRoutePreview={activeFreightRoutePreview}
-              workspaceOpen={workspaceOpen}
+              workspaceOpen={freightlinkOpen}
               marketLanes={marketLanes}
               locations={locations}
               onSelectSubject={onSelectSubject}
             />
-
-            {!workspaceOpen && (
-              <>
-                <button
-                  type="button"
-                  className={`drawer-handle drawer-handle-left ${leftOpen ? 'open' : ''}`}
-                  onClick={onToggleLeft}
-                  aria-expanded={leftOpen}
-                  aria-controls="driver-drawer"
-                >
-                  <span className="handle-icon" aria-hidden="true">☷</span>
-                  <span>DRIVERS</span>
-                  <b>{drivers.length}</b>
-                </button>
-
-                <button
-                  type="button"
-                  className={`drawer-handle drawer-handle-right ${rightOpen ? 'open' : ''} ${selectedDriver ? 'has-driver-selection' : ''}`}
-                  style={operationsHandleStyle}
-                  onClick={onToggleRight}
-                  aria-expanded={rightOpen}
-                  aria-controls="operations-drawer"
-                >
-                  <span className="handle-icon" aria-hidden="true">⌁</span>
-                  <span>OPS</span>
-                  <b>{selectedDriver?.initials ?? '—'}</b>
-                </button>
-
-                <DriverDrawer
-                  drivers={drivers}
-                  activeDriverId={selectedDriver?.id ?? null}
-                  open={leftOpen}
-                  onClose={onCloseLeft}
-                  onSelectSubject={onSelectSubject}
-                />
-
-                <OperationsDrawer
-                  selection={selection}
-                  driver={selectedDriver}
-                  driverDay={driverDay}
-                  selectedStop={selectedStop}
-                  open={rightOpen}
-                  onClose={onCloseRight}
-                  onSelectSubject={onSelectSubject}
-                />
-              </>
-            )}
           </div>
 
-          <DesktopAppDrawer activeApp={activeApp}>
-            {activeApp === 'freightlink' && (
-              <FreightLinkWorkspace
-                drivers={drivers}
-                driverDays={driverDays}
-                lanes={marketLanes}
-                locations={locations}
-                bookingRecords={bookingRecords}
-                selection={selection}
-                candidateDriverId={freightCandidateDriverId}
-                onCandidateDriverChange={onFreightCandidateDriverChange}
-                onRequestRateCon={onRequestRateCon}
-                onOpenRateCon={onOpenRateCon}
-                onSelectSubject={onSelectSubject}
-                onClose={onCloseActiveApp}
-                onRoutePreviewChange={onRoutePreviewChange}
-              />
-            )}
-          </DesktopAppDrawer>
-
-          <AppDock activeApp={activeApp} onToggleApp={onToggleApp} />
+          {hasOperationsInspector && (
+            <OperationsInspector
+              selection={selection}
+              driver={selectedDriver}
+              driverDay={driverDay}
+              selectedStop={selectedStop}
+              onSelectSubject={onSelectSubject}
+            />
+          )}
         </section>
       )}
     </main>

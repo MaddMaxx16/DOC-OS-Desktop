@@ -1,22 +1,18 @@
 export const SHELL_CONFIG = Object.freeze({
   referenceWidth: 1920,
   referenceHeight: 1080,
-  leftDrawerDefaultOpen: false,
-  rightDrawerDefaultOpen: false,
-  leftDrawerWidth: 300,
-  rightDrawerWidth: 390,
-  dockHeight: 64,
-  appDrawerViewportRatio: 0.46,
-  appDrawerMinHeight: 360,
-  appDrawerMaxHeight: 540,
+  commandRailWidth: 76,
+  browserWidth: 340,
+  inspectorWidth: 430,
 })
 
-export const DOCK_APPS = Object.freeze([
-  { id: 'freightlink', label: 'FreightLink', phase: 'LIVE' },
-  { id: 'email', label: 'Email', phase: 'V2.9' },
-  { id: 'documents', label: 'Documents', phase: 'V2.8' },
-  { id: 'messages', label: 'Messages', phase: 'V2.9' },
-  { id: 'banking', label: 'Banking', phase: 'V2.10' },
-  { id: 'carriersource', label: 'CarrierSource', phase: 'Later' },
-  { id: 'shop', label: 'Shop', phase: 'V2.10' },
+export const WORKSTATION_SECTIONS = Object.freeze([
+  { id: 'drivers', label: 'Drivers', shortLabel: 'DR', phase: 'LIVE' },
+  { id: 'freightlink', label: 'FreightLink', shortLabel: 'FL', phase: 'LIVE' },
+  { id: 'email', label: 'Email', shortLabel: 'EM', phase: 'V2.9' },
+  { id: 'documents', label: 'Documents', shortLabel: 'DOC', phase: 'V2.8' },
+  { id: 'messages', label: 'Messages', shortLabel: 'MSG', phase: 'V2.9' },
+  { id: 'banking', label: 'Banking', shortLabel: '$', phase: 'V2.10' },
+  { id: 'carriersource', label: 'CarrierSource', shortLabel: 'CS', phase: 'Later' },
+  { id: 'shop', label: 'Shop', shortLabel: 'SHOP', phase: 'V2.10' },
 ])

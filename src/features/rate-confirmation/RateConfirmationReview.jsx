@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { compareRateConfirmationToLane } from '../../domain/booking/rateConfirmation.js'
 import { formatClock } from '../../domain/manifest/driverDayModel.js'
 import './rateConfirmation.css'
@@ -32,25 +32,49 @@ export default function RateConfirmationReview({
   onRequestCorrection,
   onConfirm,
 }) {
+  const [reviewChoices, setReviewChoices] = useState({})
   const [acceptRiskArmed, setAcceptRiskArmed] = useState(false)
   const rateCon = bookingRecord?.rateConfirmation
-  const checks = compareRateConfirmationToLane(rateCon, lane)
-  const mismatches = checks.filter((check) => !check.matches)
-  const hasMismatch = mismatches.length > 0
+  const checks = useMemo(
+    () => compareRateConfirmationToLane(rateCon, lane),
+    [lane, rateCon],
+  )
 
   if (!lane || !driver || !rateCon) return null
 
+  const reviewedCount = checks.filter((check) => reviewChoices[check.id]).length
+  const flaggedChecks = checks.filter((check) => reviewChoices[check.id] === 'issue')
+  const allReviewed = reviewedCount === checks.length
+  const actualMismatches = checks.filter((check) => !check.matches)
+  const hasFlaggedIssue = flaggedChecks.length > 0
+
+  const choose = (checkId, choice) => {
+    setReviewChoices((current) => ({ ...current, [checkId]: choice }))
+    setAcceptRiskArmed(false)
+  }
+
+  const correctionReason = flaggedChecks
+    .map((check) => (
+      `${check.label}: FreightLink ${checkValue(check, check.expected, locations)}; Rate Con ${checkValue(check, check.actual, locations)}`
+    ))
+    .join('; ')
+
   const handleConfirm = () => {
-    if (hasMismatch && !acceptRiskArmed) {
+    if (!allReviewed) return
+
+    if (hasFlaggedIssue && !acceptRiskArmed) {
       setAcceptRiskArmed(true)
       return
     }
-    onConfirm({ acceptedWithMismatch: hasMismatch })
+
+    onConfirm({ acceptedWithMismatch: actualMismatches.length > 0 })
   }
 
-  const correctionReason = mismatches
-    .map((check) => `${check.label}: expected ${checkValue(check, check.expected, locations)}, document says ${checkValue(check, check.actual, locations)}`)
-    .join('; ')
+  const reviewStatus = !allReviewed
+    ? `${reviewedCount}/${checks.length} REVIEWED`
+    : hasFlaggedIssue
+      ? `${flaggedChecks.length} ISSUE${flaggedChecks.length > 1 ? 'S' : ''} FLAGGED`
+      : 'REVIEW COMPLETE'
 
   return (
     <div className="ratecon-review">
@@ -58,7 +82,7 @@ export default function RateConfirmationReview({
         <header className="ratecon-paper-header">
           <div>
             <span>FREIGHTLINK BROKERAGE</span>
-            <strong>RATE CONFIRMATION</strong>
+            <strong>RATE / LOAD CONFIRMATION</strong>
             <small>Confirmation #{rateCon.confirmationNumber}</small>
           </div>
           <div className="ratecon-revision">
@@ -68,9 +92,15 @@ export default function RateConfirmationReview({
           </div>
         </header>
 
+        <div className="ratecon-document-meta">
+          <div><span>ISSUED</span><strong>{rateCon.issuedAtLabel}</strong></div>
+          <div><span>LOAD</span><strong>{lane.laneRef}</strong></div>
+          <div><span>PAYMENT</span><strong>{rateCon.paymentTerms}</strong></div>
+        </div>
+
         <div className="ratecon-party-grid">
           <section>
-            <span>BROKER</span>
+            <span>BROKER / CONTACT</span>
             <strong>{rateCon.broker.name}</strong>
             <small>{rateCon.broker.contact}</small>
             <small>{rateCon.broker.phone}</small>
@@ -79,90 +109,130 @@ export default function RateConfirmationReview({
             <span>CARRIER</span>
             <strong>{rateCon.carrier.name}</strong>
             <small>{rateCon.carrier.operatingArea}</small>
-            <small>Assigned driver: {driver.name}</small>
+            <small>Driver: {driver.name}</small>
           </section>
         </div>
 
         <div className="ratecon-rate">
-          <span>AGREED LINEHAUL RATE</span>
+          <div>
+            <span>AGREED LINEHAUL</span>
+            <small>All-in unless separately authorized below</small>
+          </div>
           <strong>{money(rateCon.terms.rate)}</strong>
-          <small>{rateCon.terms.equipment}</small>
+          <em>{rateCon.terms.equipment}</em>
         </div>
 
         <div className="ratecon-stop-grid">
           <section>
             <div className="ratecon-stop-number">1</div>
             <div>
-              <span>PICKUP</span>
+              <span>SHIPPER / PICKUP</span>
               <strong>{rateCon.terms.pickupLocationLabel}</strong>
-              <small>{windowLabel(rateCon.terms.pickupWindow)}</small>
+              <small>Appointment: {windowLabel(rateCon.terms.pickupWindow)}</small>
             </div>
           </section>
           <section>
             <div className="ratecon-stop-number">2</div>
             <div>
-              <span>DELIVERY</span>
+              <span>CONSIGNEE / DELIVERY</span>
               <strong>{rateCon.terms.deliveryLocationLabel}</strong>
-              <small>{windowLabel(rateCon.terms.deliveryWindow)}</small>
+              <small>Appointment: {windowLabel(rateCon.terms.deliveryWindow)}</small>
             </div>
           </section>
         </div>
 
         <div className="ratecon-freight-grid">
-          <div><span>LANE</span><strong>{lane.laneRef}</strong></div>
           <div><span>PALLETS</span><strong>{rateCon.terms.freight.pallets}</strong></div>
           <div><span>WEIGHT</span><strong>{Math.round(rateCon.terms.freight.weightLbs / 1000)}K LB</strong></div>
           <div><span>EQUIPMENT</span><strong>{rateCon.terms.equipment}</strong></div>
+          <div><span>TRACKING</span><strong>REQUIRED</strong></div>
         </div>
 
-        <section className="ratecon-notes">
-          <span>CARRIER INSTRUCTIONS</span>
+        <section className="ratecon-terms">
+          <span>TERMS / ACCESSORIALS</span>
+          <p>{rateCon.trackingRequirement}.</p>
+          <p>{rateCon.accessorialTerms}</p>
           <p>{rateCon.notes}</p>
         </section>
 
+        <div className="ratecon-signature-row">
+          <div>
+            <span>CARRIER ACCEPTANCE</span>
+            <strong>Metroline / Dispatch</strong>
+          </div>
+          <div>
+            <span>DATE / TIME</span>
+            <strong>Pending acceptance</strong>
+          </div>
+        </div>
+
         <footer className="ratecon-paper-footer">
-          <span>Review all terms before dispatching. Acceptance confirms the terms shown on this document.</span>
+          <span>Carrier acceptance confirms the terms shown on this document. Retain with load paperwork.</span>
         </footer>
       </article>
 
       <aside className="ratecon-verification">
         <header>
-          <span>VERIFY BEFORE ACCEPTING</span>
-          <strong>{hasMismatch ? `${mismatches.length} MISMATCH${mismatches.length > 1 ? 'ES' : ''}` : 'TERMS MATCH'}</strong>
-          <small>Compare the broker document against the lane you evaluated in FreightLink.</small>
+          <span>YOUR VERIFICATION</span>
+          <strong>{reviewStatus}</strong>
+          <small>Compare each FreightLink term with the broker document, then mark what you found.</small>
         </header>
 
         <div className="ratecon-check-list">
-          {checks.map((check) => (
-            <div className={`ratecon-check ${check.matches ? 'match' : 'mismatch'}`} key={check.id}>
-              <span>{check.matches ? '✓' : '!'}</span>
-              <div>
-                <strong>{check.label}</strong>
-                {check.matches ? (
-                  <small>{checkValue(check, check.actual, locations)}</small>
-                ) : (
-                  <>
-                    <small>FreightLink: {checkValue(check, check.expected, locations)}</small>
-                    <small>Rate Con: {checkValue(check, check.actual, locations)}</small>
-                  </>
-                )}
+          {checks.map((check) => {
+            const choice = reviewChoices[check.id] ?? null
+            return (
+              <div className={`ratecon-check ${choice ? `reviewed ${choice}` : ''}`} key={check.id}>
+                <div className="ratecon-check-heading">
+                  <span>{choice === 'match' ? 'M' : choice === 'issue' ? '!' : '—'}</span>
+                  <strong>{check.label}</strong>
+                </div>
+
+                <div className="ratecon-compare-values">
+                  <div>
+                    <span>FREIGHTLINK</span>
+                    <strong>{checkValue(check, check.expected, locations)}</strong>
+                  </div>
+                  <div>
+                    <span>RATE CON</span>
+                    <strong>{checkValue(check, check.actual, locations)}</strong>
+                  </div>
+                </div>
+
+                <div className="ratecon-choice-row">
+                  <button
+                    type="button"
+                    className={choice === 'match' ? 'active match' : ''}
+                    onClick={() => choose(check.id, 'match')}
+                  >
+                    MATCH
+                  </button>
+                  <button
+                    type="button"
+                    className={choice === 'issue' ? 'active issue' : ''}
+                    onClick={() => choose(check.id, 'issue')}
+                  >
+                    ISSUE
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {acceptRiskArmed && hasMismatch && (
+        {acceptRiskArmed && hasFlaggedIssue && (
           <div className="ratecon-risk-warning">
-            <strong>YOU ARE ABOUT TO ACCEPT MISMATCHED TERMS.</strong>
-            <p>The booked load will use the Rate Confirmation exactly as written. DOC OS will not silently correct it.</p>
+            <strong>YOU FLAGGED AN ISSUE.</strong>
+            <p>Accepting anyway commits the broker document exactly as written. Use correction if the terms should change.</p>
           </div>
         )}
 
         <div className="ratecon-review-actions">
-          {hasMismatch && (
+          {hasFlaggedIssue && (
             <button
               type="button"
               className="ratecon-correction-button"
+              disabled={!allReviewed}
               onClick={() => onRequestCorrection(correctionReason)}
             >
               REQUEST CORRECTION
@@ -170,10 +240,17 @@ export default function RateConfirmationReview({
           )}
           <button
             type="button"
-            className={`ratecon-confirm-button ${hasMismatch ? 'warning' : ''}`}
+            className={`ratecon-confirm-button ${hasFlaggedIssue ? 'warning' : ''}`}
+            disabled={!allReviewed}
             onClick={handleConfirm}
           >
-            {hasMismatch && !acceptRiskArmed ? 'ACCEPT WITH WARNING' : hasMismatch ? 'ACCEPT ANYWAY + ASSIGN' : 'ACCEPT + ASSIGN'}
+            {!allReviewed
+              ? 'REVIEW ALL TERMS'
+              : hasFlaggedIssue && !acceptRiskArmed
+                ? 'ACCEPT AS WRITTEN'
+                : hasFlaggedIssue
+                  ? 'CONFIRM ANYWAY + ASSIGN'
+                  : 'ACCEPT + ASSIGN'}
           </button>
         </div>
       </aside>

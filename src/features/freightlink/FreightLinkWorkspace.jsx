@@ -226,13 +226,16 @@ export default function FreightLinkWorkspace({
   }
 
   return (
-    <section className="freightlink-workspace" aria-label="FreightLink desktop">
-      <header className="freightlink-header">
-        <div className="freightlink-title">
-          <span>MARKETPLACE</span>
-          <strong>FreightLink</strong>
-          <small>Compare lanes against the actual driver day before you commit.</small>
-        </div>
+    <div className="freightlink-workspace">
+      <aside className="workstation-browser freightlink-browser" aria-label="FreightLink marketplace">
+        <header className="workstation-panel-header freightlink-browser-header">
+          <div>
+            <span>MARKETPLACE</span>
+            <strong>FreightLink</strong>
+            <small>Shop freight against the selected driver's real day.</small>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close FreightLink">×</button>
+        </header>
 
         <label className="freightlink-driver-select">
           <span>{bookingLocksDriver ? 'DRIVER · LOCKED FOR REQUEST' : 'DRIVER'}</span>
@@ -250,181 +253,152 @@ export default function FreightLinkWorkspace({
           </div>
         </label>
 
-        <button type="button" className="freightlink-close" onClick={onClose} aria-label="Close FreightLink">×</button>
-      </header>
-
-      <div className="freightlink-filters" aria-label="Freight fit filters">
-        {FIT_FILTERS.map((filter) => {
-          const count = filter === 'ALL'
-            ? evaluations.length
-            : evaluations.filter(({ evaluation }) => evaluation?.label === filter).length
-          return (
-            <button
-              type="button"
-              key={filter}
-              className={fitFilter === filter ? 'active' : ''}
-              onClick={() => setFitFilter(filter)}
-            >
-              <span>{filter}</span>
-              <b>{count}</b>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="freightlink-body">
-        <div className="lane-board">
-          <div className="lane-board-head">
-            <span>LANE</span>
-            <span>PICKUP</span>
-            <span>RATE</span>
-            <span>FIT</span>
-          </div>
-
-          <div className="lane-list">
-            {visibleRows.map(({ lane, evaluation }) => {
-              const pickup = locations[lane.pickupLocationId]
-              const delivery = locations[lane.deliveryLocationId]
-              const selected = selectedLane?.id === lane.id
-              const bookingRecord = bookingRecords[lane.id] ?? null
-              return (
-                <button
-                  type="button"
-                  key={lane.id}
-                  className={`lane-row ${selected ? 'selected' : ''}`}
-                  onClick={() => onSelectSubject(SELECTION_TYPES.LOAD, lane.id)}
-                  aria-pressed={selected}
-                >
-                  <div className="lane-route-copy">
-                    <span>{lane.laneRef}</span>
-                    <strong>{pickup?.label ?? lane.pickupLocationId}</strong>
-                    <small>→ {delivery?.label ?? lane.deliveryLocationId}</small>
-                  </div>
-                  <div className="lane-pickup-copy">
-                    <strong>{windowLabel(lane.pickupWindow)}</strong>
-                    <small>{lane.freight.pallets} plt · {Math.round(lane.freight.weightLbs / 1000)}k lb</small>
-                  </div>
-                  <div className="lane-rate-copy">
-                    <strong>{formatMoney(lane.rate)}</strong>
-                    <small>{formatMoney(evaluation?.ratePerMile ?? 0)}/mi</small>
-                  </div>
-                  <div className={`lane-fit-pill ${evaluation?.tone ?? 'poor'}`}>
-                    <strong>{evaluation?.label ?? '—'}</strong>
-                    <small>{evaluation?.insertion.afterLabel ?? '—'} → {evaluation?.insertion.beforeLabel ?? '—'}</small>
-                    {bookingRecord && (
-                      <em className={`booking-state ${bookingRecord.status}`}>
-                        {bookingStatusLabel(bookingRecord)}
-                      </em>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+        <div className="freightlink-filters" aria-label="Freight fit filters">
+          {FIT_FILTERS.map((filter) => {
+            const count = filter === 'ALL'
+              ? evaluations.length
+              : evaluations.filter(({ evaluation }) => evaluation?.label === filter).length
+            return (
+              <button
+                type="button"
+                key={filter}
+                className={fitFilter === filter ? 'active' : ''}
+                onClick={() => setFitFilter(filter)}
+              >
+                <span>{filter}</span>
+                <b>{count}</b>
+              </button>
+            )
+          })}
         </div>
 
-        <aside className="lane-detail-panel">
-          {!selectedLane || !selectedEvaluation ? (
-            <div className="lane-detail-empty">
-              <span>LANE PREVIEW</span>
-              <strong>Select freight from the board.</strong>
-              <p>The lane will stay beside the map so you can see where the freight sits relative to the selected driver's existing day.</p>
+        <div className="lane-list freightlink-browser-list">
+          {visibleRows.map(({ lane, evaluation }) => {
+            const pickup = locations[lane.pickupLocationId]
+            const delivery = locations[lane.deliveryLocationId]
+            const selected = selectedLane?.id === lane.id
+            const bookingRecord = bookingRecords[lane.id] ?? null
+            return (
+              <button
+                type="button"
+                key={lane.id}
+                className={`lane-row ${selected ? 'selected' : ''}`}
+                onClick={() => onSelectSubject(SELECTION_TYPES.LOAD, lane.id)}
+                aria-pressed={selected}
+              >
+                <div className="lane-route-copy">
+                  <span>{lane.laneRef}</span>
+                  <strong>{pickup?.label ?? lane.pickupLocationId}</strong>
+                  <small>→ {delivery?.label ?? lane.deliveryLocationId}</small>
+                </div>
+                <div className="lane-browser-meta">
+                  <span>{windowLabel(lane.pickupWindow)}</span>
+                  <strong>{formatMoney(lane.rate)}</strong>
+                </div>
+                <div className={`lane-fit-pill ${evaluation?.tone ?? 'poor'}`}>
+                  <strong>{evaluation?.label ?? '—'}</strong>
+                  <small>{evaluation?.insertion.afterLabel ?? '—'} → {evaluation?.insertion.beforeLabel ?? '—'}</small>
+                </div>
+                {bookingRecord && (
+                  <em className={`booking-state ${bookingRecord.status}`}>
+                    {bookingStatusLabel(bookingRecord)}
+                  </em>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </aside>
+
+      {selectedLane && selectedEvaluation && (
+        <aside className="workstation-inspector freightlink-inspector" aria-label={`${selectedLane.laneRef} details`}>
+          <header className="workstation-panel-header freightlink-inspector-header">
+            <div>
+              <span>{selectedLane.laneRef}</span>
+              <strong>{selectedEvaluation.pickup?.label} → {selectedEvaluation.delivery?.label}</strong>
+              <small>{candidateDriver?.name} · {selectedLane.equipment}</small>
             </div>
-          ) : (
-            <>
-              <div className="lane-detail-hero">
-                <div>
-                  <span>{selectedLane.laneRef}</span>
-                  <strong>{selectedEvaluation.pickup?.label} → {selectedEvaluation.delivery?.label}</strong>
-                  <small>{selectedLane.equipment}</small>
-                </div>
-                <div className={`detail-fit-badge ${selectedEvaluation.tone}`}>
-                  <span>DRIVER FIT</span>
-                  <strong>{selectedEvaluation.label}</strong>
-                </div>
+            <div className={`detail-fit-badge ${selectedEvaluation.tone}`}>
+              <span>FIT</span>
+              <strong>{selectedEvaluation.label}</strong>
+            </div>
+          </header>
+
+          <div className="freightlink-inspector-scroll">
+            <div className="lane-money-strip">
+              <div><span>RATE</span><strong>{formatMoney(selectedLane.rate)}</strong></div>
+              <div><span>MILES</span><strong>{formatMiles(routeState.loaded?.distanceMiles ?? selectedEvaluation.loadedMiles)}</strong></div>
+              <div><span>RATE / MI</span><strong>{formatMoney(selectedEvaluation.ratePerMile)}</strong></div>
+              <div><span>FREIGHT</span><strong>{selectedLane.freight.pallets} PLT · {Math.round(selectedLane.freight.weightLbs / 1000)}K LB</strong></div>
+            </div>
+
+            <section className="lane-section">
+              <header><span>MANIFEST INSERTION</span><small>{candidateDriver?.name}</small></header>
+              <div className="manifest-insertion-card">
+                <div><span>AFTER</span><strong>{selectedEvaluation.insertion.afterLabel}</strong><small>{selectedEvaluation.insertion.originLocationLabel}</small></div>
+                <b>→</b>
+                <div className="inserted-lane"><span>ADD</span><strong>{selectedLane.laneRef}</strong><small>{formatClock(selectedEvaluation.insertion.pickupArrival)} P · {formatClock(selectedEvaluation.insertion.deliveryArrival)} D</small></div>
+                <b>→</b>
+                <div><span>BEFORE</span><strong>{selectedEvaluation.insertion.beforeLabel}</strong><small>{selectedEvaluation.insertion.nextLocationLabel}</small></div>
               </div>
+            </section>
 
-              <div className="lane-money-strip">
-                <div><span>RATE</span><strong>{formatMoney(selectedLane.rate)}</strong></div>
-                <div><span>EST. MILES</span><strong>{formatMiles(routeState.loaded?.distanceMiles ?? selectedEvaluation.loadedMiles)}</strong></div>
-                <div><span>RATE / MI</span><strong>{formatMoney(selectedEvaluation.ratePerMile)}</strong></div>
-                <div><span>FREIGHT</span><strong>{selectedLane.freight.pallets} PLT · {Math.round(selectedLane.freight.weightLbs / 1000)}K LB</strong></div>
+            <section className="lane-section">
+              <header><span>ROUTE</span><small>{routeState.status === 'routing' ? 'ROUTING…' : routeState.status === 'ready' ? 'ROAD ROUTE READY' : 'ESTIMATED'}</small></header>
+              <div className="route-stats">
+                <div><span>DEADHEAD</span><strong>{formatMiles(routeState.deadhead?.distanceMiles ?? selectedEvaluation.route.deadhead.miles)}</strong><small>{formatMinutes(routeState.deadhead?.durationMinutes ?? selectedEvaluation.route.deadhead.minutes)}</small></div>
+                <div><span>LOADED</span><strong>{formatMiles(routeState.loaded?.distanceMiles ?? selectedEvaluation.route.loaded.miles)}</strong><small>{formatMinutes(routeState.loaded?.durationMinutes ?? selectedEvaluation.route.loaded.minutes)}</small></div>
+                <div><span>PICKUP ETA</span><strong>{formatClock(selectedEvaluation.insertion.pickupArrival)}</strong><small>{selectedEvaluation.appointment.pickupMargin} min margin</small></div>
               </div>
+            </section>
 
-              <div className="lane-detail-columns">
-                <div className="lane-detail-column">
-                  <section className="lane-section">
-                    <header><span>MANIFEST INSERTION</span><small>{candidateDriver?.name}</small></header>
-                    <div className="manifest-insertion-card">
-                      <div><span>AFTER</span><strong>{selectedEvaluation.insertion.afterLabel}</strong><small>{selectedEvaluation.insertion.originLocationLabel}</small></div>
-                      <b>→</b>
-                      <div className="inserted-lane"><span>ADD LANE</span><strong>{selectedLane.laneRef}</strong><small>{formatClock(selectedEvaluation.insertion.pickupArrival)} pickup · {formatClock(selectedEvaluation.insertion.deliveryArrival)} delivery</small></div>
-                      <b>→</b>
-                      <div><span>BEFORE</span><strong>{selectedEvaluation.insertion.beforeLabel}</strong><small>{selectedEvaluation.insertion.nextLocationLabel}</small></div>
-                    </div>
-                  </section>
-
-                  <section className="lane-section">
-                    <header><span>MAP ROUTE</span><small>{routeState.status === 'routing' ? 'ROUTING…' : routeState.status === 'ready' ? 'ROAD ROUTE READY' : 'ESTIMATED ROUTE'}</small></header>
-                    <div className="route-stats">
-                      <div><span>DEADHEAD</span><strong>{formatMiles(routeState.deadhead?.distanceMiles ?? selectedEvaluation.route.deadhead.miles)}</strong><small>{formatMinutes(routeState.deadhead?.durationMinutes ?? selectedEvaluation.route.deadhead.minutes)}</small></div>
-                      <div><span>LOADED</span><strong>{formatMiles(routeState.loaded?.distanceMiles ?? selectedEvaluation.route.loaded.miles)}</strong><small>{formatMinutes(routeState.loaded?.durationMinutes ?? selectedEvaluation.route.loaded.minutes)}</small></div>
-                      <div><span>PICKUP ETA</span><strong>{formatClock(selectedEvaluation.insertion.pickupArrival)}</strong><small>{selectedEvaluation.appointment.pickupMargin} min margin</small></div>
-                    </div>
-                  </section>
-                </div>
-
-                <div className="lane-detail-column">
-                  <section className="lane-section">
-                    <header><span>FIT SIGNALS</span><small>{selectedEvaluation.detail}</small></header>
-                    <div className="freight-signal-grid">
-                      <SignalCard
-                        label="APPOINTMENTS"
-                        ok={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk}
-                        primary={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk ? 'WINDOWS HOLD' : 'WINDOW RISK'}
-                        secondary={`P ${windowLabel(selectedLane.pickupWindow)} · D ${windowLabel(selectedLane.deliveryWindow)}`}
-                      />
-                      <SignalCard
-                        label="MANIFEST"
-                        ok={selectedEvaluation.schedule.ok}
-                        primary={selectedEvaluation.schedule.ok ? `${Math.max(0, selectedEvaluation.schedule.marginMinutes)} MIN SLACK` : `${Math.abs(selectedEvaluation.schedule.marginMinutes)} MIN LATE`}
-                        secondary={`${selectedEvaluation.insertion.afterLabel} → lane → ${selectedEvaluation.insertion.beforeLabel}`}
-                      />
-                      <SignalCard
-                        label="HOS"
-                        ok={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk}
-                        primary={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk ? 'WITHIN HOURS' : 'HOS RISK'}
-                        secondary={`Drive ${formatMinutes(selectedEvaluation.hos.projectedDriveMinutes)} / ${formatMinutes(selectedEvaluation.hos.driveAvailableMinutes)}`}
-                      />
-                      <SignalCard
-                        label="CAPACITY"
-                        ok={selectedEvaluation.capacity.ok}
-                        primary={selectedEvaluation.capacity.ok ? 'TRAILER FITS' : 'OVER CAPACITY'}
-                        secondary={`${selectedEvaluation.capacity.palletsAfterPickup}/${selectedEvaluation.capacity.palletsCapacity} plt · ${Math.round(selectedEvaluation.capacity.weightAfterPickupLbs / 1000)}k/${Math.round(selectedEvaluation.capacity.weightCapacityLbs / 1000)}k lb`}
-                      />
-                    </div>
-                  </section>
-
-                  <footer className="freightlink-footer booking-footer">
-                    <div>
-                      <span>{bookingStatusLabel(selectedBooking)}</span>
-                      <strong>{bookingHelper(selectedBooking, selectedEvaluation)}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      className={selectedBooking?.status === BOOKING_STATUS.RATE_CON_READY ? 'ready' : ''}
-                      disabled={bookingActionDisabled}
-                      onClick={handleBookingAction}
-                    >
-                      {bookingActionLabel(selectedBooking)}
-                    </button>
-                  </footer>
-                </div>
+            <section className="lane-section">
+              <header><span>FIT SIGNALS</span><small>{selectedEvaluation.detail}</small></header>
+              <div className="freight-signal-grid">
+                <SignalCard
+                  label="APPOINTMENTS"
+                  ok={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk}
+                  primary={selectedEvaluation.appointment.pickupOk && selectedEvaluation.appointment.deliveryOk ? 'WINDOWS HOLD' : 'WINDOW RISK'}
+                  secondary={`P ${windowLabel(selectedLane.pickupWindow)} · D ${windowLabel(selectedLane.deliveryWindow)}`}
+                />
+                <SignalCard
+                  label="MANIFEST"
+                  ok={selectedEvaluation.schedule.ok}
+                  primary={selectedEvaluation.schedule.ok ? `${Math.max(0, selectedEvaluation.schedule.marginMinutes)} MIN SLACK` : `${Math.abs(selectedEvaluation.schedule.marginMinutes)} MIN LATE`}
+                  secondary={`${selectedEvaluation.insertion.afterLabel} → lane → ${selectedEvaluation.insertion.beforeLabel}`}
+                />
+                <SignalCard
+                  label="HOS"
+                  ok={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk}
+                  primary={selectedEvaluation.hos.driveOk && selectedEvaluation.hos.dutyOk ? 'WITHIN HOURS' : 'HOS RISK'}
+                  secondary={`Drive ${formatMinutes(selectedEvaluation.hos.projectedDriveMinutes)} / ${formatMinutes(selectedEvaluation.hos.driveAvailableMinutes)}`}
+                />
+                <SignalCard
+                  label="CAPACITY"
+                  ok={selectedEvaluation.capacity.ok}
+                  primary={selectedEvaluation.capacity.ok ? 'TRAILER FITS' : 'OVER CAPACITY'}
+                  secondary={`${selectedEvaluation.capacity.palletsAfterPickup}/${selectedEvaluation.capacity.palletsCapacity} plt · ${Math.round(selectedEvaluation.capacity.weightAfterPickupLbs / 1000)}k/${Math.round(selectedEvaluation.capacity.weightCapacityLbs / 1000)}k lb`}
+                />
               </div>
-            </>
-          )}
+            </section>
+          </div>
+
+          <footer className="freightlink-footer booking-footer">
+            <div>
+              <span>{bookingStatusLabel(selectedBooking)}</span>
+              <strong>{bookingHelper(selectedBooking, selectedEvaluation)}</strong>
+            </div>
+            <button
+              type="button"
+              className={selectedBooking?.status === BOOKING_STATUS.RATE_CON_READY ? 'ready' : ''}
+              disabled={bookingActionDisabled}
+              onClick={handleBookingAction}
+            >
+              {bookingActionLabel(selectedBooking)}
+            </button>
+          </footer>
         </aside>
-      </div>
-    </section>
+      )}
+    </div>
   )
 }

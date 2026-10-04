@@ -7,18 +7,16 @@ function GenericSelectionContext({ selection }) {
     <div className="empty-context">
       <span>{selection.type.toUpperCase()}</span>
       <strong>{selection.id}</strong>
-      <p>This subject is part of the shared selection contract but its owning desktop system has not been ported yet.</p>
+      <p>This subject is part of the shared selection contract but its detailed inspector is not built yet.</p>
     </div>
   )
 }
 
-export default function OperationsDrawer({
+export default function OperationsInspector({
   selection,
   driver,
   driverDay,
   selectedStop,
-  open,
-  onClose,
   onSelectSubject,
 }) {
   const driverIdentity = driver ? getDriverIdentity(driver.id) : null
@@ -32,13 +30,12 @@ export default function OperationsDrawer({
 
   return (
     <aside
-      id="operations-drawer"
-      className={`side-drawer operations-drawer ${open ? 'open' : ''} ${driver ? 'driver-context' : ''}`}
+      className={`workstation-inspector operations-inspector ${driver ? 'driver-context' : ''}`}
       style={style}
-      aria-hidden={!open}
       data-selection={selectionKey ?? ''}
+      aria-label="Selection details"
     >
-      <header className="drawer-header">
+      <header className="workstation-panel-header">
         <div>
           <span>{headerLabel}</span>
           <strong>{driver ? driver.name : selection ? selection.id : 'No selection'}</strong>
@@ -47,10 +44,9 @@ export default function OperationsDrawer({
               ? selectedStop.kind === 'freight-stop'
                 ? `${selectedStop.locationLabel} · ${selectedStop.loadRef}`
                 : selectedStop.locationLabel
-              : driver ? driver.locationLabel : selection ? selection.type : 'Select a subject from the map or roster'}
+              : driver ? driver.locationLabel : selection ? selection.type : 'Select a subject from the map or browser'}
           </small>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close operations drawer">×</button>
       </header>
 
       {driver && driverDay ? (
@@ -70,13 +66,7 @@ export default function OperationsDrawer({
         </div>
       ) : selection ? (
         <GenericSelectionContext selection={selection} />
-      ) : (
-        <div className="empty-context">
-          <span>CONTEXT</span>
-          <strong>Nothing selected</strong>
-          <p>Open Drivers or click a map marker. Driver Day appears here without replacing the map.</p>
-        </div>
-      )}
+      ) : null}
     </aside>
   )
 }

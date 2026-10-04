@@ -32,31 +32,28 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.5 Booking + Rate Confirmation
+## Current packet — V2.5.1 Workstation Navigation + Rate Con Review
 
-V2.1 through V2.4.7 are structurally locked.
-
-V2.5 makes freight commitment explicit and document-driven.
+V2.1 through V2.5 remain the gameplay foundation. V2.5.1 deliberately replaces the V2.4 bottom-drawer presentation contract.
 
 Guardrails:
-- selecting/evaluating freight does not commit it,
-- requesting a Rate Confirmation creates a distinct requested state,
-- requested freight remains tied to the driver used for that request,
-- Rate Confirmation arrival creates a distinct review-ready state,
-- Rate Confirmation review uses Focused Workspace and pauses ordinary gameplay presentation,
-- the player compares Rate Con terms against the FreightLink lane before confirmation,
-- mismatches are clearly flagged,
-- the player may request correction,
-- the player may deliberately accept mismatched terms after a warning,
-- accepting mismatched terms records that decision rather than silently fixing the document,
-- confirmed booking uses the Rate Confirmation terms exactly as written,
-- only confirmed freight leaves the marketplace,
-- confirmation inserts the freight into the real driver manifest at the evaluated gap,
-- manifest order is renumbered from authoritative Driver Day sequence,
-- lunch placement updates when a confirmed insertion occurs before lunch,
-- confirmed freight becomes part of the driver's committed operational route,
-- do not begin editable Daily Planning behavior until V2.6,
-- do not build the full Documents app until V2.8.
+- the bottom app bar and shared bottom app drawer are retired from active runtime,
+- normal workstation layout is left command rail → optional left browser → full-height map → optional right inspector,
+- Drivers is a first-class command-rail section,
+- FreightLink uses the left browser for lane shopping and the right inspector for selected-lane evaluation,
+- future Email/Documents/Messages/Banking surfaces inherit the same browser/inspector grammar where appropriate,
+- Focused Workspace remains the deliberate exception for deep document/task work,
+- opening ordinary workstation sections must not consume vertical map height,
+- Rate Confirmation review is player-driven: no term begins pre-verified,
+- the player must mark each comparison MATCH or ISSUE before acceptance,
+- flagged issues may be corrected or deliberately accepted as written,
+- a missed real mismatch may still be committed and recorded as a player mistake,
+- Rate Confirmation should read visually like broker paperwork rather than a DOC OS-generated form,
+- every rendered road route must begin/end at the exact gameplay POI coordinates,
+- routing-engine road snapping may affect the route interior but never leave visible lines floating short of a POI,
+- committed and proposal endpoint POIs remain visible whenever their route is visible,
+- V2.5 booking/manifest truth remains authoritative,
+- do not begin editable Daily Planning behavior until V2.6.
 
 ## Verification
 

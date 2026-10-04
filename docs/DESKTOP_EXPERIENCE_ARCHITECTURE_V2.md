@@ -164,160 +164,158 @@ The player enters DOC OS by interacting with the physical workstation.
 
 ---
 
-## 6. v2 shell principle: the map owns the screen
+## 6. Workstation principle: the map owns the height
 
-The default workstation state should feel spacious.
+The live map remains the primary operational canvas.
 
-The live map is the main canvas.
+V2.5.1 corrects the last major shell problem discovered during FreightLink and Rate Confirmation testing: ordinary apps should not consume a large horizontal drawer across the bottom of the screen.
 
-The shell should behave like a dispatch command surface with information available on demand.
+The normal workstation is organized horizontally:
+
+**Command Rail → Context Browser → Live Map → Context Inspector**
+
+The map should retain essentially the full workstation height during normal dispatch work.
 
 ### Default monitoring state
 
-At rest, the player should primarily see:
+At rest, the player primarily sees:
 
 - global top bar,
+- left command rail,
 - live map,
-- compact side handles/rails,
-- compact bottom app dock,
-- only lightweight status information.
+- lightweight status information.
 
-The player should **not** see two full-height side panels and a large bottom workspace by default.
+No bottom app bar is used.
 
-### Important rule
+No ordinary app should take 35–50% of the map's vertical space.
 
-Opening a side panel should normally **overlay the map**, not permanently shrink/reflow it.
+### Horizontal context rule
 
-The map should keep its geographic framing as panels open and close.
+Opening a normal workstation section may claim horizontal space for:
 
-This prevents constant visual jumping and preserves spatial awareness.
+- a left browser/list,
+- a right inspector/details panel,
+- or both.
+
+This is deliberate desktop reflow, not an overlay accident.
+
+The player should still retain a tall, geographically useful center map.
+
+Focused work is the exception and may temporarily replace the map.
 
 ---
 
-## 7. Left side: driver roster drawer
+## 7. Left command rail and context browser
 
-The left side owns **driver discovery and selection**.
+The far-left edge owns **workstation navigation**.
 
-### Closed state
-
-A compact rail/handle remains visible.
-
-It may show:
-
-- Drivers icon,
-- number of active drivers,
-- small warning indicator if a driver needs attention.
-
-Target visual footprint:
-
-- approximately 48–64 px wide.
-
-This is a design target, not an immutable pixel requirement.
-
-### Open state
-
-The driver roster slides over the map from the left.
+### Command rail
 
 Target width:
 
-- approximately 260–320 px.
+- approximately 72–80 px.
 
-It may include:
+The command rail includes:
 
-- search,
-- driver avatar,
-- driver name,
+- Drivers,
+- FreightLink,
+- Email,
+- Documents,
+- Messages,
+- Banking,
+- CarrierSource,
+- Shop.
+
+Only systems already built are enabled.
+
+The active section receives a strong selected treatment.
+
+Clicking the active section again may close its browser and return more width to the map.
+
+### Left context browser
+
+When a section needs discovery/list navigation, a browser opens immediately to the right of the command rail.
+
+Target width:
+
+- approximately 300–360 px.
+
+Examples:
+
+**Drivers**
+- roster,
 - duty status,
-- quick current-state label,
-- warning/attention cue.
+- next-state cue,
+- warning indicator.
 
-The roster should be dense and scannable.
+**FreightLink**
+- candidate driver selector,
+- fit filters,
+- available lanes,
+- booking/document state.
 
-It should not attempt to display full HOS, trailer, route, manifest, and communication data.
+**Email**
+- inbox/thread list.
 
-### Selecting a driver
+**Documents**
+- document list.
 
-Selecting a driver:
+**Messages**
+- conversation list.
 
-- makes that driver the selected operational subject,
-- highlights that driver's marker and route,
-- may close the roster automatically,
-- may open or refresh the right contextual panel.
-
-The exact auto-close behavior may be tuned during testing, but the roster must always remain independently closable.
+The browser is for scanning and choosing, not deep detail.
 
 ---
 
-## 8. Right side: contextual operations drawer
+## 8. Right context inspector
 
-The right side owns **deep context for whatever the player selected**.
-
-It is not permanently visible.
-
-### Closed state
-
-Only a compact handle/indicator remains.
-
-### Open state
-
-The panel slides over the map from the right.
+The right side owns **details and actions for the selected subject**.
 
 Target width:
 
-- approximately 360–420 px.
+- approximately 390–450 px.
 
-The right panel may represent different selected subjects:
+The inspector appears when there is something meaningful to inspect.
 
-- driver,
-- load,
-- stop,
-- facility,
-- route leg,
-- manifest.
+Examples:
 
-It should not always assume "Marcus detail."
-
-### Driver context
-
-When a driver is selected, the right drawer may contain:
-
-- driver identity,
+### Driver
+- identity,
 - duty state,
 - HOS,
 - trailer,
-- onboard freight,
 - next stop,
 - manifest,
-- route risk,
-- messages/action shortcuts.
+- route risk.
 
-### Facility context
+### FreightLink lane
+- rate and freight,
+- insertion point,
+- route impact,
+- appointments,
+- HOS,
+- capacity,
+- booking / Rate Con action.
 
-When a facility is selected, the same drawer may show:
-
-- facility details,
+### Facility
+- facility identity,
 - appointment information,
 - expected arrivals,
-- current/predicted congestion,
-- player drivers headed there.
+- congestion/wait context.
 
-### Load context
-
-When a load is selected:
-
-- lane,
-- appointments,
-- rate,
-- equipment,
-- assigned driver,
-- paperwork state,
-- fit/risk signals.
+### Message / email / document
+- selected content and relevant actions.
 
 ### Rule
 
-The right drawer is contextual information, not a second permanent app.
+The player learns one ordinary desktop interaction grammar:
 
-The player should be able to close it at any time and return to a map-first view.
+> choose a system on the left  
+> choose an item in the left browser  
+> inspect or act on it on the right  
+> keep the map visible in the middle when geography matters
+
+The right inspector is contextual. It is not a second permanent app and should disappear when there is no selected subject.
 
 ---
 
@@ -418,6 +416,18 @@ The map system must support at least:
 
 Pickup and delivery are roles applied to the underlying facility type. They should not force every location into the same generic pin shape.
 
+### Route / POI endpoint integrity
+
+Every visible route must terminate on a visible operational POI or driver asset.
+
+Routing engines may snap requested coordinates onto the road network internally, but rendered route geometry must be extended back to the exact gameplay coordinates at both ends.
+
+Therefore:
+
+- no visible route may stop short of its pickup/delivery/yard/staging marker,
+- proposal entry/rejoin legs must visibly connect to the committed route anchor they reference,
+- if a route endpoint exists, its typed POI must also be rendered when that route is visible.
+
 ### Pickup / delivery marker
 
 Pickup and delivery facility markers surface:
@@ -493,142 +503,73 @@ Examples:
 
 ---
 
-## 11. Bottom app bar and shared app drawer
+## 11. Workstation navigation and app surfaces
 
-The bottom of DOC OS has two distinct shell primitives:
+The retired bottom app bar / shared bottom drawer pattern is no longer part of the active desktop shell.
 
-1. **Full-width App Bar**
-2. **Shared Bottom App Drawer**
+Ordinary workstation systems use the shared horizontal grammar:
 
-They are related but should not visually blur together.
+1. **Command Rail**
+2. **Left Context Browser**
+3. **Live Map**
+4. **Right Context Inspector**
 
-### Full-width App Bar
+Not every system must use all four columns simultaneously.
 
-The app bar is always anchored edge-to-edge across the bottom of the workstation.
+### Drivers
 
-Target height:
+- Drivers is a first-class rail section.
+- Left browser = driver roster.
+- Map = driver location / route.
+- Right inspector = selected Driver Day / operational context.
 
-- approximately 58–64 px.
-
-Possible apps:
-
-- FreightLink
-- Email
-- Documents
-- Messages
-- Banking
-- CarrierSource
-- Shop
-
-Badges may appear for unread/new content.
-
-CarrierSource remains locked during early career.
-
-The active app receives the strong selected treatment.
-
-Clicking the active app again, or using the app close control, closes the app drawer.
-
-### Shared Bottom App Drawer
-
-Every ordinary dock app opens into the same shell-level drawer.
-
-The drawer:
-
-- spans the full workstation width,
-- sits directly above the app bar,
-- claims real vertical layout space,
-- resizes the map above it rather than covering the map,
-- targets approximately 46% of the screen height,
-- defaults near 46%,
-- returns its space to the map when closed.
-
-The player therefore learns one app-navigation rule:
-
-> click app → drawer opens  
-> click another app → drawer content switches  
-> close app → map expands
-
-App views should feel like desktop software:
-
-- tables,
-- lists,
-- dense rows,
-- split panes,
-- filters,
-- inspectors.
-
-Do not mount floating app windows over arbitrary parts of the map as the normal app pattern.
-
-Do not simply mount the old phone screen inside the drawer.
-
-### Map relationship
-
-The map remains the persistent operational surface above the drawer.
-
-Apps may request a contextual map mode.
-
-Examples:
-
-- FreightLink → marketplace overview, lane markers, selected lane route,
-- Documents → relevant load/document geography when useful,
-- Messages → selected driver/load context when useful,
-- Banking → ordinary operations map unless another context is selected.
-
-The app does not own the map. It supplies context to the shared map.
-
-### FreightLink shopping mode
-
-FreightLink has two distinct map states.
+### FreightLink
 
 **Marketplace overview**
 
-When FreightLink opens without a selected lane:
+When FreightLink is active without a selected lane:
 
-- zoom out enough to understand the marketplace geography,
-- show available lanes as compact selectable marketplace markers,
-- show driver assets without permanent name cards,
-- show the candidate driver's existing planned route in that driver's identity color,
-- show compact committed route anchors for the candidate driver's meaningful Driver Day locations,
-- route anchors use typed POI shapes and small P/D/L/S/Y badges,
-- duplicate timeline events at the same physical location collapse into one anchor,
-- facility names remain hidden until hover so the map stays calm.
+- left browser shows candidate driver + freight list,
+- map shows marketplace opportunities and candidate driver's committed route,
+- no large right inspector is required.
 
 **Selected-lane focus**
 
 When a lane is selected:
 
-- select the same `LOAD` object in the board and map,
-- hide unrelated marketplace opportunity markers,
-- hide unrelated drivers,
-- keep the candidate driver's colored existing route visible as the baseline plan,
-- keep the candidate driver's committed route anchors visible as small spatial references,
-- keep route-anchor labels hidden until hover,
-- offset a committed anchor slightly when it shares the exact facility with the proposed pickup/delivery marker,
-- identify the exact existing route leg between the evaluated insertion's AFTER and BEFORE events,
-- visually subdue that direct leg,
-- overlay the proposed insertion in neutral as AFTER → pickup → delivery → BEFORE,
-- use neutral dashed treatment for entry/rejoin travel and stronger neutral solid treatment for loaded travel,
-- keep route preview data synchronized to the currently selected LOAD id,
-- reject stale route/marker data from a previously selected lane,
-- keep the app drawer visible below while the map shows the geography above.
+- left browser keeps the marketplace list visible,
+- map hides unrelated marketplace clutter,
+- candidate driver's committed route remains visible,
+- committed route anchors remain visible,
+- proposal geometry overlays in neutral,
+- right inspector shows lane fit, insertion, route, HOS, capacity, and booking state.
 
-The inspector owns the detailed insertion explanation. The map's job is to make **current plan vs proposed plan** readable spatially while preserving just enough committed stop context to understand why the route goes where it goes.
+The map and inspector must represent the same selected LOAD and candidate driver.
+
+### Other apps
+
+Future systems should prefer this same grammar:
+
+- Email → mailbox/browser left, selected message right,
+- Documents → document list left, selected document/details right,
+- Messages → conversation list left, thread right,
+- Banking → navigation/account list left, selected account/details right.
+
+A system may omit the map when geography is irrelevant, but it should not invent an unrelated window-placement model.
 
 ### Focused workspace
 
-For detailed work such as:
+Focused work remains a deliberate exception.
+
+Use Focused Workspace for tasks such as:
 
 - Rate Confirmation review,
 - POD investigation,
 - invoice/document work,
 - paper comparison,
-- detailed planning,
+- other tasks requiring sustained attention.
 
-the task may expand to most of the screen.
-
-Gameplay automatically pauses.
-
-Focused mode is an intentional exception to the shared bottom app drawer, not a second ordinary app layout.
+Focused Workspace may take over most of the workstation and pauses ordinary gameplay presentation.
 
 ---
 
@@ -683,11 +624,10 @@ Existing systems should remain authoritative where already correct:
 
 Examples:
 
-- left drawer open/closed,
-- right drawer open/closed,
+- active command-rail section,
+- left browser state,
 - selected subject,
-- active app,
-- workspace mode,
+- right inspector state,
 - focused task,
 - map selection/filter state.
 
@@ -748,9 +688,9 @@ Create one coherent selection contract for:
 This selection should drive:
 
 - map emphasis,
-- left/right drawers,
+- left browser / right inspector context,
 - manifest highlight,
-- app context.
+- active workstation section.
 
 Avoid screen-specific copies of selection state.
 
@@ -819,16 +759,17 @@ Rate Confirmation review uses Focused Workspace.
 
 Focused review:
 
-- expands beyond the ordinary bottom app drawer,
+- replaces the ordinary workstation navigation surfaces for the duration of the task,
 - visibly pauses gameplay presentation,
-- shows a readable document,
-- compares the document against the FreightLink lane,
-- flags rate, equipment, facility, and appointment-window mismatches,
-- offers correction when terms do not match.
+- shows readable broker-style paperwork,
+- places FreightLink reference values beside document values,
+- begins with no term pre-verified,
+- requires the player to mark each comparison **MATCH** or **ISSUE**,
+- offers correction when the player flags an issue.
 
-Verification is gameplay, not an automatic gate.
+Verification is gameplay, not an automatic answer key.
 
-The player may deliberately accept mismatched terms after a clear warning. If they do, DOC OS preserves the Rate Confirmation exactly as written and records that the booking was accepted with a mismatch.
+If the player flags an issue, they may request correction or deliberately accept the document as written. If the player fails to notice a real mismatch and marks it MATCH, the game may still accept that mistake and preserve the Rate Confirmation terms exactly as written.
 
 #### Confirmation handoff
 
@@ -973,28 +914,19 @@ This is the intended v2 build order.
 
 ### V2.1 — Shell Reset
 
-Goal: make DOC OS feel like the mockup structurally.
+Goal: establish the map-first desktop direction and remove the inherited mobile-shell assumptions.
 
-Build:
+This milestone proved the map-first concept but its temporary side-drawer/bottom-dock presentation was later superseded by **V2.5.1 Workstation Navigation**.
 
-- map-first default state,
-- compact top bar,
-- left drawer closed by default,
-- right drawer closed by default,
-- smooth independent slide-in/out behavior,
-- compact bottom dock,
-- map stays geographically stable while side drawers overlay it,
-- remove permanent side-panel squeeze,
-- remove the always-open bottom workspace,
-- remove active Jordan tutorial presentation/gating.
+The retained V2.1 truth is:
 
-Acceptance:
+- desktop-first workstation,
+- map as the main operational canvas,
+- compact global top bar,
+- no active Jordan tutorial gating,
+- no permanent mobile-shell layout.
 
-When the workstation opens, the map feels dominant and calm.
-
-The player can open and close both side drawers without the entire layout jumping.
-
-No tutorial card interrupts the shell test.
+The active navigation/layout contract is defined by V2.5.1.
 
 ### V2.2 — Shared Selection + Driver Identity
 
@@ -1008,8 +940,8 @@ Build:
 - selected stop,
 - selected facility,
 - selected route leg,
-- map/drawer/manifest synchronization,
-- contextual right drawer content.
+- map/browser/inspector/manifest synchronization,
+- contextual right inspector content.
 
 Acceptance:
 
@@ -1215,7 +1147,7 @@ Important persistent truth includes:
 - money,
 - career progress.
 
-Temporary UI state such as which drawer was open should not need to become important save data unless there is a clear reason.
+Temporary UI state such as which command-rail section/browser was open should not need to become important save data unless there is a clear reason.
 
 If a future work packet requires resetting unfinished operations because old state is incompatible, that must be called out before implementation.
 
@@ -1236,7 +1168,7 @@ Key invariants include:
 - HOS feasibility consumes the same manifest truth shown to the player,
 - Focused work pauses simulation,
 - leaving Focused restores the prior clock state,
-- side drawers do not alter simulation truth,
+- command-rail/browser/inspector presentation does not alter simulation truth,
 - desktop selection never creates a second copy of driver/load state,
 - tutorial-disabled mode does not block ordinary gameplay.
 
@@ -1246,13 +1178,13 @@ Visual layout behavior still requires screenshot/manual browser testing.
 
 ## 21. Desktop test strategy
 
-Desktop work is tested through intentional Vercel/browser checkpoints.
+Desktop work is tested primarily through the local Vite build on the Mac.
 
-Do not deploy after every small edit.
+Vercel remains useful for intentional shareable checkpoints, but it is not required for every visual iteration.
 
 Preferred loop:
 
-**design packet → feature branch → build → permanent verification → squash merge → intentional preview → fullscreen Mac test → collect feedback → next packet**
+**design packet → feature branch → build → permanent verification → squash merge → local pull → fullscreen Mac test → collect feedback → next packet**
 
 For visual shell work, Maxx's screenshot/video feedback is part of acceptance.
 
@@ -1318,9 +1250,9 @@ continue to own that truth unless a dedicated later architecture packet explicit
 Desktop owns:
 
 - map-first shell state,
-- drawers,
+- left command rail,
+- context browser / inspector presentation,
 - shared selection,
-- app workspace mode,
 - focused-task state,
 - desktop-native presentation.
 
@@ -1346,13 +1278,12 @@ The following are now considered locked unless deliberately reopened:
 
 - Desktop Build 1 is a prototype, not the final shell.
 - The shell is rebuilt around a map-first default state.
-- Left and right panels slide in/out.
-- Side panels overlay rather than permanently squeeze the map.
-- The bottom dock stays compact when no app is active.
-- The app bar spans the full workstation width.
-- Ordinary dock apps share one full-width bottom app drawer.
-- The shared app drawer resizes the map above it instead of covering it.
-- The default shared app drawer targets roughly 46% of the viewport height, bounded to 360–540 px for normal desktop layouts.
+- The normal workstation uses a permanent left command rail.
+- Drivers is a first-class command-rail section.
+- Ordinary systems use a left browser and right contextual inspector around a full-height center map.
+- The bottom app bar and shared bottom app drawer are retired.
+- Ordinary app navigation must not consume large vertical map space.
+- Focused Workspace is the deliberate exception for deep task/document work.
 - Desktop apps are rebuilt as desktop apps rather than stretched phone screens.
 - Existing simulation logic is preserved where sound.
 - Jordan's tutorial is removed from the active loop during the systems rebuild.
@@ -1367,11 +1298,14 @@ The following are now considered locked unless deliberately reopened:
 - Rate Confirmation is a real gameplay checkpoint.
 - Requesting a Rate Confirmation never commits freight.
 - Only Rate Confirmation acceptance turns marketplace freight into committed driver work.
-- The player may deliberately accept a mismatched Rate Confirmation after a warning; DOC OS preserves the document terms exactly as written.
+- Rate Confirmation verification is player-driven; no term begins pre-verified.
+- The player marks each comparison MATCH or ISSUE before acceptance.
+- The player may deliberately accept flagged mismatched terms; DOC OS preserves the document terms exactly as written.
 - Lunch and staging are part of operational planning.
 - Focused work pauses simulation.
 - Map selection and manifest/context selection share one model.
 - Drivers use truck markers; operational locations use typed POI icons rather than generic circles.
+- Every rendered route begins and ends on the exact gameplay POI/asset coordinates so lines visually connect to their endpoint icons.
 - Desktop operational text follows the V2.4.3 readability floor (11/12/14/16/22 px scale).
 - The operational basemap is a dark detailed vector style with consumer POI clutter suppressed.
 - Browser previews remain intentional checkpoints, not automatic per-push deployments.
@@ -1381,29 +1315,28 @@ The following are now considered locked unless deliberately reopened:
 
 ## 25. Immediate next work packet
 
-The active packet is:
+The active correction packet is:
 
-# **V2.5 — Booking + Rate Confirmation**
+# **V2.5.1 — Workstation Navigation + Rate Con Review**
 
 It locks:
 
-- explicit marketplace/requested/review-ready/correction/confirmed states,
-- driver ownership of an active booking request,
-- focused Rate Confirmation review,
-- comparison of Rate Con terms against the evaluated FreightLink lane,
-- correction workflow,
-- deliberate mismatched-document acceptance with recorded consequence,
-- Rate Confirmation terms becoming authoritative on confirmation,
-- confirmed freight leaving the marketplace,
-- confirmed freight entering the real driver manifest at the evaluated insertion,
-- lunch placement and manifest renumbering after commitment,
-- committed driver route refresh from manifest truth.
+- left command rail as the workstation navigation surface,
+- Drivers and FreightLink as the first live rail sections,
+- left browser → center full-height map → right inspector interaction grammar,
+- retirement of the bottom app bar/shared bottom drawer,
+- FreightLink marketplace browser on the left,
+- FreightLink selected-lane evaluation on the right,
+- Focused Workspace as the exception for deep document work,
+- player-driven Rate Confirmation verification using MATCH / ISSUE choices,
+- broker-document presentation rather than pre-verified DOC OS paperwork,
+- exact route-to-POI endpoint connection.
 
-After V2.5 passes functional and visual acceptance, the next packet is:
+After V2.5.1 passes functional and visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 may add deliberate resequencing/planning tools for confirmed freight but must preserve V2.5 booking/document truth.
+V2.6 must preserve the V2.5 booking truth and the V2.5.1 workstation/POI contracts.
 
 
 ---

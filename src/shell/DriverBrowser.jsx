@@ -1,16 +1,15 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 
-export default function DriverDrawer({ drivers, activeDriverId, open, onClose, onSelectSubject }) {
+export default function DriverBrowser({ drivers, activeDriverId, onSelectSubject }) {
   return (
-    <aside id="driver-drawer" className={`side-drawer driver-drawer ${open ? 'open' : ''}`} aria-hidden={!open}>
-      <header className="drawer-header">
+    <aside className="workstation-browser driver-browser" aria-label="Drivers">
+      <header className="workstation-panel-header">
         <div>
           <span>FLEET</span>
           <strong>Drivers</strong>
           <small>{drivers.length} active today</small>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close driver drawer">×</button>
       </header>
 
       <div className="driver-list">

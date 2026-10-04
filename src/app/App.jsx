@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { SHELL_CONFIG } from '../config/shellConfig.js'
 import { drivers } from '../data/drivers.js'
 import { freightMarket } from '../data/freightMarket.js'
 import {
@@ -23,8 +22,6 @@ import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionM
 import DesktopShell from '../shell/DesktopShell.jsx'
 
 export default function App() {
-  const [leftOpen, setLeftOpen] = useState(SHELL_CONFIG.leftDrawerDefaultOpen)
-  const [rightOpen, setRightOpen] = useState(SHELL_CONFIG.rightDrawerDefaultOpen)
   const [selection, setSelection] = useState(null)
   const [activeApp, setActiveApp] = useState(null)
   const [freightRoutePreview, setFreightRoutePreview] = useState(null)
@@ -51,14 +48,7 @@ export default function App() {
   const selectSubject = (type, id) => {
     setSelection(createSelection(type, id))
 
-    if (type === SELECTION_TYPES.DRIVER) {
-      setLeftOpen(false)
-      if (activeApp !== 'freightlink') setRightOpen(true)
-      return
-    }
-
-    if (type === SELECTION_TYPES.STOP) {
-      if (activeApp !== 'freightlink') setRightOpen(true)
+    if (type === SELECTION_TYPES.DRIVER || type === SELECTION_TYPES.STOP) {
       return
     }
 
@@ -71,22 +61,25 @@ export default function App() {
       ) {
         setFreightCandidateDriverId(bookingRecord.driverId)
       }
-      setRightOpen(false)
     }
   }
 
   const toggleApp = (appId) => {
-    if (appId !== 'freightlink') return
+    if (!['drivers', 'freightlink'].includes(appId)) return
 
-    const opening = activeApp !== 'freightlink'
-    if (opening && selection?.type === SELECTION_TYPES.DRIVER) {
+    const opening = activeApp !== appId
+    if (appId === 'freightlink' && opening && selection?.type === SELECTION_TYPES.DRIVER) {
       setFreightCandidateDriverId(selection.id)
     }
-    setActiveApp(opening ? 'freightlink' : null)
-    setLeftOpen(false)
-    setRightOpen(false)
 
-    if (!opening) {
+    if (activeApp === 'freightlink' && appId !== 'freightlink') {
+      setFreightRoutePreview(null)
+      if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
+    }
+
+    setActiveApp(opening ? appId : null)
+
+    if (!opening && appId === 'freightlink') {
       setFreightRoutePreview(null)
       if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
     }
@@ -250,12 +243,6 @@ export default function App() {
       focusedTask={focusedTask}
       freightRoutePreview={freightRoutePreview}
       freightCandidateDriverId={freightCandidateDriverId}
-      leftOpen={leftOpen}
-      rightOpen={rightOpen}
-      onToggleLeft={() => setLeftOpen((value) => !value)}
-      onToggleRight={() => setRightOpen((value) => !value)}
-      onCloseLeft={() => setLeftOpen(false)}
-      onCloseRight={() => setRightOpen(false)}
       onToggleApp={toggleApp}
       onCloseActiveApp={closeActiveApp}
       onCloseFocusedTask={() => setFocusedTask(null)}
