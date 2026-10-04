@@ -40,6 +40,7 @@ export default function DesktopShell({
   const activeFreightRoutePreview = (
     isSelection(selection, SELECTION_TYPES.LOAD)
     && freightRoutePreview?.lane?.id === selection.id
+    && freightRoutePreview?.driver?.id === freightCandidateDriverId
   ) ? freightRoutePreview : null
 
   const freightDriver = activeFreightRoutePreview?.driver ?? null
