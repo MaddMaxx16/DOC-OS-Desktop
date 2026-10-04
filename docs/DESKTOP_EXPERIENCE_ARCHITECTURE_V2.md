@@ -1342,22 +1342,22 @@ The following are now considered locked unless deliberately reopened:
 
 The active polish packet is:
 
-# **V2.5.5 — FreightLink Fit + Time Control Strip**
+# **V2.5.6 — FreightLink Row Spacing**
 
 It locks:
 
 - lane-fit cards fully inside the FreightLink browser column,
+- a deliberate right-side gutter between fit cards and the browser/map boundary,
+- compact unbooked freight rows with no empty booking-state grid row,
+- booking-state rows appearing only when booking state actually exists,
 - no clipped TIGHT/GOOD/POOR labels or fit-card borders,
-- slightly smaller game-clock typography,
-- PAUSED retained beside the game time,
-- reserved pause / play / fast-forward controls in the top-right shell,
-- time-control buttons visible but disabled until Live Operations owns game-speed behavior.
+- the V2.5.5 clock and disabled pause / play / fast-forward control strip.
 
-After V2.5.5 passes visual acceptance, the next gameplay packet is:
+After V2.5.6 passes visual acceptance, the next gameplay packet is:
 
 # **V2.6 — Daily Planning**
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, and V2.5.5 top-bar/FreightLink spacing contract.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, and V2.5.6 FreightLink row-spacing contract.
 
 ---
 
