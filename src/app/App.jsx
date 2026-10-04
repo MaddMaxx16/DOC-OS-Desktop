@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { drivers } from '../data/drivers.js'
 import { freightMarket } from '../data/freightMarket.js'
 import {
@@ -18,6 +18,14 @@ import { commitBookedFreight } from '../domain/booking/commitBookedFreight.js'
 import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
+import {
+  advanceSimulationClock,
+  buildLiveDriverStates,
+  createSimulationClock,
+  setSimulationMode,
+  SIMULATION_MODE,
+  SIMULATION_TICK_MS,
+} from '../domain/live/liveOperations.js'
 import {
   canEditDispatchPlan,
   sendDispatchPlan,
@@ -40,11 +48,31 @@ export default function App() {
   const [planningFeedback, setPlanningFeedback] = useState(null)
   const [pendingPlanningPlace, setPendingPlanningPlace] = useState(null)
   const [operationsInspectorHidden, setOperationsInspectorHidden] = useState(false)
+  const [simulationClock, setSimulationClock] = useState(() => createSimulationClock())
 
   const driverDays = useMemo(
     () => buildDriverDays(drivers, operationalLoads, operationalDriverPlans, locations),
     [operationalDriverPlans, operationalLoads],
   )
+
+  const liveDriverStates = useMemo(
+    () => buildLiveDriverStates(driverDays, simulationClock),
+    [driverDays, simulationClock],
+  )
+
+  useEffect(() => {
+    if (focusedTask || simulationClock.mode === SIMULATION_MODE.PAUSED) return undefined
+
+    const timer = setInterval(() => {
+      setSimulationClock((current) => advanceSimulationClock(current))
+    }, SIMULATION_TICK_MS)
+
+    return () => clearInterval(timer)
+  }, [focusedTask, simulationClock.mode])
+
+  const setSimulationClockMode = (mode) => {
+    setSimulationClock((current) => setSimulationMode(current, mode))
+  }
 
   const planningPlacePreviewDay = useMemo(() => {
     if (!pendingPlanningPlace) return null
@@ -443,11 +471,14 @@ export default function App() {
       operationsInspectorHidden={operationsInspectorHidden}
       freightRoutePreview={freightRoutePreview}
       freightCandidateDriverId={freightCandidateDriverId}
+      simulationClock={simulationClock}
+      liveDriverStates={liveDriverStates}
       onToggleApp={toggleApp}
       onCloseActiveApp={closeActiveApp}
       onCloseFocusedTask={() => setFocusedTask(null)}
       onRoutePreviewChange={setFreightRoutePreview}
       onFreightCandidateDriverChange={setFreightCandidateDriverId}
+      onSimulationModeChange={setSimulationClockMode}
       onRequestRateCon={requestRateCon}
       onOpenRateCon={openRateCon}
       onRequestRateConCorrection={requestRateConCorrection}
