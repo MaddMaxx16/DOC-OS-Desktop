@@ -1,6 +1,7 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
+import { buildPlanningPlaceOptions } from '../domain/planning/planningPlaces.js'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -36,7 +37,8 @@ export default function DesktopShell({
   onConfirmBooking,
   onStartDriverPlanning,
   onStopDriverPlanning,
-  onReorderDriverStop,
+  onMoveDriverPlanEvent,
+  onChooseDriverPlanningPlace,
   onSelectSubject,
 }) {
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
@@ -62,6 +64,19 @@ export default function DesktopShell({
   const mapDriverDay = mapDriver
     ? driverDays.find((day) => day.driverId === mapDriver.id) ?? null
     : driverDay
+
+  const planningActive = planningDriverId === selectedDriver?.id
+  const planningPlaceOptions = (
+    planningActive
+    && driverDay
+    && (selectedStop?.kind === 'lunch' || selectedStop?.kind === 'staging')
+  )
+    ? buildPlanningPlaceOptions({
+        day: driverDay,
+        kind: selectedStop.kind,
+        locations,
+      })
+    : []
 
   const hasBrowser = activeApp === 'drivers' || freightlinkOpen
   const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)
@@ -147,9 +162,11 @@ export default function DesktopShell({
               selectedStop={selectedStop}
               selection={selection}
               freightRoutePreview={activeFreightRoutePreview}
+              planningPlaceOptions={planningPlaceOptions}
               workspaceOpen={freightlinkOpen}
               marketLanes={marketLanes}
               locations={locations}
+              onChoosePlanningPlace={onChooseDriverPlanningPlace}
               onSelectSubject={onSelectSubject}
             />
           </div>
@@ -160,11 +177,13 @@ export default function DesktopShell({
               driver={selectedDriver}
               driverDay={driverDay}
               selectedStop={selectedStop}
-              planning={planningDriverId === selectedDriver?.id}
+              planning={planningActive}
               planningFeedback={planningFeedback?.driverId === selectedDriver?.id ? planningFeedback : null}
+              planningPlaceOptions={planningPlaceOptions}
               onStartPlanning={onStartDriverPlanning}
               onStopPlanning={onStopDriverPlanning}
-              onReorderStop={onReorderDriverStop}
+              onMovePlanEvent={onMoveDriverPlanEvent}
+              onChoosePlanningPlace={onChooseDriverPlanningPlace}
               onSelectSubject={onSelectSubject}
             />
           )}
