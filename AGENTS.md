@@ -32,23 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.5.3 Road Route Reliability
+## Current packet — V2.6.5.4 Continuous Route Plan
 
-V2.1 through V2.6.5.2 remain the locked desktop foundation.
+V2.1 through V2.6.5.3 remain the locked desktop foundation.
 
 Guardrails:
-- preserve V2.6.5 map declutter, grouped facility anchors, selected-route persistence, and priority labels,
-- preserve V2.6.5.1 label-anchor integrity,
-- preserve V2.6.5.2 exact gameplay endpoint normalization,
-- public road-router failures must never be painted as thick committed driver routes,
-- estimate fallback remains valid for timing/math but is not valid committed map geometry,
-- committed route rendering accepts only geometry whose source is ROAD,
-- road-route requests retry before falling back,
-- failed estimate results are not cached so later refreshes can recover,
-- Driver Day routing should use low concurrency rather than bursting every leg at the public router simultaneously,
-- if a road leg remains unavailable after retries, leave an honest temporary gap instead of drawing a fake straight-line road,
-- do not change Driver Day sequence, route semantics, or P/D/L/S coordinate truth in this packet,
-- V2.7 must eventually move routing behind a production-grade routing strategy rather than depending on a public demo router as a permanent runtime assumption.
+- preserve V2.6.5 map declutter, grouped facility anchors, route persistence, and priority labels,
+- preserve V2.6.5.1 label-anchor integrity and V2.6.5.2 endpoint normalization,
+- preserve V2.6.5.3 separation between road geometry and timing-only estimates,
+- a committed Driver Day must be routed as one ordered multi-waypoint road plan rather than unrelated per-leg road requests,
+- the router receives the Driver Day waypoint order exactly as shown in the manifest,
+- returned route legs are split back into DOC OS segments only after that single continuous route calculation,
+- pickup/delivery line-style semantics remain per leg after splitting,
+- the fixed committed POI marker shell is centered on the same gameplay coordinate used by the route,
+- labels and badge bubbles may overflow the shell but may not alter its size or coordinate center,
+- committed POI offsets are permitted only while a visible FreightLink preview intentionally needs separation,
+- no hidden/stale preview state may offset normal Driver Day markers,
+- do not change Driver Day sequence, scheduling truth, or facility identity in this correction packet.
 
 ## Verification
 
