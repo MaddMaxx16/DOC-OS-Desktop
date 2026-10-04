@@ -311,3 +311,15 @@
   overflow: hidden;
   padding: 22px;
 }
+
+.operations-status.focused {
+  border-color: #62506e;
+  background: #15111a;
+}
+.operations-status.focused .status-dot {
+  background: #a783ba;
+}
+.operations-status.focused strong,
+.operations-status.focused small {
+  color: #c9b0d7;
+}
