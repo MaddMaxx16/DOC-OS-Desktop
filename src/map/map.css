@@ -445,7 +445,7 @@
   box-shadow: 0 0 0 4px rgba(183, 155, 197, .16), 0 9px 22px rgba(0, 0, 0, .5);
 }
 
-/* V2.6.5.1: labels float outside marker geometry so MapLibre's bottom anchor stays on the POI. */
+/* V2.6.5.2: labels float outside geometry while the icon center stays on the exact route endpoint. */
 .driver-route-anchor {
   position: relative;
 }
