@@ -32,28 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.6.3.1 Place Flyout + Confirmation
+## Current packet — V2.6.3.2 Contextual Staging
 
-V2.1 through V2.6.2 remain the locked desktop foundation. V2.6.3 is in active visual refinement.
+V2.1 through V2.6.2 remain the locked desktop foundation. V2.6.3 remains in active visual refinement.
 
 Guardrails:
 - preserve the map-first command rail → browser → live map → inspector workstation,
 - preserve V2.5 booking/Rate Con truth and committed freight ownership,
 - preserve V2.6.1 DRAFT/SENT planning truth,
 - preserve V2.6.2 committed-manifest sequencing, pickup-before-delivery, capacity guards, and plan-health feedback,
-- preserve V2.6.3 explicit insertion lanes and movable Lunch,
-- Lunch/Staging place choices must open in a side flyout adjacent to the right inspector; do not consume Driver Day timeline height,
-- selecting a place is preview state only,
-- a preview may update the map route but must not mutate committed Driver Day truth,
-- actual lunch/staging truth changes only after explicit CONFIRM LUNCH or CONFIRM STAGING,
-- cancelling a place preview leaves the committed plan untouched,
-- draft staging begins unassigned; do not seed a default end-of-day staging location,
-- unresolved staging remains visible as a selectable Driver Day placeholder,
-- staging selection chooses the truck's real planned end-of-day location and changes the final route leg,
-- lunch and staging candidates come from the shared gameplay location model and carry stable IDs,
-- the same physical place records must be reusable by later RPG preference/favorite/cost/event systems,
-- do not implement RPG consequence stats yet,
-- do not auto-optimize place or stop choices; show consequences and let the player decide,
+- preserve V2.6.3 explicit insertion lanes, movable Lunch, physical place model, and preview/confirm flyout,
+- staging choices must be operationally believable relative to the driver's final real stop,
+- local staging/parking/yard POIs should rank ahead of long reposition choices when they are meaningfully closer,
+- do not automatically hide longer staging choices; the player may intentionally choose a longer reposition,
+- staging candidates may carry gameplay metadata such as local/regional type and overnight capability,
+- draft staging remains unassigned until CONFIRM STAGING,
+- confirming staging writes the real end-of-day truck location and final route leg,
+- contextual staging ranking is not route optimization; it is presentation of consequences and sensible nearby choices,
 - readiness and Send Schedule still belong to V2.6.4,
 - current truck position remains the default route origin.
 

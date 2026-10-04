@@ -50,15 +50,25 @@ test('choosing a Lunch POI persists the physical location and recalculates the D
   assert.deepEqual(lunch.coordinates, locations['hudson-route-diner'].coordinates)
 })
 
-test('unassigned staging exposes the complete valid staging choice set', () => {
+test('unassigned staging ranks believable local choices from Marcus final Bronx stop', () => {
   const options = buildPlanningPlaceOptions({
     day,
     kind: 'staging',
     locations,
   })
 
-  assert.ok(options.length >= 4)
+  assert.ok(options.length >= 7)
   assert.equal(options.some((option) => option.isCurrent), false)
+  assert.deepEqual(
+    options.slice(0, 3).map((option) => option.id),
+    [
+      'hunts-point-truck-staging',
+      'bronx-river-truck-parking',
+      'port-morris-staging-yard',
+    ],
+  )
+  assert.ok(options.slice(0, 3).every((option) => option.proximityLabel === 'NEAR FINAL STOP'))
+  assert.ok(options.slice(0, 3).every((option) => option.travelMinutes <= 5))
   assert.ok(options.some((option) => option.id === 'newark-overnight-lot'))
   assert.ok(options.some((option) => option.id === 'metroline-yard'))
 })

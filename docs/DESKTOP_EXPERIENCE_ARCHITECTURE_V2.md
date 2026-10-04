@@ -1434,45 +1434,40 @@ V2.5, V2.6.1, and V2.6.2 are accepted and locked.
 
 The active refinement is:
 
-# **V2.6.3.1 — Place Flyout + Confirmation**
+# **V2.6.3.2 — Contextual Staging**
 
-V2.6.3 retains:
+V2.6.3 and V2.6.3.1 retain:
 
 - explicit insertion lanes,
 - movable freight stops and Lunch,
 - route-aware physical lunch POIs,
-- physical end-of-day staging POIs,
+- unassigned draft staging,
+- side-flyout place preview,
+- explicit CONFIRM LUNCH / CONFIRM STAGING,
 - shared RPG-ready location identity.
 
-The V2.6.3.1 interaction correction locks:
+V2.6.3.2 locks one additional staging rule:
 
-- Lunch/Staging choices open in a side flyout immediately beside the right Driver Day inspector,
-- the flyout has substantially more vertical room than the inspector timeline and exposes the full valid option set,
-- selecting a candidate is a **preview**, not an immediate commit,
-- the preview may redraw the map route so the player can see the operational effect,
-- actual Driver Day truth changes only after **CONFIRM LUNCH** or **CONFIRM STAGING**,
-- cancelling closes the flyout and restores the unchanged committed plan,
-- confirming closes the flyout and returns to the Driver Day,
-- draft staging starts **unassigned** rather than silently defaulting to Meadowlands Staging,
-- the staging row remains visible as **Choose Staging Location** until the player makes and confirms that decision,
-- unresolved staging does not create a fake committed route leg,
-- once confirmed, the staging POI becomes the real planned end-of-day truck location.
+> End-of-day staging choices must make operational sense from the driver's final real stop.
 
-The locked interaction rule remains:
+That means:
 
-> timeline decides when  
-> place flyout/map preview decides where  
-> confirmation writes Driver Day truth
+- the staging flyout ranks candidates by travel from the final real stop,
+- nearby local truck parking/staging/yard POIs should naturally appear first,
+- regionally distant choices remain available as deliberate reposition decisions,
+- staging candidates can expose local/regional type, truck access, parking, and overnight capability,
+- the player still chooses; DOC OS does not auto-pick the nearest staging location,
+- confirmation remains the only action that writes staging into Driver Day truth.
 
-V2.6.3 still does **not** implement driver favorite-place bonuses, food quality effects, morale/fatigue rewards, relationship changes, random place events, or other RPG consequences. Those systems must enrich these same POIs later.
+The current New York gameplay dataset therefore includes dedicated Bronx-side staging around the Hunts Point / Port Morris industrial area so a Bronx final delivery does not force an implausible New Jersey or Brooklyn reposition.
 
-After V2.6.3.1 passes functional and visual acceptance, proceed to:
+After V2.6.3.2 passes functional and visual acceptance, proceed to:
 
 # **V2.6.4 — Readiness + Send Schedule**
 
 V2.6.4 owns final plan blockers/warnings, review, SEND SCHEDULE, SEND ANYWAY for warnings, and sent-plan locking.
 
-V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, V2.6.1 planning-state contract, V2.6.2 committed stop-sequencing contract, and V2.6.3 insertion-lane/place-model contract.
+V2.6 must preserve the V2.5 booking truth, V2.5.1 workstation contract, V2.5.2 Document Desk/POI contract, V2.5.3 route-origin truth, V2.5.4 route-leg language, V2.5.5 top-bar control strip, V2.5.6 FreightLink row-spacing contract, V2.5.7 compact fit-badge contract, V2.6.1 planning-state contract, V2.6.2 committed stop-sequencing contract, and the V2.6.3 physical-place/preview-confirm contracts.
 
 ---
 
