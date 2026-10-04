@@ -168,6 +168,7 @@ function candidateGap({ lane, driver, day, locations, index, baselineDrive }) {
       afterLabel: eventCode(previous),
       beforeLabel: eventCode(next),
       originCoordinates: previousCoordinates,
+      nextCoordinates,
       originLocationLabel: previous.locationLabel,
       nextLocationLabel: next.locationLabel,
       pickupArrival,
