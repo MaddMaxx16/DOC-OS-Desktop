@@ -551,3 +551,35 @@
 .lane-browser-meta strong {
   margin-left: 0;
 }
+
+/* V2.5.6: give fit cards breathing room and remove the empty third row on unbooked freight. */
+.freightlink-browser-list {
+  padding-right: 0;
+}
+
+.lane-row {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(78px, 84px);
+  grid-template-areas:
+    "route fit"
+    "meta fit";
+  gap: 6px 12px;
+  padding: 10px 18px 10px 13px;
+}
+
+.lane-row.has-booking-state {
+  grid-template-areas:
+    "route fit"
+    "meta fit"
+    "state state";
+}
+
+.lane-fit-pill {
+  justify-self: end;
+  align-self: stretch;
+  margin-right: 2px;
+}
+
+.lane-browser-meta {
+  align-self: end;
+}
