@@ -3128,3 +3128,107 @@ These treatments are visual identity only. No new handling penalties, hazmat rul
 The goal is:
 
 > before reading the label, the player should already have a strong clue what kind of freight they are looking at.
+
+
+---
+
+## V2.7.5.1 — Trailer Rules Foundation: Delivery Access
+
+The freight-loading interaction is now visually accepted enough to begin making placement quality matter. The first trailer rule is unload accessibility.
+
+### Driver Day owns unload order
+
+Dock & Load does not invent a separate delivery sequence.
+
+For every pickup workspace, DOC OS reads the driver's remaining Driver Day timeline and derives the delivery order for freight that will be onboard after this pickup:
+
+- D1 = next load scheduled to deliver,
+- D2 = following delivery,
+- D3 = next after that,
+- and so on.
+
+Only loads represented by the current trailer freight set participate.
+
+This preserves the invariant:
+
+> the trailer puzzle reasons about the same stop order the dispatcher already planned.
+
+### Rear-door access abstraction
+
+The existing trailer board is a 2D floor model. V2.7.5.1 deliberately does not pretend to simulate full forklift geometry.
+
+Rows run:
+
+**FRONT / NOSE → REAR / DOORS**
+
+Columns act as simplified trailer lanes.
+
+For any two loads sharing a lane:
+
+- lower delivery rank means the freight must unload earlier,
+- earlier-delivery freight may sit rearward of later freight,
+- later-delivery freight may not sit farther rearward than earlier freight in the same lane,
+- if it does, that later freight blocks rear-door access to the earlier load.
+
+The rule evaluates the real occupied footprint of each freight object, including long/wide/oversize rectangular cargo.
+
+### Player-owned correction
+
+Delivery-access failure does not reject the drop.
+
+The player may create a bad load plan. DOC OS then explains the problem:
+
+- earlier blocked freight receives a blocked treatment,
+- later freight physically causing the conflict receives a blocker treatment,
+- onboard cargo shows D1 / D2 / D3 delivery-order badges,
+- the right-side rule card shows the unload sequence,
+- the rule card reports CLEAR or BLOCKED,
+- drag preview may turn amber when the proposed placement creates an unload-order conflict.
+
+Red remains reserved for geometric illegality such as overlap or out-of-bounds placement.
+
+### Readiness
+
+Trailer readiness now requires:
+
+- booked freight placed,
+- no unrelated staged freight loaded,
+- no overlap,
+- no out-of-bounds footprint,
+- legal trailer weight,
+- delivery access clear.
+
+A delivery-access conflict produces DELIVERY_ACCESS_BLOCKED and keeps the rear-door commit control locked.
+
+### Persistent cargo matters
+
+Because prior pickup cargo remains physically onboard, later pickups can force the player to reorganize earlier loads.
+
+Example:
+
+- M-101 is already onboard,
+- Queens adds M-202,
+- Driver Day says M-101 delivers before M-202,
+- any M-202 freight placed behind M-101 in the same lane blocks D1 access,
+- the player may reposition either load until M-101 has a clear rear-door path.
+
+That is the first point where trailer continuity becomes a strategic gameplay constraint rather than visual persistence.
+
+### Non-goals
+
+This packet does not add:
+
+- axle calculations,
+- front/rear or left/right weight-balance scoring,
+- fragile separation,
+- hazardous-material compatibility,
+- no-stack enforcement,
+- keep-upright enforcement,
+- heavy-low/forward rules,
+- vertical stacking,
+- full forklift pathfinding,
+- delivery unloading puzzle,
+- service-time changes,
+- HOS changes.
+
+The next trailer-rule slice after playtest acceptance is weight distribution / balance.
