@@ -32,22 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3.2 Driver Label + Marker Alignment Cleanup
+## Current packet — V2.7.3.3 Complete Route Truth
 
-V2.1 through V2.7.3.1 are accepted and locked. Route-locked smooth truck motion must remain untouched.
+V2.1 through V2.7.3.2 are accepted and locked. Smooth truck motion and explicit-click driver labels must remain intact.
 
 Guardrails:
-- preserve the V2.7.3.1 route interpolation and clock behavior exactly,
-- driver name labels are hidden by default and appear only when the player explicitly selects that driver's truck,
-- selecting a stop/load that resolves to a driver must not implicitly open the driver's map label,
-- the selected-driver glow may remain independent from label visibility,
-- the geographic coordinate of every coordinate-bearing DOM marker must correspond to the visual center of its icon artwork,
-- committed lunch/staging route anchors use center anchoring,
-- planning-place and FreightLink pickup/delivery preview icons use center anchoring,
-- labels, badges, and role chips must float outside the coordinate-bearing icon box and must not change MapLibre marker geometry,
-- hover/selected scale effects may enlarge icons but must not translate them away from their geographic coordinate,
-- committed P/D freight stops remain map-native and continue using canonical stitched route access coordinates,
-- do not change route calculation, truck motion, planning timing, or facility service behavior in this cleanup.
+- a committed Driver Day route snapshot may publish only when every planned leg has real road geometry,
+- timing-only estimate legs are internal retry state and must not appear as a partially complete operational route,
+- unresolved committed legs retry automatically while the selected Driver Day remains active,
+- the last complete same-driver route may remain visible while a replacement route resolves,
+- committed operational stop markers must never fall back to raw facility coordinates when their road-access coordinate is unresolved,
+- if road-access truth for a committed stop is unavailable, hide that operational marker until the route leg resolves rather than displaying a floating icon,
+- committed P/D map-native markers and committed L/S DOM markers must both use route-access truth only,
+- facility coordinates remain valid for planning candidates and non-committed preview context, but not as a substitute for committed road-access truth,
+- route retries must preserve serialized OSRM access and existing route caching,
+- do not change route timing, HOS, plan evaluation, truck interpolation, or facility service timing in this packet.
 
 
 ## Verification

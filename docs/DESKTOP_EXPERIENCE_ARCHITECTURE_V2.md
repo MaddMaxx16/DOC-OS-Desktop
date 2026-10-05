@@ -1773,3 +1773,44 @@ Committed lunch/staging anchors, planning-place candidates, and FreightLink pick
 Their labels, badges, and role chips are absolutely positioned outside a fixed icon-sized geometry box. Hover and selected states may scale an icon, but must not translate it away from the map coordinate.
 
 Committed freight P/D circles remain map-native symbols sourced from the canonical stitched route-access coordinate and do not need a DOM-anchor adjustment.
+
+
+---
+
+## V2.7.3.3 — Complete Route Truth
+
+A V2.7.3.2 playtest showed that some operational icons still appeared detached from the blue route. The marker anchor was no longer the problem. The actual defect was incomplete road hydration being published as if it were a complete Driver Day.
+
+When an OSRM request fell back to a timing estimate:
+
+- that estimate leg was intentionally omitted from committed blue-road rendering,
+- but its operational stop marker could still fall back to the canonical facility coordinate,
+- the result looked like a floating Lunch/Staging/Pickup/Delivery icon with no route touching it.
+
+### Publication rule
+
+A Driver Day road snapshot becomes visible only when every segment has real road geometry.
+
+If any segment is unresolved:
+
+- keep the previous complete snapshot for the same driver when one exists,
+- otherwise keep committed route truth unpublished,
+- retry unresolved road truth automatically with capped backoff,
+- reuse cached successful road legs so retries focus network work on missing geometry.
+
+### Operational marker rule
+
+Committed markers are road-facing operational context, not generic facility pins.
+
+Therefore:
+
+- committed P/D markers use route-access coordinates only,
+- committed Lunch/Staging route anchors use route-access coordinates only,
+- no committed marker falls back to the facility coordinate,
+- a committed marker with unresolved route access remains hidden until road truth exists.
+
+Planning candidates and non-committed location previews may still use canonical facility coordinates because they are not yet route execution truth.
+
+This creates the invariant:
+
+> if the player can see a committed operational marker, a committed road route must physically meet it.

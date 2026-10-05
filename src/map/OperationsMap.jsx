@@ -117,6 +117,31 @@ function poiSvg(type) {
   return '<svg viewBox="0 0 48 48" focusable="false"><path d="M6 18 24 7l18 11v23H6z"/><path d="M12 24h7v17h-7zm11 0h7v17h-7zm11 0h4v17h-4z"/><path d="M10 18h28"/></svg>'
 }
 
+function committedRouteComplete(segments = []) {
+  return segments.length > 0
+    && segments.every((segment) => (
+      segment.route?.source === 'road'
+      && Array.isArray(segment.route?.routeShape)
+      && segment.route.routeShape.length >= 2
+    ))
+}
+
+function waitForRouteRetry(milliseconds, isActive) {
+  return new Promise((resolve) => {
+    const startedAt = Date.now()
+
+    const check = () => {
+      if (!isActive() || Date.now() - startedAt >= milliseconds) {
+        resolve()
+        return
+      }
+      setTimeout(check, Math.min(250, milliseconds))
+    }
+
+    check()
+  })
+}
+
 function committedRouteGeoJson(segments = [], execution = null) {
   return {
     type: 'FeatureCollection',
@@ -392,8 +417,9 @@ export default function OperationsMap({
       const markerCoordinates = routeAccessCoordinate(
         routeAccessByEventId,
         anchorEventId,
-        routeAnchor.coordinates,
+        null,
       )
+      if (!Array.isArray(markerCoordinates)) return
 
       const marker = new Marker({ element, anchor: 'center', offset })
         .setLngLat(markerCoordinates)
@@ -591,7 +617,7 @@ export default function OperationsMap({
         const coordinates = routeAccessCoordinate(
           accessByEventId,
           stop.id,
-          stop.coordinates,
+          null,
         )
         if (!Array.isArray(coordinates)) return null
 
@@ -763,22 +789,38 @@ export default function OperationsMap({
   ])
 
   useEffect(() => {
-    if (!driverRouteKey || !driverDay) return undefined
+    if (!driverRouteKey || !driverDay || !selectedDriver) return undefined
 
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
 
-    hydrateCommittedRouteSegments(segmentSpecs, {
-      routeSegment: calculateRoadRoute,
-      isActive: () => active,
-    }).then((segments) => {
-      if (!active) return
-      setDriverRouteResult({
-        key: driverRouteKey,
-        driverId: selectedDriver.id,
-        segments,
-      })
-    })
+    const hydrateCompleteRoute = async () => {
+      let retryAttempt = 0
+
+      while (active) {
+        const segments = await hydrateCommittedRouteSegments(segmentSpecs, {
+          routeSegment: calculateRoadRoute,
+          isActive: () => active,
+        })
+
+        if (!active) return
+
+        if (committedRouteComplete(segments)) {
+          setDriverRouteResult({
+            key: driverRouteKey,
+            driverId: selectedDriver.id,
+            segments,
+          })
+          return
+        }
+
+        retryAttempt += 1
+        const retryDelayMs = Math.min(12000, 1800 + (retryAttempt * 1200))
+        await waitForRouteRetry(retryDelayMs, () => active)
+      }
+    }
+
+    hydrateCompleteRoute()
 
     return () => {
       active = false

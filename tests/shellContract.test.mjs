@@ -323,7 +323,8 @@ test('V2.6.5.9 committed freight stops render in MapLibre instead of displaced D
   assert.match(map, /type: 'circle'/)
   assert.match(map, /text-field': \['get', 'badge'\]/)
   assert.match(map, /text-field': \['get', 'label'\]/)
-  assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*stop\.coordinates/)
+  assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*null/)
+  assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,80}stop\.coordinates/)
   assert.match(map, /map\.on\('click', layerId, selectStop\)/)
   assert.doesNotMatch(map, /poi-marker facility-stop/)
 })
@@ -338,7 +339,8 @@ test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-acce
   assert.match(routing, /data\?\.waypoints\?\.\[0\]\?\.location/)
   assert.match(routing, /data\?\.waypoints\?\.\[1\]\?\.location/)
   assert.match(map, /buildRouteAccessByEventId\(displayDriverRoutes\)/)
-  assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*stop\.coordinates/)
+  assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*null/)
+  assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,80}stop\.coordinates/)
   assert.match(map, /displayDriverRoutes, planningPlaceOptions/)
   assert.match(access, /Prefer the incoming leg's destination access point/)
 })
@@ -385,6 +387,20 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /coordinateAlongRouteShape/)
   assert.match(execution, /'dwell-break'/)
   assert.match(execution, /routeExecutionPosition/)
+})
+
+test('V2.7.3.3 publishes only complete committed road truth and never floats operational markers on facility fallback coordinates', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /function committedRouteComplete\(segments = \[\]\)/)
+  assert.match(map, /segments\.every\(\(segment\) => \([\s\S]*segment\.route\?\.source === 'road'/)
+  assert.match(map, /while \(active\)/)
+  assert.match(map, /if \(committedRouteComplete\(segments\)\) \{[\s\S]*setDriverRouteResult/)
+  assert.match(map, /retryDelayMs = Math\.min\(12000, 1800 \+ \(retryAttempt \* 1200\)\)/)
+  assert.match(map, /routeAccessCoordinate\([\s\S]{0,180}anchorEventId,[\s\S]{0,60}null,[\s\S]{0,80}\)/)
+  assert.match(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,60}null,[\s\S]{0,80}\)/)
+  assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}anchorEventId,[\s\S]{0,80}routeAnchor\.coordinates/)
+  assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,80}stop\.coordinates/)
 })
 
 test('V2.7.3.2 shows driver labels only for explicit truck selection and centers coordinate-bearing POI icons', async () => {
@@ -519,8 +535,8 @@ test('V2.6.5.13 publishes the committed route only after the full serialized day
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const hydration = await readFile(new URL('../src/domain/routing/committedRouteHydration.js', import.meta.url), 'utf8')
 
-  assert.match(map, /hydrateCommittedRouteSegments\(segmentSpecs/)
-  assert.match(map, /\.then\(\(segments\) => \{[\s\S]*setDriverRouteResult\(\{[\s\S]*key: driverRouteKey,[\s\S]*driverId: selectedDriver\.id,[\s\S]*segments,[\s\S]*\}\)/)
+  assert.match(map, /const segments = await hydrateCommittedRouteSegments\(segmentSpecs/)
+  assert.match(map, /if \(committedRouteComplete\(segments\)\) \{[\s\S]*setDriverRouteResult\(\{[\s\S]*key: driverRouteKey,[\s\S]*driverId: selectedDriver\.id,[\s\S]*segments,[\s\S]*\}\)/)
   assert.doesNotMatch(map, /onProgress:/)
   assert.doesNotMatch(hydration, /onProgress/)
 })
@@ -642,7 +658,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.2 · MARKER CLEANUP/)
+  assert.match(top, /DESKTOP V2\.7\.3\.3 · COMPLETE ROUTE TRUTH/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
