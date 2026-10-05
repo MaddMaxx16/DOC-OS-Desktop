@@ -66,7 +66,11 @@ export function analyzeDriverDay(day, driver, locations = {}) {
       )
     }
 
-    const margin = finite(stop.appointmentEndMinutes) - finite(stop.projectedArrivalMinutes)
+    const appointmentReadyMinutes = finite(
+      stop.serviceStartMinutes,
+      stop.projectedArrivalMinutes,
+    )
+    const margin = finite(stop.appointmentEndMinutes) - appointmentReadyMinutes
     if (margin < 0) {
       addWarning(
         `appointment-late:${stop.id}`,

@@ -112,6 +112,15 @@ function activePresentation(execution = {}) {
     }
   }
 
+  if (execution.executionPhase === 'waiting-appointment') {
+    return {
+      label: 'WAITING',
+      detail: execution.currentEventLabel
+        ? `Early at ${execution.currentEventLabel} · appointment opens in ${Math.ceil(execution.waitRemainingMinutes ?? 0)} min.`
+        : `Waiting ${Math.ceil(execution.waitRemainingMinutes ?? 0)} min for appointment.`,
+    }
+  }
+
   if (execution.executionPhase === 'arrived') {
     return {
       label: 'ARRIVED',

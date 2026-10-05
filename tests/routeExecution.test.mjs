@@ -66,6 +66,76 @@ test('sent-day timeline execution moves between planned events', () => {
   assert.deepEqual(state.completedEventIds, ['marcus-reed:shift-start'])
 })
 
+test('early freight arrival parks at the facility and waits for the appointment before service', () => {
+  const waitingDay = {
+    driverId: 'marcus-reed',
+    timeline: [
+      {
+        id: 'marcus-reed:shift-start',
+        kind: 'shift-start',
+        locationLabel: 'Newark, NJ',
+        projectedArrivalMinutes: 420,
+      },
+      {
+        id: 'M-101:pickup',
+        kind: 'freight-stop',
+        role: 'pickup',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        freight: { pallets: 8, weightLbs: 12000 },
+        locationLabel: 'Empire Freight Terminal',
+        projectedArrivalMinutes: 470,
+        physicalArrivalMinutes: 470,
+        serviceStartMinutes: 480,
+        endMinutes: 492,
+      },
+      {
+        id: 'M-101:delivery',
+        kind: 'freight-stop',
+        role: 'delivery',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        freight: { pallets: 8, weightLbs: 12000 },
+        locationLabel: 'Harborline Logistics',
+        projectedArrivalMinutes: 540,
+        physicalArrivalMinutes: 540,
+        serviceStartMinutes: 540,
+        endMinutes: 550,
+      },
+    ],
+  }
+
+  const driving = buildTimelineExecution(waitingDay, {
+    dayNumber: 1,
+    currentMinutes: 465,
+  })
+  assert.equal(driving.executionPhase, 'en-route')
+  assert.equal(driving.activeSegmentProgress, 0.9)
+
+  const waiting = buildTimelineExecution(waitingDay, {
+    dayNumber: 1,
+    currentMinutes: 474,
+  })
+  assert.equal(waiting.executionPhase, 'waiting-appointment')
+  assert.equal(waiting.currentEventId, 'M-101:pickup')
+  assert.equal(waiting.currentEventArrivalMinutes, 470)
+  assert.equal(waiting.waitingUntilMinutes, 480)
+  assert.equal(waiting.waitRemainingMinutes, 6)
+  assert.ok(waiting.completedSegmentIds.includes('marcus-reed:shift-start->M-101:pickup'))
+  assert.ok(!waiting.completedEventIds.includes('M-101:pickup'))
+  assert.deepEqual(waiting.onboardLoadIds, [])
+
+  const loading = buildTimelineExecution(waitingDay, {
+    dayNumber: 1,
+    currentMinutes: 486,
+  })
+  assert.equal(loading.executionPhase, 'service-loading')
+  assert.equal(loading.serviceStartMinutes, 480)
+  assert.equal(loading.serviceDurationMinutes, 12)
+  assert.equal(loading.serviceRemainingMinutes, 6)
+  assert.equal(loading.serviceProgress, 0.5)
+})
+
 test('freight pickup becomes a parked loading service window', () => {
   const state = buildTimelineExecution(day, {
     dayNumber: 1,
@@ -196,6 +266,11 @@ test('route execution position uses active road geometry and stop access points'
 
   assert.deepEqual(routeExecutionPosition({
     executionPhase: 'arrived',
+    currentEventId: 'p1',
+  }, segments, [-1, -1]), [2, 0])
+
+  assert.deepEqual(routeExecutionPosition({
+    executionPhase: 'waiting-appointment',
     currentEventId: 'p1',
   }, segments, [-1, -1]), [2, 0])
 })

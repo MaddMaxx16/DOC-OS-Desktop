@@ -2431,3 +2431,75 @@ Risk receives explicit right-side padding so it does not visually collide with t
 The principle is:
 
 > Fleet should answer "who, what's next, how much work, and what is wrong?" Anything deeper belongs in Driver Day.
+
+
+---
+
+## V2.7.4.2 — Physical Arrival + Appointment Waiting
+
+The pre-V2.7.4.2 schedule model clamped a freight stop's arrival to the appointment start. If a truck could physically reach a receiver early, the live route therefore stretched the drive until the appointment rather than arriving and waiting.
+
+V2.7.4.2 separates those concepts.
+
+### Freight timing model
+
+Each freight stop now carries:
+
+- **physicalArrivalMinutes** — when road travel reaches the facility,
+- **serviceStartMinutes** — when loading/unloading may begin,
+- **waitMinutes** — early dwell before service,
+- **endMinutes** — service completion/departure.
+
+For an appointment-gated stop:
+
+`serviceStart = max(physicalArrival, appointmentStart)`
+
+and:
+
+`end = serviceStart + serviceDuration`
+
+`projectedArrivalMinutes` now follows physical arrival for recalculated freight stops so the Driver Day timeline represents where the truck actually is.
+
+### Live execution
+
+A freight leg is complete at physical arrival.
+
+If the driver is early:
+
+`EN ROUTE → WAITING → LOADING / UNLOADING → EN ROUTE`
+
+During WAITING:
+
+- the truck is parked at the facility access point,
+- the completed incoming leg is visually retired,
+- no pickup freight becomes onboard,
+- no delivery freight is removed,
+- service progress has not started,
+- a countdown identifies when the appointment opens.
+
+The next road leg does not begin until service completes.
+
+### Planning and appointment risk
+
+Plan analysis evaluates appointment-window risk using service-ready time.
+
+This preserves the useful distinction:
+
+- arriving early is not a late appointment,
+- arriving after the appointment start may still be inside the window,
+- arriving/service-ready after the appointment end is late.
+
+### Facility gameplay handoff
+
+This packet intentionally does **not** add the pickup/delivery puzzle.
+
+It creates the event boundary that facility gameplay needs:
+
+1. truck physically arrives,
+2. early truck waits if required,
+3. appointment/service gate opens,
+4. facility interaction may begin,
+5. service/loading time follows facility interaction,
+6. driver departs automatically after service completion.
+
+The next facility-gameplay packet can replace the automatic transition at step 4 with the dock/freight puzzle without rewriting route or appointment timing.

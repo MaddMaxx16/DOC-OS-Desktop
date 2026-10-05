@@ -38,14 +38,22 @@ function normalizeTimeline(driverDay = {}) {
   let previousArrival = Number.NEGATIVE_INFINITY
 
   return timeline.map((event, index) => {
-    let arrival = finite(event.projectedArrivalMinutes)
+    let arrival = finite(
+      event.physicalArrivalMinutes,
+      event.projectedArrivalMinutes,
+    )
 
     while (arrival < previousArrival) arrival += 1440
 
-    let departure = arrival
+    let serviceStart = event.kind === 'freight-stop'
+      ? finite(event.serviceStartMinutes, arrival)
+      : arrival
+    while (serviceStart < arrival) serviceStart += 1440
+
+    let departure = serviceStart
     if (Number.isFinite(Number(event.endMinutes))) {
       departure = finite(event.endMinutes)
-      while (departure < arrival) departure += 1440
+      while (departure < serviceStart) departure += 1440
     }
 
     previousArrival = arrival
@@ -54,6 +62,7 @@ function normalizeTimeline(driverDay = {}) {
       event,
       index,
       arrivalMinutes: arrival,
+      serviceStartMinutes: serviceStart,
       departureMinutes: departure,
     }
   })
@@ -129,11 +138,11 @@ function freightServiceFields(item, currentMinutes) {
 
   const serviceDurationMinutes = Math.max(
     0,
-    item.departureMinutes - item.arrivalMinutes,
+    item.departureMinutes - item.serviceStartMinutes,
   )
   const elapsed = Math.max(
     0,
-    Math.min(serviceDurationMinutes, currentMinutes - item.arrivalMinutes),
+    Math.min(serviceDurationMinutes, currentMinutes - item.serviceStartMinutes),
   )
   const serviceProgress = serviceDurationMinutes > 0
     ? elapsed / serviceDurationMinutes
@@ -143,6 +152,7 @@ function freightServiceFields(item, currentMinutes) {
     serviceRole: event.role ?? null,
     serviceLoadId: event.loadId ?? null,
     serviceLoadRef: event.loadRef ?? null,
+    serviceStartMinutes: item.serviceStartMinutes,
     serviceDurationMinutes,
     serviceProgress,
     serviceRemainingMinutes: Math.max(0, item.departureMinutes - currentMinutes),
@@ -204,7 +214,35 @@ export function buildTimelineExecution(driverDay = {}, clock = {}) {
     const next = nextEventAfter(schedule, index)
 
     if (
-      currentMinutes >= current.arrivalMinutes
+      current.event.kind === 'freight-stop'
+      && currentMinutes >= current.arrivalMinutes
+      && currentMinutes < current.serviceStartMinutes
+    ) {
+      return {
+        ...base,
+        executionPhase: 'waiting-appointment',
+        activeSegmentId: null,
+        activeSegmentProgress: 0,
+        currentEventId: current.event.id,
+        currentEventKind: current.event.kind,
+        currentEventLabel: current.event.locationLabel,
+        currentEventArrivalMinutes: current.arrivalMinutes,
+        currentEventServiceStartMinutes: current.serviceStartMinutes,
+        currentEventDepartureMinutes: current.departureMinutes,
+        waitingUntilMinutes: current.serviceStartMinutes,
+        waitRemainingMinutes: Math.max(0, current.serviceStartMinutes - currentMinutes),
+        nextEventId: next?.event.id ?? null,
+        nextEventKind: next?.event.kind ?? null,
+        nextEventLabel: next?.event.locationLabel ?? null,
+        nextEventArrivalMinutes: next?.arrivalMinutes ?? null,
+        serviceRole: current.event.role ?? null,
+        serviceLoadId: current.event.loadId ?? null,
+        serviceLoadRef: current.event.loadRef ?? null,
+      }
+    }
+
+    if (
+      currentMinutes >= current.serviceStartMinutes
       && currentMinutes < current.departureMinutes
     ) {
       const servicePhase = current.event.kind === 'freight-stop'
@@ -223,6 +261,8 @@ export function buildTimelineExecution(driverDay = {}, clock = {}) {
         currentEventId: current.event.id,
         currentEventKind: current.event.kind,
         currentEventLabel: current.event.locationLabel,
+        currentEventArrivalMinutes: current.arrivalMinutes,
+        currentEventServiceStartMinutes: current.serviceStartMinutes,
         currentEventDepartureMinutes: current.departureMinutes,
         nextEventId: next?.event.id ?? null,
         nextEventKind: next?.event.kind ?? null,
@@ -277,6 +317,7 @@ export function buildTimelineExecution(driverDay = {}, clock = {}) {
         nextEventKind: next.event.kind,
         nextEventLabel: next.event.locationLabel,
         nextEventArrivalMinutes: next.arrivalMinutes,
+        nextEventServiceStartMinutes: next.serviceStartMinutes,
       }
     }
   }

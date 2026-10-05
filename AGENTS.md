@@ -32,28 +32,31 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.1.3 Fleet Roster Cleanup
+## Current packet — V2.7.4.2 Physical Arrival + Appointment Waiting
 
-V2.1 through V2.7.4.1.2 are accepted and locked. Fleet search/filter/risk behavior, Fleet Glance scaling, dispatch gating, fleet execution, route truth, and marker anchoring remain intact.
+V2.1 through V2.7.4.1.3 are accepted and locked. Fleet Roster cleanup, dispatch gating, late-send recovery, fleet execution, route truth, and marker anchoring remain intact.
 
-Product hierarchy:
-- quick driver chips own lightweight operational status and driver switching,
-- Fleet owns roster scanning/search/filtering/risk,
-- Driver Day owns detailed driver metrics such as HOS and the full timeline.
+Core timing invariant:
+- road travel ends when the truck physically reaches the facility,
+- appointment timing gates service, not driving.
 
-Fleet row rules:
-- do not duplicate HOS in Fleet while Driver Day already owns that detail,
-- do not repeat ordinary PLAN NOT SENT / EN ROUTE status text inside every Fleet row; the quick chips and Fleet filters already carry fleet-status context,
-- each Fleet row shows the driver identity, inline NEXT stop/ETA, assigned load count, and RISK,
-- NEXT replaces the old instructional/detail sentence under the driver name,
-- remove instructional copy such as "Send the schedule to arm Live Operations" from roster rows,
-- LOADS is a simple assigned-load count, not a miniature load-detail view,
-- RISK remains the exception surface: DISPATCH REQUIRED -> BLOCKER -> WARNING -> CLEAR,
-- risk must have right-side breathing room and must not hug the browser edge,
-- Fleet may be narrower than V2.7.4.1.2 now that duplicate columns are gone; the map should regain that space,
-- search may still index operational status/detail text even when those strings are not rendered redundantly,
-- clicking the row still selects the driver and opens Driver Day,
-- do not change route execution, dispatch timing, late-send recovery, appointment/service timing, or HOS calculations in this packet.
+Freight timing rules:
+- projectedArrivalMinutes now represents physical facility arrival for recalculated freight stops,
+- physicalArrivalMinutes explicitly preserves that same arrival truth,
+- serviceStartMinutes is max(physical arrival, appointment start),
+- waitMinutes is the early-arrival gap between physical arrival and service start,
+- endMinutes is service start + deterministic freight service duration,
+- appointment risk is evaluated from service-ready time, not by stretching drive time,
+- route-segment completion occurs at physical arrival,
+- if physical arrival is before service start, execution enters waiting-appointment,
+- waiting-appointment parks the truck at the facility and completes no freight service,
+- onboard freight changes only when pickup/delivery service actually completes,
+- once serviceStartMinutes is reached, existing LOADING / UNLOADING service behavior begins,
+- all fleet surfaces may classify waiting-appointment as AT STOP and show WAITING,
+- Driver Day shows an appointment countdown for the actively waiting stop,
+- do not implement the pickup/delivery facility puzzle in this packet,
+- V2.7.4.2 creates the truthful facility-arrival trigger that the upcoming facility gameplay will consume,
+- do not change HOS depletion in this packet.
 
 
 ## Verification

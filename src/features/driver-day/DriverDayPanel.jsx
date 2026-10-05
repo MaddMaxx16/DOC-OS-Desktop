@@ -25,6 +25,24 @@ function eventCode(item) {
   return `${prefix}${item.loadOrdinal}`
 }
 
+function AppointmentWait({ item, liveState }) {
+  const active = (
+    liveState?.currentEventId === item.id
+    && liveState?.executionPhase === 'waiting-appointment'
+  )
+  if (!active) return null
+
+  const remaining = Math.max(0, Math.ceil(liveState.waitRemainingMinutes ?? 0))
+
+  return (
+    <div className="appointment-wait">
+      <span>WAITING</span>
+      <strong>{remaining} MIN</strong>
+      <em>APPOINTMENT {formatClock(liveState.waitingUntilMinutes)}</em>
+    </div>
+  )
+}
+
 function ServiceProgress({ item, liveState }) {
   const active = (
     liveState?.currentEventId === item.id
@@ -70,8 +88,12 @@ function FreightMeta({ item, capacityPallets, liveState }) {
         <span>{capacity.palletsUsed}/{capacityPallets} pallets</span>
         <span>{formatWeight(capacity.weightUsedLbs)}</span>
         <span>{capacity.onboardLoadIds.length} planned onboard</span>
-        <span>{item.role === 'pickup' ? 'load' : 'unload'} {item.serviceMinutes} min</span>
+        <span>
+          {item.waitMinutes > 0 ? `wait ${item.waitMinutes} · ` : ''}
+          {item.role === 'pickup' ? 'load' : 'unload'} {item.serviceMinutes} min
+        </span>
       </div>
+      <AppointmentWait item={item} liveState={liveState} />
       <ServiceProgress item={item} liveState={liveState} />
     </>
   )
@@ -459,6 +481,8 @@ export default function DriverDayPanel({
               ? `Shift starts at ${formatClock(liveState.shiftStartMinutes)}. Live execution is armed.`
               : liveState?.executionPhase === 'en-route'
                 ? `Next: ${liveState.nextEventLabel ?? 'planned stop'} · ETA ${formatClock(liveState.nextEventArrivalMinutes)}`
+                : liveState?.executionPhase === 'waiting-appointment'
+                  ? `Arrived early at ${liveState.currentEventLabel ?? 'planned stop'} · appointment opens at ${formatClock(liveState.waitingUntilMinutes)} · ${Math.ceil(liveState.waitRemainingMinutes ?? 0)} min waiting.`
                 : ['service-loading', 'service-unloading'].includes(liveState?.executionPhase)
                   ? `${liveState.executionPhase === 'service-loading' ? 'Loading' : 'Unloading'} ${liveState.serviceLoadRef ?? 'freight'} · ${Math.ceil(liveState.serviceRemainingMinutes ?? 0)} min remaining · automatic departure at ${formatClock(liveState.currentEventDepartureMinutes)}.`
                 : liveState?.executionPhase === 'arrived'

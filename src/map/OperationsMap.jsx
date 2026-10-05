@@ -300,7 +300,7 @@ function fleetStatusBucket(liveState = null) {
   if (!liveState?.sent || liveState?.phase === 'draft') return 'not-sent'
   if (liveState?.phase === 'scheduled') return 'scheduled'
   if (liveState?.executionPhase === 'en-route') return 'en-route'
-  if (['service-loading', 'service-unloading', 'arrived'].includes(liveState?.executionPhase)) {
+  if (['waiting-appointment', 'service-loading', 'service-unloading', 'arrived'].includes(liveState?.executionPhase)) {
     return 'at-stop'
   }
   if (liveState?.executionPhase === 'dwell-break') return 'break'
@@ -383,6 +383,7 @@ function fleetStatusLabel(driver, liveState) {
   if (liveState.phase === 'closed') return 'SHIFT CLOSED'
 
   if (liveState.executionPhase === 'en-route') return 'EN ROUTE'
+  if (liveState.executionPhase === 'waiting-appointment') return 'WAITING'
   if (liveState.executionPhase === 'service-loading') return 'LOADING'
   if (liveState.executionPhase === 'service-unloading') return 'UNLOADING'
   if (liveState.executionPhase === 'dwell-break') return 'ON BREAK'

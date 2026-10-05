@@ -90,14 +90,22 @@ function updateLunchSequence(plan, sequenceIds, orderByStopId) {
   }
 }
 
-function updateLoadArrival(loads, loadId, role, arrivalMinutes) {
+function updateLoadTiming(
+  loads,
+  loadId,
+  role,
+  physicalArrivalMinutes,
+  serviceStartMinutes,
+) {
   return loads.map((load) => (
     load.id === loadId
       ? {
           ...load,
           [role]: {
             ...load[role],
-            projectedArrivalMinutes: arrivalMinutes,
+            projectedArrivalMinutes: physicalArrivalMinutes,
+            physicalArrivalMinutes,
+            serviceStartMinutes,
           },
         }
       : load
@@ -161,9 +169,20 @@ export function recalculateDriverTimeline({
     const rawArrival = readyMinute + Number(travel.minutes ?? 0)
 
     if (event.kind === 'freight-stop') {
-      const arrival = Math.max(rawArrival, Number(event.appointmentStartMinutes ?? rawArrival))
-      nextLoads = updateLoadArrival(nextLoads, event.loadId, event.role, arrival)
-      readyMinute = arrival + freightServiceMinutes(event.role, event.serviceMinutes)
+      const physicalArrivalMinutes = rawArrival
+      const serviceStartMinutes = Math.max(
+        physicalArrivalMinutes,
+        Number(event.appointmentStartMinutes ?? physicalArrivalMinutes),
+      )
+      nextLoads = updateLoadTiming(
+        nextLoads,
+        event.loadId,
+        event.role,
+        physicalArrivalMinutes,
+        serviceStartMinutes,
+      )
+      readyMinute = serviceStartMinutes
+        + freightServiceMinutes(event.role, event.serviceMinutes)
     } else if (event.kind === 'lunch' && nextPlan.lunch) {
       const duration = Math.max(1, Number(nextPlan.lunch.durationMinutes ?? 30))
       const preferredStart = Number(nextPlan.lunch.preferredStartMinutes ?? rawArrival)

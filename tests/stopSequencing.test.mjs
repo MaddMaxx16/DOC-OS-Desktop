@@ -115,6 +115,45 @@ test('a reorder that would exceed trailer capacity is blocked', () => {
   assert.match(result.reason, /exceeds trailer capacity/)
 })
 
+test('timeline recalculation preserves physical early arrival instead of stretching travel to appointment time', () => {
+  const earlyAppointmentLoads = loads.map((load) => (
+    load.id === 'M-101'
+      ? {
+          ...load,
+          pickup: {
+            ...load.pickup,
+            appointmentStartMinutes: 600,
+            appointmentEndMinutes: 630,
+          },
+        }
+      : load
+  ))
+
+  const recalculated = recalculateDriverTimeline({
+    driver: marcusDriver,
+    loads: earlyAppointmentLoads,
+    plan: driverPlans[marcusDriver.id],
+    locations,
+  })
+
+  const day = buildDriverDay({
+    driver: marcusDriver,
+    loads: recalculated.loads,
+    plan: recalculated.plan,
+    locations,
+  })
+  const pickup = day.freightStops.find((stop) => stop.id === 'M-101:pickup')
+
+  assert.ok(pickup.physicalArrivalMinutes < pickup.serviceStartMinutes)
+  assert.equal(pickup.projectedArrivalMinutes, pickup.physicalArrivalMinutes)
+  assert.equal(pickup.serviceStartMinutes, 600)
+  assert.equal(
+    pickup.waitMinutes,
+    pickup.serviceStartMinutes - pickup.physicalArrivalMinutes,
+  )
+  assert.equal(pickup.endMinutes, pickup.serviceStartMinutes + pickup.serviceMinutes)
+})
+
 test('late dispatch rebases the entire remaining Driver Day from the actual departure minute', () => {
   const actualDispatchMinute = 510
   const recalculated = recalculateDriverTimeline({

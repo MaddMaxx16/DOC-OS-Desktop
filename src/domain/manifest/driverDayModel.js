@@ -19,7 +19,23 @@ export function formatClock(minutes) {
 function freightStop(load, role, locations) {
   const spec = load[role]
   const location = locations[spec.locationId]
-  const projectedArrivalMinutes = finite(spec.projectedArrivalMinutes)
+  const appointmentStartMinutes = finite(spec.appointmentStartMinutes)
+  const appointmentEndMinutes = finite(spec.appointmentEndMinutes)
+  const physicalArrivalMinutes = finite(
+    spec.physicalArrivalMinutes,
+    finite(spec.projectedArrivalMinutes),
+  )
+  const explicitServiceStart = (
+    spec.serviceStartMinutes !== null
+    && spec.serviceStartMinutes !== undefined
+    && Number.isFinite(Number(spec.serviceStartMinutes))
+  )
+    ? Number(spec.serviceStartMinutes)
+    : null
+  const serviceStartMinutes = explicitServiceStart ?? Math.max(
+    physicalArrivalMinutes,
+    appointmentStartMinutes,
+  )
   const serviceMinutes = freightServiceMinutes(role, spec.serviceMinutes)
 
   return {
@@ -31,11 +47,14 @@ function freightStop(load, role, locations) {
     loadOrdinal: finite(load.dayLoadOrder, 1),
     driverId: load.assignedDriverId,
     manifestOrder: finite(spec.manifestOrder),
-    projectedArrivalMinutes,
+    projectedArrivalMinutes: physicalArrivalMinutes,
+    physicalArrivalMinutes,
+    serviceStartMinutes,
+    waitMinutes: Math.max(0, serviceStartMinutes - physicalArrivalMinutes),
     serviceMinutes,
-    endMinutes: projectedArrivalMinutes + serviceMinutes,
-    appointmentStartMinutes: finite(spec.appointmentStartMinutes),
-    appointmentEndMinutes: finite(spec.appointmentEndMinutes),
+    endMinutes: serviceStartMinutes + serviceMinutes,
+    appointmentStartMinutes,
+    appointmentEndMinutes,
     locationId: spec.locationId,
     locationLabel: location?.label ?? spec.locationId,
     coordinates: location?.coordinates ?? null,
