@@ -32,25 +32,30 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.1.1 Fleet Glance Scaling
+## Current packet — V2.7.4.1.2 Fleet Roster
 
-V2.1 through V2.7.4.1 are accepted and locked. Dispatch gating, late-send recovery, fleet execution, route truth, and marker anchoring remain intact.
+V2.1 through V2.7.4.1.1 are accepted and locked. Fleet glance scaling, dispatch gating, fleet execution, route truth, and marker anchoring remain intact.
 
-Fleet glance scaling rules:
-- fleets with 1–5 drivers retain the existing one-chip-per-driver map strip,
-- fleets with 6+ drivers switch to a compact selected-driver + fleet-health summary,
-- the selected driver remains visible regardless of fleet size,
-- up to two non-selected drivers requiring attention remain individually visible by initials/status,
-- additional attention drivers collapse into a NEED ATTENTION counter,
-- fleet summary counters include EN ROUTE, AT STOP, BREAK, SCHEDULED, and NOT SENT when nonzero,
-- clicking a summary counter opens the Drivers browser filtered to that operational group,
-- clicking DRIVERS opens the complete roster,
-- the Drivers browser exposes the active filter and provides an ALL clear action,
-- fleets with 6–10 drivers retain non-selected active-leg context at reduced opacity,
-- fleets with 11+ drivers hide ordinary non-selected active legs by default; only attention-worthy context may break through,
-- truck simulation remains fully active regardless of whether route context is hidden,
-- persistent truck name labels remain click-only,
-- do not change dispatch timing, late-send recovery, route execution, HOS, or appointment/service timing in this patch.
+Product hierarchy:
+- quick driver chips are glance + driver switching,
+- Fleet is the roster/search/filter/risk command board,
+- Driver Day is the detailed one-driver operations workspace.
+
+Fleet roster rules:
+- keep the internal app id `drivers` stable, but present the navigation label as Fleet,
+- Fleet receives committed Driver Days and live driver states; it must not duplicate or invent operational truth,
+- each roster row exposes DRIVER / STATUS, HOS, LOAD, NEXT, and RISK,
+- current/next load identity comes from Driver Day freight stops and live current/next event ids,
+- live onboard count/pallet state comes from live execution state,
+- next-stop ETA comes from live state when available and Driver Day as fallback,
+- risk priority is DISPATCH REQUIRED -> BLOCKER -> WARNING -> CLEAR,
+- Fleet search matches driver, initials, status, stop, risk, and load reference,
+- map-summary filters continue to open Fleet already filtered to the matching operational group,
+- Fleet gets a slightly wider browser than FreightLink; the map remains the primary workspace,
+- clicking a roster row selects that driver and opens the existing Driver Day inspector,
+- Fleet HOS currently reflects the Driver Day HOS source; live HOS depletion will replace that source in the dedicated HOS packet,
+- do not add duplicate persistent driver labels to the map,
+- do not change dispatch timing, route execution, late-send recovery, appointment/service timing, or HOS calculations in this packet.
 
 
 ## Verification

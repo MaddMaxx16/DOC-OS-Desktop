@@ -13,6 +13,7 @@ test('V2.5.1 workstation uses rail, browser, and inspector widths', () => {
   assert.equal(SHELL_CONFIG.browserWidth, 340)
   assert.equal(SHELL_CONFIG.inspectorWidth, 430)
   assert.equal(WORKSTATION_SECTIONS[0].id, 'drivers')
+  assert.equal(WORKSTATION_SECTIONS[0].label, 'Fleet')
   assert.equal(WORKSTATION_SECTIONS[1].id, 'freightlink')
 })
 
@@ -54,7 +55,7 @@ test('V2.5.1 shell is rail -> browser -> map -> inspector', async () => {
   assert.match(css, /76px minmax\(300px, 340px\) minmax\(0, 1fr\) minmax\(390px, 430px\)/)
 })
 
-test('V2.5.1 command rail exposes Drivers and FreightLink as live sections', async () => {
+test('V2.5.1 command rail exposes Fleet and FreightLink as live sections', async () => {
   const rail = await readFile(new URL('../src/shell/CommandRail.jsx', import.meta.url), 'utf8')
 
   assert.match(rail, /section\.id === 'drivers' \|\| section\.id === 'freightlink'/)
@@ -392,6 +393,44 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.4.1.2 turns the Drivers browser into a searchable operational Fleet roster', async () => {
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const browser = await readFile(new URL('../src/shell/DriverBrowser.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/shell/shell.css', import.meta.url), 'utf8')
+  const config = await readFile(new URL('../src/config/shellConfig.js', import.meta.url), 'utf8')
+
+  assert.match(config, /id: 'drivers', label: 'Fleet'/)
+  assert.match(shell, /activeApp === 'drivers' \? 'fleet-browser-open' : ''/)
+  assert.match(shell, /<DriverBrowser[\s\S]*driverDays=\{driverDays\}/)
+
+  assert.match(browser, /aria-label="Fleet roster"/)
+  assert.match(browser, /<strong>Roster<\/strong>/)
+  assert.match(browser, /type="search"/)
+  assert.match(browser, /placeholder="Driver, load, stop, status…"/)
+  assert.match(browser, /function currentLoadCopy/)
+  assert.match(browser, /function nextStopCopy/)
+  assert.match(browser, /function riskCopy/)
+  assert.match(browser, /day\?\.hos/)
+  assert.match(browser, /liveState\.onboardLoadIds/)
+  assert.match(browser, /nextEventArrivalMinutes/)
+  assert.match(browser, /day\?\.planHealth\?\.blockers/)
+  assert.match(browser, /day\?\.planHealth\?\.warnings/)
+  assert.match(browser, /DRIVER \/ STATUS/)
+  assert.match(browser, />HOS</)
+  assert.match(browser, />LOAD</)
+  assert.match(browser, />NEXT</)
+  assert.match(browser, />RISK</)
+  assert.match(browser, /filteredRows\.map/)
+
+  assert.match(css, /browser-open\.fleet-browser-open/)
+  assert.match(css, /minmax\(380px, 410px\)/)
+  assert.match(css, /\.fleet-roster-columns/)
+  assert.match(css, /\.fleet-roster-row/)
+  assert.match(css, /\.fleet-roster-risk\.alert/)
+  assert.match(css, /\.fleet-roster-risk\.warning/)
+  assert.match(css, /\.fleet-roster-risk\.clear/)
+})
+
 test('V2.7.4.1.1 scales fleet glance from individual drivers to filtered fleet health', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const mapCss = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
@@ -425,7 +464,7 @@ test('V2.7.4.1.1 scales fleet glance from individual drivers to filtered fleet h
   assert.match(browser, /filter === 'en-route'/)
   assert.match(browser, /filter === 'at-stop'/)
   assert.match(browser, /filter === 'break'/)
-  assert.match(browser, /filteredDrivers\.map/)
+  assert.match(browser, /filteredRows\.map/)
   assert.match(browser, /driver-filter-clear/)
   assert.match(shellCss, /\.workstation-panel-header > button\.driver-filter-clear/)
 })
@@ -877,7 +916,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.4\.1\.1 · FLEET GLANCE SCALING/)
+  assert.match(top, /DESKTOP V2\.7\.4\.1\.2 · FLEET ROSTER/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

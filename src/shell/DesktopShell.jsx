@@ -170,6 +170,7 @@ export default function DesktopShell({
             hasBrowser ? 'browser-open' : '',
             hasInspector ? 'inspector-open' : '',
             freightlinkOpen ? 'freightlink-open' : '',
+            activeApp === 'drivers' ? 'fleet-browser-open' : '',
           ].filter(Boolean).join(' ')}
           style={selectedDriverIdentity ? { '--selected-driver-color': selectedDriverIdentity.color } : undefined}
           aria-label="DOC OS operations workstation"
@@ -179,6 +180,7 @@ export default function DesktopShell({
           {activeApp === 'drivers' && (
             <DriverBrowser
               drivers={drivers}
+              driverDays={driverDays}
               activeDriverId={selectedDriver?.id ?? null}
               liveDriverStates={liveDriverStates}
               filter={driverBrowserFilter}

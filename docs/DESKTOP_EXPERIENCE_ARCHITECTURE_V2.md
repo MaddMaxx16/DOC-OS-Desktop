@@ -2321,3 +2321,66 @@ Future attention states may opt into visible route context even in dense fleets.
 This preserves the fleet invariant:
 
 > the map shows enough context to understand the operation without rendering every possible piece of fleet state at once.
+
+
+---
+
+## V2.7.4.1.2 — Fleet Roster
+
+Fleet Glance proved useful for quick switching and exception awareness, which made the old Drivers panel redundant: it repeated the same driver/status information in larger cards.
+
+The left-side driver app is therefore reframed as **Fleet**.
+
+### Three levels of driver UX
+
+The workstation now has three deliberately different levels:
+
+1. **Fleet Glance** — who needs attention and who should I inspect?
+2. **Fleet Roster** — what is happening across the operation?
+3. **Driver Day** — what exactly is happening with this one driver?
+
+The roster must provide information that cannot fit responsibly in the map chips.
+
+### Roster fields
+
+Each driver row exposes:
+
+- **DRIVER / STATUS** — identity plus current live phase,
+- **HOS** — current Driver Day drive/duty source,
+- **LOAD** — current/next load reference and live onboard context,
+- **NEXT** — next operational location and ETA,
+- **RISK** — dispatch-required, plan blocker, warning, or clear.
+
+Rows remain selectable and drive the existing Driver Day inspector.
+
+### Search and filters
+
+Fleet supports text search across:
+
+- driver name,
+- initials,
+- operational status,
+- load reference,
+- next stop,
+- risk.
+
+Fleet Glance status counters continue to hand off into Fleet filters. An ALL action clears the status filter without clearing the game selection.
+
+### Layout
+
+Fleet is slightly wider than the generic browser because it is a command board, not a card list.
+
+- Fleet browser: up to ~410 px,
+- FreightLink browser retains the existing generic width,
+- the map remains the dominant center surface,
+- the right Driver Day inspector remains unchanged.
+
+### HOS source
+
+This packet does not implement live HOS depletion.
+
+The Fleet HOS column intentionally reads the same Driver Day HOS source used by the current Driver Day summary. When live HOS is implemented, Fleet becomes the fleet-level view of those clocks without another layout redesign.
+
+The architectural separation remains:
+
+> Fleet Glance tells the dispatcher where to look; Fleet tells the dispatcher what needs management; Driver Day is where the dispatcher acts.

@@ -7,7 +7,7 @@ export const SHELL_CONFIG = Object.freeze({
 })
 
 export const WORKSTATION_SECTIONS = Object.freeze([
-  { id: 'drivers', label: 'Drivers', shortLabel: 'DR', phase: 'LIVE' },
+  { id: 'drivers', label: 'Fleet', shortLabel: 'FL', phase: 'LIVE' },
   { id: 'freightlink', label: 'FreightLink', shortLabel: 'FL', phase: 'LIVE' },
   { id: 'email', label: 'Email', shortLabel: 'EM', phase: 'V2.9' },
   { id: 'documents', label: 'Documents', shortLabel: 'DOC', phase: 'V2.8' },
