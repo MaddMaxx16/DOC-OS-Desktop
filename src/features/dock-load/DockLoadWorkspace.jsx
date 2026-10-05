@@ -63,6 +63,10 @@ function cargoClass(freight) {
   return `cargo-${freight.cargoType ?? 'wrapped-pallet'}`
 }
 
+function handlingClass(freight) {
+  return `handling-${String(freight.handlingCode ?? 'standard').toLowerCase().replaceAll('_', '-')}`
+}
+
 function FreightManifestRow({
   freight,
   rotation,
@@ -83,6 +87,7 @@ function FreightManifestRow({
         'pallet-piece',
         'freight-manifest-row',
         cargoClass(freight),
+        handlingClass(freight),
         planned ? 'planned' : '',
         dragging ? 'dragging' : '',
         rotating ? 'rotating' : '',
@@ -582,6 +587,7 @@ export default function DockLoadWorkspace({
                         className={[
                           'drag-preview-piece',
                           cargoClass(draggedFreight),
+                          handlingClass(draggedFreight),
                           hoverPlacement.valid ? 'valid' : 'invalid',
                           dragPreviewShape.length > 1 ? 'oversize' : 'standard',
                         ].filter(Boolean).join(' ')}
@@ -630,6 +636,7 @@ export default function DockLoadWorkspace({
                           className={[
                             'loaded-freight-piece',
                             cargoClass(freight),
+                            handlingClass(freight),
                             freight.carried ? 'carried-freight' : 'current-pickup-freight',
                             freight.stackable ? 'stackable' : 'no-stack',
                             shape.length > 1 ? 'oversize' : 'standard',
@@ -642,7 +649,10 @@ export default function DockLoadWorkspace({
                             '--piece-columns': bounds.width,
                             '--piece-rows': bounds.height,
                           }}
-                          onDragStart={(dragEvent) => startDrag(dragEvent, freightId)}
+                          onDragStart={(dragEvent) => {
+                            dragEvent.stopPropagation()
+                            startDrag(dragEvent, freightId)
+                          }}
                           onDragEnd={endDrag}
                           title={`${freight.loadRef} · ${freight.handlingLabel} · drag to reposition · press R while dragging to rotate`}
                           aria-label={`${freight.label}, load ${freight.loadRef}, ${freight.handlingLabel}. Drag to reposition.`}
@@ -662,6 +672,7 @@ export default function DockLoadWorkspace({
                             <strong>{freight.loadRef}</strong>
                             <span>{freight.handlingLabel}</span>
                           </span>
+                          <span className="loaded-freight-grip" aria-hidden="true">MOVE</span>
                         </button>
                       )
                     })}
