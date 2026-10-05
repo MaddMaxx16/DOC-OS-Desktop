@@ -32,27 +32,36 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.3 Square Pallet Floor
+## Current packet — V2.7.5.0.4 Dock & Load Visual / Interaction Polish
 
-V2.1 through V2.7.5.0.2 are accepted and locked. Rear-open trailer presentation, equipment-derived puzzle logic, shaped freight, rotation, overlap/bounds validation, facility gating, Focused Mode, door commitment, and background loading remain authoritative.
+V2.1 through V2.7.5.0.3 are accepted and locked. Square floor slots, truck-capacity truth, shaped freight, rotation, placement legality, rear-open trailer presentation, facility gating, Focused Mode, door commitment, background loading, and downstream timing remain authoritative.
 
-Gameplay correction:
+This packet is polish only:
 
-> the trailer floor must behave like pallet packing, not a spreadsheet of stretched half-cells.
+> do not redesign the puzzle; make the accepted interaction feel brighter, more tactile, more expressive, and more rewarding.
 
-Square-floor rules:
-- trailer capacity maps directly to legal floor slots; do not double capacity into hidden half-pallet cells,
-- Marcus's existing 26-pallet dry van therefore exposes exactly 26 usable puzzle slots,
-- the 26 slots are laid out compactly as a 4×7 board with two unavailable cells,
-- standard pallet freight occupies one square slot,
-- oversized or irregular freight may occupy multiple adjacent square slots,
-- rotation, overlap, out-of-bounds, wrong-load, and weight validation remain unchanged,
-- puzzle tracks must render as true square cells rather than stretching to fill the panel,
-- placed freight must render as raised physical cargo/crate boxes sitting on the trailer floor,
-- visual box depth must not change collision geometry,
-- left-side staged pieces and center-floor placements must continue sharing the same freight shape truth,
-- FLOOR SLOTS replaces half-cell/puzzle-cell language in the player-facing HUD,
-- do not change facility timing, loading duration, route execution, or door-commit semantics in this packet.
+Polish rules:
+- staged freight remains the same puzzle-piece data but receives brighter crate/pallet rendering,
+- hover lifts the freight piece and strengthens border/shadow feedback,
+- active drag visibly reduces the source piece while preserving a clear drag target,
+- rotation gets a short state-triggered visual pop,
+- staged freight may show visual badges for oversized, no-stack, wrong-load, and planned state without adding new mechanics,
+- planned freight remains visible in staging rather than disappearing into an unusably dark state,
+- multi-slot freight inside the trailer must visually read as one connected cargo object,
+- placed freight gets brighter top/side/base treatment and stronger contact shadow,
+- trailer-floor texture may add subtle grooves/wear only if puzzle slot readability remains dominant,
+- whole visible freight footprint must preview during drag,
+- valid drag preview is clearly positive and invalid drag preview is clearly blocked,
+- invalid drop must not place the freight and should trigger a brief rejection response rather than a modal,
+- READY transition may pulse briefly but must not interrupt play,
+- ready state should visually draw attention toward the rear-door commit interaction,
+- Close Doors remains the only final commit action,
+- closing doors must play a short state-triggered trailer-door animation before Focused Mode exits,
+- door commit animation must not create extra simulation time; the world remains paused until the existing commit callback finishes,
+- animations must be event-driven rather than continuously expensive at idle,
+- reduced-motion preferences must suppress nonessential animation,
+- do not add stackability gameplay, fragile rules, height, axle/balance scoring, stop-order scoring, Top Down functionality, Side View functionality, rework, delivery puzzle, or HOS changes in this packet,
+- do not change placement legality, capacity, service duration, facility timing, route execution, or door-commit semantics.
 
 
 ## Verification

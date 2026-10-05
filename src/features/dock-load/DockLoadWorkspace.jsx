@@ -28,14 +28,47 @@ function shapeBounds(shape = []) {
   }
 }
 
+function boardPosition(board, cellIndex) {
+  return {
+    column: (Number(cellIndex) % board.columns) + 1,
+    row: Math.floor(Number(cellIndex) / board.columns) + 1,
+  }
+}
+
+function visibleFootprintCells(board, freight, anchorCell, rotation) {
+  if (!freight || anchorCell == null) return []
+
+  const anchor = boardPosition(board, anchorCell)
+  const shape = rotateFreightShape(freight.shape, rotation)
+
+  return shape
+    .map(([dx, dy]) => {
+      const column = anchor.column + dx
+      const row = anchor.row + dy
+      if (
+        column < 1
+        || column > board.columns
+        || row < 1
+        || row > board.rows
+      ) return null
+
+      const index = ((row - 1) * board.columns) + (column - 1)
+      return index < board.usableCells ? index : null
+    })
+    .filter((index) => index != null)
+}
+
 function PalletPiece({
   freight,
   rotation,
   verified,
   planned,
+  dragging,
+  rotating,
   onRotate,
   onVerify,
   onDragStart,
+  onDragEnd,
 }) {
   const shape = rotateFreightShape(freight.shape, rotation)
   const bounds = shapeBounds(shape)
@@ -47,10 +80,13 @@ function PalletPiece({
         'pallet-piece',
         verified ? 'verified' : '',
         planned ? 'planned' : '',
+        dragging ? 'dragging' : '',
+        rotating ? 'rotating' : '',
         freight.expected ? 'expected-piece' : 'noise-piece',
       ].filter(Boolean).join(' ')}
       draggable={!planned}
       onDragStart={(event) => onDragStart(event, freight.id)}
+      onDragEnd={onDragEnd}
       title={planned ? 'Already planned in trailer' : 'Drag this pallet into the trailer'}
     >
       <div
@@ -72,6 +108,13 @@ function PalletPiece({
             />
           )
         })}
+      </div>
+
+      <div className="pallet-piece-badges">
+        {!freight.expected && <b className="wrong">WRONG LOAD</b>}
+        {shape.length > 1 && <b className="oversize">OVERSIZE</b>}
+        {!freight.stackable && <b className="no-stack">NO STACK</b>}
+        {planned && <b className="planned-badge">PLANNED</b>}
       </div>
 
       <div className="pallet-piece-copy">
@@ -122,11 +165,21 @@ export default function DockLoadWorkspace({
   const [rotations, setRotations] = useState({})
   const [dragFreightId, setDragFreightId] = useState(null)
   const [hoverCell, setHoverCell] = useState(null)
+  const [rotatingFreightId, setRotatingFreightId] = useState(null)
+  const [invalidDropReason, setInvalidDropReason] = useState(null)
+  const [readyPulse, setReadyPulse] = useState(false)
   const [doorsClosing, setDoorsClosing] = useState(false)
   const closeTimerRef = useRef(null)
+  const rotateTimerRef = useRef(null)
+  const invalidTimerRef = useRef(null)
+  const readyTimerRef = useRef(null)
+  const wasReadyRef = useRef(false)
 
   useEffect(() => () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
+    if (invalidTimerRef.current) clearTimeout(invalidTimerRef.current)
+    if (readyTimerRef.current) clearTimeout(readyTimerRef.current)
   }, [])
 
   const evaluation = useMemo(
@@ -139,6 +192,16 @@ export default function DockLoadWorkspace({
     }),
     [board, event, placements, stagedFreight, verifiedIds],
   )
+
+  useEffect(() => {
+    if (evaluation.ready && !wasReadyRef.current) {
+      setReadyPulse(true)
+      if (readyTimerRef.current) clearTimeout(readyTimerRef.current)
+      readyTimerRef.current = setTimeout(() => setReadyPulse(false), 620)
+    }
+
+    wasReadyRef.current = evaluation.ready
+  }, [evaluation.ready])
 
   const mapped = useMemo(
     () => placementMap({
@@ -174,7 +237,14 @@ export default function DockLoadWorkspace({
     stagedFreight,
   ])
 
-  const previewCells = new Set(hoverPlacement?.cells ?? [])
+  const previewCells = new Set(
+    visibleFootprintCells(
+      board,
+      draggedFreight,
+      hoverCell,
+      dragRotation,
+    ),
+  )
 
   const verify = (freightId) => {
     setVerifiedIds((current) => (
@@ -189,6 +259,9 @@ export default function DockLoadWorkspace({
       ...current,
       [freightId]: ((current[freightId] ?? 0) + 1) % 4,
     }))
+    setRotatingFreightId(freightId)
+    if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
+    rotateTimerRef.current = setTimeout(() => setRotatingFreightId(null), 170)
   }
 
   const startDrag = (dragEvent, freightId) => {
@@ -196,6 +269,15 @@ export default function DockLoadWorkspace({
     setHoverCell(null)
     dragEvent.dataTransfer.setData('text/plain', freightId)
     dragEvent.dataTransfer.effectAllowed = 'move'
+
+    const dragVisual = dragEvent.currentTarget.querySelector('.pallet-piece-shape')
+    if (dragVisual) {
+      dragEvent.dataTransfer.setDragImage(
+        dragVisual,
+        dragVisual.offsetWidth / 2,
+        dragVisual.offsetHeight / 2,
+      )
+    }
   }
 
   const endDrag = () => {
@@ -214,7 +296,13 @@ export default function DockLoadWorkspace({
       rotation,
     })
 
-    if (!result.valid) return
+    if (!result.valid) {
+      setInvalidDropReason(result.reason ?? 'INVALID')
+      setHoverCell(null)
+      if (invalidTimerRef.current) clearTimeout(invalidTimerRef.current)
+      invalidTimerRef.current = setTimeout(() => setInvalidDropReason(null), 260)
+      return
+    }
 
     setPlacements((current) => ({
       ...current,
@@ -258,11 +346,20 @@ export default function DockLoadWorkspace({
           doorsState: 'closed',
         },
       })
-    }, 720)
+    }, 840)
   }
 
   return (
-    <div className="dock-load-workspace puzzle-mode">
+    <div
+      className={[
+        'dock-load-workspace',
+        'puzzle-mode',
+        evaluation.ready ? 'load-ready' : '',
+        readyPulse ? 'ready-pulse' : '',
+        invalidDropReason ? 'invalid-drop' : '',
+        doorsClosing ? 'committing' : '',
+      ].filter(Boolean).join(' ')}
+    >
       <aside className="dock-load-staging">
         <header>
           <span>STAGED FREIGHT</span>
@@ -280,9 +377,12 @@ export default function DockLoadWorkspace({
               rotation={rotations[freight.id] ?? 0}
               verified={verifiedIds.includes(freight.id)}
               planned={plannedIds.has(freight.id)}
+              dragging={dragFreightId === freight.id}
+              rotating={rotatingFreightId === freight.id}
               onRotate={() => rotate(freight.id)}
               onVerify={() => verify(freight.id)}
               onDragStart={startDrag}
+              onDragEnd={endDrag}
             />
           ))}
         </div>
@@ -349,10 +449,16 @@ export default function DockLoadWorkspace({
                       const previewValid = preview && hoverPlacement?.valid
                       const previewInvalid = preview && !hoverPlacement?.valid
 
+                      const cellPosition = boardPosition(board, cellIndex)
+
                       return (
                         <button
                           type="button"
                           key={cellIndex}
+                          style={{
+                            gridColumn: cellPosition.column,
+                            gridRow: cellPosition.row,
+                          }}
                           className={[
                             'trailer-puzzle-cell',
                             disabled ? 'disabled' : '',
@@ -377,7 +483,15 @@ export default function DockLoadWorkspace({
                           onClick={() => occupantId && removeFreight(occupantId)}
                           title={occupant ? `Return ${occupant.label} to staging` : 'Open puzzle cell'}
                         >
-                          {occupant && <i className="loaded-cargo-box" />}
+                          {preview && (
+                            <i
+                              className={[
+                                'drag-preview-box',
+                                previewValid ? 'valid' : '',
+                                previewInvalid ? 'invalid' : '',
+                              ].filter(Boolean).join(' ')}
+                            />
+                          )}
                           {anchor && occupant && (
                             <span className="trailer-piece-label">
                               <strong>{occupant.label}</strong>
@@ -387,12 +501,70 @@ export default function DockLoadWorkspace({
                         </button>
                       )
                     })}
+
+                    {Object.entries(placements).map(([freightId, placement]) => {
+                      const freight = stagedFreight.find((item) => item.id === freightId)
+                      if (!freight) return null
+
+                      const shape = rotateFreightShape(
+                        freight.shape,
+                        placement.rotation ?? 0,
+                      )
+                      const bounds = shapeBounds(shape)
+                      const anchor = boardPosition(board, placement.anchorCell)
+
+                      return (
+                        <div
+                          key={freightId}
+                          className={[
+                            'loaded-freight-piece',
+                            freight.expected ? 'expected' : 'wrong-load',
+                            freight.stackable ? 'stackable' : 'no-stack',
+                            shape.length > 1 ? 'oversize' : 'standard',
+                          ].filter(Boolean).join(' ')}
+                          style={{
+                            gridColumn: `${anchor.column} / span ${bounds.width}`,
+                            gridRow: `${anchor.row} / span ${bounds.height}`,
+                            '--piece-columns': bounds.width,
+                            '--piece-rows': bounds.height,
+                          }}
+                          aria-hidden="true"
+                        >
+                          <div className="loaded-freight-shape">
+                            {shape.map(([x, y], index) => (
+                              <i
+                                key={`${freightId}:${index}`}
+                                style={{
+                                  gridColumn: x + 1,
+                                  gridRow: y + 1,
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <span>
+                            <strong>{freight.label}</strong>
+                            {shape.length > 1 && <small>OVERSIZE</small>}
+                            {!freight.stackable && <small>NO STACK</small>}
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 
                 <div className="trailer-side-wall right">
                   <span>{board.capacityPallets} PLT</span>
                 </div>
+              </div>
+
+              <div
+                className={`trailer-door-commit ${doorsClosing ? 'closing' : ''}`}
+                aria-hidden="true"
+              >
+                <i className="door-panel left" />
+                <i className="door-panel right" />
+                <strong>LOAD PLAN LOCKED</strong>
+                <small>SENDING TO WAREHOUSE</small>
               </div>
 
               <div className="trailer-rear-frame">
@@ -417,7 +589,7 @@ export default function DockLoadWorkspace({
             >
               <i />
               <i />
-              <b>{doorsClosing ? 'LOCKING PLAN…' : evaluation.ready ? 'CLOSE DOORS' : 'PLAN NOT READY'}</b>
+              <b>{doorsClosing ? 'SENDING PLAN…' : evaluation.ready ? 'CLOSE DOORS' : 'PLAN NOT READY'}</b>
             </button>
           </div>
         </div>
@@ -451,7 +623,13 @@ export default function DockLoadWorkspace({
           </div>
         </section>
 
-        <section className="dock-load-readiness">
+        <section
+          className={[
+            'dock-load-readiness',
+            evaluation.ready ? 'ready' : '',
+            readyPulse ? 'pulse' : '',
+          ].filter(Boolean).join(' ')}
+        >
           <header>
             <span>LOAD PLAN</span>
             <strong>{evaluation.ready ? 'READY' : 'INCOMPLETE'}</strong>
@@ -498,6 +676,11 @@ export default function DockLoadWorkspace({
                 ))}
               </>
             )}
+          </div>
+
+          <div className="dock-load-interaction-status" aria-live="polite">
+            {invalidDropReason === 'OVERLAP' && 'That space is already occupied.'}
+            {invalidDropReason === 'OUT_OF_BOUNDS' && 'That freight does not fit there.'}
           </div>
         </section>
 

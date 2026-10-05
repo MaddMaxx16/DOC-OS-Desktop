@@ -2812,3 +2812,88 @@ The visual depth is presentation only:
 - validation still uses the same board model.
 
 The player should perceive boxes sitting inside the trailer rather than colored spreadsheet rows.
+
+
+---
+
+## V2.7.5.0.4 — Visual / Interaction Polish
+
+V2.7.5.0.3 establishes the accepted Dock & Load gameplay surface. This packet does not change the puzzle model.
+
+Its purpose is to improve tactile readability.
+
+### Staged freight
+
+Staged pieces are intentionally brighter than the surrounding DOC OS chrome so cargo reads as the primary interactive material.
+
+Freight pieces support distinct visual states:
+
+- idle,
+- hover,
+- dragging,
+- rotating,
+- verified,
+- planned,
+- wrong/noise freight.
+
+Existing metadata may drive visual badges such as:
+
+- OVERSIZE,
+- NO STACK,
+- WRONG LOAD,
+- PLANNED.
+
+These badges are descriptive in this packet. They do not add new simulation rules.
+
+### Trailer cargo
+
+The trailer floor remains the authoritative placement grid.
+
+Placed freight is rendered above that grid as physical crate/pallet material.
+
+Multi-slot freight is grouped into one visual cargo object using the same footprint and rotation as the placement model. The visual grouping must never rewrite the placement geometry.
+
+### Drag feedback
+
+Drag preview uses the whole visible footprint.
+
+- valid footprint = bright positive outline/fill,
+- invalid footprint = strong red blocked state,
+- out-of-bounds and overlap remain domain validation truth,
+- failed drop triggers a short board rejection response and never places the freight.
+
+### READY state
+
+When the last blocker clears, LOAD PLAN READY may briefly pulse.
+
+The trailer rear frame and Close Doors control gain restrained positive emphasis so the commitment action becomes the natural next step without a modal.
+
+### Rear-door commitment
+
+Closing the doors remains the single commitment boundary.
+
+The visual sequence is:
+
+1. disable further puzzle interaction,
+2. slide the trailer doors across the opening,
+3. show brief LOAD PLAN LOCKED / SENDING TO WAREHOUSE feedback,
+4. execute the existing commit callback,
+5. exit Focused Mode,
+6. resume the world in LOADING.
+
+The animation is presentation only. Simulation remains paused during the visual commit.
+
+### Performance
+
+Idle Dock & Load should not run continuous expensive animation.
+
+Motion is state-triggered by:
+
+- hover,
+- drag,
+- rotate,
+- invalid drop,
+- ready transition,
+- door commit.
+
+Reduced-motion preferences disable nonessential animation.
