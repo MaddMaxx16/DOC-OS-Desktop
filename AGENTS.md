@@ -32,27 +32,33 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.5 Cargo Interaction Polish
+## Current packet — V2.7.5.0.6 Freight Loading
 
-V2.1 through V2.7.5.0.4 are accepted and locked. Square floor slots, truck-capacity truth, shaped freight, rotation, placement legality, rear-open trailer presentation, facility gating, Focused Mode, door commitment, background loading, and downstream timing remain authoritative.
+V2.1 through V2.7.5.0.5 are accepted and locked. Equipment-derived trailer capacity, footprint legality, physical drag preview, rear-open trailer presentation, facility gating, Focused Mode, rear-door commitment, background loading, and downstream timing remain authoritative.
 
-This packet is a targeted interaction pass:
+This packet turns Dock & Load from a shaped-piece prototype into a readable freight-loading system:
 
-> keep the grid as simulation truth, but make the freight itself feel like the game piece.
+> the player should identify freight from the freight itself, place it naturally, and arrive at later pickups with truthful cargo already onboard.
 
-Polish rules:
-- drag/drop legality still comes exclusively from the existing board and placement domain,
-- the grid remains visible but becomes secondary during drag,
-- drag hover renders one translucent physical freight object using the freight's real footprint and rotation,
-- the whole preview object reads valid or invalid as one state,
-- overlap may additionally mark the specific occupied blocker cell,
-- staged cargo may be slightly larger and use straps/wrap/marking detail for stronger physical identity,
-- valid placement may play a short settle response with no simulation-time effect,
-- placed freight keeps its pallet identity visible while special-property tags stay collapsed until hover/focus,
-- placed freight must not intercept trailer drag targets while another staged piece is being dragged,
-- staged freight badges remain descriptive only,
-- do not add stackability gameplay, fragile rules, height, axle/balance scoring, stop-order scoring, Top Down functionality, Side View functionality, rework, delivery puzzle, or HOS changes,
-- do not change trailer capacity, footprint truth, placement legality, service duration, facility timing, route execution, READY semantics, or door-commit semantics.
+Freight-loading rules:
+- staged freight is a single vertical manifest on the left rather than a two-column card gallery,
+- every freight unit must show a clearly readable load number at normal gameplay scale,
+- any handling information that could affect placement must remain readable on the physical cargo, not hidden behind tiny hover-only metadata,
+- tutorial freight may use STANDARD, FRAGILE, HAZMAT, HEAVY, KEEP UPRIGHT, NO STACK, and OVERSIZE markings as descriptive identity,
+- those handling markings do not add their future simulation penalties or placement rules in this packet,
+- freight footprints must be physically credible rectangles: standard pallet, long skid, wide skid, and rectangular machinery/crate footprints are permitted; L-shaped pallet footprints are not,
+- placing booked freight in the trailer is sufficient verification; there is no separate VERIFY interaction or verification readiness state,
+- the player may press R while actively dragging freight to rotate it,
+- freight already in the trailer remains directly draggable and can be repositioned without first ejecting it to staging,
+- current-pickup freight may be dragged back to the staging manifest before rear-door commitment,
+- cargo inherited from a prior pickup cannot be returned to the current facility's staging area,
+- a committed pickup stores the complete trailer freight manifest and placements,
+- later pickups reconstruct still-onboard cargo from prior committed pickup snapshots and remove a load after its delivery occurs,
+- inherited cargo occupies real trailer positions and participates in overlap, capacity, weight, and placement truth,
+- unrelated staged freight must not advertise itself as WRONG LOAD before the player identifies the mismatch; its visible load number is the clue,
+- rear doors remain the single commit control and loading still occurs in simulation time after Focused Mode closes,
+- do not add stackability gameplay, fragile/hazmat consequence systems, height, axle/balance scoring, stop-order scoring, Top Down functionality, Side View functionality, rework, delivery puzzle, or HOS changes,
+- do not change equipment capacity, loading duration, facility timing, route execution, or rear-door commitment semantics.
 
 
 ## Verification
