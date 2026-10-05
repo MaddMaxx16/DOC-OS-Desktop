@@ -3088,3 +3088,43 @@ V2.7.5.0.6 does not add:
 - HOS changes.
 
 Rear-door commitment, background loading duration, route timing, equipment capacity, and Focused Mode behavior remain unchanged.
+
+
+---
+
+## V2.7.5.0.6.1 — Cargo Readability + Reposition Fix
+
+The first Freight Loading playtest confirmed trailer continuity and readable load-number identity, but exposed two implementation defects.
+
+### Reliable onboard repositioning
+
+Placed cargo is intended to remain directly draggable. The previous drag-preview CSS made every loaded freight object pointer-transparent as soon as a drag began, including the source piece. That rule was inherited from the staging-only interaction model.
+
+V2.7.5.0.6.1 corrects the interaction boundary:
+
+- the actively dragged onboard cargo remains an interactive drag source,
+- other loaded cargo may become pointer-transparent during that drag,
+- the trailer surface owns drag-over and drop resolution,
+- the hovered floor cell is resolved underneath visible cargo,
+- moving freight therefore continues to work in a crowded trailer and when shifting a piece near its prior footprint,
+- placement legality still comes from the existing footprint/collision domain.
+
+### Stronger freight silhouettes
+
+The V2.7.5.0.6 data distinctions were readable in text but too visually similar in the trailer.
+
+V2.7.5.0.6.1 adds a second presentation layer driven by handling class:
+
+- STANDARD keeps the familiar warm wrapped-pallet language,
+- FRAGILE uses visibly braced crate treatment,
+- HEAVY uses a darker industrial skid treatment and strong load band,
+- HAZMAT uses steel/drum language with a regulated warning band,
+- KEEP UPRIGHT uses cooler directional striping,
+- NO STACK uses a pale wrap plus repeated warning bands,
+- OVERSIZE uses industrial steel/hazard-edge treatment.
+
+These treatments are visual identity only. No new handling penalties, hazmat rules, stack rules, or balance simulation are introduced.
+
+The goal is:
+
+> before reading the label, the player should already have a strong clue what kind of freight they are looking at.
