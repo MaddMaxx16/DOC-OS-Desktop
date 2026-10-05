@@ -32,9 +32,9 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.6 Freight Loading
+## Current packet — V2.7.5.0.6.1 Cargo Readability + Reposition Fix
 
-V2.1 through V2.7.5.0.5 are accepted and locked. Equipment-derived trailer capacity, footprint legality, physical drag preview, rear-open trailer presentation, facility gating, Focused Mode, rear-door commitment, background loading, and downstream timing remain authoritative.
+V2.1 through V2.7.5.0.6 are accepted and locked. Equipment-derived trailer capacity, footprint legality, physical drag preview, rear-open trailer presentation, facility gating, Focused Mode, rear-door commitment, background loading, and downstream timing remain authoritative.
 
 This packet turns Dock & Load from a shaped-piece prototype into a readable freight-loading system:
 
@@ -50,6 +50,9 @@ Freight-loading rules:
 - placing booked freight in the trailer is sufficient verification; there is no separate VERIFY interaction or verification readiness state,
 - the player may press R while actively dragging freight to rotate it,
 - freight already in the trailer remains directly draggable and can be repositioned without first ejecting it to staging,
+- trailer-level drag/drop must resolve the floor cell underneath overlapping cargo so crowded-trailer repositioning remains reliable,
+- the actively dragged onboard piece must retain drag-source interaction; old pointer-transparency rules may apply only to other loaded pieces,
+- handling classes must be visually distinct at a glance in both staging and trailer views; labels alone are not sufficient differentiation,
 - current-pickup freight may be dragged back to the staging manifest before rear-door commitment,
 - cargo inherited from a prior pickup cannot be returned to the current facility's staging area,
 - a committed pickup stores the complete trailer freight manifest and placements,
