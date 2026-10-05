@@ -393,6 +393,31 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.5.1 makes delivery accessibility a visible trailer-readiness rule', async () => {
+  const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
+  const facility = await readFile(new URL('../src/domain/facility/pickupOperation.js', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(top, /DESKTOP V2\.7\.5\.1 · DELIVERY ACCESS/)
+  assert.match(facility, /export function buildDeliveryAccessOrder/)
+  assert.match(facility, /export function evaluateTrailerDeliveryAccess/)
+  assert.match(facility, /DELIVERY_ACCESS_BLOCKED/)
+  assert.match(puzzle, /buildDeliveryAccessOrder/)
+  assert.match(puzzle, /evaluateTrailerDeliveryAccess/)
+  assert.match(puzzle, /DELIVERY ACCESS/)
+  assert.match(puzzle, /loaded-freight-order/)
+  assert.match(puzzle, /delivery-blocked/)
+  assert.match(puzzle, /delivery-blocker/)
+  assert.match(puzzle, /preview-rule-warning/)
+  assert.match(css, /\.dock-load-trailer-rule/)
+  assert.match(css, /\.dock-load-delivery-order/)
+  assert.match(css, /\.loaded-freight-piece\.delivery-blocked/)
+  assert.match(css, /\.loaded-freight-piece\.delivery-blocker/)
+  assert.match(css, /\.drag-preview-piece\.rule-warning/)
+  assert.match(css, /\.trailer-puzzle-cell\.preview-rule-warning/)
+})
+
 test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag preview', async () => {
   const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
   const facility = await readFile(new URL('../src/domain/facility/pickupOperation.js', import.meta.url), 'utf8')
@@ -400,7 +425,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.6\.1 · CARGO READABILITY/)
+  assert.match(top, /DESKTOP V2\.7\.5\.1 · DELIVERY ACCESS/)
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /manifest-load-number/)
   assert.match(puzzle, /pallet-piece-marking/)
@@ -1167,7 +1192,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.6\.1 · CARGO READABILITY/)
+  assert.match(top, /DESKTOP V2\.7\.5\.1 · DELIVERY ACCESS/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
