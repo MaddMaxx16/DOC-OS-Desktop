@@ -545,7 +545,7 @@ export default function DockLoadWorkspace({
                           <strong>{draggedFreight.label}</strong>
                         </span>
                       </div>
-                    ))}
+                    )}
 
                     {Object.entries(placements).map(([freightId, placement]) => {
                       const freight = stagedFreight.find((item) => item.id === freightId)
