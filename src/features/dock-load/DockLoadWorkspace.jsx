@@ -5,12 +5,14 @@ import {
   useState,
 } from 'react'
 import {
+  buildDeliveryAccessOrder,
   buildOnboardCargoForPickup,
   buildTrailerPuzzleBoard,
   buildTutorialStagedFreight,
   canPlaceFreight,
   dockNumberForPickup,
   evaluatePickupLoadPlan,
+  evaluateTrailerDeliveryAccess,
   placementMap,
   rotateFreightShape,
 } from '../../domain/facility/pickupOperation.js'
@@ -201,6 +203,23 @@ export default function DockLoadWorkspace({
     return [...byId.values()]
   }, [carriedCargo.freight, stagedFreight])
 
+  const deliveryOrder = useMemo(
+    () => buildDeliveryAccessOrder({
+      driverDay,
+      eventId: event.id,
+      freight: allFreight,
+    }),
+    [allFreight, driverDay, event.id],
+  )
+  const deliveryRankByLoad = useMemo(() => {
+    const rankMap = new Map()
+    for (const stop of deliveryOrder) {
+      if (stop.loadId) rankMap.set(stop.loadId, stop.rank)
+      if (stop.loadRef) rankMap.set(stop.loadRef, stop.rank)
+    }
+    return rankMap
+  }, [deliveryOrder])
+
   const requiredFreightIds = useMemo(
     () => stagedFreight.filter((freight) => freight.expected).map((freight) => freight.id),
     [stagedFreight],
@@ -266,8 +285,9 @@ export default function DockLoadWorkspace({
       stagedFreight: allFreight,
       placements,
       requiredFreightIds,
+      deliveryOrder,
     }),
-    [allFreight, board, event, placements, requiredFreightIds],
+    [allFreight, board, deliveryOrder, event, placements, requiredFreightIds],
   )
 
   useEffect(() => {
@@ -290,6 +310,11 @@ export default function DockLoadWorkspace({
   )
 
   const plannedIds = new Set(Object.keys(placements))
+  const blockedDeliveryIds = new Set(evaluation.deliveryAccess?.blockedFreightIds ?? [])
+  const blockingDeliveryIds = new Set(evaluation.deliveryAccess?.blockingFreightIds ?? [])
+  const nonAccessErrors = evaluation.errors.filter(
+    (issue) => issue.code !== 'DELIVERY_ACCESS_BLOCKED',
+  )
   const orderedStagedFreight = [
     ...stagedFreight.filter((freight) => !plannedIds.has(freight.id)),
     ...stagedFreight.filter((freight) => plannedIds.has(freight.id)),
@@ -317,6 +342,45 @@ export default function DockLoadWorkspace({
     hoverCell,
     placements,
   ])
+
+  const previewDeliveryAccess = useMemo(() => {
+    if (
+      !dragFreightId
+      || hoverCell == null
+      || !hoverPlacement?.valid
+    ) return null
+
+    return evaluateTrailerDeliveryAccess({
+      board,
+      stagedFreight: allFreight,
+      placements: {
+        ...placements,
+        [dragFreightId]: {
+          anchorCell: hoverCell,
+          rotation: dragRotation,
+        },
+      },
+      deliveryOrder,
+    })
+  }, [
+    allFreight,
+    board,
+    deliveryOrder,
+    dragFreightId,
+    dragRotation,
+    hoverCell,
+    hoverPlacement?.valid,
+    placements,
+  ])
+
+  const previewAccessWarning = Boolean(
+    previewDeliveryAccess
+    && !previewDeliveryAccess.clear
+    && previewDeliveryAccess.violations.some((issue) => (
+      issue.blockedFreightId === dragFreightId
+      || issue.blockingFreightId === dragFreightId
+    )),
+  )
 
   const previewCells = new Set(
     visibleFootprintCells(
@@ -571,7 +635,8 @@ export default function DockLoadWorkspace({
                       const occupantId = occupantForCell(cellIndex)
                       const occupant = allFreight.find((item) => item.id === occupantId) ?? null
                       const preview = previewCells.has(cellIndex)
-                      const previewValid = preview && hoverPlacement?.valid
+                      const previewValid = preview && hoverPlacement?.valid && !previewAccessWarning
+                      const previewRuleWarning = preview && hoverPlacement?.valid && previewAccessWarning
                       const previewInvalid = preview && !hoverPlacement?.valid
                       const previewBlocked = previewBlockedCells.has(cellIndex)
                       const cellPosition = boardPosition(board, cellIndex)
@@ -589,6 +654,7 @@ export default function DockLoadWorkspace({
                             disabled ? 'disabled' : '',
                             occupant ? 'occupied' : '',
                             previewValid ? 'preview-valid' : '',
+                            previewRuleWarning ? 'preview-rule-warning' : '',
                             previewInvalid ? 'preview-invalid' : '',
                             previewBlocked ? 'preview-blocker' : '',
                           ].filter(Boolean).join(' ')}
@@ -607,7 +673,9 @@ export default function DockLoadWorkspace({
                           'drag-preview-piece',
                           cargoClass(draggedFreight),
                           handlingClass(draggedFreight),
-                          hoverPlacement.valid ? 'valid' : 'invalid',
+                          hoverPlacement.valid
+                            ? previewAccessWarning ? 'rule-warning' : 'valid'
+                            : 'invalid',
                           dragPreviewShape.length > 1 ? 'oversize' : 'standard',
                         ].filter(Boolean).join(' ')}
                         style={{
@@ -646,6 +714,9 @@ export default function DockLoadWorkspace({
                       )
                       const bounds = shapeBounds(shape)
                       const anchor = boardPosition(board, placement.anchorCell)
+                      const deliveryRank = deliveryRankByLoad.get(
+                        freight.loadRef ?? freight.loadId,
+                      )
 
                       return (
                         <button
@@ -661,6 +732,9 @@ export default function DockLoadWorkspace({
                             shape.length > 1 ? 'oversize' : 'standard',
                             settlingFreightId === freightId ? 'settling' : '',
                             dragFreightId === freightId ? 'dragging' : '',
+                            deliveryRank === 1 ? 'delivery-next' : '',
+                            blockedDeliveryIds.has(freightId) ? 'delivery-blocked' : '',
+                            blockingDeliveryIds.has(freightId) ? 'delivery-blocker' : '',
                           ].filter(Boolean).join(' ')}
                           style={{
                             gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -691,6 +765,14 @@ export default function DockLoadWorkspace({
                             <strong>{freight.loadRef}</strong>
                             <span>{freight.handlingLabel}</span>
                           </span>
+                          {deliveryRank && (
+                            <span
+                              className="loaded-freight-order"
+                              title={deliveryRank === 1 ? 'Next delivery off trailer' : `Delivery order ${deliveryRank}`}
+                            >
+                              D{deliveryRank}
+                            </span>
+                          )}
                           <span className="loaded-freight-grip" aria-hidden="true">MOVE</span>
                         </button>
                       )
@@ -808,15 +890,52 @@ export default function DockLoadWorkspace({
             </div>
           </div>
 
+          <div
+            className={[
+              'dock-load-trailer-rule',
+              evaluation.deliveryAccess?.clear ? 'clear' : 'blocked',
+            ].filter(Boolean).join(' ')}
+          >
+            <header>
+              <span>DELIVERY ACCESS</span>
+              <strong>{evaluation.deliveryAccess?.clear ? 'CLEAR' : 'BLOCKED'}</strong>
+            </header>
+            <div className="dock-load-delivery-order" aria-label="Trailer unload order">
+              {deliveryOrder.length > 0 ? deliveryOrder.map((stop) => (
+                <span
+                  key={stop.deliveryEventId ?? `${stop.loadRef}:${stop.rank}`}
+                  className={stop.rank === 1 ? 'next' : ''}
+                  title={stop.destination}
+                >
+                  <b>D{stop.rank}</b>
+                  <strong>{stop.loadRef}</strong>
+                </span>
+              )) : (
+                <span className="empty">NO DELIVERY ORDER</span>
+              )}
+            </div>
+            <small>
+              {evaluation.deliveryAccess?.clear
+                ? deliveryOrder.length > 1
+                  ? 'Earlier deliveries have a clear path to the rear doors.'
+                  : 'Only one delivery is currently onboard; rear-door access is clear.'
+                : evaluation.deliveryAccess?.pairSummaries?.[0]
+                  ? `${evaluation.deliveryAccess.pairSummaries[0].blockedLoadRef} unloads before ${evaluation.deliveryAccess.pairSummaries[0].blockingLoadRef}. Move the earlier load rearward.`
+                  : 'Earlier-delivery freight is buried behind later freight.'}
+            </small>
+          </div>
+
           <div className="dock-load-validation">
-            {evaluation.errors.length === 0 && evaluation.warnings.length === 0 ? (
+            {nonAccessErrors.length === 0
+              && evaluation.warnings.length === 0
+              && evaluation.deliveryAccess?.clear ? (
               <div className="ok">
                 <strong>LOAD PLAN READY</strong>
                 <small>Close the rear doors to send this plan to the warehouse.</small>
               </div>
             ) : (
               <>
-                {evaluation.errors.map((issue) => (
+                {nonAccessErrors.map((issue) => (
                   <div className="error" key={issue.code}>
                     <strong>{issue.code.replaceAll('_', ' ')}</strong>
                     <small>{issue.message}</small>
