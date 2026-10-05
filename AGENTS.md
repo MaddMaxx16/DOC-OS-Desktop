@@ -32,22 +32,23 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.0.2 Fleet Route Lock
+## Current packet — V2.7.4.0.3 Single Route Truth
 
-V2.1 through V2.7.4.0.1 are accepted and locked. Fleet execution and fleet-map readability remain intact.
+V2.1 through V2.7.4.0.2 are accepted and locked. Fleet execution and fleet map clarity remain intact.
 
 Core invariant:
 
-> the rendered truck coordinate and the rendered active road leg must come from the same authoritative route segment.
+> a committed driver's visible full route, active leg, and moving truck all come from the same committed fleet route object.
 
 Guardrails:
-- fleet active-leg rendering and per-driver truck motion use one shared active-segment lookup,
-- a truck may never animate against a different routeShape than the active leg shown for that driver,
-- selected-driver full-route display prefers an exact active preview only when its route key matches the currently displayed preview day,
-- stale same-driver preview geometry must never override committed fleet execution geometry,
-- non-selected trucks remain full-size at their map anchor and are de-emphasized by opacity/filter only,
-- do not use scale transforms to create fleet hierarchy because the truck SVG is asymmetric and scale can make route alignment look wrong,
-- all prior fleet execution rules remain: selection is UI; simulation is world state,
+- when the displayed Driver Day is the committed Driver Day from driverDays, full-route rendering must use fleetRouteResults for that driver,
+- driverRouteResult is preview-only and must not override committed route geometry merely because driverId/key match,
+- planning previews may use driverRouteResult only while a distinct preview Driver Day is actually displayed,
+- if a preview route is not ready yet, committed fleet geometry may remain visible as fallback,
+- active-leg rendering and truck interpolation continue to share fleetActiveSegment(),
+- selected-driver visual emphasis must not change route ownership,
+- all trucks remain simulation-driven regardless of selection,
+- non-selected truck artwork stays full-size at the same anchor; hierarchy uses opacity/filter, not scaling,
 - do not change dispatch gating, late-send recovery, appointment waiting, HOS, or facility timing in this patch.
 
 

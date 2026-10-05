@@ -2129,3 +2129,34 @@ Otherwise the detailed map uses committed fleet route geometry.
 Non-selected trucks remain de-emphasized, but are no longer scaled down.
 
 The truck SVG is asymmetric, so scaling the artwork could make a correctly anchored marker appear visually displaced relative to a thin route line. Context hierarchy now uses opacity/filter while preserving the same marker box and artwork size as the selected truck.
+
+
+---
+
+## V2.7.4.0.3 — Single Route Truth
+
+A recording of V2.7.4.0.2 showed Taylor and Derrick visually displaced from the thick selected route even though fleet active-leg and truck interpolation shared the same active segment.
+
+The remaining split was one level higher: selected full-route rendering could still prefer `driverRouteResult` when its driver ID and route key matched, while truck execution used `fleetRouteResults`.
+
+Two separately hydrated road results can share the same schedule key while containing different road geometry.
+
+### Committed route ownership
+
+For a committed Driver Day:
+
+- `fleetRouteResults[driverId]` is the authoritative full-route geometry,
+- active-leg rendering resolves from that same fleet route collection,
+- truck interpolation resolves from that same fleet route collection.
+
+`driverRouteResult` is reserved for a distinct planning-preview Driver Day.
+
+### Preview isolation
+
+A preview route is eligible only when the displayed Driver Day is not the same committed Driver Day object supplied by `driverDays`.
+
+If preview hydration has not completed, the committed route may remain visible as a temporary fallback rather than showing stale preview geometry.
+
+This creates the invariant:
+
+> committed route line, current active leg, and truck position are three views of one route object—not three independently hydrated routes.

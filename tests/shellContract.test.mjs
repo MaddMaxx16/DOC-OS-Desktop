@@ -392,6 +392,17 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.4.0.3 makes committed selected-route display use the same fleet route object as execution', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /const committedSelectedDay = selectedDriver/)
+  assert.match(map, /driverDay === committedSelectedDay/)
+  assert.match(map, /displayingCommittedSelectedDay/)
+  assert.match(map, /displayingCommittedSelectedDay[\s\S]*committedSelectedRoute[\s\S]*return committedSelectedRoute\.segments/)
+  assert.match(map, /!displayingCommittedSelectedDay[\s\S]*driverRouteResult[\s\S]*driverRouteResult\.key === driverRouteKey/)
+  assert.match(map, /return Array\.isArray\(committedSelectedRoute\?\.segments\)[\s\S]*\? committedSelectedRoute\.segments/)
+})
+
 test('V2.7.4.0.2 locks fleet truck motion and fleet active-leg rendering to the same route segment', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
@@ -400,7 +411,8 @@ test('V2.7.4.0.2 locks fleet truck motion and fleet active-leg rendering to the 
   assert.match(map, /const activeSegment = fleetActiveSegment\([\s\S]*driverId,[\s\S]*liveDriverStates,[\s\S]*fleetDisplayRoutesByDriverId/)
   assert.match(map, /const routeShape = activeSegment\?\.route\?\.routeShape \?\? \[\]/)
   assert.doesNotMatch(map, /routes\.find\(\(segment\) => segment\.id === activeSegmentId\)/)
-  assert.doesNotMatch(map, /driverRouteResult[\s\S]{0,180}driverRouteResult\.driverId === selectedDriver\.id[\s\S]{0,320}return driverRouteResult\.segments[\s\S]{0,220}return Array\.isArray\(committedSelectedRoute\?\.segments\)/)
+  assert.match(map, /displayingCommittedSelectedDay[\s\S]{0,260}return committedSelectedRoute\.segments/)
+  assert.match(map, /!displayingCommittedSelectedDay[\s\S]{0,320}return driverRouteResult\.segments/)
 })
 
 test('V2.7.4.0.1 gives the live fleet a readable map hierarchy without persistent truck labels', async () => {
@@ -788,7 +800,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.4\.0\.2 · FLEET ROUTE LOCK/)
+  assert.match(top, /DESKTOP V2\.7\.4\.0\.3 · SINGLE ROUTE TRUTH/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

@@ -223,7 +223,7 @@
 }
 .driver-marker.context:hover .driver-truck-icon {
   opacity: .84;
-  transform: scale(.96);
+  transform: scale(1);
 }
 
 /* Marketplace opportunity — compact by default, descriptive only on interaction. */

@@ -396,6 +396,15 @@ export default function OperationsMap({
   const [openDriverLabelId, setOpenDriverLabelId] = useState(null)
 
   const driverRouteKey = driverDayRouteKey(driverDay)
+  const committedSelectedDay = selectedDriver
+    ? driverDays.find((day) => day.driverId === selectedDriver.id) ?? null
+    : null
+  const displayingCommittedSelectedDay = Boolean(
+    selectedDriver
+    && driverDay
+    && committedSelectedDay
+    && driverDay === committedSelectedDay
+  )
   const committedSelectedRoute = selectedDriver
     ? fleetRouteResults[selectedDriver.id] ?? null
     : null
@@ -403,7 +412,16 @@ export default function OperationsMap({
     if (!selectedDriver) return []
 
     if (
-      driverRouteResult
+      displayingCommittedSelectedDay
+      && committedSelectedRoute
+      && Array.isArray(committedSelectedRoute.segments)
+    ) {
+      return committedSelectedRoute.segments
+    }
+
+    if (
+      !displayingCommittedSelectedDay
+      && driverRouteResult
       && driverRouteResult.driverId === selectedDriver.id
       && driverRouteResult.key === driverRouteKey
       && Array.isArray(driverRouteResult.segments)
@@ -411,16 +429,12 @@ export default function OperationsMap({
       return driverRouteResult.segments
     }
 
-    if (
-      committedSelectedRoute
-      && Array.isArray(committedSelectedRoute.segments)
-    ) {
-      return committedSelectedRoute.segments
-    }
-
-    return []
+    return Array.isArray(committedSelectedRoute?.segments)
+      ? committedSelectedRoute.segments
+      : []
   }, [
     committedSelectedRoute,
+    displayingCommittedSelectedDay,
     driverRouteKey,
     driverRouteResult,
     selectedDriver,
