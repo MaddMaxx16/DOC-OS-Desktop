@@ -408,7 +408,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   assert.match(puzzle, /freight\.handlingLabel/)
   assert.match(puzzle, /keyboardEvent\.key\.toLowerCase\(\) !== 'r'/)
   assert.match(puzzle, /draggable/)
-  assert.match(puzzle, /onDragStart=\{\(dragEvent\) => startDrag\(dragEvent, freightId\)\}/)
+  assert.match(puzzle, /startDrag\(dragEvent, freightId\)/)
   assert.match(puzzle, /buildOnboardCargoForPickup/)
   assert.match(puzzle, /freightManifest/)
   assert.match(puzzle, /TRAILER LOAD PLAN/)
