@@ -6,18 +6,116 @@ export const PICKUP_OPERATION_STATUS = Object.freeze({
   LOADED: 'loaded',
 })
 
-const SHAPE_LIBRARY = Object.freeze([
-  Object.freeze({ id: 'standard', cells: Object.freeze([[0, 0]]) }),
-  Object.freeze({ id: 'standard-alt', cells: Object.freeze([[0, 0]]) }),
-  Object.freeze({ id: 'long', cells: Object.freeze([[0, 0], [0, 1]]) }),
-  Object.freeze({ id: 'wide', cells: Object.freeze([[0, 0], [1, 0]]) }),
-  Object.freeze({ id: 'l-overhang', cells: Object.freeze([[0, 0], [0, 1], [1, 1]]) }),
-  Object.freeze({ id: 'block', cells: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]]) }),
+const SHAPE_LIBRARY = Object.freeze({
+  standard: Object.freeze({ id: 'standard', cells: Object.freeze([[0, 0]]) }),
+  'standard-alt': Object.freeze({ id: 'standard-alt', cells: Object.freeze([[0, 0]]) }),
+  long: Object.freeze({ id: 'long', cells: Object.freeze([[0, 0], [0, 1]]) }),
+  wide: Object.freeze({ id: 'wide', cells: Object.freeze([[0, 0], [1, 0]]) }),
+  block: Object.freeze({ id: 'block', cells: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]]) }),
+})
+
+const FREIGHT_PROFILES = Object.freeze([
+  Object.freeze({
+    cargoType: 'wrapped-pallet',
+    unitName: 'Pallet',
+    handlingCode: 'STANDARD',
+    handlingLabel: 'STANDARD',
+    stackable: true,
+    maxStack: 2,
+    shapeId: 'standard',
+  }),
+  Object.freeze({
+    cargoType: 'crate',
+    unitName: 'Crate',
+    handlingCode: 'FRAGILE',
+    handlingLabel: 'FRAGILE',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'standard-alt',
+  }),
+  Object.freeze({
+    cargoType: 'long-skid',
+    unitName: 'Long Skid',
+    handlingCode: 'HEAVY',
+    handlingLabel: 'HEAVY',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'long',
+  }),
+  Object.freeze({
+    cargoType: 'drum-pallet',
+    unitName: 'Drum Pallet',
+    handlingCode: 'HAZMAT',
+    handlingLabel: 'HAZMAT',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'standard',
+  }),
+  Object.freeze({
+    cargoType: 'wide-skid',
+    unitName: 'Wide Skid',
+    handlingCode: 'UPRIGHT',
+    handlingLabel: 'KEEP UPRIGHT',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'wide',
+  }),
+  Object.freeze({
+    cargoType: 'wrapped-pallet',
+    unitName: 'Pallet',
+    handlingCode: 'NO_STACK',
+    handlingLabel: 'NO STACK',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'standard-alt',
+  }),
+  Object.freeze({
+    cargoType: 'machinery-crate',
+    unitName: 'Machinery Crate',
+    handlingCode: 'OVERSIZE',
+    handlingLabel: 'OVERSIZE',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'block',
+  }),
+  Object.freeze({
+    cargoType: 'crate',
+    unitName: 'Crate',
+    handlingCode: 'FRAGILE',
+    handlingLabel: 'FRAGILE',
+    stackable: false,
+    maxStack: 1,
+    shapeId: 'standard',
+  }),
 ])
 
 function finite(value, fallback = 0) {
   const number = Number(value)
   return Number.isFinite(number) ? number : fallback
+}
+
+function freightProfileForIndex(index, expected = true) {
+  if (!expected) {
+    return {
+      cargoType: 'wrapped-pallet',
+      unitName: 'Pallet',
+      handlingCode: 'STANDARD',
+      handlingLabel: 'STANDARD',
+      stackable: true,
+      maxStack: 2,
+      shapeId: 'standard-alt',
+    }
+  }
+
+  return FREIGHT_PROFILES[index % FREIGHT_PROFILES.length]
+}
+
+function shapeForProfile(profile) {
+  return SHAPE_LIBRARY[profile.shapeId] ?? SHAPE_LIBRARY.standard
+}
+
+function unitLabel(profile, index) {
+  return `${profile.unitName} ${String(index + 1).padStart(2, '0')}`
 }
 
 export function facilityOperationKey(driverId, eventId) {
@@ -89,23 +187,6 @@ function destinationLabel(event = {}) {
     ?? 'Booked destination'
 }
 
-function shapeForIndex(index, expected = true) {
-  if (!expected) return SHAPE_LIBRARY[4]
-
-  const tutorialPattern = [
-    SHAPE_LIBRARY[0],
-    SHAPE_LIBRARY[1],
-    SHAPE_LIBRARY[2],
-    SHAPE_LIBRARY[0],
-    SHAPE_LIBRARY[3],
-    SHAPE_LIBRARY[0],
-    SHAPE_LIBRARY[4],
-    SHAPE_LIBRARY[0],
-  ]
-
-  return tutorialPattern[index % tutorialPattern.length]
-}
-
 export function buildTutorialStagedFreight(event = {}) {
   const palletCount = Math.max(1, Number(event.freight?.pallets ?? 1))
   const weightEach = palletWeight(event.freight?.weightLbs, palletCount)
@@ -113,38 +194,50 @@ export function buildTutorialStagedFreight(event = {}) {
   const destination = destinationLabel(event)
 
   const expected = Array.from({ length: palletCount }, (_, index) => {
-    const shape = shapeForIndex(index, true)
+    const profile = freightProfileForIndex(index, true)
+    const shape = shapeForProfile(profile)
 
     return {
       id: `${event.id}:pallet-${index + 1}`,
-      label: `Pallet ${index + 1}`,
+      label: unitLabel(profile, index),
+      unitCode: `P${String(index + 1).padStart(2, '0')}`,
+      loadId: event.loadId ?? loadRef,
       loadRef,
       pickupNumber: loadRef,
       destination,
-      commodity: 'Booked freight',
+      commodity: profile.unitName,
+      cargoType: profile.cargoType,
+      handlingCode: profile.handlingCode,
+      handlingLabel: profile.handlingLabel,
       weightLbs: weightEach,
-      stackable: index % 4 !== 3,
-      maxStack: index % 4 !== 3 ? 2 : 1,
+      stackable: profile.stackable,
+      maxStack: profile.maxStack,
       expected: true,
       shapeId: shape.id,
       shape: shape.cells.map(([x, y]) => [x, y]),
     }
   })
 
-  const noiseShape = shapeForIndex(0, false)
+  const profile = freightProfileForIndex(0, false)
+  const shape = shapeForProfile(profile)
   const noise = {
     id: `${event.id}:noise-1`,
-    label: 'Pallet X',
+    label: 'Pallet 99',
+    unitCode: 'P99',
+    loadId: `${loadRef}-ALT`,
     loadRef: `${loadRef}-ALT`,
     pickupNumber: `${loadRef}-ALT`,
     destination: 'Albany, NY',
-    commodity: 'Unrelated staged freight',
+    commodity: 'Staged freight',
+    cargoType: profile.cargoType,
+    handlingCode: profile.handlingCode,
+    handlingLabel: profile.handlingLabel,
     weightLbs: Math.max(450, Math.round(weightEach * 0.9)),
-    stackable: true,
-    maxStack: 2,
+    stackable: profile.stackable,
+    maxStack: profile.maxStack,
     expected: false,
-    shapeId: noiseShape.id,
-    shape: noiseShape.cells.map(([x, y]) => [x, y]),
+    shapeId: shape.id,
+    shape: shape.cells.map(([x, y]) => [x, y]),
   }
 
   return [...expected, noise]
@@ -281,41 +374,34 @@ export function evaluatePickupLoadPlan({
   event,
   board,
   stagedFreight = [],
-  verifiedIds = [],
   placements = {},
+  requiredFreightIds = null,
 } = {}) {
-  const verified = new Set(verifiedIds)
   const placed = new Set(Object.keys(placements))
-  const expectedFreight = stagedFreight.filter((item) => item.expected)
-  const expectedIds = new Set(expectedFreight.map((item) => item.id))
+  const required = requiredFreightIds == null
+    ? stagedFreight.filter((item) => item.expected)
+    : stagedFreight.filter((item) => requiredFreightIds.includes(item.id))
+  const requiredIds = new Set(required.map((item) => item.id))
   const wrongPlaced = stagedFreight.filter((item) => (
-    !item.expected && placed.has(item.id)
+    item.expected === false && placed.has(item.id)
   ))
-  const missingVerified = expectedFreight.filter((item) => !verified.has(item.id))
-  const missingPlaced = expectedFreight.filter((item) => !placed.has(item.id))
+  const missingPlaced = required.filter((item) => !placed.has(item.id))
   const map = placementMap({ board, stagedFreight, placements })
 
   const errors = []
   const warnings = []
 
-  if (missingVerified.length > 0) {
-    errors.push({
-      code: 'REQUIRED_FREIGHT_UNRESOLVED',
-      message: `${missingVerified.length} expected pallet${missingVerified.length === 1 ? '' : 's'} not verified.`,
-    })
-  }
-
   if (missingPlaced.length > 0) {
     errors.push({
       code: 'REQUIRED_FREIGHT_NOT_PLANNED',
-      message: `${missingPlaced.length} expected pallet${missingPlaced.length === 1 ? '' : 's'} not placed.`,
+      message: `${missingPlaced.length} booked freight unit${missingPlaced.length === 1 ? '' : 's'} not placed.`,
     })
   }
 
   if (wrongPlaced.length > 0) {
     errors.push({
       code: 'WRONG_LOAD',
-      message: `${wrongPlaced.length} unrelated pallet${wrongPlaced.length === 1 ? '' : 's'} included in trailer plan.`,
+      message: `${wrongPlaced.length} staged unit${wrongPlaced.length === 1 ? '' : 's'} has a load-number mismatch.`,
     })
   }
 
@@ -330,16 +416,6 @@ export function evaluatePickupLoadPlan({
     errors.push({
       code: 'FREIGHT_OVERLAP',
       message: `${map.collisions.size} freight piece${map.collisions.size === 1 ? '' : 's'} overlap another piece.`,
-    })
-  }
-
-  const unverifiedPlaced = stagedFreight.filter((item) => (
-    placed.has(item.id) && !verified.has(item.id)
-  ))
-  if (unverifiedPlaced.length > 0) {
-    warnings.push({
-      code: 'UNVERIFIED_PLACEMENT',
-      message: `${unverifiedPlaced.length} placed unit${unverifiedPlaced.length === 1 ? '' : 's'} still unverified.`,
     })
   }
 
@@ -359,13 +435,97 @@ export function evaluatePickupLoadPlan({
     ready: errors.length === 0,
     errors,
     warnings,
-    expectedCount: expectedIds.size,
-    verifiedExpectedCount: expectedFreight.filter((item) => verified.has(item.id)).length,
-    plannedExpectedCount: expectedFreight.filter((item) => placed.has(item.id)).length,
+    expectedCount: requiredIds.size,
+    plannedExpectedCount: required.filter((item) => placed.has(item.id)).length,
     plannedCount: placed.size,
+    onboardCount: stagedFreight.filter((item) => placed.has(item.id) && item.expected !== false).length,
     occupiedCells: map.occupied.size,
     plannedWeightLbs,
     loadRef: event?.loadRef ?? event?.loadId ?? null,
+  }
+}
+
+function sameLoad(freight, event) {
+  const eventLoadId = event?.loadId ?? event?.loadRef ?? null
+  const eventLoadRef = event?.loadRef ?? event?.loadId ?? null
+  return (
+    (eventLoadId != null && freight.loadId === eventLoadId)
+    || (eventLoadRef != null && freight.loadRef === eventLoadRef)
+  )
+}
+
+export function buildOnboardCargoForPickup({
+  driverId,
+  eventId,
+  driverDay,
+  facilityOperations = {},
+} = {}) {
+  const activeFreight = new Map()
+  const activePlacements = {}
+
+  for (const timelineEvent of driverDay?.timeline ?? []) {
+    if (timelineEvent.id === eventId) break
+    if (timelineEvent.kind !== 'freight-stop') continue
+
+    if (timelineEvent.role === 'delivery') {
+      for (const [freightId, freight] of activeFreight.entries()) {
+        if (!sameLoad(freight, timelineEvent)) continue
+        activeFreight.delete(freightId)
+        delete activePlacements[freightId]
+      }
+      continue
+    }
+
+    if (timelineEvent.role !== 'pickup') continue
+
+    const operation = facilityOperationForEvent(
+      facilityOperations,
+      driverId,
+      timelineEvent.id,
+    )
+    if (!pickupPlanCommitted(operation)) continue
+
+    const snapshot = Array.isArray(operation?.loadPlan?.freightManifest)
+      ? operation.loadPlan.freightManifest
+      : null
+
+    if (snapshot) {
+      activeFreight.clear()
+      for (const key of Object.keys(activePlacements)) delete activePlacements[key]
+
+      for (const freight of snapshot) {
+        activeFreight.set(freight.id, {
+          ...freight,
+          carried: true,
+        })
+        const placement = operation.loadPlan?.placements?.[freight.id]
+        if (placement) activePlacements[freight.id] = { ...placement }
+      }
+      continue
+    }
+
+    const pickupFreight = buildTutorialStagedFreight(timelineEvent)
+      .filter((freight) => freight.expected)
+
+    for (const freight of pickupFreight) {
+      activeFreight.set(freight.id, {
+        ...freight,
+        carried: true,
+      })
+      const placement = operation.loadPlan?.placements?.[freight.id]
+      if (placement) activePlacements[freight.id] = { ...placement }
+    }
+
+    for (const [freightId, placement] of Object.entries(operation.loadPlan?.placements ?? {})) {
+      if (activeFreight.has(freightId)) {
+        activePlacements[freightId] = { ...placement }
+      }
+    }
+  }
+
+  return {
+    freight: [...activeFreight.values()],
+    placements: activePlacements,
   }
 }
 
