@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  buildOnboardCargoForPickup,
   buildTrailerPuzzleBoard,
   buildTutorialStagedFreight,
   canPlaceFreight,
@@ -54,19 +55,25 @@ test('trailer puzzle board derives its usable puzzle cells from the assigned equ
   assert.equal(smaller.maxWeightLbs, 18000)
 })
 
-test('tutorial staged freight exposes different shaped puzzle pieces plus discoverable noise freight', () => {
-  const staged = buildTutorialStagedFreight(event)
+test('staged freight uses realistic rectangular footprints and readable handling identity', () => {
+  const staged = buildTutorialStagedFreight({
+    ...event,
+    freight: { pallets: 8, weightLbs: 12000 },
+  })
   const expected = staged.filter((item) => item.expected)
   const noise = staged.filter((item) => !item.expected)
 
-  assert.equal(expected.length, 3)
+  assert.equal(expected.length, 8)
   assert.equal(noise.length, 1)
   assert.ok(expected.every((item) => item.loadRef === 'M-101'))
   assert.ok(expected.every((item) => item.destination === 'Harborline Logistics'))
-  assert.ok(expected.every((item) => Array.isArray(item.shape) && item.shape.length >= 1))
-  assert.ok(expected.some((item) => item.shape.length === 1))
+  assert.ok(expected.every((item) => item.handlingLabel))
+  assert.ok(expected.every((item) => item.cargoType))
+  assert.ok(expected.some((item) => item.handlingLabel === 'FRAGILE'))
+  assert.ok(expected.some((item) => item.handlingLabel === 'HAZMAT'))
+  assert.ok(expected.some((item) => item.handlingLabel === 'HEAVY'))
   assert.ok(expected.some((item) => item.shape.length > 1))
-  assert.ok(new Set(expected.map((item) => item.shapeId)).size > 1)
+  assert.ok(expected.every((item) => item.shapeId !== 'l-overhang'))
   assert.notEqual(noise[0].loadRef, 'M-101')
 })
 
@@ -114,7 +121,7 @@ test('freight shapes rotate and reject overlap or out-of-bounds placement', () =
   assert.equal(out.reason, 'OUT_OF_BOUNDS')
 })
 
-test('load plan is ready only when expected shaped freight is verified and legally placed', () => {
+test('placing the booked freight is verification; no separate verify state is required', () => {
   const board = buildTrailerPuzzleBoard(equipment)
   const staged = buildTutorialStagedFreight(event)
   const expected = staged.filter((item) => item.expected)
@@ -124,20 +131,20 @@ test('load plan is ready only when expected shaped freight is verified and legal
     event,
     board,
     stagedFreight: staged,
-    verifiedIds: expectedIds.slice(0, 2),
+    requiredFreightIds: expectedIds,
     placements: {
       [expectedIds[0]]: { anchorCell: 0, rotation: 0 },
       [expectedIds[1]]: { anchorCell: 6, rotation: 0 },
     },
   })
   assert.equal(incomplete.ready, false)
-  assert.ok(incomplete.errors.some((issue) => issue.code === 'REQUIRED_FREIGHT_UNRESOLVED'))
+  assert.ok(incomplete.errors.some((issue) => issue.code === 'REQUIRED_FREIGHT_NOT_PLANNED'))
 
   const ready = evaluatePickupLoadPlan({
     event,
     board,
     stagedFreight: staged,
-    verifiedIds: expectedIds,
+    requiredFreightIds: expectedIds,
     placements: {
       [expectedIds[0]]: { anchorCell: 0, rotation: 0 },
       [expectedIds[1]]: { anchorCell: 6, rotation: 0 },
@@ -145,15 +152,15 @@ test('load plan is ready only when expected shaped freight is verified and legal
     },
   })
   assert.equal(ready.ready, true)
-  assert.equal(ready.verifiedExpectedCount, 3)
   assert.equal(ready.plannedExpectedCount, 3)
+  assert.equal(ready.onboardCount, 3)
   assert.ok(ready.occupiedCells >= 4)
 
   const wrong = evaluatePickupLoadPlan({
     event,
     board,
     stagedFreight: staged,
-    verifiedIds: [...expectedIds, staged.at(-1).id],
+    requiredFreightIds: expectedIds,
     placements: {
       [expectedIds[0]]: { anchorCell: 0, rotation: 0 },
       [expectedIds[1]]: { anchorCell: 6, rotation: 0 },
@@ -165,7 +172,79 @@ test('load plan is ready only when expected shaped freight is verified and legal
   assert.ok(wrong.errors.some((issue) => issue.code === 'WRONG_LOAD'))
 })
 
-test('committing the rear doors preserves the solved puzzle plan and starts loading now', () => {
+test('later pickups inherit committed cargo until that load has been delivered', () => {
+  const firstPickup = {
+    ...event,
+    id: 'M-101:pickup',
+  }
+  const secondPickup = {
+    ...event,
+    id: 'M-202:pickup',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    locationId: 'queens-freight-center',
+    locationLabel: 'Queens Freight Center',
+  }
+  const firstDelivery = {
+    ...event,
+    id: 'M-101:delivery',
+    role: 'delivery',
+  }
+  const thirdPickup = {
+    ...event,
+    id: 'M-303:pickup',
+    loadId: 'M-303',
+    loadRef: 'M-303',
+  }
+
+  const firstFreight = buildTutorialStagedFreight(firstPickup).filter((item) => item.expected)
+  const firstPlacements = {
+    [firstFreight[0].id]: { anchorCell: 0, rotation: 0 },
+    [firstFreight[1].id]: { anchorCell: 6, rotation: 0 },
+    [firstFreight[2].id]: { anchorCell: 12, rotation: 0 },
+  }
+  const firstOperation = commitPickupOperation({
+    driverId: 'marcus-reed',
+    event: firstPickup,
+    currentAbsoluteMinutes: 503,
+    loadPlan: {
+      freightIds: Object.keys(firstPlacements),
+      freightManifest: firstFreight,
+      placements: firstPlacements,
+      board: buildTrailerPuzzleBoard(equipment),
+    },
+  })
+  const facilityOperations = {
+    [firstOperation.key]: firstOperation,
+  }
+
+  const beforeSecondPickup = buildOnboardCargoForPickup({
+    driverId: 'marcus-reed',
+    eventId: secondPickup.id,
+    driverDay: {
+      timeline: [firstPickup, secondPickup, firstDelivery, thirdPickup],
+    },
+    facilityOperations,
+  })
+
+  assert.equal(beforeSecondPickup.freight.length, 3)
+  assert.equal(Object.keys(beforeSecondPickup.placements).length, 3)
+  assert.ok(beforeSecondPickup.freight.every((item) => item.loadRef === 'M-101'))
+
+  const afterDelivery = buildOnboardCargoForPickup({
+    driverId: 'marcus-reed',
+    eventId: thirdPickup.id,
+    driverDay: {
+      timeline: [firstPickup, secondPickup, firstDelivery, thirdPickup],
+    },
+    facilityOperations,
+  })
+
+  assert.equal(afterDelivery.freight.length, 0)
+  assert.equal(Object.keys(afterDelivery.placements).length, 0)
+})
+
+test('committing the rear doors preserves the solved trailer snapshot and starts loading now', () => {
   const board = buildTrailerPuzzleBoard(equipment)
   const operation = commitPickupOperation({
     driverId: 'marcus-reed',
@@ -173,6 +252,7 @@ test('committing the rear doors preserves the solved puzzle plan and starts load
     currentAbsoluteMinutes: 503,
     loadPlan: {
       freightIds: ['a', 'b', 'c'],
+      freightManifest: [],
       placements: {
         a: { anchorCell: 0, rotation: 0 },
         b: { anchorCell: 6, rotation: 1 },
