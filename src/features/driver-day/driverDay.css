@@ -304,6 +304,45 @@
   color: #87a5b6;
 }
 
+.dock-load-open-action {
+  width: calc(100% - 20px);
+  margin: 0 10px 10px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "dock title"
+    "dock detail";
+  align-items: center;
+  gap: 2px 10px;
+  padding: 10px 11px;
+  border: 1px solid #496b7e;
+  border-left: 3px solid #65a6cd;
+  background: #0c1821;
+  color: #d8e6ee;
+  text-align: left;
+  cursor: pointer;
+}
+.dock-load-open-action:hover {
+  border-color: #6f9eb7;
+  background: #10202a;
+}
+.dock-load-open-action span {
+  grid-area: dock;
+  color: #6eb4dc;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+.dock-load-open-action strong {
+  grid-area: title;
+  font-size: var(--type-secondary);
+}
+.dock-load-open-action small {
+  grid-area: detail;
+  color: #7f95a3;
+  font-size: var(--type-micro);
+}
+
 .appointment-wait {
   margin-top: 8px;
   min-height: 34px;

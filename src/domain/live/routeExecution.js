@@ -1,3 +1,9 @@
+import {
+  dockNumberForPickup,
+  facilityOperationForEvent,
+  pickupPlanCommitted,
+} from '../facility/pickupOperation.js'
+
 const EARTH_RADIUS_MILES = 3958.8
 
 function finite(value, fallback = 0) {
@@ -33,27 +39,70 @@ function validCoordinate(point) {
     && Number.isFinite(Number(point[1]))
 }
 
-function normalizeTimeline(driverDay = {}) {
+function normalizeTimeline(driverDay = {}, facilityOperations = null) {
   const timeline = driverDay.timeline ?? []
   let previousArrival = Number.NEGATIVE_INFINITY
+  let accumulatedDelayMinutes = 0
 
   return timeline.map((event, index) => {
     let arrival = finite(
       event.physicalArrivalMinutes,
       event.projectedArrivalMinutes,
-    )
+    ) + accumulatedDelayMinutes
 
     while (arrival < previousArrival) arrival += 1440
 
-    let serviceStart = event.kind === 'freight-stop'
-      ? finite(event.serviceStartMinutes, arrival)
-      : arrival
-    while (serviceStart < arrival) serviceStart += 1440
+    let serviceStart = arrival
+    let departure = arrival
 
-    let departure = serviceStart
-    if (Number.isFinite(Number(event.endMinutes))) {
-      departure = finite(event.endMinutes)
+    if (event.kind === 'freight-stop') {
+      serviceStart = Math.max(
+        arrival,
+        finite(event.serviceStartMinutes, arrival),
+      )
+      const serviceDuration = Math.max(
+        0,
+        finite(
+          event.serviceMinutes,
+          finite(event.endMinutes, serviceStart)
+            - finite(event.serviceStartMinutes, serviceStart),
+        ),
+      )
+      departure = serviceStart + serviceDuration
+    } else if (Number.isFinite(Number(event.endMinutes))) {
+      departure = finite(event.endMinutes) + accumulatedDelayMinutes
       while (departure < serviceStart) departure += 1440
+    }
+
+    const operation = (
+      event.kind === 'freight-stop'
+      && event.role === 'pickup'
+      && facilityOperations
+    )
+      ? facilityOperationForEvent(
+          facilityOperations,
+          driverDay.driverId,
+          event.id,
+        )
+      : null
+
+    if (pickupPlanCommitted(operation)) {
+      const originalDeparture = departure
+      const loadingStart = Math.max(
+        serviceStart,
+        finite(operation.loadingStartMinutes, serviceStart),
+      )
+      const loadingDuration = Math.max(
+        1,
+        finite(
+          operation.loadingDurationMinutes,
+          departure - serviceStart,
+        ),
+      )
+
+      serviceStart = loadingStart
+      departure = loadingStart + loadingDuration
+      accumulatedDelayMinutes += Math.max(0, departure - originalDeparture)
     }
 
     previousArrival = arrival
@@ -168,8 +217,15 @@ function executionBase(schedule, currentMinutes) {
   }
 }
 
-export function buildTimelineExecution(driverDay = {}, clock = {}) {
-  const schedule = normalizeTimeline(driverDay)
+export function buildTimelineExecution(
+  driverDay = {},
+  clock = {},
+  {
+    pickupFacilityMode = false,
+    facilityOperations = null,
+  } = {},
+) {
+  const schedule = normalizeTimeline(driverDay, facilityOperations)
   const currentMinutes = currentAbsoluteMinutes(clock)
   const base = executionBase(schedule, currentMinutes)
 
@@ -238,6 +294,47 @@ export function buildTimelineExecution(driverDay = {}, clock = {}) {
         serviceRole: current.event.role ?? null,
         serviceLoadId: current.event.loadId ?? null,
         serviceLoadRef: current.event.loadRef ?? null,
+      }
+    }
+
+    if (
+      pickupFacilityMode
+      && current.event.kind === 'freight-stop'
+      && current.event.role === 'pickup'
+      && currentMinutes >= current.serviceStartMinutes
+    ) {
+      const operation = facilityOperationForEvent(
+        facilityOperations ?? {},
+        driverDay.driverId,
+        current.event.id,
+      )
+
+      if (!pickupPlanCommitted(operation)) {
+        const heldBase = executionBase(schedule, current.arrivalMinutes)
+
+        return {
+          ...heldBase,
+          currentAbsoluteMinutes: currentMinutes,
+          executionPhase: 'facility-dock-assigned',
+          activeSegmentId: null,
+          activeSegmentProgress: 0,
+          currentEventId: current.event.id,
+          currentEventKind: current.event.kind,
+          currentEventLabel: current.event.locationLabel,
+          currentEventArrivalMinutes: current.arrivalMinutes,
+          currentEventServiceStartMinutes: current.serviceStartMinutes,
+          currentEventDepartureMinutes: null,
+          nextEventId: next?.event.id ?? null,
+          nextEventKind: next?.event.kind ?? null,
+          nextEventLabel: next?.event.locationLabel ?? null,
+          nextEventArrivalMinutes: null,
+          serviceRole: current.event.role,
+          serviceLoadId: current.event.loadId ?? null,
+          serviceLoadRef: current.event.loadRef ?? null,
+          facilityStatus: 'DOCK ASSIGNED',
+          dock: dockNumberForPickup(current.event),
+          facilityActionRequired: true,
+        }
       }
     }
 

@@ -214,6 +214,7 @@ export default function DriverDayPanel({
   onStopPlanning,
   onMovePlanEvent,
   onSendSchedule,
+  onOpenDockLoad,
   onSelectSubject,
 }) {
   const [draggedEventId, setDraggedEventId] = useState(null)
@@ -483,6 +484,8 @@ export default function DriverDayPanel({
                 ? `Next: ${liveState.nextEventLabel ?? 'planned stop'} · ETA ${formatClock(liveState.nextEventArrivalMinutes)}`
                 : liveState?.executionPhase === 'waiting-appointment'
                   ? `Arrived early at ${liveState.currentEventLabel ?? 'planned stop'} · appointment opens at ${formatClock(liveState.waitingUntilMinutes)} · ${Math.ceil(liveState.waitRemainingMinutes ?? 0)} min waiting.`
+                : liveState?.executionPhase === 'facility-dock-assigned'
+                  ? `Dock ${liveState.dock ?? '—'} is ready. Open Dock & Load to verify freight and build the trailer plan.`
                 : ['service-loading', 'service-unloading'].includes(liveState?.executionPhase)
                   ? `${liveState.executionPhase === 'service-loading' ? 'Loading' : 'Unloading'} ${liveState.serviceLoadRef ?? 'freight'} · ${Math.ceil(liveState.serviceRemainingMinutes ?? 0)} min remaining · automatic departure at ${formatClock(liveState.currentEventDepartureMinutes)}.`
                 : liveState?.executionPhase === 'arrived'
@@ -498,6 +501,21 @@ export default function DriverDayPanel({
                           : 'Editing remains locked after dispatch.'}
           </small>
         </div>
+      )}
+
+      {!editable && liveState?.executionPhase === 'facility-dock-assigned' && (
+        <button
+          type="button"
+          className="dock-load-open-action"
+          onClick={() => onOpenDockLoad?.({
+            driverId: driver.id,
+            eventId: liveState.currentEventId,
+          })}
+        >
+          <span>DOCK {liveState.dock ?? '—'} ASSIGNED</span>
+          <strong>OPEN DOCK & LOAD</strong>
+          <small>Focused Mode · verify freight and plan the trailer</small>
+        </button>
       )}
 
       <div className="driver-day-timeline">

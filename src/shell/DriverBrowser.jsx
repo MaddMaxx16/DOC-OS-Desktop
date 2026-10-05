@@ -20,7 +20,7 @@ function matchesDriverFilter(filter, liveState) {
   }
   if (filter === 'en-route') return liveState?.executionPhase === 'en-route'
   if (filter === 'at-stop') {
-    return ['waiting-appointment', 'service-loading', 'service-unloading', 'arrived'].includes(
+    return ['waiting-appointment', 'facility-dock-assigned', 'service-loading', 'service-unloading', 'arrived'].includes(
       liveState?.executionPhase,
     )
   }
@@ -79,6 +79,16 @@ function liveStatusCopy(driver, liveState) {
       detail: liveState.currentEventLabel
         ? `Early at ${liveState.currentEventLabel} · appointment ${Math.ceil(liveState.waitRemainingMinutes ?? 0)} min`
         : 'Waiting for appointment',
+      tone: 'scheduled',
+    }
+  }
+
+  if (liveState.executionPhase === 'facility-dock-assigned') {
+    return {
+      status: `DOCK ${liveState.dock ?? '—'}`,
+      detail: liveState.currentEventLabel
+        ? `Load plan required at ${liveState.currentEventLabel}`
+        : 'Dock & Load plan required',
       tone: 'scheduled',
     }
   }

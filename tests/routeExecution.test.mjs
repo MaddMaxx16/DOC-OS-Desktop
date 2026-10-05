@@ -136,6 +136,80 @@ test('early freight arrival parks at the facility and waits for the appointment 
   assert.equal(loading.serviceProgress, 0.5)
 })
 
+test('Dock & Load mode holds pickup at its assigned dock until a load plan is committed', () => {
+  const held = buildTimelineExecution(
+    day,
+    {
+      dayNumber: 1,
+      currentMinutes: 486,
+    },
+    {
+      pickupFacilityMode: true,
+      facilityOperations: {},
+    },
+  )
+
+  assert.equal(held.executionPhase, 'facility-dock-assigned')
+  assert.equal(held.currentEventId, 'M-101:pickup')
+  assert.equal(held.facilityStatus, 'DOCK ASSIGNED')
+  assert.equal(held.facilityActionRequired, true)
+  assert.equal(held.currentEventDepartureMinutes, null)
+  assert.deepEqual(held.onboardLoadIds, [])
+  assert.ok(held.completedSegmentIds.includes('marcus-reed:shift-start->M-101:pickup'))
+  assert.ok(!held.completedSegmentIds.includes('M-101:pickup->marcus-reed:lunch'))
+  assert.ok(!held.completedEventIds.includes('M-101:pickup'))
+})
+
+test('committed Dock & Load plan starts loading at commit time and shifts the downstream day', () => {
+  const operationKey = 'marcus-reed:M-101:pickup'
+  const facilityOperations = {
+    [operationKey]: {
+      key: operationKey,
+      driverId: 'marcus-reed',
+      eventId: 'M-101:pickup',
+      status: 'plan-committed',
+      loadingStartMinutes: 500,
+      loadingDurationMinutes: 12,
+    },
+  }
+
+  const loading = buildTimelineExecution(
+    day,
+    {
+      dayNumber: 1,
+      currentMinutes: 506,
+    },
+    {
+      pickupFacilityMode: true,
+      facilityOperations,
+    },
+  )
+
+  assert.equal(loading.executionPhase, 'service-loading')
+  assert.equal(loading.serviceStartMinutes, 500)
+  assert.equal(loading.currentEventDepartureMinutes, 512)
+  assert.equal(loading.serviceRemainingMinutes, 6)
+  assert.deepEqual(loading.onboardLoadIds, [])
+
+  const departed = buildTimelineExecution(
+    day,
+    {
+      dayNumber: 1,
+      currentMinutes: 512,
+    },
+    {
+      pickupFacilityMode: true,
+      facilityOperations,
+    },
+  )
+
+  assert.equal(departed.executionPhase, 'en-route')
+  assert.ok(departed.completedEventIds.includes('M-101:pickup'))
+  assert.deepEqual(departed.onboardLoadIds, ['M-101'])
+  assert.equal(departed.nextEventId, 'marcus-reed:lunch')
+  assert.equal(departed.nextEventArrivalMinutes, 650)
+})
+
 test('freight pickup becomes a parked loading service window', () => {
   const state = buildTimelineExecution(day, {
     dayNumber: 1,

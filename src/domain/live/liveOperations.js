@@ -121,6 +121,15 @@ function activePresentation(execution = {}) {
     }
   }
 
+  if (execution.executionPhase === 'facility-dock-assigned') {
+    return {
+      label: `DOCK ${execution.dock ?? '—'}`,
+      detail: execution.currentEventLabel
+        ? `Dock ${execution.dock ?? '—'} assigned at ${execution.currentEventLabel} · load plan required.`
+        : `Dock ${execution.dock ?? '—'} assigned · load plan required.`,
+    }
+  }
+
   if (execution.executionPhase === 'arrived') {
     return {
       label: 'ARRIVED',
@@ -179,12 +188,16 @@ function activePresentation(execution = {}) {
   }
 }
 
-export function buildLiveDriverState(day = {}, clock = {}) {
+export function buildLiveDriverState(day = {}, clock = {}, executionOptions = {}) {
   const normalizedClock = createSimulationClock(clock)
   const shift = day?.shift ?? {}
   const shiftStartMinutes = finite(shift.startMinutes)
   const shiftEndMinutes = finite(shift.endMinutes)
-  const timelineExecution = buildTimelineExecution(day, normalizedClock)
+  const timelineExecution = buildTimelineExecution(
+    day,
+    normalizedClock,
+    executionOptions,
+  )
 
   if (!isSent(day)) {
     const dispatchRequired = requiresDispatch(day, normalizedClock)
@@ -279,11 +292,15 @@ export function buildLiveDriverState(day = {}, clock = {}) {
   }
 }
 
-export function buildLiveDriverStates(driverDays = [], clock = {}) {
+export function buildLiveDriverStates(
+  driverDays = [],
+  clock = {},
+  executionOptions = {},
+) {
   return Object.fromEntries(
     driverDays.map((day) => [
       day.driverId,
-      buildLiveDriverState(day, clock),
+      buildLiveDriverState(day, clock, executionOptions),
     ]),
   )
 }

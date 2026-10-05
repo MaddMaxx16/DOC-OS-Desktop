@@ -4,6 +4,7 @@ import { resolveSelectionContext } from '../domain/selection/selectionContext.js
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import { buildPlanningPlaceOptions } from '../domain/planning/planningPlaces.js'
 import PlanningPlaceFlyout from '../features/driver-day/PlanningPlaceFlyout.jsx'
+import DockLoadWorkspace from '../features/dock-load/DockLoadWorkspace.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -21,6 +22,7 @@ export default function DesktopShell({
   allMarketLanes,
   locations,
   bookingRecords,
+  facilityOperations,
   selection,
   activeApp,
   focusedTask,
@@ -43,6 +45,8 @@ export default function DesktopShell({
   onOpenRateCon,
   onRequestRateConCorrection,
   onConfirmBooking,
+  onOpenDockLoad,
+  onCommitDockLoad,
   onStartDriverPlanning,
   onStopDriverPlanning,
   onMoveDriverPlanEvent,
@@ -120,6 +124,16 @@ export default function DesktopShell({
   )
   const hasInspector = hasFreightInspector || hasOperationsInspector
 
+  const focusedDockDriver = focusedTask?.type === 'dock-load'
+    ? drivers.find((driver) => driver.id === focusedTask.driverId) ?? null
+    : null
+  const focusedDockDay = focusedDockDriver
+    ? driverDays.find((day) => day.driverId === focusedDockDriver.id) ?? null
+    : null
+  const focusedDockEvent = focusedDockDay
+    ? focusedDockDay.timeline.find((event) => event.id === focusedTask?.eventId) ?? null
+    : null
+
   const focusedRecord = focusedTask?.type === 'rate-confirmation'
     ? bookingRecords[focusedTask.laneId] ?? null
     : null
@@ -147,7 +161,21 @@ export default function DesktopShell({
         onSimulationModeChange={onSimulationModeChange}
       />
 
-      {focusedTask?.type === 'rate-confirmation' && focusedLane && focusedDriver && focusedRecord ? (
+      {focusedTask?.type === 'dock-load' && focusedDockDriver && focusedDockEvent ? (
+        <FocusedWorkspace
+          eyebrow="DOCK & LOAD"
+          title={`${focusedDockDriver.name} · ${focusedDockEvent.locationLabel}`}
+          subtitle="FOCUSED · GAMEPLAY PAUSED"
+          onClose={onCloseFocusedTask}
+        >
+          <DockLoadWorkspace
+            driver={focusedDockDriver}
+            event={focusedDockEvent}
+            facilityOperation={facilityOperations?.[`${focusedDockDriver.id}:${focusedDockEvent.id}`] ?? null}
+            onCommit={onCommitDockLoad}
+          />
+        </FocusedWorkspace>
+      ) : focusedTask?.type === 'rate-confirmation' && focusedLane && focusedDriver && focusedRecord ? (
         <FocusedWorkspace
           eyebrow="DOCUMENT REVIEW"
           title={`Rate Confirmation · ${focusedLane.laneRef}`}
@@ -257,6 +285,7 @@ export default function DesktopShell({
               onStopPlanning={onStopDriverPlanning}
               onMovePlanEvent={onMoveDriverPlanEvent}
               onSendSchedule={onSendDriverSchedule}
+              onOpenDockLoad={onOpenDockLoad}
               onClose={onCloseOperationsInspector}
               onSelectSubject={onSelectSubject}
             />

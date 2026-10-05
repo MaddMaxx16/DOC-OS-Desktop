@@ -24,6 +24,7 @@ export default function OperationsInspector({
   onStopPlanning,
   onMovePlanEvent,
   onSendSchedule,
+  onOpenDockLoad,
   onClose,
   onSelectSubject,
 }) {
@@ -85,6 +86,7 @@ export default function OperationsInspector({
             onStopPlanning={() => onStopPlanning?.(driver.id)}
             onMovePlanEvent={onMovePlanEvent}
             onSendSchedule={onSendSchedule}
+            onOpenDockLoad={onOpenDockLoad}
             onSelectSubject={onSelectSubject}
           />
         </div>

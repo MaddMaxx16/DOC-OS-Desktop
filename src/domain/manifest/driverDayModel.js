@@ -57,6 +57,9 @@ function freightStop(load, role, locations) {
     appointmentEndMinutes,
     locationId: spec.locationId,
     locationLabel: location?.label ?? spec.locationId,
+    deliveryLocationLabel: role === 'pickup'
+      ? locations[load.delivery?.locationId]?.label ?? load.delivery?.locationId ?? null
+      : location?.label ?? spec.locationId,
     coordinates: location?.coordinates ?? null,
     freight: load.freight,
   }

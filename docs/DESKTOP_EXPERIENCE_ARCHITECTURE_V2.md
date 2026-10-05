@@ -2503,3 +2503,117 @@ It creates the event boundary that facility gameplay needs:
 6. driver departs automatically after service completion.
 
 The next facility-gameplay packet can replace the automatic transition at step 4 with the dock/freight puzzle without rewriting route or appointment timing.
+
+
+---
+
+## V2.7.5.0 — Dock & Load Foundation
+
+V2.7.4.2 established the truthful facility boundary: a truck physically arrives, waits when early, and reaches an appointment-ready state without stretching road travel.
+
+V2.7.5.0 inserts the first player-driven pickup operation at that boundary.
+
+### Simulation boundary
+
+Pickup execution now follows:
+
+`EN ROUTE → WAITING (when early) → DOCK ASSIGNED → FOCUSED LOAD PLANNING → LOADING → EN ROUTE`
+
+The important separation is:
+
+- **decision time** happens in Focused Mode and pauses the world clock,
+- **operational loading time** happens after commitment in normal simulation.
+
+The player does not impersonate warehouse labor. The player verifies and plans the operation.
+
+### Facility gate
+
+When an appointment-ready pickup has no committed facility operation:
+
+- the incoming road leg remains complete,
+- the truck remains parked at the facility,
+- freight is not onboard,
+- later route legs cannot complete,
+- Driver Day exposes the assigned dock and an OPEN DOCK & LOAD action.
+
+The first packet assigns a deterministic dock immediately when the appointment/service gate opens. Congestion-based WAITING FOR DOCK timing is deferred.
+
+### Focused Dock & Load
+
+Dock & Load uses the existing FocusedWorkspace shell, so world simulation pauses automatically while the player solves the load.
+
+The first playable puzzle includes three regions:
+
+1. **Staged Freight**
+   - expected booked freight,
+   - one unrelated noise unit,
+   - verify/unverify,
+   - drag or PLACE into trailer.
+
+2. **Trailer Plan**
+   - stylized 53-foot dry-van board,
+   - 26 floor positions,
+   - verified freight placement,
+   - click planned freight to return it to staging,
+   - visible FRONT / NOSE and REAR / DOORS orientation.
+
+3. **Booked Load / Readiness HUD**
+   - driver,
+   - pickup,
+   - destination,
+   - expected pallet count and weight,
+   - positions used,
+   - planned weight,
+   - verified expected freight,
+   - planned expected freight,
+   - blocking validation.
+
+### Rear doors are the commit control
+
+There is no generic final submit button.
+
+When the load plan has no blocking errors, the rear doors become actionable.
+
+Closing them:
+
+1. locks the current plan,
+2. records the facility operation,
+3. records actual loading start at the current simulation minute,
+4. exits Focused Mode,
+5. resumes the world clock,
+6. begins background LOADING.
+
+The door interaction is therefore both visual feedback and the state transition between planning and execution.
+
+### Downstream timing
+
+A pickup held for player action cannot silently keep executing the old schedule.
+
+Once the plan is committed, route execution uses the actual loading start and deterministic loading duration. Any delay beyond the original service window is propagated into downstream arrivals and dwell timing.
+
+Appointment clocks themselves remain fixed; delays move the truck, not the appointment.
+
+### Tutorial-level scope
+
+The V2.7.5.0 load-plan evaluator is intentionally simple:
+
+- all expected pallets must be verified,
+- all expected pallets must be placed,
+- unrelated freight in the trailer is a blocker,
+- duplicate placement is a blocker.
+
+The underlying operation/load-plan state is preserved so later packets can add:
+
+- stack compatibility,
+- vertical height,
+- trailer weight and balance,
+- stop accessibility,
+- ambiguous labels,
+- missing/extra freight,
+- rework,
+- facility personality,
+- variable loading time,
+- paperwork and pickup exceptions,
+- delivery consequences.
+
+The first goal is to prove the complete interaction boundary without destabilizing fleet execution.

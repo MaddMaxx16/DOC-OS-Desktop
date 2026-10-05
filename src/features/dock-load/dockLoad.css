@@ -1,0 +1,492 @@
+.dock-load-workspace {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 27%) minmax(0, 1fr) minmax(260px, 24%);
+  gap: 14px;
+}
+
+.dock-load-staging,
+.dock-load-trailer-panel,
+.dock-load-hud {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid #243640;
+  background: #081118;
+}
+
+.dock-load-staging,
+.dock-load-hud {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.dock-load-staging > header,
+.dock-load-trailer-heading,
+.dock-load-booked > header,
+.dock-load-readiness > header {
+  padding: 12px 13px;
+  border-bottom: 1px solid #21323d;
+  background: #0a151d;
+}
+
+.dock-load-staging > header,
+.dock-load-booked > header,
+.dock-load-readiness > header,
+.dock-load-trailer-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.dock-load-staging header span,
+.dock-load-trailer-heading span,
+.dock-load-booked header span,
+.dock-load-readiness header span,
+.dock-load-booked > div span,
+.dock-load-hud-grid span,
+.dock-load-focus-note span {
+  color: #6d8290;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .1em;
+}
+
+.dock-load-staging header strong,
+.dock-load-trailer-heading strong,
+.dock-load-booked header strong,
+.dock-load-readiness header strong {
+  color: #dce6ec;
+  font-size: var(--type-emphasis);
+}
+
+.dock-load-staging header small,
+.dock-load-trailer-heading small {
+  color: #738895;
+  font-size: var(--type-secondary);
+  line-height: 1.35;
+}
+
+.dock-load-freight-list {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 8px;
+}
+
+.dock-load-freight-card {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid #263946;
+  background: #0a141b;
+}
+
+.dock-load-freight-card.verified {
+  border-color: #355d52;
+  background: #0b1715;
+}
+
+.dock-load-freight-card.planned {
+  border-color: #47667b;
+  background: #0c1720;
+}
+
+.dock-load-freight-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dock-load-freight-card-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dock-load-freight-card-head span {
+  color: #778b98;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.dock-load-freight-card-head strong {
+  color: #d6e0e6;
+  font-size: 11px;
+}
+
+.dock-load-freight-card-head b {
+  align-self: start;
+  padding: 3px 5px;
+  border: 1px solid #314551;
+  color: #8497a2;
+  font-size: 7px;
+  letter-spacing: .06em;
+}
+
+.dock-load-freight-card.verified .dock-load-freight-card-head b {
+  border-color: #356051;
+  color: #84b9a8;
+}
+
+.dock-load-freight-card.planned .dock-load-freight-card-head b {
+  border-color: #3e657d;
+  color: #7db5da;
+}
+
+.dock-load-freight-card dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 5px 9px;
+}
+
+.dock-load-freight-card dl > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.dock-load-freight-card dt {
+  color: #536b79;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.dock-load-freight-card dd {
+  margin: 0;
+  overflow: hidden;
+  color: #a9bbc6;
+  font-size: 9px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-load-freight-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.dock-load-freight-actions button {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid #334a58;
+  background: #0d1a22;
+  color: #93a6b2;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+
+.dock-load-freight-actions button.active {
+  border-color: #3d695a;
+  background: #10211c;
+  color: #8fc0ae;
+}
+
+.dock-load-freight-actions button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
+.dock-load-trailer-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.dock-load-trailer-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+
+.dock-load-trailer-heading small {
+  max-width: 420px;
+  text-align: right;
+}
+
+.dock-load-trailer-shell {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 34px minmax(0, 1fr) 78px;
+  padding: 12px 18px 14px;
+  background:
+    linear-gradient(180deg, rgba(33, 46, 55, .26), transparent 22%),
+    #060c11;
+}
+
+.dock-load-nose,
+.dock-load-rear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dock-load-nose span,
+.dock-load-rear > span {
+  color: #708592;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+
+.dock-load-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(13, minmax(26px, 1fr));
+  gap: 4px;
+  padding: 8px;
+  border: 2px solid #425560;
+  border-radius: 10px 10px 3px 3px;
+  background:
+    linear-gradient(90deg, rgba(68, 86, 96, .12) 1px, transparent 1px),
+    #0b141a;
+  box-shadow: inset 0 0 0 5px #081016;
+}
+
+.dock-load-grid button {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border: 1px dashed #2b3d48;
+  border-radius: 2px;
+  background: #0a1319;
+  color: #506673;
+  cursor: pointer;
+}
+
+.dock-load-grid button:hover {
+  border-color: #536f80;
+  background: #0e1a22;
+}
+
+.dock-load-grid button.occupied {
+  border-style: solid;
+  border-color: #3e657d;
+  background: #10202a;
+}
+
+.dock-load-grid button > span {
+  color: #4f6470;
+  font-size: 7px;
+  font-weight: 950;
+}
+
+.dock-load-grid button > strong {
+  overflow: hidden;
+  color: #b7ccd8;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-load-grid button > small {
+  color: #6f9bb5;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.dock-load-rear {
+  position: relative;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dock-load-doors {
+  width: min(310px, 74%);
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #3a4d58;
+  background: #0a1116;
+  color: #748994;
+  cursor: not-allowed;
+}
+
+.dock-load-doors i {
+  min-height: 30px;
+  border-right: 1px solid #354854;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.025), transparent),
+    #111c22;
+  transform-origin: left center;
+  transition: transform .28s ease;
+}
+
+.dock-load-doors i:nth-child(2) {
+  border-right: 0;
+  border-left: 1px solid #354854;
+  transform-origin: right center;
+}
+
+.dock-load-doors b {
+  grid-column: 1 / -1;
+  padding: 5px;
+  border-top: 1px solid #334650;
+  font-size: 8px;
+  letter-spacing: .08em;
+}
+
+.dock-load-doors.ready {
+  border-color: #41705f;
+  color: #9dc8b8;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(71, 124, 104, .13);
+}
+
+.dock-load-doors.ready i {
+  background: #14221e;
+}
+
+.dock-load-doors.closing i:first-child {
+  transform: perspective(160px) rotateY(-58deg);
+}
+
+.dock-load-doors.closing i:nth-child(2) {
+  transform: perspective(160px) rotateY(58deg);
+}
+
+.dock-load-hud {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.dock-load-booked {
+  border-bottom: 1px solid #21323d;
+}
+
+.dock-load-booked > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px 12px;
+  border-top: 1px solid #172731;
+}
+
+.dock-load-booked > div strong {
+  color: #b8c8d1;
+  font-size: 10px;
+}
+
+.dock-load-readiness {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.dock-load-hud-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #1d2e37;
+}
+
+.dock-load-hud-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  background: #0a141b;
+}
+
+.dock-load-hud-grid strong {
+  color: #cbd7dd;
+  font-size: 11px;
+}
+
+.dock-load-validation {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 9px;
+}
+
+.dock-load-validation > div {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid #334650;
+  background: #0b151c;
+}
+
+.dock-load-validation strong {
+  font-size: 8px;
+  letter-spacing: .06em;
+}
+
+.dock-load-validation small {
+  color: #7f929e;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.dock-load-validation .error {
+  border-color: #69414c;
+  background: #1a1014;
+}
+
+.dock-load-validation .error strong {
+  color: #d67c8b;
+}
+
+.dock-load-validation .warning {
+  border-color: #67552f;
+  background: #18150d;
+}
+
+.dock-load-validation .warning strong {
+  color: #d1ad62;
+}
+
+.dock-load-validation .ok {
+  border-color: #315d4e;
+  background: #0e1916;
+}
+
+.dock-load-validation .ok strong {
+  color: #80b39f;
+}
+
+.dock-load-focus-note {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-top: 1px solid #2e3c48;
+  background: #0b1118;
+}
+
+.dock-load-focus-note strong {
+  color: #ab98b6;
+  font-size: 9px;
+}
+
+.dock-load-focus-note small {
+  color: #6f7d86;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1300px) {
+  .dock-load-workspace {
+    grid-template-columns: minmax(250px, 30%) minmax(0, 1fr);
+  }
+
+  .dock-load-hud {
+    display: none;
+  }
+}

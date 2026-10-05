@@ -103,6 +103,51 @@ test('an unsent driver becomes dispatch-required at shift start and remains held
   assert.match(state.detail, /holding at Jersey City/)
 })
 
+test('pickup facility mode changes appointment-ready pickup into a dock-assigned action state', () => {
+  const day = {
+    driverId: 'marcus-reed',
+    dispatchStatus: 'sent',
+    shift: { startMinutes: 420, endMinutes: 1020 },
+    timeline: [
+      {
+        id: 'marcus-reed:shift-start',
+        kind: 'shift-start',
+        locationLabel: 'Newark',
+        projectedArrivalMinutes: 420,
+      },
+      {
+        id: 'M-101:pickup',
+        kind: 'freight-stop',
+        role: 'pickup',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        locationLabel: 'Empire Freight Terminal',
+        projectedArrivalMinutes: 470,
+        physicalArrivalMinutes: 470,
+        serviceStartMinutes: 480,
+        serviceMinutes: 12,
+        endMinutes: 492,
+      },
+    ],
+  }
+
+  const state = buildLiveDriverState(
+    day,
+    createSimulationClock({ currentMinutes: 486 }),
+    {
+      pickupFacilityMode: true,
+      facilityOperations: {},
+    },
+  )
+
+  assert.equal(state.phase, 'active')
+  assert.equal(state.executionPhase, 'facility-dock-assigned')
+  assert.match(state.label, /^DOCK /)
+  assert.equal(state.facilityActionRequired, true)
+  assert.match(state.detail, /load plan required/)
+  assert.deepEqual(state.onboardLoadIds, [])
+})
+
 test('live state reports WAITING when a driver physically arrives before an appointment', () => {
   const day = {
     driverId: 'marcus-reed',

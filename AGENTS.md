@@ -32,31 +32,35 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.2 Physical Arrival + Appointment Waiting
+## Current packet — V2.7.5.0 Dock & Load Foundation
 
-V2.1 through V2.7.4.1.3 are accepted and locked. Fleet Roster cleanup, dispatch gating, late-send recovery, fleet execution, route truth, and marker anchoring remain intact.
+V2.1 through V2.7.4.2 are accepted and locked. Physical arrival, appointment waiting, Fleet Roster, dispatch gating, late-send recovery, fleet execution, route truth, and marker anchoring remain intact.
 
-Core timing invariant:
-- road travel ends when the truck physically reaches the facility,
-- appointment timing gates service, not driving.
+Core pickup invariant:
 
-Freight timing rules:
-- projectedArrivalMinutes now represents physical facility arrival for recalculated freight stops,
-- physicalArrivalMinutes explicitly preserves that same arrival truth,
-- serviceStartMinutes is max(physical arrival, appointment start),
-- waitMinutes is the early-arrival gap between physical arrival and service start,
-- endMinutes is service start + deterministic freight service duration,
-- appointment risk is evaluated from service-ready time, not by stretching drive time,
-- route-segment completion occurs at physical arrival,
-- if physical arrival is before service start, execution enters waiting-appointment,
-- waiting-appointment parks the truck at the facility and completes no freight service,
-- onboard freight changes only when pickup/delivery service actually completes,
-- once serviceStartMinutes is reached, existing LOADING / UNLOADING service behavior begins,
-- all fleet surfaces may classify waiting-appointment as AT STOP and show WAITING,
-- Driver Day shows an appointment countdown for the actively waiting stop,
-- do not implement the pickup/delivery facility puzzle in this packet,
-- V2.7.4.2 creates the truthful facility-arrival trigger that the upcoming facility gameplay will consume,
-- do not change HOS depletion in this packet.
+> the player plans the load; the warehouse executes the load afterward.
+
+Pickup flow in this packet:
+- road arrival and appointment waiting remain owned by V2.7.4.2,
+- when an appointment-ready pickup has no committed load plan, execution enters facility-dock-assigned instead of automatic LOADING,
+- facility-dock-assigned parks the truck at the pickup and blocks all downstream execution,
+- the assigned dock is deterministic per pickup for this foundation packet,
+- Driver Day exposes OPEN DOCK & LOAD only for the active pickup that owns the dock gate,
+- opening Dock & Load creates a Focused Mode task; the global simulation clock pauses while the player thinks,
+- closing the focused workspace without committing leaves the driver at DOCK ASSIGNED,
+- the initial puzzle shows booked-load reference, staged freight, a 26-position dry-van board, verification state, readiness, and rear-door commitment,
+- the tutorial staging set contains the complete expected pallet set plus one clearly discoverable unrelated freight unit,
+- verified freight can be dragged into trailer positions or placed into the next open position,
+- planned freight can be returned to staging before commitment,
+- the first-slice readiness gate requires all expected freight verified and planned and rejects unrelated freight in the plan,
+- closing the rear doors commits the load plan, exits Focused Mode, and starts background LOADING at the current simulation minute,
+- focused decision time consumes no simulation time,
+- a delayed door commit shifts downstream route timing from the actual loading start rather than retroactively loading,
+- warehouse loading duration still uses the existing deterministic pickup service duration in this packet,
+- automatic departure resumes after loading completes because route execution remains authoritative,
+- this packet does not yet implement stacking, weight-balance scoring, stop-access warnings, freight ambiguity difficulty, dock congestion delay, rework, final paperwork exceptions, or delivery puzzle gameplay,
+- those systems must extend the committed trailer/facility model instead of replacing it,
+- do not change live HOS depletion in this packet.
 
 
 ## Verification

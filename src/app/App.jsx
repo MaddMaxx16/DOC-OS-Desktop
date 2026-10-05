@@ -17,6 +17,7 @@ import {
 import { commitBookedFreight } from '../domain/booking/commitBookedFreight.js'
 import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
+import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
   advanceSimulationClock,
@@ -48,6 +49,7 @@ export default function App() {
   const [operationalLoads, setOperationalLoads] = useState(() => [...seedLoads])
   const [operationalDriverPlans, setOperationalDriverPlans] = useState(() => ({ ...seedDriverPlans }))
   const [bookingRecords, setBookingRecords] = useState({})
+  const [facilityOperations, setFacilityOperations] = useState({})
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
   const [planningFeedback, setPlanningFeedback] = useState(null)
@@ -61,8 +63,11 @@ export default function App() {
   )
 
   const liveDriverStates = useMemo(
-    () => buildLiveDriverStates(driverDays, simulationClock),
-    [driverDays, simulationClock],
+    () => buildLiveDriverStates(driverDays, simulationClock, {
+      pickupFacilityMode: true,
+      facilityOperations,
+    }),
+    [driverDays, facilityOperations, simulationClock],
   )
 
   useEffect(() => {
@@ -492,6 +497,47 @@ export default function App() {
     }
   }
 
+  const openDockLoad = ({ driverId, eventId }) => {
+    const day = driverDays.find((item) => item.driverId === driverId)
+    const event = day?.timeline?.find((item) => item.id === eventId)
+    const liveState = liveDriverStates[driverId] ?? null
+
+    if (
+      !event
+      || event.kind !== 'freight-stop'
+      || event.role !== 'pickup'
+      || liveState?.executionPhase !== 'facility-dock-assigned'
+      || liveState.currentEventId !== eventId
+    ) {
+      return
+    }
+
+    setFocusedTask({
+      type: 'dock-load',
+      driverId,
+      eventId,
+    })
+  }
+
+  const commitDockLoad = ({ driverId, eventId, loadPlan }) => {
+    const day = driverDays.find((item) => item.driverId === driverId)
+    const event = day?.timeline?.find((item) => item.id === eventId)
+    if (!event || event.kind !== 'freight-stop' || event.role !== 'pickup') return
+
+    const operation = commitPickupOperation({
+      driverId,
+      event,
+      loadPlan,
+      currentAbsoluteMinutes: simulationAbsoluteMinutes(simulationClock),
+    })
+
+    setFacilityOperations((current) => ({
+      ...current,
+      [operation.key]: operation,
+    }))
+    setFocusedTask(null)
+  }
+
   return (
     <DesktopShell
       drivers={drivers}
@@ -500,6 +546,7 @@ export default function App() {
       allMarketLanes={freightMarket}
       locations={locations}
       bookingRecords={bookingRecords}
+      facilityOperations={facilityOperations}
       selection={selection}
       activeApp={activeApp}
       focusedTask={focusedTask}
@@ -522,6 +569,8 @@ export default function App() {
       onOpenRateCon={openRateCon}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}
+      onOpenDockLoad={openDockLoad}
+      onCommitDockLoad={commitDockLoad}
       onStartDriverPlanning={startDriverPlanning}
       onStopDriverPlanning={stopDriverPlanning}
       onMoveDriverPlanEvent={moveDriverPlanEvent}
