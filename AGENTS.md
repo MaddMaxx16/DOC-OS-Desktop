@@ -32,21 +32,22 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3.4 Native Operational Stops
+## Current packet — V2.7.3.5 Native Planning POIs
 
-V2.1 through V2.7.3.3 are accepted and locked. Complete route truth, smooth truck motion, and click-only driver labels remain intact.
+V2.1 through V2.7.3.4 are accepted and locked. Complete route truth, smooth truck motion, click-only driver labels, and native committed P/D/L/S stops remain intact.
 
 Guardrails:
-- all committed operational stops use one MapLibre-native source and projection path,
-- pickup, delivery, lunch, and staging are all features in COMMITTED_STOP_SOURCE,
-- committed lunch/staging must not use HTML/DOM Marker positioning,
-- every native operational stop resolves from canonical committed route-access truth only,
-- no committed stop may fall back to a facility coordinate,
-- L and S use the same native circle/badge/label layers as P and D,
-- selection, next-stop priority labels, completion dimming, hover labels, and click selection work for P/D/L/S through the same source,
-- planning-place candidates remain DOM markers because they are not committed route truth,
-- FreightLink preview pickup/delivery markers remain preview-only DOM context,
-- do not alter route geometry, routing retries, truck interpolation, simulation timing, HOS, or facility-service timing in this packet.
+- lunch/staging planning candidates use MapLibre-native GeoJSON layers, not HTML/DOM Marker positioning,
+- candidate POIs preserve their semantic place type: food, truck stop, staging, yard, fuel, service, or warehouse,
+- committed lunch/staging use the same semantic icon family as planning candidates,
+- pickup/delivery retain P#/D# load badges because freight sequence and identity remain operationally useful,
+- planning candidate circles use a distinct preview treatment so they read as choices rather than committed stops,
+- hovering a candidate may reveal its place label; clicking it previews that location through the existing planning workflow,
+- the currently previewed candidate is represented by the preview Driver Day route/stop and must not render twice,
+- semantic icon sprites are registered once on map load and shared by committed and planning layers,
+- planning-place DOM marker markup and CSS are retired,
+- FreightLink preview pickup/delivery DOM markers remain valid preview-only context,
+- do not alter route geometry, routing retries, truck interpolation, simulation timing, HOS, planning calculations, or facility-service timing in this packet.
 
 
 ## Verification

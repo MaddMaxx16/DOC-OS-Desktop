@@ -226,7 +226,8 @@ test('V2.6.3 Planning Mode moves Lunch through insertion lanes and uses physical
   assert.match(shell, /buildPlanningPlaceOptions/)
   assert.match(panel, /timeline-insert-gap/)
   assert.match(panel, /click to open lunch planner/)
-  assert.match(map, /planning-place-option/)
+  assert.match(map, /PLANNING_POI_SOURCE/)
+  assert.match(map, /PLANNING_POI_ICON_LAYER/)
   assert.match(map, /event\.locationId \?\? 'truck'/)
 })
 
@@ -341,7 +342,8 @@ test('V2.6.5.6 route geometry and operational stop markers share OSRM truck-acce
   assert.match(map, /buildRouteAccessByEventId\(displayDriverRoutes\)/)
   assert.match(map, /routeAccessCoordinate\([\s\S]*stop\.id,[\s\S]*null/)
   assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,80}stop\.coordinates/)
-  assert.match(map, /displayDriverRoutes, planningPlaceOptions/)
+  assert.match(map, /const features = planningPlaceOptions/)
+  assert.match(map, /source: PLANNING_POI_SOURCE/)
   assert.match(access, /Prefer the incoming leg's destination access point/)
 })
 
@@ -389,7 +391,26 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /routeExecutionPosition/)
 })
 
-test('V2.7.3.4 renders P D L and S through the same native MapLibre stop layers', async () => {
+test('V2.7.3.5 renders lunch and staging choices as native semantic planning POIs', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /const PLANNING_POI_SOURCE = 'planning-poi-source'/)
+  assert.match(map, /const PLANNING_POI_CIRCLE_LAYER = 'planning-poi-circle-layer'/)
+  assert.match(map, /const PLANNING_POI_ICON_LAYER = 'planning-poi-icon-layer'/)
+  assert.match(map, /const PLANNING_POI_LABEL_LAYER = 'planning-poi-label-layer'/)
+  assert.match(map, /registerPoiIconImages\(map\)/)
+  assert.match(map, /POI_ICON_IDS/)
+  assert.match(map, /food: 'poi-food'/)
+  assert.match(map, /'truck-stop': 'poi-truck-stop'/)
+  assert.match(map, /staging: 'poi-staging'/)
+  assert.match(map, /poiType: option\.poiType \?\? 'warehouse'/)
+  assert.match(map, /onPreviewPlanningPlaceRef\.current\?\.\(/)
+  assert.doesNotMatch(map, /planning-place-option/)
+  assert.doesNotMatch(css, /\.planning-place-option/)
+})
+
+test('V2.7.3.4 renders P D L and S through one native MapLibre stop source', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
   assert.match(map, /const operationalStops = driverDay\.timeline\.filter/)
@@ -397,10 +418,10 @@ test('V2.7.3.4 renders P D L and S through the same native MapLibre stop layers'
   assert.match(map, /stop\.kind === 'lunch'/)
   assert.match(map, /stop\.kind === 'staging'/)
   assert.match(map, /kind: stop\.kind/)
-  assert.match(map, /badge,[\s\S]*label: stop\.locationLabel/)
   assert.match(map, /source: COMMITTED_STOP_SOURCE/)
-  assert.match(map, /type: 'circle'/)
-  assert.match(map, /text-field': \['get', 'badge'\]/)
+  assert.match(map, /COMMITTED_STOP_ICON_LAYER/)
+  assert.match(map, /filter: \['==', \['get', 'kind'\], 'freight-stop'\]/)
+  assert.match(map, /filter: \['!=', \['get', 'kind'\], 'freight-stop'\]/)
   assert.doesNotMatch(map, /driver-route-anchor/)
   assert.doesNotMatch(map, /addRouteAnchorMarker/)
 })
@@ -419,7 +440,7 @@ test('V2.7.3.3 publishes only complete committed road truth and never floats ope
   assert.doesNotMatch(map, /routeAnchor\.coordinates/)
 })
 
-test('V2.7.3.2 keeps driver labels click-only and centers non-committed preview POIs', async () => {
+test('V2.7.3.2 keeps driver labels click-only and FreightLink preview markers center-anchored', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
@@ -427,9 +448,10 @@ test('V2.7.3.2 keeps driver labels click-only and centers non-committed preview 
   assert.match(map, /driverExplicitlySelected \? 'label-open' : ''/)
   assert.match(css, /\.driver-marker\.label-open > small \{[\s\S]*display: flex;/)
   assert.doesNotMatch(css, /\.driver-marker:hover > small,[\s\S]*\.driver-marker\.selected > small/)
-  assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(option\.coordinates\)/)
   assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(accessCoordinates \?\? location\.coordinates\)/)
-  assert.match(css, /\.planning-place-option,[\s\S]*\.freight-preview-marker \{[\s\S]*width: 34px;[\s\S]*height: 34px;/)
+  assert.match(css, /\.freight-preview-marker \{[\s\S]*width: 34px;[\s\S]*height: 34px;/)
+  assert.doesNotMatch(map, /planning-place-option/)
+  assert.doesNotMatch(css, /\.planning-place-option/)
 })
 
 test('V2.7.3.1 keeps the truck artwork centered on route truth and smooths each live tick along road geometry', async () => {
@@ -671,7 +693,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.4 · NATIVE OPS STOPS/)
+  assert.match(top, /DESKTOP V2\.7\.3\.5 · NATIVE PLANNING POIS/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -716,15 +738,16 @@ test('V2.5.2 ISSUE highlights the paper field without revealing correctness', as
   assert.match(css, /@keyframes rateconIssueFlash/)
 })
 
-test('Live Map and FreightLink use one native stop source for pickup delivery lunch and staging', async () => {
+test('Live Map uses semantic native icons for committed lunch and staging while P D keep load badges', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
   assert.match(map, /COMMITTED_STOP_SOURCE/)
-  assert.match(map, /const operationalStops = driverDay\.timeline\.filter/)
-  assert.match(map, /stop\.kind === 'freight-stop'/)
-  assert.match(map, /stop\.kind === 'lunch'/)
-  assert.match(map, /stop\.kind === 'staging'/)
-  assert.match(map, /stop\.kind === 'lunch'[\s\S]*\? 'L'[\s\S]*: 'S'/)
+  assert.match(map, /COMMITTED_STOP_ICON_LAYER/)
+  assert.match(map, /poiType = stop\.kind === 'freight-stop'/)
+  assert.match(map, /locationType\([\s\S]*stop\.kind === 'staging' \? 'staging' : 'warehouse'/)
+  assert.match(map, /const badge = stop\.kind === 'freight-stop'[\s\S]*: ''/)
+  assert.match(map, /'icon-image': poiIconImageExpression\(\)/)
+  assert.doesNotMatch(map, /stop\.kind === 'lunch'[\s\S]*\? 'L'[\s\S]*: 'S'/)
   assert.doesNotMatch(map, /addRouteAnchorMarker/)
   assert.doesNotMatch(map, /buildDriverRouteAnchors/)
 })

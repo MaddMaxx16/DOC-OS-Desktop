@@ -1860,3 +1860,51 @@ DOM markers are still valid for non-committed context such as:
 - the moving driver truck asset.
 
 Those are presentation/interaction overlays, not committed stop truth.
+
+
+---
+
+## V2.7.3.5 — Native Planning POIs
+
+V2.7.3.4 proved that one MapLibre-native projection path eliminates the visual drift that affected committed Lunch/Staging stops. V2.7.3.5 applies that same rule to temporary Lunch/Staging planning choices.
+
+### Semantic place language
+
+Planning choices describe physical places, so the marker communicates the place type rather than repeating the event role.
+
+Examples:
+
+- diner / restaurant → food icon,
+- truck stop / travel plaza → truck-stop icon,
+- staging lot → staging icon,
+- yard → yard icon,
+- fuel location → fuel icon,
+- service facility → service icon,
+- generic freight facility → warehouse icon.
+
+The planning flyout still explains that the player is choosing a Lunch or Staging location. The map icon answers a different question: **what kind of place is this?**
+
+### Native planning source
+
+Lunch/Staging candidates are features in a dedicated MapLibre GeoJSON source with native:
+
+- candidate circle layer,
+- semantic icon layer,
+- hover label layer,
+- click interaction.
+
+The retired `.planning-place-option` DOM marker path is no longer used.
+
+Candidate markers use canonical location coordinates because they are still uncommitted choices. Once the player previews a choice, the preview Driver Day and its route hydration own the road-facing stop truth.
+
+### Consistent committed semantics
+
+Committed non-freight stops no longer use generic `L` or `S` letters.
+
+- P/D remain numbered load badges.
+- Lunch/Staging render the semantic icon for their chosen physical location.
+- Previewed Lunch/Staging stops use the same icon and receive a distinct preview accent.
+
+This creates the map-language invariant:
+
+> letters/numbers identify freight work; icons identify physical stop types.

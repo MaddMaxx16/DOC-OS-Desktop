@@ -39,7 +39,23 @@ const DRIVER_ROUTE_PICKUP_LAYER = 'driver-plan-pickup-layer'
 const COMMITTED_STOP_SOURCE = 'committed-stop-source'
 const COMMITTED_STOP_CIRCLE_LAYER = 'committed-stop-circle-layer'
 const COMMITTED_STOP_BADGE_LAYER = 'committed-stop-badge-layer'
+const COMMITTED_STOP_ICON_LAYER = 'committed-stop-icon-layer'
 const COMMITTED_STOP_LABEL_LAYER = 'committed-stop-label-layer'
+
+const PLANNING_POI_SOURCE = 'planning-poi-source'
+const PLANNING_POI_CIRCLE_LAYER = 'planning-poi-circle-layer'
+const PLANNING_POI_ICON_LAYER = 'planning-poi-icon-layer'
+const PLANNING_POI_LABEL_LAYER = 'planning-poi-label-layer'
+
+const POI_ICON_IDS = Object.freeze({
+  yard: 'poi-yard',
+  staging: 'poi-staging',
+  fuel: 'poi-fuel',
+  food: 'poi-food',
+  'truck-stop': 'poi-truck-stop',
+  service: 'poi-service',
+  warehouse: 'poi-warehouse',
+})
 
 const DEADHEAD_SOURCE = 'freightlink-deadhead-source'
 const DEADHEAD_CASING_LAYER = 'freightlink-deadhead-casing'
@@ -114,6 +130,67 @@ function poiSvg(type) {
   }
 
   return '<svg viewBox="0 0 48 48" focusable="false"><path d="M6 18 24 7l18 11v23H6z"/><path d="M12 24h7v17h-7zm11 0h7v17h-7zm11 0h4v17h-4z"/><path d="M10 18h28"/></svg>'
+}
+
+function drawPoiIcon(type) {
+  const canvas = document.createElement('canvas')
+  canvas.width = 48
+  canvas.height = 48
+  const context = canvas.getContext('2d')
+  if (!context) return null
+
+  context.clearRect(0, 0, 48, 48)
+  context.strokeStyle = '#f3f7fa'
+  context.fillStyle = '#f3f7fa'
+  context.lineWidth = 3.5
+  context.lineCap = 'round'
+  context.lineJoin = 'round'
+
+  const strokePath = (path) => context.stroke(new Path2D(path))
+
+  if (type === 'yard') {
+    strokePath('M7 15h34v25H7z M12 9h24v8H12z M13 24h8v16h-8 M27 24h8v16h-8')
+  } else if (type === 'staging') {
+    strokePath('M8 8h32v32H8z M18 34V14h8c7 0 11 3 11 9s-4 9-11 9h-3 M23 19v8h3c4 0 6-1 6-4s-2-4-6-4z')
+  } else if (type === 'fuel') {
+    strokePath('M10 7h20v34H10z M14 12h12v9H14z M30 15h5l5 6v15c0 3-2 5-5 5s-5-2-5-5 M35 15v7h5')
+  } else if (type === 'food') {
+    strokePath('M14 7v15 M9 7v10c0 4 2 6 5 6s5-2 5-6V7 M14 23v18 M31 7c5 5 7 11 7 18h-7v16 M31 7v18')
+  } else if (type === 'truck-stop') {
+    strokePath('M5 13h23v20H5z M28 20h8l7 7v6H28z')
+    context.beginPath()
+    context.arc(14, 35, 4, 0, Math.PI * 2)
+    context.arc(36, 35, 4, 0, Math.PI * 2)
+    context.stroke()
+  } else if (type === 'service') {
+    strokePath('M31 8a10 10 0 0 0-10 13L8 34l6 6 13-13A10 10 0 0 0 40 17l-7 7-6-6 7-7a10 10 0 0 0-3-3z')
+  } else {
+    strokePath('M6 18L24 7l18 11v23H6z M12 24h7v17h-7 M23 24h7v17h-7 M34 24h4v17h-4 M10 18h28')
+  }
+
+  return context.getImageData(0, 0, 48, 48)
+}
+
+function registerPoiIconImages(map) {
+  for (const [type, imageId] of Object.entries(POI_ICON_IDS)) {
+    if (map.hasImage(imageId)) continue
+    const image = drawPoiIcon(type)
+    if (image) map.addImage(imageId, image, { pixelRatio: 2 })
+  }
+}
+
+function poiIconImageExpression() {
+  return [
+    'match',
+    ['get', 'poiType'],
+    'yard', POI_ICON_IDS.yard,
+    'staging', POI_ICON_IDS.staging,
+    'fuel', POI_ICON_IDS.fuel,
+    'food', POI_ICON_IDS.food,
+    'truck-stop', POI_ICON_IDS['truck-stop'],
+    'service', POI_ICON_IDS.service,
+    POI_ICON_IDS.warehouse,
+  ]
 }
 
 function committedRouteComplete(segments = []) {
@@ -286,6 +363,7 @@ export default function OperationsMap({
       map.setBearing(0)
       map.setPitch(0)
       tuneBaseMap(map)
+      registerPoiIconImages(map)
       setMapReady(true)
     })
     mapRef.current = map
@@ -368,53 +446,7 @@ export default function OperationsMap({
       }
     }
 
-    const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
-
-    if (
-      !workspaceOpen
-      && selectedDriver
-      && (selectedStop?.kind === 'lunch' || selectedStop?.kind === 'staging')
-    ) {
-      for (const option of planningPlaceOptions) {
-        if (
-          !Array.isArray(option.coordinates)
-          || option.id === selectedStop.locationId
-          || option.id === pendingPlanningPlace?.locationId
-        ) continue
-
-        const element = document.createElement('button')
-        element.type = 'button'
-        element.className = `poi-marker planning-place-option ${option.poiType}`
-        element.style.setProperty('--driver-color', driverIdentity?.color ?? '#8ea3b0')
-        element.setAttribute(
-          'aria-label',
-          `Choose ${option.label} for ${selectedStop.kind}`,
-        )
-        element.innerHTML = `${facilityMarkup({
-          type: option.poiType,
-          badge: selectedStop.kind === 'lunch' ? 'L?' : 'S?',
-        })}<small>${option.label}</small>`
-        element.addEventListener('click', (event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          onPreviewPlanningPlaceRef.current?.({
-            driverId: selectedDriver.id,
-            kind: selectedStop.kind,
-            locationId: option.id,
-          })
-        })
-
-        const marker = new Marker({ element, anchor: 'center' })
-          .setLngLat(option.coordinates)
-          .addTo(map)
-
-        markerRefs.current.set(`planning-place:${option.id}`, marker)
-      }
-    }
-
-
-
-  }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, displayDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
+  }, [drivers, locations, marketLanes, selectedDriver, selection, workspaceOpen])
 
   useEffect(() => {
     if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return undefined
@@ -532,6 +564,7 @@ export default function OperationsMap({
 
     const clearCommittedStops = () => {
       if (map.getLayer(COMMITTED_STOP_LABEL_LAYER)) map.removeLayer(COMMITTED_STOP_LABEL_LAYER)
+      if (map.getLayer(COMMITTED_STOP_ICON_LAYER)) map.removeLayer(COMMITTED_STOP_ICON_LAYER)
       if (map.getLayer(COMMITTED_STOP_BADGE_LAYER)) map.removeLayer(COMMITTED_STOP_BADGE_LAYER)
       if (map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)) map.removeLayer(COMMITTED_STOP_CIRCLE_LAYER)
       if (map.getSource(COMMITTED_STOP_SOURCE)) map.removeSource(COMMITTED_STOP_SOURCE)
@@ -563,13 +596,24 @@ export default function OperationsMap({
 
         const selected = isSelection(selection, SELECTION_TYPES.STOP, stop.id)
         const completed = completedEventIds.has(stop.id)
-        const priority = selected || stop.id === nextStopId
+        const planningPreview = Boolean(
+          pendingPlanningPlace
+          && pendingPlanningPlace.driverId === selectedDriver.id
+          && pendingPlanningPlace.kind === stop.kind
+          && pendingPlanningPlace.locationId === stop.locationId
+        )
+        const priority = selected || stop.id === nextStopId || planningPreview
+        const location = locations[stop.locationId]
+        const poiType = stop.kind === 'freight-stop'
+          ? 'warehouse'
+          : locationType(
+              location,
+              stop.kind === 'staging' ? 'staging' : 'warehouse',
+            )
 
         const badge = stop.kind === 'freight-stop'
           ? `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`
-          : stop.kind === 'lunch'
-            ? 'L'
-            : 'S'
+          : ''
 
         return {
           type: 'Feature',
@@ -578,11 +622,13 @@ export default function OperationsMap({
             id: stop.id,
             kind: stop.kind,
             role: stop.role ?? '',
+            poiType,
             badge,
             label: stop.locationLabel,
             priority,
             selected,
             completed,
+            planningPreview,
           },
           geometry: {
             type: 'Point',
@@ -613,8 +659,18 @@ export default function OperationsMap({
           16,
           14,
         ],
-        'circle-color': '#101a22',
-        'circle-stroke-color': identity.color,
+        'circle-color': [
+          'case',
+          ['boolean', ['get', 'planningPreview'], false],
+          '#1a131d',
+          '#101a22',
+        ],
+        'circle-stroke-color': [
+          'case',
+          ['boolean', ['get', 'planningPreview'], false],
+          '#c1a0cf',
+          identity.color,
+        ],
         'circle-stroke-width': [
           'case',
           ['boolean', ['get', 'selected'], false],
@@ -640,6 +696,7 @@ export default function OperationsMap({
       id: COMMITTED_STOP_BADGE_LAYER,
       type: 'symbol',
       source: COMMITTED_STOP_SOURCE,
+      filter: ['==', ['get', 'kind'], 'freight-stop'],
       layout: {
         'text-field': ['get', 'badge'],
         'text-size': 10,
@@ -657,6 +714,32 @@ export default function OperationsMap({
         ],
         'text-halo-color': '#071019',
         'text-halo-width': 1,
+      },
+    })
+
+    map.addLayer({
+      id: COMMITTED_STOP_ICON_LAYER,
+      type: 'symbol',
+      source: COMMITTED_STOP_SOURCE,
+      filter: ['!=', ['get', 'kind'], 'freight-stop'],
+      layout: {
+        'icon-image': poiIconImageExpression(),
+        'icon-size': [
+          'case',
+          ['boolean', ['get', 'selected'], false],
+          1.08,
+          0.96,
+        ],
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+      },
+      paint: {
+        'icon-opacity': [
+          'case',
+          ['boolean', ['get', 'completed'], false],
+          0.48,
+          1,
+        ],
       },
     })
 
@@ -705,6 +788,7 @@ export default function OperationsMap({
     for (const layerId of [
       COMMITTED_STOP_CIRCLE_LAYER,
       COMMITTED_STOP_BADGE_LAYER,
+      COMMITTED_STOP_ICON_LAYER,
       COMMITTED_STOP_LABEL_LAYER,
     ]) {
       map.on('click', layerId, selectStop)
@@ -716,6 +800,7 @@ export default function OperationsMap({
       for (const layerId of [
         COMMITTED_STOP_CIRCLE_LAYER,
         COMMITTED_STOP_BADGE_LAYER,
+        COMMITTED_STOP_ICON_LAYER,
         COMMITTED_STOP_LABEL_LAYER,
       ]) {
         map.off('click', layerId, selectStop)
@@ -733,6 +818,175 @@ export default function OperationsMap({
     displayDriverRoutes,
     selectedDriver,
     selection,
+    locations,
+    pendingPlanningPlace,
+  ])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map) return undefined
+
+    const clearPlanningPois = () => {
+      if (map.getLayer(PLANNING_POI_LABEL_LAYER)) map.removeLayer(PLANNING_POI_LABEL_LAYER)
+      if (map.getLayer(PLANNING_POI_ICON_LAYER)) map.removeLayer(PLANNING_POI_ICON_LAYER)
+      if (map.getLayer(PLANNING_POI_CIRCLE_LAYER)) map.removeLayer(PLANNING_POI_CIRCLE_LAYER)
+      if (map.getSource(PLANNING_POI_SOURCE)) map.removeSource(PLANNING_POI_SOURCE)
+    }
+
+    clearPlanningPois()
+
+    if (
+      workspaceOpen
+      || !selectedDriver
+      || !selectedStop
+      || !['lunch', 'staging'].includes(selectedStop.kind)
+    ) {
+      return clearPlanningPois
+    }
+
+    const pendingLocationId = (
+      pendingPlanningPlace?.driverId === selectedDriver.id
+      && pendingPlanningPlace?.kind === selectedStop.kind
+    )
+      ? pendingPlanningPlace.locationId
+      : null
+
+    const features = planningPlaceOptions
+      .filter((option) => (
+        Array.isArray(option.coordinates)
+        && option.id !== selectedStop.locationId
+        && option.id !== pendingLocationId
+      ))
+      .map((option) => ({
+        type: 'Feature',
+        id: option.id,
+        properties: {
+          id: option.id,
+          locationId: option.id,
+          kind: selectedStop.kind,
+          label: option.label,
+          poiType: option.poiType ?? 'warehouse',
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: option.coordinates,
+        },
+      }))
+
+    if (!features.length) return clearPlanningPois
+
+    map.addSource(PLANNING_POI_SOURCE, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features,
+      },
+    })
+
+    map.addLayer({
+      id: PLANNING_POI_CIRCLE_LAYER,
+      type: 'circle',
+      source: PLANNING_POI_SOURCE,
+      paint: {
+        'circle-radius': 15,
+        'circle-color': '#17131b',
+        'circle-stroke-color': '#b79bc5',
+        'circle-stroke-width': 2,
+        'circle-opacity': 0.9,
+        'circle-stroke-opacity': 0.92,
+      },
+    })
+
+    map.addLayer({
+      id: PLANNING_POI_ICON_LAYER,
+      type: 'symbol',
+      source: PLANNING_POI_SOURCE,
+      layout: {
+        'icon-image': poiIconImageExpression(),
+        'icon-size': 0.92,
+        'icon-allow-overlap': true,
+        'icon-ignore-placement': true,
+      },
+      paint: {
+        'icon-opacity': 0.96,
+      },
+    })
+
+    map.addLayer({
+      id: PLANNING_POI_LABEL_LAYER,
+      type: 'symbol',
+      source: PLANNING_POI_SOURCE,
+      filter: ['==', ['get', 'id'], ''],
+      layout: {
+        'text-field': ['get', 'label'],
+        'text-size': 11,
+        'text-font': ['Open Sans Semibold'],
+        'text-anchor': 'top',
+        'text-offset': [0, 1.9],
+        'text-max-width': 18,
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+      },
+      paint: {
+        'text-color': '#e5d8ea',
+        'text-halo-color': '#100c12',
+        'text-halo-width': 2,
+      },
+    })
+
+    const previewPlanningPlace = (event) => {
+      const properties = event.features?.[0]?.properties
+      if (!properties?.locationId) return
+      onPreviewPlanningPlaceRef.current?.({
+        driverId: selectedDriver.id,
+        kind: properties.kind,
+        locationId: properties.locationId,
+      })
+    }
+
+    const showPlanningLabel = (event) => {
+      const locationId = event.features?.[0]?.properties?.locationId
+      map.getCanvas().style.cursor = 'pointer'
+      if (!locationId || !map.getLayer(PLANNING_POI_LABEL_LAYER)) return
+      map.setFilter(PLANNING_POI_LABEL_LAYER, ['==', ['get', 'id'], locationId])
+    }
+
+    const hidePlanningLabel = () => {
+      map.getCanvas().style.cursor = ''
+      if (!map.getLayer(PLANNING_POI_LABEL_LAYER)) return
+      map.setFilter(PLANNING_POI_LABEL_LAYER, ['==', ['get', 'id'], ''])
+    }
+
+    for (const layerId of [
+      PLANNING_POI_CIRCLE_LAYER,
+      PLANNING_POI_ICON_LAYER,
+      PLANNING_POI_LABEL_LAYER,
+    ]) {
+      map.on('click', layerId, previewPlanningPlace)
+      map.on('mouseenter', layerId, showPlanningLabel)
+      map.on('mouseleave', layerId, hidePlanningLabel)
+    }
+
+    return () => {
+      for (const layerId of [
+        PLANNING_POI_CIRCLE_LAYER,
+        PLANNING_POI_ICON_LAYER,
+        PLANNING_POI_LABEL_LAYER,
+      ]) {
+        map.off('click', layerId, previewPlanningPlace)
+        map.off('mouseenter', layerId, showPlanningLabel)
+        map.off('mouseleave', layerId, hidePlanningLabel)
+      }
+      hidePlanningLabel()
+      clearPlanningPois()
+    }
+  }, [
+    mapReady,
+    workspaceOpen,
+    selectedDriver,
+    selectedStop,
+    planningPlaceOptions,
+    pendingPlanningPlace,
   ])
 
   useEffect(() => {
