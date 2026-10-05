@@ -2960,3 +2960,131 @@ This packet does not add or modify:
 - placement legality,
 - READY validation,
 - Close Doors commitment.
+
+
+---
+
+## V2.7.5.0.6 — Freight Loading
+
+The Cargo Interaction pass made drag/drop feel physical, but gameplay review exposed a deeper problem: the freight still behaved like anonymous puzzle pieces. Load identity was too small, irregular footprints could imply impossible pallet geometry, VERIFY duplicated the act of loading, and a later pickup reopened an empty trailer even when the driver had already collected freight.
+
+V2.7.5.0.6 promotes Dock & Load from a packing prototype to a persistent freight-loading system.
+
+### Vertical staged-freight manifest
+
+Staged freight is presented as one readable vertical manifest on the left.
+
+Each row exposes, at normal gameplay scale:
+
+- a recognizable cargo silhouette/material treatment,
+- freight-unit identity,
+- a prominent load number,
+- handling marking,
+- weight,
+- destination,
+- staged/onboard state,
+- rotation affordance.
+
+Completed current-pickup rows may fall below remaining staged freight, but their identity stays readable.
+
+### Freight identity lives on the freight
+
+The physical cargo is the primary gameplay object.
+
+Every freight object displays its load number directly on the object. Handling information that may matter to placement is also printed visibly on the cargo rather than hidden in tiny secondary badges.
+
+Tutorial cargo may visibly identify:
+
+- STANDARD,
+- FRAGILE,
+- HAZMAT,
+- HEAVY,
+- KEEP UPRIGHT,
+- NO STACK,
+- OVERSIZE.
+
+These markings are descriptive in this packet. Future handling-rule packets may attach consequences to them without redesigning the freight object.
+
+Unrelated facility freight no longer announces WRONG LOAD before interaction. Its mismatching load number is the player's clue.
+
+### Physically credible footprints
+
+The puzzle keeps equipment-derived floor positions and deterministic footprint collision, but tutorial shapes must represent plausible freight.
+
+Supported examples include:
+
+- one-position pallet or crate,
+- two-position long skid,
+- two-position wide skid,
+- rectangular machinery/crate block.
+
+L-shaped pallet footprints are removed.
+
+The game may still use different footprints for packing decisions, but the rendered cargo must plausibly explain the occupied footprint.
+
+### Loading is verification
+
+The separate VERIFY action is removed.
+
+For the current pickup:
+
+> correctly placing the booked freight in the trailer is the verification action.
+
+Readiness therefore requires the booked pickup freight to be legally placed, with unrelated freight excluded and existing capacity/weight legality preserved. There is no second verification counter.
+
+### Fast manipulation
+
+Rotation is available while the freight is in hand:
+
+- drag freight,
+- press **R**,
+- the active freight rotates under the same drag operation.
+
+The visible rotate control may remain for discoverability, but keyboard rotation is the fast path.
+
+Placed freight is also directly draggable. The player does not eject a unit to staging merely to move it to another trailer position.
+
+Current-pickup cargo may be dragged back to that facility's manifest before commitment. Cargo inherited from an earlier pickup cannot be returned to an unrelated facility's staging area.
+
+### Persistent trailer continuity
+
+A committed pickup now records a complete trailer snapshot:
+
+- freight manifest,
+- placements,
+- rotations embedded in placement state,
+- equipment-derived board,
+- validation result.
+
+When a later pickup opens, Dock & Load reconstructs the driver's trailer from prior committed pickup snapshots.
+
+Prior cargo:
+
+- remains visible,
+- occupies its real positions,
+- contributes to occupied-floor and weight truth,
+- blocks overlapping placements,
+- may be repositioned inside the same trailer,
+- remains onboard until its matching delivery occurs.
+
+A completed delivery removes that load from the reconstructed onboard state before subsequent pickups.
+
+This creates the operational invariant:
+
+> the trailer seen at a facility is the trailer the driver actually arrived with.
+
+### Locked systems
+
+V2.7.5.0.6 does not add:
+
+- fragile or hazardous-material penalties,
+- stackability rules,
+- vertical height simulation,
+- axle/weight-balance scoring,
+- stop-order accessibility scoring,
+- Top Down or Side View functionality,
+- delivery-side freight puzzles,
+- facility rework,
+- HOS changes.
+
+Rear-door commitment, background loading duration, route timing, equipment capacity, and Focused Mode behavior remain unchanged.
