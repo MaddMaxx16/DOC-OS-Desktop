@@ -2897,3 +2897,66 @@ Motion is state-triggered by:
 - door commit.
 
 Reduced-motion preferences disable nonessential animation.
+
+
+---
+
+## V2.7.5.0.5 — Cargo Interaction Polish
+
+V2.7.5.0.4 proved the visual direction, but gameplay review exposed one remaining illusion break: during drag, the trailer temporarily read as a colored spreadsheet because the preview was drawn primarily as green/red floor cells.
+
+V2.7.5.0.5 keeps the accepted puzzle model and changes only how that truth is presented.
+
+### Physical drag preview
+
+The board remains the hit-test and legality source of truth.
+
+The player now sees the dragged freight itself positioned over the proposed floor location:
+
+- the preview uses the freight's real rotated footprint,
+- valid placement keeps the cargo material visible with restrained positive edging/glow,
+- invalid placement keeps the same physical shape but shifts the whole object into a blocked red state,
+- overlap may additionally stripe the specific occupied blocker cell,
+- floor-cell feedback stays subtle so the cargo remains the primary visual object.
+
+Out-of-bounds, overlap, capacity, rotation, and placement legality remain unchanged.
+
+### Staged freight presence
+
+Staged cargo is slightly larger and receives small physical details such as straps, wrap/tape cues, pallet feet, and material variation.
+
+These are presentation details only.
+
+### Placement weight
+
+A successful drop may play a short lift/snap/settle response.
+
+The response is event-driven and does not advance simulation time.
+
+### Trailer label hierarchy
+
+Placed freight always keeps the pallet identity readable.
+
+Special descriptors such as OVERSIZE, NO STACK, and WRONG LOAD are secondary and stay collapsed until the player hovers or keyboard-focuses the placed cargo.
+
+When another staged piece is actively being dragged, placed cargo becomes pointer-transparent so it cannot block trailer drop targets.
+
+### Locked systems
+
+This packet does not add or modify:
+
+- stackability gameplay,
+- fragile handling,
+- height rules,
+- axle or balance scoring,
+- stop-order scoring,
+- Top Down or Side View functionality,
+- rework,
+- delivery puzzle behavior,
+- HOS logic,
+- loading duration,
+- route timing,
+- trailer capacity,
+- placement legality,
+- READY validation,
+- Close Doors commitment.

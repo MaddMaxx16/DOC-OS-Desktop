@@ -393,12 +393,34 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.5.0.5 makes freight itself the drag preview and reduces trailer badge clutter', async () => {
+  const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(top, /DESKTOP V2\.7\.5\.0\.5 · CARGO INTERACTION/)
+  assert.match(puzzle, /drag-preview-piece/)
+  assert.match(puzzle, /drag-preview-shape/)
+  assert.match(puzzle, /previewBlockedCells/)
+  assert.match(puzzle, /preview-blocker/)
+  assert.match(puzzle, /settlingFreightId/)
+  assert.match(puzzle, /loaded-freight-tags/)
+  assert.match(puzzle, /drag-active/)
+  assert.doesNotMatch(puzzle, /className=\{\[\s*'drag-preview-box'/)
+  assert.match(css, /\.drag-preview-piece\.valid/)
+  assert.match(css, /\.drag-preview-piece\.invalid/)
+  assert.match(css, /\.trailer-puzzle-cell\.preview-blocker/)
+  assert.match(css, /@keyframes cargo-settle/)
+  assert.match(css, /\.puzzle-board\.drag-active \.loaded-freight-piece/)
+  assert.match(css, /\.loaded-freight-piece:hover \.loaded-freight-tags/)
+})
+
 test('V2.7.5.0.4 polishes staged freight, drag feedback, connected cargo, ready state, and door commitment', async () => {
   const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.4 · VISUAL POLISH/)
+  assert.match(top, /DESKTOP V2\.7\.5\.0\.5 · CARGO INTERACTION/)
   assert.match(puzzle, /pallet-piece-badges/)
   assert.match(puzzle, /WRONG LOAD/)
   assert.match(puzzle, /OVERSIZE/)
@@ -408,7 +430,7 @@ test('V2.7.5.0.4 polishes staged freight, drag feedback, connected cargo, ready 
   assert.match(puzzle, /visibleFootprintCells/)
   assert.match(puzzle, /setDragImage/)
   assert.match(puzzle, /pallet-piece-shape/)
-  assert.match(puzzle, /drag-preview-box/)
+  assert.match(puzzle, /drag-preview-piece/)
   assert.match(puzzle, /invalidDropReason/)
   assert.match(puzzle, /loaded-freight-piece/)
   assert.match(puzzle, /loaded-freight-shape/)
@@ -1128,7 +1150,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.4 · VISUAL POLISH/)
+  assert.match(top, /DESKTOP V2\.7\.5\.0\.5 · CARGO INTERACTION/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 

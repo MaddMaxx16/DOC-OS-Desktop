@@ -92,8 +92,8 @@ function PalletPiece({
       <div
         className="pallet-piece-shape"
         style={{
-          gridTemplateColumns: `repeat(${bounds.width}, 28px)`,
-          gridTemplateRows: `repeat(${bounds.height}, 28px)`,
+          gridTemplateColumns: `repeat(${bounds.width}, 31px)`,
+          gridTemplateRows: `repeat(${bounds.height}, 31px)`,
         }}
       >
         {Array.from({ length: bounds.width * bounds.height }, (_, index) => {
@@ -166,11 +166,13 @@ export default function DockLoadWorkspace({
   const [dragFreightId, setDragFreightId] = useState(null)
   const [hoverCell, setHoverCell] = useState(null)
   const [rotatingFreightId, setRotatingFreightId] = useState(null)
+  const [settlingFreightId, setSettlingFreightId] = useState(null)
   const [invalidDropReason, setInvalidDropReason] = useState(null)
   const [readyPulse, setReadyPulse] = useState(false)
   const [doorsClosing, setDoorsClosing] = useState(false)
   const closeTimerRef = useRef(null)
   const rotateTimerRef = useRef(null)
+  const settleTimerRef = useRef(null)
   const invalidTimerRef = useRef(null)
   const readyTimerRef = useRef(null)
   const wasReadyRef = useRef(false)
@@ -178,6 +180,7 @@ export default function DockLoadWorkspace({
   useEffect(() => () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
     if (invalidTimerRef.current) clearTimeout(invalidTimerRef.current)
     if (readyTimerRef.current) clearTimeout(readyTimerRef.current)
   }, [])
@@ -245,6 +248,20 @@ export default function DockLoadWorkspace({
       dragRotation,
     ),
   )
+
+  const previewBlockedCells = new Set(
+    hoverPlacement?.valid === false && hoverPlacement.reason === 'OVERLAP'
+      ? [...previewCells].filter((cell) => mapped.occupied.has(cell))
+      : [],
+  )
+
+  const dragPreviewShape = draggedFreight
+    ? rotateFreightShape(draggedFreight.shape, dragRotation)
+    : []
+  const dragPreviewBounds = shapeBounds(dragPreviewShape)
+  const dragPreviewAnchor = hoverCell != null
+    ? boardPosition(board, hoverCell)
+    : null
 
   const verify = (freightId) => {
     setVerifiedIds((current) => (
@@ -316,6 +333,9 @@ export default function DockLoadWorkspace({
         ? current
         : [...current, freightId]
     ))
+    setSettlingFreightId(freightId)
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
+    settleTimerRef.current = setTimeout(() => setSettlingFreightId(null), 260)
     endDrag()
   }
 
@@ -427,7 +447,7 @@ export default function DockLoadWorkspace({
                   </div>
 
                   <div
-                    className="dock-load-grid puzzle-board"
+                    className={`dock-load-grid puzzle-board ${draggedFreight ? 'drag-active' : ''}`}
                     style={{
                       '--board-columns': board.columns,
                       '--board-rows': board.rows,
@@ -448,6 +468,7 @@ export default function DockLoadWorkspace({
                       const preview = previewCells.has(cellIndex)
                       const previewValid = preview && hoverPlacement?.valid
                       const previewInvalid = preview && !hoverPlacement?.valid
+                      const previewBlocked = previewBlockedCells.has(cellIndex)
 
                       const cellPosition = boardPosition(board, cellIndex)
 
@@ -467,6 +488,7 @@ export default function DockLoadWorkspace({
                             anchor ? 'piece-anchor' : '',
                             previewValid ? 'preview-valid' : '',
                             previewInvalid ? 'preview-invalid' : '',
+                            previewBlocked ? 'preview-blocker' : '',
                           ].filter(Boolean).join(' ')}
                           disabled={disabled}
                           onDragOver={(dragEvent) => {
@@ -483,15 +505,6 @@ export default function DockLoadWorkspace({
                           onClick={() => occupantId && removeFreight(occupantId)}
                           title={occupant ? `Return ${occupant.label} to staging` : 'Open puzzle cell'}
                         >
-                          {preview && (
-                            <i
-                              className={[
-                                'drag-preview-box',
-                                previewValid ? 'valid' : '',
-                                previewInvalid ? 'invalid' : '',
-                              ].filter(Boolean).join(' ')}
-                            />
-                          )}
                           {anchor && occupant && (
                             <span className="trailer-piece-label">
                               <strong>{occupant.label}</strong>
@@ -501,6 +514,38 @@ export default function DockLoadWorkspace({
                         </button>
                       )
                     })}
+
+                    {draggedFreight && dragPreviewAnchor && hoverPlacement && (
+                      <div
+                        className={[
+                          'drag-preview-piece',
+                          hoverPlacement.valid ? 'valid' : 'invalid',
+                          dragPreviewShape.length > 1 ? 'oversize' : 'standard',
+                        ].filter(Boolean).join(' ')}
+                        style={{
+                          gridColumn: `${dragPreviewAnchor.column} / span ${dragPreviewBounds.width}`,
+                          gridRow: `${dragPreviewAnchor.row} / span ${dragPreviewBounds.height}`,
+                          '--piece-columns': dragPreviewBounds.width,
+                          '--piece-rows': dragPreviewBounds.height,
+                        }}
+                        aria-hidden="true"
+                      >
+                        <div className="drag-preview-shape">
+                          {dragPreviewShape.map(([x, y], index) => (
+                            <i
+                              key={`preview:${draggedFreight.id}:${index}`}
+                              style={{
+                                gridColumn: x + 1,
+                                gridRow: y + 1,
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <span>
+                          <strong>{draggedFreight.label}</strong>
+                        </span>
+                      </div>
+                    ))}
 
                     {Object.entries(placements).map(([freightId, placement]) => {
                       const freight = stagedFreight.find((item) => item.id === freightId)
@@ -514,13 +559,15 @@ export default function DockLoadWorkspace({
                       const anchor = boardPosition(board, placement.anchorCell)
 
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={freightId}
                           className={[
                             'loaded-freight-piece',
                             freight.expected ? 'expected' : 'wrong-load',
                             freight.stackable ? 'stackable' : 'no-stack',
                             shape.length > 1 ? 'oversize' : 'standard',
+                            settlingFreightId === freightId ? 'settling' : '',
                           ].filter(Boolean).join(' ')}
                           style={{
                             gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -528,7 +575,9 @@ export default function DockLoadWorkspace({
                             '--piece-columns': bounds.width,
                             '--piece-rows': bounds.height,
                           }}
-                          aria-hidden="true"
+                          onClick={() => removeFreight(freightId)}
+                          title={`Return ${freight.label} to staging`}
+                          aria-label={`Return ${freight.label} to staging`}
                         >
                           <div className="loaded-freight-shape">
                             {shape.map(([x, y], index) => (
@@ -541,12 +590,15 @@ export default function DockLoadWorkspace({
                               />
                             ))}
                           </div>
-                          <span>
+                          <span className="loaded-freight-label">
                             <strong>{freight.label}</strong>
-                            {shape.length > 1 && <small>OVERSIZE</small>}
-                            {!freight.stackable && <small>NO STACK</small>}
+                            <span className="loaded-freight-tags">
+                              {!freight.expected && <small>WRONG LOAD</small>}
+                              {shape.length > 1 && <small>OVERSIZE</small>}
+                              {!freight.stackable && <small>NO STACK</small>}
+                            </span>
                           </span>
-                        </div>
+                        </button>
                       )
                     })}
                   </div>

@@ -32,36 +32,27 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.4 Dock & Load Visual / Interaction Polish
+## Current packet — V2.7.5.0.5 Cargo Interaction Polish
 
-V2.1 through V2.7.5.0.3 are accepted and locked. Square floor slots, truck-capacity truth, shaped freight, rotation, placement legality, rear-open trailer presentation, facility gating, Focused Mode, door commitment, background loading, and downstream timing remain authoritative.
+V2.1 through V2.7.5.0.4 are accepted and locked. Square floor slots, truck-capacity truth, shaped freight, rotation, placement legality, rear-open trailer presentation, facility gating, Focused Mode, door commitment, background loading, and downstream timing remain authoritative.
 
-This packet is polish only:
+This packet is a targeted interaction pass:
 
-> do not redesign the puzzle; make the accepted interaction feel brighter, more tactile, more expressive, and more rewarding.
+> keep the grid as simulation truth, but make the freight itself feel like the game piece.
 
 Polish rules:
-- staged freight remains the same puzzle-piece data but receives brighter crate/pallet rendering,
-- hover lifts the freight piece and strengthens border/shadow feedback,
-- active drag visibly reduces the source piece while preserving a clear drag target,
-- rotation gets a short state-triggered visual pop,
-- staged freight may show visual badges for oversized, no-stack, wrong-load, and planned state without adding new mechanics,
-- planned freight remains visible in staging rather than disappearing into an unusably dark state,
-- multi-slot freight inside the trailer must visually read as one connected cargo object,
-- placed freight gets brighter top/side/base treatment and stronger contact shadow,
-- trailer-floor texture may add subtle grooves/wear only if puzzle slot readability remains dominant,
-- whole visible freight footprint must preview during drag,
-- valid drag preview is clearly positive and invalid drag preview is clearly blocked,
-- invalid drop must not place the freight and should trigger a brief rejection response rather than a modal,
-- READY transition may pulse briefly but must not interrupt play,
-- ready state should visually draw attention toward the rear-door commit interaction,
-- Close Doors remains the only final commit action,
-- closing doors must play a short state-triggered trailer-door animation before Focused Mode exits,
-- door commit animation must not create extra simulation time; the world remains paused until the existing commit callback finishes,
-- animations must be event-driven rather than continuously expensive at idle,
-- reduced-motion preferences must suppress nonessential animation,
-- do not add stackability gameplay, fragile rules, height, axle/balance scoring, stop-order scoring, Top Down functionality, Side View functionality, rework, delivery puzzle, or HOS changes in this packet,
-- do not change placement legality, capacity, service duration, facility timing, route execution, or door-commit semantics.
+- drag/drop legality still comes exclusively from the existing board and placement domain,
+- the grid remains visible but becomes secondary during drag,
+- drag hover renders one translucent physical freight object using the freight's real footprint and rotation,
+- the whole preview object reads valid or invalid as one state,
+- overlap may additionally mark the specific occupied blocker cell,
+- staged cargo may be slightly larger and use straps/wrap/marking detail for stronger physical identity,
+- valid placement may play a short settle response with no simulation-time effect,
+- placed freight keeps its pallet identity visible while special-property tags stay collapsed until hover/focus,
+- placed freight must not intercept trailer drag targets while another staged piece is being dragged,
+- staged freight badges remain descriptive only,
+- do not add stackability gameplay, fragile rules, height, axle/balance scoring, stop-order scoring, Top Down functionality, Side View functionality, rework, delivery puzzle, or HOS changes,
+- do not change trailer capacity, footprint truth, placement legality, service duration, facility timing, route execution, READY semantics, or door-commit semantics.
 
 
 ## Verification
