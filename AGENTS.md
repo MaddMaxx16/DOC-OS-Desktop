@@ -32,30 +32,28 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.1.2 Fleet Roster
+## Current packet — V2.7.4.1.3 Fleet Roster Cleanup
 
-V2.1 through V2.7.4.1.1 are accepted and locked. Fleet glance scaling, dispatch gating, fleet execution, route truth, and marker anchoring remain intact.
+V2.1 through V2.7.4.1.2 are accepted and locked. Fleet search/filter/risk behavior, Fleet Glance scaling, dispatch gating, fleet execution, route truth, and marker anchoring remain intact.
 
 Product hierarchy:
-- quick driver chips are glance + driver switching,
-- Fleet is the roster/search/filter/risk command board,
-- Driver Day is the detailed one-driver operations workspace.
+- quick driver chips own lightweight operational status and driver switching,
+- Fleet owns roster scanning/search/filtering/risk,
+- Driver Day owns detailed driver metrics such as HOS and the full timeline.
 
-Fleet roster rules:
-- keep the internal app id `drivers` stable, but present the navigation label as Fleet,
-- Fleet receives committed Driver Days and live driver states; it must not duplicate or invent operational truth,
-- each roster row exposes DRIVER / STATUS, HOS, LOAD, NEXT, and RISK,
-- current/next load identity comes from Driver Day freight stops and live current/next event ids,
-- live onboard count/pallet state comes from live execution state,
-- next-stop ETA comes from live state when available and Driver Day as fallback,
-- risk priority is DISPATCH REQUIRED -> BLOCKER -> WARNING -> CLEAR,
-- Fleet search matches driver, initials, status, stop, risk, and load reference,
-- map-summary filters continue to open Fleet already filtered to the matching operational group,
-- Fleet gets a slightly wider browser than FreightLink; the map remains the primary workspace,
-- clicking a roster row selects that driver and opens the existing Driver Day inspector,
-- Fleet HOS currently reflects the Driver Day HOS source; live HOS depletion will replace that source in the dedicated HOS packet,
-- do not add duplicate persistent driver labels to the map,
-- do not change dispatch timing, route execution, late-send recovery, appointment/service timing, or HOS calculations in this packet.
+Fleet row rules:
+- do not duplicate HOS in Fleet while Driver Day already owns that detail,
+- do not repeat ordinary PLAN NOT SENT / EN ROUTE status text inside every Fleet row; the quick chips and Fleet filters already carry fleet-status context,
+- each Fleet row shows the driver identity, inline NEXT stop/ETA, assigned load count, and RISK,
+- NEXT replaces the old instructional/detail sentence under the driver name,
+- remove instructional copy such as "Send the schedule to arm Live Operations" from roster rows,
+- LOADS is a simple assigned-load count, not a miniature load-detail view,
+- RISK remains the exception surface: DISPATCH REQUIRED -> BLOCKER -> WARNING -> CLEAR,
+- risk must have right-side breathing room and must not hug the browser edge,
+- Fleet may be narrower than V2.7.4.1.2 now that duplicate columns are gone; the map should regain that space,
+- search may still index operational status/detail text even when those strings are not rendered redundantly,
+- clicking the row still selects the driver and opens Driver Day,
+- do not change route execution, dispatch timing, late-send recovery, appointment/service timing, or HOS calculations in this packet.
 
 
 ## Verification

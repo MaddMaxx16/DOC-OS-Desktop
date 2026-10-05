@@ -2384,3 +2384,50 @@ The Fleet HOS column intentionally reads the same Driver Day HOS source used by 
 The architectural separation remains:
 
 > Fleet Glance tells the dispatcher where to look; Fleet tells the dispatcher what needs management; Driver Day is where the dispatcher acts.
+
+
+---
+
+## V2.7.4.1.3 — Fleet Roster Cleanup
+
+The first Fleet Roster pass proved the command-board direction, but the live screenshot exposed too much duplication with Fleet Glance and Driver Day.
+
+### Ownership cleanup
+
+Fleet no longer attempts to summarize every piece of driver state.
+
+The responsibilities are:
+
+- **Fleet Glance:** lightweight current status and fast switching,
+- **Fleet Roster:** driver identity, next work, workload count, operational risk,
+- **Driver Day:** HOS, trailer detail, full timeline, plan editing, and one-driver execution detail.
+
+### Compact row
+
+Each Fleet row is now:
+
+- **Driver**
+  - name/identity,
+  - inline `NEXT · location · ETA`,
+- **Loads**
+  - assigned load count,
+- **Risk**
+  - DISPATCH, BLOCKER, WARNING, or CLEAR.
+
+The old HOS column is removed.
+
+The separate NEXT column is removed.
+
+The generic instructional/detail footer is removed, including repeated copy such as "Send the schedule to arm Live Operations."
+
+Ordinary status text such as PLAN NOT SENT is intentionally not repeated inside the roster row because Fleet Glance already carries that glanceable state.
+
+### Space recovery
+
+With fewer columns, Fleet narrows from the first roster pass and returns horizontal space to the map.
+
+Risk receives explicit right-side padding so it does not visually collide with the browser boundary.
+
+The principle is:
+
+> Fleet should answer "who, what's next, how much work, and what is wrong?" Anything deeper belongs in Driver Day.

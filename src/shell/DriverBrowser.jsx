@@ -132,31 +132,8 @@ function loadRefs(day) {
   )]
 }
 
-function eventLoadRef(day, eventId) {
-  if (!eventId) return null
-  return day?.freightStops?.find((stop) => stop.id === eventId)?.loadRef ?? null
-}
-
-function currentLoadCopy(day, liveState) {
-  const refs = loadRefs(day)
-  const activeRef = (
-    eventLoadRef(day, liveState?.currentEventId)
-    ?? eventLoadRef(day, liveState?.nextEventId)
-    ?? refs[0]
-    ?? null
-  )
-  const onboardCount = liveState?.sent
-    ? liveState.onboardLoadIds?.length ?? 0
-    : 0
-
-  if (!activeRef) return '—'
-  if (!liveState?.sent) {
-    return refs.length > 1 ? `${refs.length} loads` : activeRef
-  }
-
-  return onboardCount > 0
-    ? `${activeRef} · ${onboardCount} on`
-    : activeRef
+function loadCount(day) {
+  return loadRefs(day).length
 }
 
 function nextStopCopy(day, liveState) {
@@ -251,7 +228,7 @@ export default function DriverBrowser({
         liveCopy,
         risk,
         nextStop,
-        load: currentLoadCopy(day, liveState),
+        loadCount: loadCount(day),
       }
     })
   ), [driverDays, drivers, liveDriverStates])
@@ -310,16 +287,14 @@ export default function DriverBrowser({
       </div>
 
       <div className="fleet-roster-columns" aria-hidden="true">
-        <span>DRIVER / STATUS</span>
-        <span>HOS</span>
-        <span>LOAD</span>
-        <span>NEXT</span>
+        <span>DRIVER</span>
+        <span>LOADS</span>
         <span>RISK</span>
       </div>
 
       <div className="driver-list fleet-roster-list">
         {filteredRows.map((row) => {
-          const { driver, day, liveState, liveCopy, risk, nextStop, load } = row
+          const { driver, risk, nextStop, loadCount: assignedLoadCount } = row
           const identity = getDriverIdentity(driver.id)
           const selected = driver.id === activeDriverId
 
@@ -336,36 +311,22 @@ export default function DriverBrowser({
                 <i>{driver.initials}</i>
                 <span>
                   <strong>{driver.name}</strong>
-                  <small className={`status-${liveCopy.tone}`}>{liveCopy.status}</small>
+                  <small className="fleet-roster-next">
+                    <b>NEXT</b>
+                    <span>{nextStop.label}</span>
+                    {nextStop.eta && <em>{nextStop.eta}</em>}
+                  </small>
                 </span>
               </div>
 
-              <div className="fleet-roster-metric hos">
-                <span>HOS</span>
-                <strong>{day?.hos ? `${day.hos.drive}/${day.hos.duty}` : '—'}</strong>
-              </div>
-
-              <div className="fleet-roster-metric load">
-                <span>LOAD</span>
-                <strong>{load}</strong>
-                {liveState?.sent && (
-                  <small>{liveState.onboardPallets ?? 0} plt onboard</small>
-                )}
-              </div>
-
-              <div className="fleet-roster-metric next">
-                <span>NEXT</span>
-                <strong>{nextStop.label}</strong>
-                {nextStop.eta && <small>{nextStop.eta}</small>}
+              <div className="fleet-roster-loads">
+                <strong>{assignedLoadCount}</strong>
+                <small>LOAD{assignedLoadCount === 1 ? '' : 'S'}</small>
               </div>
 
               <div className={`fleet-roster-risk ${risk.tone}`}>
                 <span>{risk.label}</span>
                 <small>{risk.detail}</small>
-              </div>
-
-              <div className="fleet-roster-detail">
-                {liveCopy.detail}
               </div>
             </button>
           )
