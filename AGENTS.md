@@ -32,25 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.2 Route Execution + Truck Motion
+## Current packet — V2.7.3 Facility Service Execution
 
-V2.1 through V2.6.5.14 are accepted and locked. V2.6 Daily Planning is complete. V2.7.1/.1.1/.1.2 clock, startup, and camera behavior are accepted and locked.
+V2.1 through V2.7.2 are accepted and locked. V2.7.2 route execution, truck motion, camera ownership, and sent-plan live truth must remain intact.
 
 Guardrails:
-- preserve every locked planning, booking, routing, native-stop, camera-ownership, and live-clock invariant,
-- only SENT Driver Days execute; draft plans never move,
-- every sent driver derives execution state from the shared simulation clock and communicated Driver Day,
-- execution phases include SCHEDULED, EN ROUTE, ARRIVED, ON BREAK/AT STOP, ROUTE COMPLETE, and SHIFT CLOSED presentation,
-- route execution uses Driver Day event times; Lunch is a true dwell window and the truck remains parked until lunch end,
-- pickup/delivery loading and unloading service timers are not part of V2.7.2 and must not be invented here,
-- the currently hydrated map driver moves along the real committed road geometry using cumulative route distance, never straight-line interpolation between facilities,
-- native committed stop emphasis follows the live next-event truth,
-- completed committed route legs fade; the active leg remains strongest; future legs remain visible but subordinate,
-- the Driver Day timeline exposes completed / NOW / NEXT state from the same live execution truth,
-- manual pan/zoom remains player-owned while the truck moves; truck motion must not recenter the camera,
-- execution state may advance for all sent drivers even when only the currently hydrated map driver's precise road motion is rendered,
-- do not mutate HOS, appointments, capacity, load onboard state, paperwork, or service completion in this packet,
-- do not automatically complete pickups or deliveries; V2.7.2 proves movement and arrival state only.
+- preserve every locked planning, booking, routing, native-stop, camera-ownership, live-clock, and route-execution invariant,
+- only SENT Driver Days execute; draft plans never move or service freight,
+- pickup and delivery freight stops own deterministic service windows; default service is 12 minutes for pickup loading and 10 minutes for delivery unloading unless the stop explicitly overrides it,
+- the truck remains parked at the routed facility access point for the full service window,
+- pickup service completion is the moment the load becomes live onboard freight,
+- delivery service completion is the moment the load leaves live onboard freight,
+- outgoing route motion begins automatically when the service window ends; there is no manual Depart action,
+- Driver Day, Fleet, and map execution state must read from the same service truth,
+- completed timeline events are based on service completion/departure, not merely facility arrival,
+- completed incoming route legs may fade on arrival while the truck remains parked for service,
+- the future loading puzzle may become the gate that starts facility service, but V2.7.3 must not invent that puzzle or couple the execution engine to a specific puzzle UI,
+- do not add facility congestion, detention, paperwork completion, document generation, dock assignment, or player-controlled loading geometry in this packet,
+- service timing must remain deterministic and testable from the shared simulation clock.
+
 
 ## Verification
 

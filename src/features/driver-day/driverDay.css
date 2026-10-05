@@ -304,6 +304,60 @@
   color: #87a5b6;
 }
 
+.facility-service-progress {
+  display: grid;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 7px 8px;
+  border: 1px solid #315647;
+  background: #0c1b17;
+}
+.facility-service-progress.delivery {
+  border-color: #4b5364;
+  background: #10151d;
+}
+.facility-service-progress > div:first-child {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 7px;
+}
+.facility-service-progress span,
+.facility-service-progress strong,
+.facility-service-progress em {
+  font-size: var(--type-micro);
+  font-style: normal;
+}
+.facility-service-progress span {
+  color: #84c3a9;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+.facility-service-progress.delivery span {
+  color: #a8b4cf;
+}
+.facility-service-progress strong {
+  color: #d6e7df;
+}
+.facility-service-progress em {
+  justify-self: end;
+  color: #799188;
+  font-weight: 850;
+}
+.facility-service-meter {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #1c3029;
+}
+.facility-service-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--selected-driver-color);
+  transition: width .18s linear;
+}
+
 /* V2.6.2: stop sequencing makes the Driver Day timeline the planning game board. */
 .driver-day-panel.planning .driver-day-row.draggable-stop {
   cursor: grab;

@@ -33,7 +33,7 @@ export default function TopBar({
         <span className="status-dot" />
         <strong>{focused ? 'FOCUSED' : 'NO ALERTS'}</strong>
         <span className="status-divider" />
-        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.7.2 · ROUTE EXECUTION'}</small>
+        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.7.3 · FACILITY SERVICE'}</small>
       </div>
 
       <div className="clock-block">

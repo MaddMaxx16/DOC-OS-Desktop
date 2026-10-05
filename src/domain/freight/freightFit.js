@@ -1,5 +1,5 @@
-const PICKUP_SERVICE_MINUTES = 12
-const DELIVERY_SERVICE_MINUTES = 10
+import { freightServiceMinutes } from './serviceTimes.js'
+
 const ROAD_DISTANCE_MULTIPLIER = 1.18
 const PLANNING_SPEED_MPH = 38
 const TIGHT_MARGIN_MINUTES = 30
@@ -53,7 +53,7 @@ function eventCoordinates(event, locations) {
 function eventReadyMinute(event) {
   if (!event) return 0
   if (event.kind === 'lunch') return finite(event.endMinutes, event.projectedArrivalMinutes)
-  if (event.kind === 'freight-stop') return finite(event.projectedArrivalMinutes) + (event.role === 'pickup' ? PICKUP_SERVICE_MINUTES : DELIVERY_SERVICE_MINUTES)
+  if (event.kind === 'freight-stop') return finite(event.projectedArrivalMinutes) + freightServiceMinutes(event.role, event.serviceMinutes)
   return finite(event.projectedArrivalMinutes)
 }
 
@@ -119,9 +119,9 @@ function candidateGap({ lane, driver, day, locations, index, baselineDrive }) {
     : estimateRoadLeg(previousCoordinates, nextCoordinates)
 
   const pickupArrival = Math.max(previousReady + deadhead.minutes, lane.pickupWindow.startMinutes)
-  const pickupDeparture = pickupArrival + PICKUP_SERVICE_MINUTES
+  const pickupDeparture = pickupArrival + freightServiceMinutes('pickup')
   const deliveryArrival = Math.max(pickupDeparture + loaded.minutes, lane.deliveryWindow.startMinutes)
-  const deliveryDeparture = deliveryArrival + DELIVERY_SERVICE_MINUTES
+  const deliveryDeparture = deliveryArrival + freightServiceMinutes('delivery')
   const returnArrival = deliveryDeparture + reposition.minutes
 
   const pickupOk = pickupArrival <= lane.pickupWindow.endMinutes

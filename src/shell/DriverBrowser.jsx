@@ -30,6 +30,20 @@ function liveStatusCopy(driver, liveState) {
     }
   }
 
+  if (liveState.executionPhase === 'service-loading') {
+    return {
+      status: 'LOADING',
+      detail: `${liveState.currentEventLabel ?? driver.nextStop} · ${liveState.serviceRemainingMinutes ?? 0} min`,
+    }
+  }
+
+  if (liveState.executionPhase === 'service-unloading') {
+    return {
+      status: 'UNLOADING',
+      detail: `${liveState.currentEventLabel ?? driver.nextStop} · ${liveState.serviceRemainingMinutes ?? 0} min`,
+    }
+  }
+
   if (liveState.executionPhase === 'dwell-break') {
     return {
       status: 'ON BREAK',

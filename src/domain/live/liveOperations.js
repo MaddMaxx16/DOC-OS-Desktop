@@ -106,6 +106,24 @@ function activePresentation(execution = {}) {
     }
   }
 
+  if (execution.executionPhase === 'service-loading') {
+    return {
+      label: 'LOADING',
+      detail: execution.currentEventLabel
+        ? `Loading ${execution.serviceLoadRef ?? 'freight'} at ${execution.currentEventLabel}.`
+        : 'Loading freight at the planned pickup.',
+    }
+  }
+
+  if (execution.executionPhase === 'service-unloading') {
+    return {
+      label: 'UNLOADING',
+      detail: execution.currentEventLabel
+        ? `Unloading ${execution.serviceLoadRef ?? 'freight'} at ${execution.currentEventLabel}.`
+        : 'Unloading freight at the planned delivery.',
+    }
+  }
+
   if (execution.executionPhase === 'dwell-break') {
     return {
       label: 'ON BREAK',

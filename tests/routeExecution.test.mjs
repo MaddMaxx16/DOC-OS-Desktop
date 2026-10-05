@@ -6,6 +6,11 @@ import {
   routeExecutionPosition,
   routeSegmentExecutionPhase,
 } from '../src/domain/live/routeExecution.js'
+import { buildFreightManifest } from '../src/domain/manifest/driverDayModel.js'
+import {
+  FREIGHT_SERVICE_MINUTES,
+  freightServiceMinutes,
+} from '../src/domain/freight/serviceTimes.js'
 
 const day = {
   driverId: 'marcus-reed',
@@ -20,8 +25,12 @@ const day = {
       id: 'M-101:pickup',
       kind: 'freight-stop',
       role: 'pickup',
+      loadId: 'M-101',
+      loadRef: 'M-101',
+      freight: { pallets: 8, weightLbs: 12000 },
       locationLabel: 'Empire Freight Terminal',
       projectedArrivalMinutes: 480,
+      endMinutes: 492,
     },
     {
       id: 'marcus-reed:lunch',
@@ -34,8 +43,12 @@ const day = {
       id: 'M-101:delivery',
       kind: 'freight-stop',
       role: 'delivery',
+      loadId: 'M-101',
+      loadRef: 'M-101',
+      freight: { pallets: 8, weightLbs: 12000 },
       locationLabel: 'Harborline Logistics',
       projectedArrivalMinutes: 700,
+      endMinutes: 710,
     },
   ],
 }
@@ -53,16 +66,88 @@ test('sent-day timeline execution moves between planned events', () => {
   assert.deepEqual(state.completedEventIds, ['marcus-reed:shift-start'])
 })
 
-test('timeline execution exposes a one-minute arrival state at a freight stop', () => {
+test('freight pickup becomes a parked loading service window', () => {
   const state = buildTimelineExecution(day, {
     dayNumber: 1,
-    currentMinutes: 480,
+    currentMinutes: 486,
   })
 
-  assert.equal(state.executionPhase, 'arrived')
+  assert.equal(state.executionPhase, 'service-loading')
   assert.equal(state.currentEventId, 'M-101:pickup')
   assert.equal(state.nextEventId, 'marcus-reed:lunch')
+  assert.equal(state.serviceLoadRef, 'M-101')
+  assert.equal(state.serviceRemainingMinutes, 6)
+  assert.equal(state.serviceProgress, 0.5)
   assert.ok(state.completedSegmentIds.includes('marcus-reed:shift-start->M-101:pickup'))
+  assert.ok(!state.completedEventIds.includes('M-101:pickup'))
+  assert.deepEqual(state.onboardLoadIds, [])
+})
+
+test('pickup service completion puts freight onboard and automatically resumes the route', () => {
+  const state = buildTimelineExecution(day, {
+    dayNumber: 1,
+    currentMinutes: 492,
+  })
+
+  assert.equal(state.executionPhase, 'en-route')
+  assert.ok(state.completedEventIds.includes('M-101:pickup'))
+  assert.deepEqual(state.onboardLoadIds, ['M-101'])
+  assert.equal(state.onboardPallets, 8)
+  assert.equal(state.onboardWeightLbs, 12000)
+})
+
+test('delivery remains onboard while unloading and clears at service completion', () => {
+  const unloading = buildTimelineExecution(day, {
+    dayNumber: 1,
+    currentMinutes: 705,
+  })
+
+  assert.equal(unloading.executionPhase, 'service-unloading')
+  assert.equal(unloading.serviceRemainingMinutes, 5)
+  assert.deepEqual(unloading.onboardLoadIds, ['M-101'])
+
+  const complete = buildTimelineExecution(day, {
+    dayNumber: 1,
+    currentMinutes: 710,
+  })
+
+  assert.equal(complete.executionPhase, 'complete')
+  assert.deepEqual(complete.onboardLoadIds, [])
+  assert.ok(complete.completedEventIds.includes('M-101:delivery'))
+})
+
+test('freight manifest gives pickup and delivery deterministic service windows by default', () => {
+  const stops = buildFreightManifest([
+    {
+      id: 'L-1',
+      loadRef: 'L-1',
+      assignedDriverId: 'marcus-reed',
+      freight: { pallets: 4, weightLbs: 5000 },
+      pickup: {
+        locationId: 'pickup',
+        projectedArrivalMinutes: 500,
+        manifestOrder: 0,
+      },
+      delivery: {
+        locationId: 'delivery',
+        projectedArrivalMinutes: 600,
+        manifestOrder: 1,
+      },
+    },
+  ], 'marcus-reed', {
+    pickup: { label: 'Pickup', coordinates: [0, 0] },
+    delivery: { label: 'Delivery', coordinates: [1, 1] },
+  })
+
+  assert.equal(FREIGHT_SERVICE_MINUTES.pickup, 12)
+  assert.equal(FREIGHT_SERVICE_MINUTES.delivery, 10)
+  assert.equal(freightServiceMinutes('pickup'), 12)
+  assert.equal(freightServiceMinutes('delivery'), 10)
+  assert.equal(freightServiceMinutes('pickup', 0), 0)
+  assert.equal(stops[0].serviceMinutes, 12)
+  assert.equal(stops[0].endMinutes, 512)
+  assert.equal(stops[1].serviceMinutes, 10)
+  assert.equal(stops[1].endMinutes, 610)
 })
 
 test('planned lunch is a real dwell window and does not move the truck', () => {

@@ -1658,3 +1658,51 @@ After acceptance, the next Live Operations slice will add stop service/handoff b
 ---
 
 This file is the active desktop design and build-order contract. If a major desktop decision changes, update this document rather than layering a competing rule elsewhere.
+
+
+---
+
+## V2.7.3 — Facility Service Execution
+
+V2.7.3 turns freight-stop arrival into real operational dwell instead of an instantaneous waypoint.
+
+### Service clock
+
+- Pickup = **12 minutes loading** by default.
+- Delivery = **10 minutes unloading** by default.
+- A stop may override its own service duration later without changing the execution model.
+- Service time begins at the Driver Day projected arrival time for this packet.
+- The truck remains parked at the routed facility access point for the entire service window.
+- The next route leg begins automatically when service ends. The dispatcher does not press a redundant Depart button.
+
+### Live freight truth
+
+Arrival alone does not change cargo state.
+
+- A pickup becomes onboard only when loading completes.
+- A delivery remains onboard during unloading.
+- The load leaves the truck only when unloading completes.
+- Live onboard pallet and weight totals derive from completed facility-service events, not from the planning-only capacity snapshot.
+
+This keeps planning truth and execution truth separate:
+
+> planned capacity describes what the day should look like  
+> live onboard state describes what has actually finished loading or unloading
+
+### Presentation
+
+During service, the same execution state drives every surface:
+
+- Fleet shows **LOADING** or **UNLOADING**,
+- Driver Day keeps the freight stop marked **NOW**,
+- the freight row shows service progress, remaining minutes, and automatic departure time,
+- the map keeps the truck parked at the current facility,
+- the completed incoming route leg may remain visually retired while the outgoing leg stays future.
+
+### Loading-puzzle seam
+
+The physical loading puzzle is deliberately not implemented in V2.7.3.
+
+The execution engine is structured so the later facility puzzle can become the gate that releases/starts the service clock. Finishing the puzzle and closing the trailer doors can trigger loading time without rewriting route movement, cargo-state, Driver Day, or Fleet behavior.
+
+Paperwork, dock congestion, detention, and facility-specific service variability remain later work.

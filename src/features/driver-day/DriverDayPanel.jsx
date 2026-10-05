@@ -25,7 +25,39 @@ function eventCode(item) {
   return `${prefix}${item.loadOrdinal}`
 }
 
-function FreightMeta({ item, capacityPallets }) {
+function ServiceProgress({ item, liveState }) {
+  const active = (
+    liveState?.currentEventId === item.id
+    && ['service-loading', 'service-unloading'].includes(liveState?.executionPhase)
+  )
+  if (!active) return null
+
+  const progress = Math.max(0, Math.min(100, Math.round((liveState.serviceProgress ?? 0) * 100)))
+  const remaining = Math.max(0, Math.ceil(liveState.serviceRemainingMinutes ?? 0))
+  const label = item.role === 'pickup' ? 'LOADING' : 'UNLOADING'
+
+  return (
+    <div className={`facility-service-progress ${item.role}`}>
+      <div>
+        <span>{label}</span>
+        <strong>{progress}%</strong>
+        <em>{remaining} MIN · AUTO DEPART {formatClock(liveState.currentEventDepartureMinutes)}</em>
+      </div>
+      <div
+        className="facility-service-meter"
+        role="progressbar"
+        aria-label={`${label.toLowerCase()} ${item.loadRef}`}
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={progress}
+      >
+        <i style={{ width: `${progress}%` }} />
+      </div>
+    </div>
+  )
+}
+
+function FreightMeta({ item, capacityPallets, liveState }) {
   const capacity = item.capacityAfter
   return (
     <>
@@ -37,8 +69,10 @@ function FreightMeta({ item, capacityPallets }) {
       <div className="capacity-after">
         <span>{capacity.palletsUsed}/{capacityPallets} pallets</span>
         <span>{formatWeight(capacity.weightUsedLbs)}</span>
-        <span>{capacity.onboardLoadIds.length} onboard</span>
+        <span>{capacity.onboardLoadIds.length} planned onboard</span>
+        <span>{item.role === 'pickup' ? 'load' : 'unload'} {item.serviceMinutes} min</span>
       </div>
+      <ServiceProgress item={item} liveState={liveState} />
     </>
   )
 }
@@ -252,7 +286,13 @@ export default function DriverDayPanel({
             {current && <em className="execution-chip current">NOW</em>}
             {!current && next && <em className="execution-chip next">NEXT</em>}
           </div>
-          {item.kind === 'freight-stop' && <FreightMeta item={item} capacityPallets={day.trailer.capacityPallets} />}
+          {item.kind === 'freight-stop' && (
+            <FreightMeta
+              item={item}
+              capacityPallets={day.trailer.capacityPallets}
+              liveState={liveState}
+            />
+          )}
           {item.kind === 'lunch' && (
             <div className="day-row-meta">
               <span>OFF DUTY</span>
@@ -341,8 +381,16 @@ export default function DriverDayPanel({
         </div>
         <div>
           <span>TRAILER</span>
-          <strong>{day.trailer.peakPalletsUsed}/{day.trailer.capacityPallets} PLT</strong>
-          <small>{formatWeight(day.trailer.peakWeightUsedLbs)} / {formatWeight(day.trailer.maxWeightLbs)}</small>
+          <strong>
+            {liveState?.sent
+              ? `${liveState.onboardPallets ?? 0}/${day.trailer.capacityPallets} LIVE PLT`
+              : `${day.trailer.peakPalletsUsed}/${day.trailer.capacityPallets} PLT`}
+          </strong>
+          <small>
+            {liveState?.sent
+              ? `${formatWeight(liveState.onboardWeightLbs ?? 0)} · ${liveState.onboardLoadIds?.length ?? 0} ONBOARD`
+              : `${formatWeight(day.trailer.peakWeightUsedLbs)} / ${formatWeight(day.trailer.maxWeightLbs)}`}
+          </small>
         </div>
       </div>
 
@@ -401,6 +449,8 @@ export default function DriverDayPanel({
               ? `Shift starts at ${formatClock(liveState.shiftStartMinutes)}. Live execution is armed.`
               : liveState?.executionPhase === 'en-route'
                 ? `Next: ${liveState.nextEventLabel ?? 'planned stop'} · ETA ${formatClock(liveState.nextEventArrivalMinutes)}`
+                : ['service-loading', 'service-unloading'].includes(liveState?.executionPhase)
+                  ? `${liveState.executionPhase === 'service-loading' ? 'Loading' : 'Unloading'} ${liveState.serviceLoadRef ?? 'freight'} · ${Math.ceil(liveState.serviceRemainingMinutes ?? 0)} min remaining · automatic departure at ${formatClock(liveState.currentEventDepartureMinutes)}.`
                 : liveState?.executionPhase === 'arrived'
                   ? `At ${liveState.currentEventLabel ?? 'planned stop'} · next movement begins on the live clock.`
                   : liveState?.executionPhase === 'dwell-break'

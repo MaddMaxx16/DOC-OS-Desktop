@@ -1,9 +1,7 @@
 import { estimateRoadLeg } from '../freight/freightFit.js'
+import { freightServiceMinutes } from '../freight/serviceTimes.js'
 import { buildDriverDay } from '../manifest/driverDayModel.js'
 import { canEditDispatchPlan } from './dispatchPlan.js'
-
-const PICKUP_SERVICE_MINUTES = 12
-const DELIVERY_SERVICE_MINUTES = 10
 
 function eventCoordinates(event, locations = {}) {
   if (Array.isArray(event?.coordinates)) return event.coordinates
@@ -144,7 +142,7 @@ export function recalculateDriverTimeline({
     if (event.kind === 'freight-stop') {
       const arrival = Math.max(rawArrival, Number(event.appointmentStartMinutes ?? rawArrival))
       nextLoads = updateLoadArrival(nextLoads, event.loadId, event.role, arrival)
-      readyMinute = arrival + (event.role === 'pickup' ? PICKUP_SERVICE_MINUTES : DELIVERY_SERVICE_MINUTES)
+      readyMinute = arrival + freightServiceMinutes(event.role, event.serviceMinutes)
     } else if (event.kind === 'lunch' && nextPlan.lunch) {
       const duration = Math.max(1, Number(nextPlan.lunch.durationMinutes ?? 30))
       const preferredStart = Number(nextPlan.lunch.preferredStartMinutes ?? rawArrival)

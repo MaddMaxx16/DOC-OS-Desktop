@@ -82,7 +82,7 @@ function completedSegmentIds(schedule = [], currentMinutes) {
 
 function completedEventIds(schedule = [], currentMinutes) {
   return schedule
-    .filter((item) => currentMinutes >= item.arrivalMinutes)
+    .filter((item) => currentMinutes >= item.departureMinutes)
     .map((item) => item.event.id)
 }
 
@@ -90,11 +90,71 @@ function nextEventAfter(schedule = [], index) {
   return schedule[index + 1] ?? null
 }
 
+function freightLoadState(schedule = [], currentMinutes) {
+  const onboard = new Map()
+  const completedFreightServiceEventIds = []
+
+  for (const item of schedule) {
+    const event = item.event
+    if (event?.kind !== 'freight-stop') continue
+    if (currentMinutes < item.departureMinutes) continue
+
+    completedFreightServiceEventIds.push(event.id)
+
+    if (event.role === 'pickup') {
+      onboard.set(event.loadId, event.freight ?? {})
+    } else if (event.role === 'delivery') {
+      onboard.delete(event.loadId)
+    }
+  }
+
+  let onboardPallets = 0
+  let onboardWeightLbs = 0
+  for (const freight of onboard.values()) {
+    onboardPallets += finite(freight?.pallets)
+    onboardWeightLbs += finite(freight?.weightLbs)
+  }
+
+  return {
+    completedFreightServiceEventIds,
+    onboardLoadIds: [...onboard.keys()],
+    onboardPallets,
+    onboardWeightLbs,
+  }
+}
+
+function freightServiceFields(item, currentMinutes) {
+  const event = item?.event
+  if (event?.kind !== 'freight-stop') return {}
+
+  const serviceDurationMinutes = Math.max(
+    0,
+    item.departureMinutes - item.arrivalMinutes,
+  )
+  const elapsed = Math.max(
+    0,
+    Math.min(serviceDurationMinutes, currentMinutes - item.arrivalMinutes),
+  )
+  const serviceProgress = serviceDurationMinutes > 0
+    ? elapsed / serviceDurationMinutes
+    : 1
+
+  return {
+    serviceRole: event.role ?? null,
+    serviceLoadId: event.loadId ?? null,
+    serviceLoadRef: event.loadRef ?? null,
+    serviceDurationMinutes,
+    serviceProgress,
+    serviceRemainingMinutes: Math.max(0, item.departureMinutes - currentMinutes),
+  }
+}
+
 function executionBase(schedule, currentMinutes) {
   return {
     currentAbsoluteMinutes: currentMinutes,
     completedSegmentIds: completedSegmentIds(schedule, currentMinutes),
     completedEventIds: completedEventIds(schedule, currentMinutes),
+    ...freightLoadState(schedule, currentMinutes),
   }
 }
 
@@ -147,9 +207,17 @@ export function buildTimelineExecution(driverDay = {}, clock = {}) {
       currentMinutes >= current.arrivalMinutes
       && currentMinutes < current.departureMinutes
     ) {
+      const servicePhase = current.event.kind === 'freight-stop'
+        ? current.event.role === 'pickup'
+          ? 'service-loading'
+          : 'service-unloading'
+        : current.event.kind === 'lunch'
+          ? 'dwell-break'
+          : 'dwell'
+
       return {
         ...base,
-        executionPhase: current.event.kind === 'lunch' ? 'dwell-break' : 'dwell',
+        executionPhase: servicePhase,
         activeSegmentId: null,
         activeSegmentProgress: 0,
         currentEventId: current.event.id,
@@ -160,6 +228,7 @@ export function buildTimelineExecution(driverDay = {}, clock = {}) {
         nextEventKind: next?.event.kind ?? null,
         nextEventLabel: next?.event.locationLabel ?? null,
         nextEventArrivalMinutes: next?.arrivalMinutes ?? null,
+        ...freightServiceFields(current, currentMinutes),
       }
     }
 

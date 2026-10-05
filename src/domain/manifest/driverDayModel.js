@@ -1,3 +1,4 @@
+import { freightServiceMinutes } from '../freight/serviceTimes.js'
 import { normalizeDispatchPlanStatus } from '../planning/dispatchPlan.js'
 import { analyzeDriverDay } from '../planning/planAnalysis.js'
 
@@ -18,6 +19,9 @@ export function formatClock(minutes) {
 function freightStop(load, role, locations) {
   const spec = load[role]
   const location = locations[spec.locationId]
+  const projectedArrivalMinutes = finite(spec.projectedArrivalMinutes)
+  const serviceMinutes = freightServiceMinutes(role, spec.serviceMinutes)
+
   return {
     id: `${load.id}:${role}`,
     kind: 'freight-stop',
@@ -27,7 +31,9 @@ function freightStop(load, role, locations) {
     loadOrdinal: finite(load.dayLoadOrder, 1),
     driverId: load.assignedDriverId,
     manifestOrder: finite(spec.manifestOrder),
-    projectedArrivalMinutes: finite(spec.projectedArrivalMinutes),
+    projectedArrivalMinutes,
+    serviceMinutes,
+    endMinutes: projectedArrivalMinutes + serviceMinutes,
     appointmentStartMinutes: finite(spec.appointmentStartMinutes),
     appointmentEndMinutes: finite(spec.appointmentEndMinutes),
     locationId: spec.locationId,
