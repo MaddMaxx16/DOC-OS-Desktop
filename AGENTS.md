@@ -32,36 +32,33 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.6.1 Cargo Readability + Reposition Fix
+## Current packet — V2.7.5.1 Trailer Rules: Delivery Access
 
-V2.1 through V2.7.5.0.6 are accepted and locked. Equipment-derived trailer capacity, footprint legality, physical drag preview, rear-open trailer presentation, facility gating, Focused Mode, rear-door commitment, background loading, and downstream timing remain authoritative.
+V2.1 through V2.7.5.0.6.1 are accepted and locked. Equipment-derived capacity, realistic freight identity, persistent trailer snapshots, direct onboard repositioning, keyboard rotation, rear-door commitment, background loading, Focused Mode, and route timing remain authoritative.
 
-This packet turns Dock & Load from a shaped-piece prototype into a readable freight-loading system:
+This packet introduces the first actual trailer-loading rule:
 
-> the player should identify freight from the freight itself, place it naturally, and arrive at later pickups with truthful cargo already onboard.
+> freight that delivers earlier must remain accessible from the rear doors before freight that delivers later.
 
-Freight-loading rules:
-- staged freight is a single vertical manifest on the left rather than a two-column card gallery,
-- every freight unit must show a clearly readable load number at normal gameplay scale,
-- any handling information that could affect placement must remain readable on the physical cargo, not hidden behind tiny hover-only metadata,
-- tutorial freight may use STANDARD, FRAGILE, HAZMAT, HEAVY, KEEP UPRIGHT, NO STACK, and OVERSIZE markings as descriptive identity,
-- those handling markings do not add their future simulation penalties or placement rules in this packet,
-- freight footprints must be physically credible rectangles: standard pallet, long skid, wide skid, and rectangular machinery/crate footprints are permitted; L-shaped pallet footprints are not,
-- placing booked freight in the trailer is sufficient verification; there is no separate VERIFY interaction or verification readiness state,
-- the player may press R while actively dragging freight to rotate it,
-- freight already in the trailer remains directly draggable and can be repositioned without first ejecting it to staging,
-- trailer-level drag/drop must resolve the floor cell underneath overlapping cargo so crowded-trailer repositioning remains reliable,
-- the actively dragged onboard piece must retain drag-source interaction; old pointer-transparency rules may apply only to other loaded pieces,
-- handling classes must be visually distinct at a glance in both staging and trailer views; labels alone are not sufficient differentiation,
-- current-pickup freight may be dragged back to the staging manifest before rear-door commitment,
-- cargo inherited from a prior pickup cannot be returned to the current facility's staging area,
-- a committed pickup stores the complete trailer freight manifest and placements,
-- later pickups reconstruct still-onboard cargo from prior committed pickup snapshots and remove a load after its delivery occurs,
-- inherited cargo occupies real trailer positions and participates in overlap, capacity, weight, and placement truth,
-- unrelated staged freight must not advertise itself as WRONG LOAD before the player identifies the mismatch; its visible load number is the clue,
-- rear doors remain the single commit control and loading still occurs in simulation time after Focused Mode closes,
-- do not add stackability gameplay, fragile/hazmat consequence systems, height, axle/balance scoring, stop-order scoring, Top Down functionality, Side View functionality, rework, delivery puzzle, or HOS changes,
-- do not change equipment capacity, loading duration, facility timing, route execution, or rear-door commitment semantics.
+Delivery-access rules:
+- derive unload order from the driver's real remaining Driver Day delivery sequence,
+- label onboard loads with D1, D2, D3… according to that delivery order,
+- trailer rows increase from FRONT / NOSE toward REAR / DOORS,
+- model rear-door access lane-by-lane using the existing trailer columns,
+- if an earlier-delivery freight piece occupies a lane and later-delivery freight sits farther rearward in that same lane, the earlier piece is blocked,
+- blocked earlier freight and the later freight causing the block must be visually distinguishable,
+- the right-side trailer-rule card must show the unload sequence and CLEAR / BLOCKED state,
+- a delivery-access conflict prevents LOAD PLAN READY and rear-door commitment,
+- placement itself remains player-owned: DOC OS warns and blocks readiness rather than snapping cargo into a correct answer,
+- dragging a piece into a delivery-access conflict may show an amber rule warning while ordinary overlap/out-of-bounds remains the red legality state,
+- single-load trailers are automatically clear for delivery access,
+- delivery-access truth must include carried freight from prior pickups and current-pickup freight together,
+- do not add full 3D forklift pathfinding; lane-based rear-door access is the intentional abstraction for this packet,
+- do not add axle/weight-balance scoring yet,
+- do not activate fragile, hazmat, no-stack, upright, or heavy handling penalties yet,
+- do not add vertical stacking, Top Down functionality, Side View functionality, delivery puzzle, rework, HOS changes, or service-time changes.
+
+After visual/gameplay acceptance, the next trailer-rule slice is weight distribution / balance.
 
 
 ## Verification
