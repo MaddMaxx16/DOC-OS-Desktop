@@ -32,21 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3.3 Complete Route Truth
+## Current packet — V2.7.3.4 Native Operational Stops
 
-V2.1 through V2.7.3.2 are accepted and locked. Smooth truck motion and explicit-click driver labels must remain intact.
+V2.1 through V2.7.3.3 are accepted and locked. Complete route truth, smooth truck motion, and click-only driver labels remain intact.
 
 Guardrails:
-- a committed Driver Day route snapshot may publish only when every planned leg has real road geometry,
-- timing-only estimate legs are internal retry state and must not appear as a partially complete operational route,
-- unresolved committed legs retry automatically while the selected Driver Day remains active,
-- the last complete same-driver route may remain visible while a replacement route resolves,
-- committed operational stop markers must never fall back to raw facility coordinates when their road-access coordinate is unresolved,
-- if road-access truth for a committed stop is unavailable, hide that operational marker until the route leg resolves rather than displaying a floating icon,
-- committed P/D map-native markers and committed L/S DOM markers must both use route-access truth only,
-- facility coordinates remain valid for planning candidates and non-committed preview context, but not as a substitute for committed road-access truth,
-- route retries must preserve serialized OSRM access and existing route caching,
-- do not change route timing, HOS, plan evaluation, truck interpolation, or facility service timing in this packet.
+- all committed operational stops use one MapLibre-native source and projection path,
+- pickup, delivery, lunch, and staging are all features in COMMITTED_STOP_SOURCE,
+- committed lunch/staging must not use HTML/DOM Marker positioning,
+- every native operational stop resolves from canonical committed route-access truth only,
+- no committed stop may fall back to a facility coordinate,
+- L and S use the same native circle/badge/label layers as P and D,
+- selection, next-stop priority labels, completion dimming, hover labels, and click selection work for P/D/L/S through the same source,
+- planning-place candidates remain DOM markers because they are not committed route truth,
+- FreightLink preview pickup/delivery markers remain preview-only DOM context,
+- do not alter route geometry, routing retries, truck interpolation, simulation timing, HOS, or facility-service timing in this packet.
 
 
 ## Verification

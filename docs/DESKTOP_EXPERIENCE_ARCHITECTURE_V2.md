@@ -1814,3 +1814,49 @@ Planning candidates and non-committed location previews may still use canonical 
 This creates the invariant:
 
 > if the player can see a committed operational marker, a committed road route must physically meet it.
+
+
+---
+
+## V2.7.3.4 — Native Operational Stops
+
+The V2.7.3.3 playtest isolated the remaining map mismatch:
+
+- committed Pickup/Delivery markers were MapLibre-native and met the route correctly,
+- committed Lunch/Staging markers still used HTML/DOM Marker positioning and appeared displaced from the same route-access coordinate.
+
+The committed DOM route-anchor path is therefore retired.
+
+### One projection path
+
+All committed operational stops now come from the same MapLibre GeoJSON source:
+
+- Pickup → `P#`
+- Delivery → `D#`
+- Lunch → `L`
+- Staging → `S`
+
+Every feature resolves its coordinate from the canonical committed route-access map. The same source drives:
+
+- the stop circle,
+- badge text,
+- selected/next-stop label,
+- completion opacity,
+- hover label,
+- click selection.
+
+This creates the rendering invariant:
+
+> committed route line + committed P/D/L/S stop = one MapLibre projection system
+
+No committed Lunch or Staging HTML marker is permitted.
+
+### DOM markers that remain
+
+DOM markers are still valid for non-committed context such as:
+
+- planning-place candidates,
+- FreightLink preview pickup/delivery markers,
+- the moving driver truck asset.
+
+Those are presentation/interaction overlays, not committed stop truth.

@@ -103,7 +103,7 @@ test('operations map remains dark, flat, north-up, and pan/zoom only', async () 
   assert.match(source, /new NavigationControl\(\{ showCompass: false \}\)/)
 })
 
-test('map language uses trucks, typed POIs, neutral proposal routes, and committed route anchors', async () => {
+test('map language uses trucks, typed planning POIs, neutral proposal routes, and native committed stops', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
@@ -113,10 +113,10 @@ test('map language uses trucks, typed POIs, neutral proposal routes, and committ
   assert.match(map, /type === 'food'/)
   assert.match(map, /type === 'truck-stop'/)
   assert.match(map, /DRIVER_ROUTE_SOURCE/)
-  assert.match(map, /buildDriverRouteAnchors/)
+  assert.match(map, /COMMITTED_STOP_SOURCE/)
+  assert.doesNotMatch(map, /buildDriverRouteAnchors/)
   assert.match(map, /const PREVIEW_ROUTE = '#c8d2da'/)
   assert.match(map, /const PREVIEW_DEADHEAD = '#8797a4'/)
-  assert.match(css, /\.driver-route-anchor/)
   assert.match(css, /\.freight-preview-marker/)
 })
 
@@ -389,6 +389,22 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.3.4 renders P D L and S through the same native MapLibre stop layers', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /const operationalStops = driverDay\.timeline\.filter/)
+  assert.match(map, /stop\.kind === 'freight-stop'/)
+  assert.match(map, /stop\.kind === 'lunch'/)
+  assert.match(map, /stop\.kind === 'staging'/)
+  assert.match(map, /kind: stop\.kind/)
+  assert.match(map, /badge,[\s\S]*label: stop\.locationLabel/)
+  assert.match(map, /source: COMMITTED_STOP_SOURCE/)
+  assert.match(map, /type: 'circle'/)
+  assert.match(map, /text-field': \['get', 'badge'\]/)
+  assert.doesNotMatch(map, /driver-route-anchor/)
+  assert.doesNotMatch(map, /addRouteAnchorMarker/)
+})
+
 test('V2.7.3.3 publishes only complete committed road truth and never floats operational markers on facility fallback coordinates', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
@@ -397,13 +413,13 @@ test('V2.7.3.3 publishes only complete committed road truth and never floats ope
   assert.match(map, /while \(active\)/)
   assert.match(map, /if \(committedRouteComplete\(segments\)\) \{[\s\S]*setDriverRouteResult/)
   assert.match(map, /retryDelayMs = Math\.min\(12000, 1800 \+ \(retryAttempt \* 1200\)\)/)
-  assert.match(map, /routeAccessCoordinate\([\s\S]{0,180}anchorEventId,[\s\S]{0,60}null,[\s\S]{0,80}\)/)
   assert.match(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,60}null,[\s\S]{0,80}\)/)
-  assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}anchorEventId,[\s\S]{0,80}routeAnchor\.coordinates/)
   assert.doesNotMatch(map, /routeAccessCoordinate\([\s\S]{0,160}stop\.id,[\s\S]{0,80}stop\.coordinates/)
+  assert.doesNotMatch(map, /anchorEventId/)
+  assert.doesNotMatch(map, /routeAnchor\.coordinates/)
 })
 
-test('V2.7.3.2 shows driver labels only for explicit truck selection and centers coordinate-bearing POI icons', async () => {
+test('V2.7.3.2 keeps driver labels click-only and centers non-committed preview POIs', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
@@ -411,12 +427,9 @@ test('V2.7.3.2 shows driver labels only for explicit truck selection and centers
   assert.match(map, /driverExplicitlySelected \? 'label-open' : ''/)
   assert.match(css, /\.driver-marker\.label-open > small \{[\s\S]*display: flex;/)
   assert.doesNotMatch(css, /\.driver-marker:hover > small,[\s\S]*\.driver-marker\.selected > small/)
-  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
   assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(option\.coordinates\)/)
   assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(accessCoordinates \?\? location\.coordinates\)/)
   assert.match(css, /\.planning-place-option,[\s\S]*\.freight-preview-marker \{[\s\S]*width: 34px;[\s\S]*height: 34px;/)
-  assert.match(css, /\.driver-route-anchor\.selected \.poi-symbol \{[\s\S]*transform: scale\(1\.08\);/)
-  assert.doesNotMatch(css, /\.driver-route-anchor\.selected \.poi-symbol \{[\s\S]{0,160}translateY/)
 })
 
 test('V2.7.3.1 keeps the truck artwork centered on route truth and smooths each live tick along road geometry', async () => {
@@ -559,9 +572,9 @@ test('V2.6.5.10 removes diagnostic overlays after native-stop proof', async () =
 test('V2.6.5.11 FreightLink does not disable the native committed-stop layer', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
-  assert.match(map, /if \(!selectedDriver \|\| !driverDay\?\.freightStops\?\.length\)/)
-  assert.doesNotMatch(map, /if \(workspaceOpen \|\| !selectedDriver \|\| !driverDay\?\.freightStops\?\.length\)/)
-  assert.match(map, /interactive: !workspaceOpen/)
+  assert.match(map, /if \(!selectedDriver \|\| !driverDay\?\.timeline\?\.length\)/)
+  assert.doesNotMatch(map, /if \(workspaceOpen \|\| !selectedDriver \|\| !driverDay\?\.timeline\?\.length\)/)
+  assert.match(map, /const operationalStops = driverDay\.timeline\.filter/)
   assert.match(map, /COMMITTED_STOP_CIRCLE_LAYER/)
   assert.match(map, /COMMITTED_STOP_BADGE_LAYER/)
   assert.match(map, /COMMITTED_STOP_LABEL_LAYER/)
@@ -658,7 +671,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.3 · COMPLETE ROUTE TRUTH/)
+  assert.match(top, /DESKTOP V2\.7\.3\.4 · NATIVE OPS STOPS/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
@@ -703,15 +716,17 @@ test('V2.5.2 ISSUE highlights the paper field without revealing correctness', as
   assert.match(css, /@keyframes rateconIssueFlash/)
 })
 
-test('Live Map and FreightLink both use map-native freight stops while DOM anchors remain non-freight only', async () => {
+test('Live Map and FreightLink use one native stop source for pickup delivery lunch and staging', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
   assert.match(map, /COMMITTED_STOP_SOURCE/)
-  assert.match(map, /driverDay\.freightStops/)
-  assert.match(map, /const routeAnchors = driverIdentity && driverDay/)
-  assert.match(map, /const isFreightLocation = routeAnchor\.eventKinds\.includes\('freight-stop'\)/)
-  assert.match(map, /if \(!isFreightLocation\) \{[\s\S]*addRouteAnchorMarker\(routeAnchor, \{ interactive: !workspaceOpen \}\)/)
-  assert.doesNotMatch(map, /if \(workspaceOpen && driverIdentity\)[\s\S]*addRouteAnchorMarker\(routeAnchor\)/)
+  assert.match(map, /const operationalStops = driverDay\.timeline\.filter/)
+  assert.match(map, /stop\.kind === 'freight-stop'/)
+  assert.match(map, /stop\.kind === 'lunch'/)
+  assert.match(map, /stop\.kind === 'staging'/)
+  assert.match(map, /stop\.kind === 'lunch'[\s\S]*\? 'L'[\s\S]*: 'S'/)
+  assert.doesNotMatch(map, /addRouteAnchorMarker/)
+  assert.doesNotMatch(map, /buildDriverRouteAnchors/)
 })
 
 test('V2.5.3 Rate Con keeps ISSUE markup on paper until the player changes the judgment', async () => {

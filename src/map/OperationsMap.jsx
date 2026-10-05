@@ -13,7 +13,6 @@ import {
   routeSegmentExecutionPhase,
 } from '../domain/live/routeExecution.js'
 import {
-  buildDriverRouteAnchors,
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
 } from '../domain/routing/driverRoutePlan.js'
@@ -313,8 +312,6 @@ export default function OperationsMap({
     markerRefs.current.clear()
 
     const loadSelected = isSelection(selection, SELECTION_TYPES.LOAD)
-    const routeAccessByEventId = buildRouteAccessByEventId(displayDriverRoutes)
-
     drivers.forEach((driver) => {
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
       const identity = getDriverIdentity(driver.id)
@@ -372,70 +369,6 @@ export default function OperationsMap({
     }
 
     const driverIdentity = selectedDriver ? getDriverIdentity(selectedDriver.id) : null
-    const routeAnchors = driverIdentity && driverDay
-      ? buildDriverRouteAnchors(driverDay, locations)
-      : []
-    const previewPickupId = freightRoutePreview?.pickup?.id ?? null
-    const previewDeliveryId = freightRoutePreview?.delivery?.id ?? null
-
-    const addRouteAnchorMarker = (routeAnchor, { interactive = false } = {}) => {
-      const selected = Boolean(
-        selectedStop
-        && routeAnchor.eventIds.includes(selectedStop.id),
-      )
-      const element = document.createElement(interactive ? 'button' : 'div')
-      if (interactive) element.type = 'button'
-      element.className = `poi-marker driver-route-anchor ${routeAnchor.poiType} ${selected ? 'selected' : ''}`
-      element.style.setProperty('--driver-color', driverIdentity.color)
-      element.setAttribute(
-        'aria-label',
-        `${routeAnchor.badge ? `${routeAnchor.badge} · ` : ''}${routeAnchor.locationLabel}`,
-      )
-      element.innerHTML = `${facilityMarkup({
-        type: routeAnchor.poiType,
-        badge: routeAnchor.badge,
-      })}<small>${routeAnchor.locationLabel}</small>`
-
-      if (interactive && routeAnchor.eventIds.length) {
-        element.addEventListener('click', (event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          onSelectSubjectRef.current?.(SELECTION_TYPES.STOP, routeAnchor.eventIds[0])
-        })
-      }
-
-      let offset = [0, 0]
-      if (routeAnchor.locationId && routeAnchor.locationId === previewPickupId) offset = [-18, 0]
-      else if (routeAnchor.locationId && routeAnchor.locationId === previewDeliveryId) offset = [18, 0]
-
-      const anchorEventId = (
-        selectedStop
-        && routeAnchor.eventIds.includes(selectedStop.id)
-      )
-        ? selectedStop.id
-        : routeAnchor.eventIds[0]
-      const markerCoordinates = routeAccessCoordinate(
-        routeAccessByEventId,
-        anchorEventId,
-        null,
-      )
-      if (!Array.isArray(markerCoordinates)) return
-
-      const marker = new Marker({ element, anchor: 'center', offset })
-        .setLngLat(markerCoordinates)
-        .addTo(map)
-
-      markerRefs.current.set(`route-anchor:${routeAnchor.id}`, marker)
-    }
-
-    if (driverIdentity) {
-      for (const routeAnchor of routeAnchors) {
-        const isFreightLocation = routeAnchor.eventKinds.includes('freight-stop')
-        if (!isFreightLocation) {
-          addRouteAnchorMarker(routeAnchor, { interactive: !workspaceOpen })
-        }
-      }
-    }
 
     if (
       !workspaceOpen
@@ -606,13 +539,20 @@ export default function OperationsMap({
 
     clearCommittedStops()
 
-    if (!selectedDriver || !driverDay?.freightStops?.length) {
+    if (!selectedDriver || !driverDay?.timeline?.length) {
       return clearCommittedStops
     }
 
+    const operationalStops = driverDay.timeline.filter((stop) => (
+      stop.kind === 'freight-stop'
+      || stop.kind === 'lunch'
+      || stop.kind === 'staging'
+    ))
+    if (!operationalStops.length) return clearCommittedStops
+
     const identity = getDriverIdentity(selectedDriver.id)
     const accessByEventId = buildRouteAccessByEventId(displayDriverRoutes)
-    const features = driverDay.freightStops
+    const features = operationalStops
       .map((stop) => {
         const coordinates = routeAccessCoordinate(
           accessByEventId,
@@ -625,13 +565,20 @@ export default function OperationsMap({
         const completed = completedEventIds.has(stop.id)
         const priority = selected || stop.id === nextStopId
 
+        const badge = stop.kind === 'freight-stop'
+          ? `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`
+          : stop.kind === 'lunch'
+            ? 'L'
+            : 'S'
+
         return {
           type: 'Feature',
           id: stop.id,
           properties: {
             id: stop.id,
-            role: stop.role,
-            badge: `${stop.role === 'pickup' ? 'P' : 'D'}${stop.loadOrdinal}`,
+            kind: stop.kind,
+            role: stop.role ?? '',
+            badge,
             label: stop.locationLabel,
             priority,
             selected,
