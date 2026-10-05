@@ -32,27 +32,27 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.2 Trailer View
+## Current packet — V2.7.5.0.3 Square Pallet Floor
 
-V2.1 through V2.7.5.0.1 are accepted and locked. The equipment-derived puzzle grid, shaped freight, rotation, overlap/bounds validation, facility gating, Focused Mode, door commitment, and background loading remain authoritative.
+V2.1 through V2.7.5.0.2 are accepted and locked. Rear-open trailer presentation, equipment-derived puzzle logic, shaped freight, rotation, overlap/bounds validation, facility gating, Focused Mode, door commitment, and background loading remain authoritative.
 
-Visual/gameplay correction:
+Gameplay correction:
 
-> The center must read as an open truck trailer being loaded, not as a detached spreadsheet grid.
+> the trailer floor must behave like pallet packing, not a spreadsheet of stretched half-cells.
 
-Trailer-view rules:
-- preserve the existing equipment-derived collision grid underneath the visual surface,
-- render that grid inside a stylized rear-open trailer body,
-- visibly communicate roof/frame, side walls, front/nose, trailer floor, rear frame, tail lights, and doors,
-- the floor narrows toward the nose to create 2.5D depth while remaining an interactive drag/drop board,
-- placed freight renders as physical pallet/crate blocks inside the trailer rather than only changing cell color,
-- full footprint preview remains green/valid or red/invalid during drag,
-- clicking placed freight still returns it to staging before commitment,
-- TRAILER VIEW is the active view for this packet,
-- TOP DOWN and SIDE VIEW are shown as disabled future views only; they must not create a second state model,
-- rear doors remain the commit interaction,
-- do not alter puzzle legality, facility timing, route timing, or background-loading behavior in this visual packet,
-- Focused Mode shell copy must be generic and must not say RATE CON REVIEW while Dock & Load is active.
+Square-floor rules:
+- trailer capacity maps directly to legal floor slots; do not double capacity into hidden half-pallet cells,
+- Marcus's existing 26-pallet dry van therefore exposes exactly 26 usable puzzle slots,
+- the 26 slots are laid out compactly as a 4×7 board with two unavailable cells,
+- standard pallet freight occupies one square slot,
+- oversized or irregular freight may occupy multiple adjacent square slots,
+- rotation, overlap, out-of-bounds, wrong-load, and weight validation remain unchanged,
+- puzzle tracks must render as true square cells rather than stretching to fill the panel,
+- placed freight must render as raised physical cargo/crate boxes sitting on the trailer floor,
+- visual box depth must not change collision geometry,
+- left-side staged pieces and center-floor placements must continue sharing the same freight shape truth,
+- FLOOR SLOTS replaces half-cell/puzzle-cell language in the player-facing HUD,
+- do not change facility timing, loading duration, route execution, or door-commit semantics in this packet.
 
 
 ## Verification

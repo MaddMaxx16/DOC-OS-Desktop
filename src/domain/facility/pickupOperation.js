@@ -6,15 +6,13 @@ export const PICKUP_OPERATION_STATUS = Object.freeze({
   LOADED: 'loaded',
 })
 
-const HALF_PALLET_CELLS_PER_STANDARD_POSITION = 2
-
 const SHAPE_LIBRARY = Object.freeze([
-  Object.freeze({ id: 'standard-long', cells: Object.freeze([[0, 0], [0, 1]]) }),
-  Object.freeze({ id: 'standard-wide', cells: Object.freeze([[0, 0], [1, 0]]) }),
+  Object.freeze({ id: 'standard', cells: Object.freeze([[0, 0]]) }),
+  Object.freeze({ id: 'standard-alt', cells: Object.freeze([[0, 0]]) }),
+  Object.freeze({ id: 'long', cells: Object.freeze([[0, 0], [0, 1]]) }),
+  Object.freeze({ id: 'wide', cells: Object.freeze([[0, 0], [1, 0]]) }),
   Object.freeze({ id: 'l-overhang', cells: Object.freeze([[0, 0], [0, 1], [1, 1]]) }),
-  Object.freeze({ id: 'wide-overhang', cells: Object.freeze([[0, 0], [1, 0], [2, 0]]) }),
   Object.freeze({ id: 'block', cells: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]]) }),
-  Object.freeze({ id: 'long-overhang', cells: Object.freeze([[0, 0], [0, 1], [0, 2]]) }),
 ])
 
 function finite(value, fallback = 0) {
@@ -56,9 +54,15 @@ export function pickupPlanCommitted(operation = null) {
 export function buildTrailerPuzzleBoard(equipment = {}) {
   const capacityPallets = Math.max(1, finite(equipment.capacityPallets, 26))
   const maxWeightLbs = Math.max(1, finite(equipment.maxWeightLbs, 44000))
-  const usableCells = capacityPallets * HALF_PALLET_CELLS_PER_STANDARD_POSITION
-  const columns = capacityPallets <= 12 ? 3 : 4
-  const rows = Math.ceil(usableCells / columns)
+  const columns = capacityPallets >= 18
+    ? 4
+    : capacityPallets >= 8
+      ? 3
+      : capacityPallets >= 4
+        ? 2
+        : 1
+  const rows = Math.ceil(capacityPallets / columns)
+  const usableCells = capacityPallets
   const totalCells = rows * columns
 
   return {
@@ -86,8 +90,20 @@ function destinationLabel(event = {}) {
 }
 
 function shapeForIndex(index, expected = true) {
-  if (!expected) return SHAPE_LIBRARY[2]
-  return SHAPE_LIBRARY[index % SHAPE_LIBRARY.length]
+  if (!expected) return SHAPE_LIBRARY[4]
+
+  const tutorialPattern = [
+    SHAPE_LIBRARY[0],
+    SHAPE_LIBRARY[1],
+    SHAPE_LIBRARY[2],
+    SHAPE_LIBRARY[0],
+    SHAPE_LIBRARY[3],
+    SHAPE_LIBRARY[0],
+    SHAPE_LIBRARY[4],
+    SHAPE_LIBRARY[0],
+  ]
+
+  return tutorialPattern[index % tutorialPattern.length]
 }
 
 export function buildTutorialStagedFreight(event = {}) {

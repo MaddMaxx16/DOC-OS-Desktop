@@ -37,9 +37,9 @@ test('trailer puzzle board derives its usable puzzle cells from the assigned equ
 
   assert.equal(board.label, "53' Dry Van")
   assert.equal(board.capacityPallets, 26)
-  assert.equal(board.usableCells, 52)
+  assert.equal(board.usableCells, 26)
   assert.equal(board.columns, 4)
-  assert.equal(board.rows, 13)
+  assert.equal(board.rows, 7)
   assert.equal(board.maxWeightLbs, 44000)
 
   const smaller = buildTrailerPuzzleBoard({
@@ -48,9 +48,9 @@ test('trailer puzzle board derives its usable puzzle cells from the assigned equ
     maxWeightLbs: 18000,
   })
 
-  assert.equal(smaller.usableCells, 24)
+  assert.equal(smaller.usableCells, 12)
   assert.equal(smaller.columns, 3)
-  assert.equal(smaller.rows, 8)
+  assert.equal(smaller.rows, 4)
   assert.equal(smaller.maxWeightLbs, 18000)
 })
 
@@ -63,7 +63,9 @@ test('tutorial staged freight exposes different shaped puzzle pieces plus discov
   assert.equal(noise.length, 1)
   assert.ok(expected.every((item) => item.loadRef === 'M-101'))
   assert.ok(expected.every((item) => item.destination === 'Harborline Logistics'))
-  assert.ok(expected.every((item) => Array.isArray(item.shape) && item.shape.length >= 2))
+  assert.ok(expected.every((item) => Array.isArray(item.shape) && item.shape.length >= 1))
+  assert.ok(expected.some((item) => item.shape.length === 1))
+  assert.ok(expected.some((item) => item.shape.length > 1))
   assert.ok(new Set(expected.map((item) => item.shapeId)).size > 1)
   assert.notEqual(noise[0].loadRef, 'M-101')
 })
@@ -85,7 +87,7 @@ test('freight shapes rotate and reject overlap or out-of-bounds placement', () =
     anchorCell: 0,
     rotation: 0,
   })
-  assert.ok(firstCells.length >= 2)
+  assert.ok(firstCells.length >= 1)
 
   const overlap = canPlaceFreight({
     board,
@@ -145,7 +147,7 @@ test('load plan is ready only when expected shaped freight is verified and legal
   assert.equal(ready.ready, true)
   assert.equal(ready.verifiedExpectedCount, 3)
   assert.equal(ready.plannedExpectedCount, 3)
-  assert.ok(ready.occupiedCells >= 6)
+  assert.ok(ready.occupiedCells >= 4)
 
   const wrong = evaluatePickupLoadPlan({
     event,
@@ -185,6 +187,6 @@ test('committing the rear doors preserves the solved puzzle plan and starts load
   assert.equal(operation.status, 'plan-committed')
   assert.equal(operation.loadingStartMinutes, 503)
   assert.equal(operation.loadingDurationMinutes, 12)
-  assert.equal(operation.loadPlan.board.usableCells, 52)
+  assert.equal(operation.loadPlan.board.usableCells, 26)
   assert.equal(pickupPlanCommitted(operation), true)
 })

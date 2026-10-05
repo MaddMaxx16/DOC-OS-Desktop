@@ -2755,3 +2755,60 @@ Focused work now displays:
 `FOCUSED MODE · GAMEPLAY PAUSED`
 
 instead of retaining Rate Confirmation copy during Dock & Load.
+
+
+---
+
+## V2.7.5.0.3 — Square Pallet Floor
+
+The rear-open Trailer View fixed the object being represented, but the interior still inherited a spreadsheet-like floor because 26 pallet capacity had been expanded into 52 stretched half-pallet cells.
+
+That abstraction is removed.
+
+### Capacity means floor slots
+
+Equipment capacity is now represented directly:
+
+- a 26-pallet trailer exposes 26 legal floor slots,
+- a 12-pallet vehicle exposes 12 legal floor slots,
+- max freight weight still comes from the same equipment source.
+
+The visual board may include disabled filler cells only to complete a compact rectangular puzzle layout. Those filler cells are not usable capacity.
+
+### Compact trailer layout
+
+Marcus's 26-pallet dry van is represented as:
+
+- 4 columns,
+- 7 rows,
+- 26 usable square slots,
+- 2 disabled cells.
+
+This is a gameplay board layout, not a literal DOT loading diagram. Its purpose is to preserve truck-specific capacity while making spatial packing legible and fun.
+
+### Freight scale
+
+A standard pallet is one square slot.
+
+Irregular freight expands from that base unit:
+
+- 1×2,
+- 2×1,
+- L footprint,
+- 2×2 block.
+
+This allows rotation and packing decisions without making every ordinary pallet a domino.
+
+### Physical cargo rendering
+
+The trailer floor remains the collision surface.
+
+Placed freight is now drawn as a raised cargo/crate box above that floor using visual top and side faces.
+
+The visual depth is presentation only:
+
+- collision still uses footprint cells,
+- rotation still uses the same shape coordinates,
+- validation still uses the same board model.
+
+The player should perceive boxes sitting inside the trailer rather than colored spreadsheet rows.

@@ -295,8 +295,8 @@ export default function DockLoadWorkspace({
             <strong>{board.label}</strong>
           </div>
           <small>
-            {board.capacityPallets} standard pallet positions · {board.usableCells} puzzle cells.
-            Rotate pieces to make the load fit.
+            {board.capacityPallets} floor slots · square-slot packing board.
+            Rotate oversized pieces to make the load fit.
           </small>
         </header>
 
@@ -329,8 +329,8 @@ export default function DockLoadWorkspace({
                   <div
                     className="dock-load-grid puzzle-board"
                     style={{
-                      gridTemplateColumns: `repeat(${board.columns}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${board.rows}, minmax(0, 1fr))`,
+                      '--board-columns': board.columns,
+                      '--board-rows': board.rows,
                     }}
                     onDragLeave={(event) => {
                       if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -377,7 +377,7 @@ export default function DockLoadWorkspace({
                           onClick={() => occupantId && removeFreight(occupantId)}
                           title={occupant ? `Return ${occupant.label} to staging` : 'Open puzzle cell'}
                         >
-                          {occupant && <i className="loaded-cargo-block" />}
+                          {occupant && <i className="loaded-cargo-box" />}
                           {anchor && occupant && (
                             <span className="trailer-piece-label">
                               <strong>{occupant.label}</strong>
@@ -459,7 +459,7 @@ export default function DockLoadWorkspace({
 
           <div className="dock-load-hud-grid">
             <div>
-              <span>FLOOR SPACE</span>
+              <span>FLOOR SLOTS</span>
               <strong>{evaluation.occupiedCells} / {board.usableCells}</strong>
             </div>
             <div>
