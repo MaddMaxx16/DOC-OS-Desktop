@@ -32,24 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.0.3 Single Route Truth
+## Current packet — V2.7.4.0.4 Fleet Marker Anchor
 
-V2.1 through V2.7.4.0.2 are accepted and locked. Fleet execution and fleet map clarity remain intact.
+V2.1 through V2.7.4.0.3 are accepted and locked. Fleet execution, single route truth, and fleet map clarity remain intact.
 
-Core invariant:
-
-> a committed driver's visible full route, active leg, and moving truck all come from the same committed fleet route object.
+Root cause addressed:
+- MapLibre custom markers require absolute positioning,
+- the custom .driver-marker CSS had overridden MapLibre's marker positioning with position: relative,
+- with multiple driver markers in DOM order, normal document flow could offset later markers before MapLibre's geographic transform,
+- this explains the fleet-only pattern where the first driver appeared correctly aligned while later drivers appeared beside otherwise-correct routes.
 
 Guardrails:
-- when the displayed Driver Day is the committed Driver Day from driverDays, full-route rendering must use fleetRouteResults for that driver,
-- driverRouteResult is preview-only and must not override committed route geometry merely because driverId/key match,
-- planning previews may use driverRouteResult only while a distinct preview Driver Day is actually displayed,
-- if a preview route is not ready yet, committed fleet geometry may remain visible as fallback,
-- active-leg rendering and truck interpolation continue to share fleetActiveSegment(),
-- selected-driver visual emphasis must not change route ownership,
-- all trucks remain simulation-driven regardless of selection,
-- non-selected truck artwork stays full-size at the same anchor; hierarchy uses opacity/filter, not scaling,
-- do not change dispatch gating, late-send recovery, appointment waiting, HOS, or facility timing in this patch.
+- .driver-marker must remain position: absolute,
+- truck marker geometry uses a fixed 42x31 border-box with zero padding,
+- the truck's internal artwork may use relative positioning, but the MapLibre marker container may not,
+- all driver markers continue to use anchor: 'center',
+- route geometry, execution progress, and route ownership from V2.7.4.0.3 are unchanged,
+- do not compensate with per-driver pixel offsets,
+- do not change dispatch gating, late-send recovery, appointment waiting, HOS, or service timing in this patch.
 
 
 ## Verification

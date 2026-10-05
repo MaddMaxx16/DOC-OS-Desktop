@@ -114,9 +114,11 @@
 
 /* Drivers — asset type is communicated by a truck silhouette, identity by color. */
 .driver-marker {
-  position: relative;
+  position: absolute;
   width: 42px;
   height: 31px;
+  padding: 0;
+  box-sizing: border-box;
   appearance: none;
   border: 0;
   background: transparent;

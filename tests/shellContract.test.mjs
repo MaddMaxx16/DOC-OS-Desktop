@@ -392,6 +392,16 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.4.0.4 keeps every custom truck marker in MapLibre absolute positioning', async () => {
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(css, /\.driver-marker \{[\s\S]*position: absolute;/)
+  assert.doesNotMatch(css, /\.driver-marker \{[\s\S]{0,120}position: relative;/)
+  assert.match(css, /\.driver-marker \{[\s\S]*padding: 0;[\s\S]*box-sizing: border-box;/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)/)
+})
+
 test('V2.7.4.0.3 makes committed selected-route display use the same fleet route object as execution', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
@@ -800,7 +810,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.4\.0\.3 · SINGLE ROUTE TRUTH/)
+  assert.match(top, /DESKTOP V2\.7\.4\.0\.4 · FLEET MARKER ANCHOR/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

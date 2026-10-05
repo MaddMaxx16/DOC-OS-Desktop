@@ -2160,3 +2160,40 @@ If preview hydration has not completed, the committed route may remain visible a
 This creates the invariant:
 
 > committed route line, current active leg, and truck position are three views of one route object—not three independently hydrated routes.
+
+
+---
+
+## V2.7.4.0.4 — Fleet Marker Anchor
+
+The V2.7.4.0.3 recording exposed a fleet-only presentation bug that route-geometry changes could not explain: Marcus, the first driver marker, aligned correctly while Taylor and Derrick appeared progressively displaced from otherwise-correct route lines.
+
+### Root cause
+
+MapLibre positions custom markers with geographic transforms on absolutely positioned marker elements.
+
+The DOC OS truck element also had:
+
+```css
+.driver-marker {
+  position: relative;
+}
+```
+
+That custom rule overrode MapLibre's required marker positioning.
+
+With one truck, the error could remain invisible. With multiple marker elements in DOM order, later markers could inherit normal document-flow placement before MapLibre's transform was applied, producing apparent geographic offsets.
+
+### Marker invariant
+
+The truck marker container now uses:
+
+- `position: absolute`,
+- fixed `42px × 31px` dimensions,
+- `padding: 0`,
+- `box-sizing: border-box`,
+- MapLibre `anchor: 'center'`.
+
+Only child artwork uses relative positioning.
+
+No driver-specific pixel correction is permitted. Every truck receives the same geographic-to-screen projection path.
