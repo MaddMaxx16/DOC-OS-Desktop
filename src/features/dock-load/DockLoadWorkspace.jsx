@@ -5,6 +5,7 @@ import {
   useState,
 } from 'react'
 import {
+  buildOnboardCargoForPickup,
   buildTrailerPuzzleBoard,
   buildTutorialStagedFreight,
   canPlaceFreight,
@@ -58,15 +59,17 @@ function visibleFootprintCells(board, freight, anchorCell, rotation) {
     .filter((index) => index != null)
 }
 
-function PalletPiece({
+function cargoClass(freight) {
+  return `cargo-${freight.cargoType ?? 'wrapped-pallet'}`
+}
+
+function FreightManifestRow({
   freight,
   rotation,
-  verified,
   planned,
   dragging,
   rotating,
   onRotate,
-  onVerify,
   onDragStart,
   onDragEnd,
 }) {
@@ -78,16 +81,18 @@ function PalletPiece({
     <article
       className={[
         'pallet-piece',
-        verified ? 'verified' : '',
+        'freight-manifest-row',
+        cargoClass(freight),
         planned ? 'planned' : '',
         dragging ? 'dragging' : '',
         rotating ? 'rotating' : '',
-        freight.expected ? 'expected-piece' : 'noise-piece',
       ].filter(Boolean).join(' ')}
       draggable={!planned}
       onDragStart={(event) => onDragStart(event, freight.id)}
       onDragEnd={onDragEnd}
-      title={planned ? 'Already planned in trailer' : 'Drag this pallet into the trailer'}
+      title={planned
+        ? `${freight.label} is already onboard. Drag it inside the trailer to reposition it.`
+        : `Drag ${freight.label} into the trailer`}
     >
       <div
         className="pallet-piece-shape"
@@ -95,6 +100,7 @@ function PalletPiece({
           gridTemplateColumns: `repeat(${bounds.width}, 31px)`,
           gridTemplateRows: `repeat(${bounds.height}, 31px)`,
         }}
+        aria-hidden="true"
       >
         {Array.from({ length: bounds.width * bounds.height }, (_, index) => {
           const x = index % bounds.width
@@ -108,40 +114,34 @@ function PalletPiece({
             />
           )
         })}
-      </div>
-
-      <div className="pallet-piece-badges">
-        {!freight.expected && <b className="wrong">WRONG LOAD</b>}
-        {shape.length > 1 && <b className="oversize">OVERSIZE</b>}
-        {!freight.stackable && <b className="no-stack">NO STACK</b>}
-        {planned && <b className="planned-badge">PLANNED</b>}
+        <span className="pallet-piece-marking">
+          <strong>{freight.loadRef}</strong>
+          <small>{freight.handlingLabel}</small>
+        </span>
       </div>
 
       <div className="pallet-piece-copy">
         <div>
           <strong>{freight.label}</strong>
-          <span>{freight.loadRef}</span>
+          <span>{freight.unitCode}</span>
         </div>
-        <small>{pounds(freight.weightLbs)} lb · {freight.stackable ? `STACK ×${freight.maxStack}` : 'NO STACK'}</small>
+        <b className="manifest-load-number">LOAD {freight.loadRef}</b>
+        <small>{freight.handlingLabel} · {pounds(freight.weightLbs)} lb</small>
         <small>{freight.destination}</small>
       </div>
 
       <div className="pallet-piece-actions">
         <button
           type="button"
-          onClick={onVerify}
-          disabled={planned}
-          className={verified ? 'active' : ''}
-        >
-          {verified ? 'VERIFIED' : 'VERIFY'}
-        </button>
-        <button
-          type="button"
           onClick={onRotate}
           disabled={planned}
+          title="Rotate staged freight. While dragging, press R."
         >
-          ROTATE
+          ROTATE · R
         </button>
+        <span className={planned ? 'onboard' : 'staged'}>
+          {planned ? 'ONBOARD' : freight.handlingLabel}
+        </span>
       </div>
     </article>
   )
@@ -149,7 +149,9 @@ function PalletPiece({
 
 export default function DockLoadWorkspace({
   driver,
+  driverDay,
   event,
+  facilityOperations = {},
   onCommit,
 }) {
   const board = useMemo(
@@ -160,9 +162,43 @@ export default function DockLoadWorkspace({
     () => buildTutorialStagedFreight(event),
     [event],
   )
-  const [verifiedIds, setVerifiedIds] = useState([])
-  const [placements, setPlacements] = useState({})
-  const [rotations, setRotations] = useState({})
+  const carriedCargo = useMemo(
+    () => buildOnboardCargoForPickup({
+      driverId: driver.id,
+      eventId: event.id,
+      driverDay,
+      facilityOperations,
+    }),
+    [driver.id, driverDay, event.id, facilityOperations],
+  )
+  const allFreight = useMemo(() => {
+    const byId = new Map()
+
+    for (const freight of carriedCargo.freight) {
+      byId.set(freight.id, { ...freight, carried: true })
+    }
+    for (const freight of stagedFreight) {
+      byId.set(freight.id, freight)
+    }
+
+    return [...byId.values()]
+  }, [carriedCargo.freight, stagedFreight])
+
+  const requiredFreightIds = useMemo(
+    () => stagedFreight.filter((freight) => freight.expected).map((freight) => freight.id),
+    [stagedFreight],
+  )
+  const currentStagedIds = useMemo(
+    () => new Set(stagedFreight.map((freight) => freight.id)),
+    [stagedFreight],
+  )
+
+  const [placements, setPlacements] = useState(() => ({ ...carriedCargo.placements }))
+  const [rotations, setRotations] = useState(() => Object.fromEntries(
+    Object.entries(carriedCargo.placements).map(([freightId, placement]) => (
+      [freightId, placement.rotation ?? 0]
+    )),
+  ))
   const [dragFreightId, setDragFreightId] = useState(null)
   const [hoverCell, setHoverCell] = useState(null)
   const [rotatingFreightId, setRotatingFreightId] = useState(null)
@@ -185,15 +221,36 @@ export default function DockLoadWorkspace({
     if (readyTimerRef.current) clearTimeout(readyTimerRef.current)
   }, [])
 
+  useEffect(() => {
+    if (!dragFreightId) return undefined
+
+    const rotateDraggedFreight = (keyboardEvent) => {
+      if (keyboardEvent.key.toLowerCase() !== 'r' || keyboardEvent.repeat) return
+      keyboardEvent.preventDefault()
+
+      setRotations((current) => ({
+        ...current,
+        [dragFreightId]: ((current[dragFreightId] ?? 0) + 1) % 4,
+      }))
+      setRotatingFreightId(dragFreightId)
+
+      if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
+      rotateTimerRef.current = setTimeout(() => setRotatingFreightId(null), 170)
+    }
+
+    window.addEventListener('keydown', rotateDraggedFreight)
+    return () => window.removeEventListener('keydown', rotateDraggedFreight)
+  }, [dragFreightId])
+
   const evaluation = useMemo(
     () => evaluatePickupLoadPlan({
       event,
       board,
-      stagedFreight,
-      verifiedIds,
+      stagedFreight: allFreight,
       placements,
+      requiredFreightIds,
     }),
-    [board, event, placements, stagedFreight, verifiedIds],
+    [allFreight, board, event, placements, requiredFreightIds],
   )
 
   useEffect(() => {
@@ -209,22 +266,26 @@ export default function DockLoadWorkspace({
   const mapped = useMemo(
     () => placementMap({
       board,
-      stagedFreight,
+      stagedFreight: allFreight,
       placements,
     }),
-    [board, placements, stagedFreight],
+    [allFreight, board, placements],
   )
 
   const plannedIds = new Set(Object.keys(placements))
+  const orderedStagedFreight = [
+    ...stagedFreight.filter((freight) => !plannedIds.has(freight.id)),
+    ...stagedFreight.filter((freight) => plannedIds.has(freight.id)),
+  ]
   const dock = dockNumberForPickup(event)
-  const draggedFreight = stagedFreight.find((item) => item.id === dragFreightId) ?? null
+  const draggedFreight = allFreight.find((item) => item.id === dragFreightId) ?? null
   const dragRotation = dragFreightId ? rotations[dragFreightId] ?? 0 : 0
 
   const hoverPlacement = useMemo(() => (
     dragFreightId != null && hoverCell != null
       ? canPlaceFreight({
           board,
-          stagedFreight,
+          stagedFreight: allFreight,
           placements,
           freightId: dragFreightId,
           anchorCell: hoverCell,
@@ -232,12 +293,12 @@ export default function DockLoadWorkspace({
         })
       : null
   ), [
+    allFreight,
     board,
     dragFreightId,
     dragRotation,
     hoverCell,
     placements,
-    stagedFreight,
   ])
 
   const previewCells = new Set(
@@ -251,7 +312,10 @@ export default function DockLoadWorkspace({
 
   const previewBlockedCells = new Set(
     hoverPlacement?.valid === false && hoverPlacement.reason === 'OVERLAP'
-      ? [...previewCells].filter((cell) => mapped.occupied.has(cell))
+      ? [...previewCells].filter((cell) => {
+          const occupantId = mapped.occupied.get(cell)
+          return occupantId != null && occupantId !== dragFreightId
+        })
       : [],
   )
 
@@ -262,14 +326,6 @@ export default function DockLoadWorkspace({
   const dragPreviewAnchor = hoverCell != null
     ? boardPosition(board, hoverCell)
     : null
-
-  const verify = (freightId) => {
-    setVerifiedIds((current) => (
-      current.includes(freightId)
-        ? current.filter((id) => id !== freightId)
-        : [...current, freightId]
-    ))
-  }
 
   const rotate = (freightId) => {
     setRotations((current) => ({
@@ -287,7 +343,9 @@ export default function DockLoadWorkspace({
     dragEvent.dataTransfer.setData('text/plain', freightId)
     dragEvent.dataTransfer.effectAllowed = 'move'
 
-    const dragVisual = dragEvent.currentTarget.querySelector('.pallet-piece-shape')
+    const dragVisual = dragEvent.currentTarget.querySelector(
+      '.pallet-piece-shape, .loaded-freight-shape',
+    )
     if (dragVisual) {
       dragEvent.dataTransfer.setDragImage(
         dragVisual,
@@ -306,7 +364,7 @@ export default function DockLoadWorkspace({
     const rotation = rotations[freightId] ?? 0
     const result = canPlaceFreight({
       board,
-      stagedFreight,
+      stagedFreight: allFreight,
       placements,
       freightId,
       anchorCell,
@@ -328,23 +386,24 @@ export default function DockLoadWorkspace({
         rotation,
       },
     }))
-    setVerifiedIds((current) => (
-      current.includes(freightId)
-        ? current
-        : [...current, freightId]
-    ))
     setSettlingFreightId(freightId)
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
     settleTimerRef.current = setTimeout(() => setSettlingFreightId(null), 260)
     endDrag()
   }
 
-  const removeFreight = (freightId) => {
+  const returnFreightToStaging = (freightId) => {
+    if (!currentStagedIds.has(freightId)) {
+      endDrag()
+      return
+    }
+
     setPlacements((current) => {
       const next = { ...current }
       delete next[freightId]
       return next
     })
+    endDrag()
   }
 
   const occupantForCell = (cellIndex) => mapped.occupied.get(cellIndex) ?? null
@@ -354,20 +413,26 @@ export default function DockLoadWorkspace({
     setDoorsClosing(true)
 
     closeTimerRef.current = setTimeout(() => {
+      const placedFreight = allFreight.filter((freight) => placements[freight.id])
+
       onCommit({
         driverId: driver.id,
         eventId: event.id,
         loadPlan: {
           freightIds: Object.keys(placements),
+          freightManifest: placedFreight.map((freight) => ({ ...freight })),
           placements: { ...placements },
           board: { ...board },
-          verifiedIds: [...verifiedIds],
           validation: evaluation,
           doorsState: 'closed',
         },
       })
     }, 840)
   }
+
+  const carriedLoadRefs = [...new Set(
+    carriedCargo.freight.map((freight) => freight.loadRef).filter(Boolean),
+  )]
 
   return (
     <div
@@ -382,25 +447,35 @@ export default function DockLoadWorkspace({
     >
       <aside className="dock-load-staging">
         <header>
-          <span>STAGED FREIGHT</span>
+          <span>STAGED FREIGHT MANIFEST</span>
           <strong>Dock {dock}</strong>
           <small>
-            These are the puzzle pieces. Verify them, rotate them, then drag them into the trailer.
+            Match the load number, then drag freight into the trailer. Hold a piece and press R to rotate.
           </small>
         </header>
 
-        <div className="pallet-piece-bin">
-          {stagedFreight.map((freight) => (
-            <PalletPiece
+        <div
+          className="pallet-piece-bin"
+          onDragOver={(dragEvent) => {
+            if (!dragFreightId || !currentStagedIds.has(dragFreightId)) return
+            dragEvent.preventDefault()
+            dragEvent.dataTransfer.dropEffect = 'move'
+          }}
+          onDrop={(dragEvent) => {
+            dragEvent.preventDefault()
+            const freightId = dragEvent.dataTransfer.getData('text/plain')
+            if (freightId) returnFreightToStaging(freightId)
+          }}
+        >
+          {orderedStagedFreight.map((freight) => (
+            <FreightManifestRow
               key={freight.id}
               freight={freight}
               rotation={rotations[freight.id] ?? 0}
-              verified={verifiedIds.includes(freight.id)}
               planned={plannedIds.has(freight.id)}
               dragging={dragFreightId === freight.id}
               rotating={rotatingFreightId === freight.id}
               onRotate={() => rotate(freight.id)}
-              onVerify={() => verify(freight.id)}
               onDragStart={startDrag}
               onDragEnd={endDrag}
             />
@@ -411,12 +486,11 @@ export default function DockLoadWorkspace({
       <section className="dock-load-trailer-panel">
         <header className="dock-load-trailer-heading">
           <div>
-            <span>TRAILER PUZZLE</span>
+            <span>TRAILER LOAD PLAN</span>
             <strong>{board.label}</strong>
           </div>
           <small>
-            {board.capacityPallets} floor slots · square-slot packing board.
-            Rotate oversized pieces to make the load fit.
+            {board.capacityPallets} pallet positions · Drag onboard freight to reposition it · R rotates the piece in hand.
           </small>
         </header>
 
@@ -452,8 +526,8 @@ export default function DockLoadWorkspace({
                       '--board-columns': board.columns,
                       '--board-rows': board.rows,
                     }}
-                    onDragLeave={(event) => {
-                      if (!event.currentTarget.contains(event.relatedTarget)) {
+                    onDragLeave={(dragEvent) => {
+                      if (!dragEvent.currentTarget.contains(dragEvent.relatedTarget)) {
                         setHoverCell(null)
                       }
                     }}
@@ -461,15 +535,11 @@ export default function DockLoadWorkspace({
                     {Array.from({ length: board.totalCells }, (_, cellIndex) => {
                       const disabled = cellIndex >= board.usableCells
                       const occupantId = occupantForCell(cellIndex)
-                      const occupant = stagedFreight.find((item) => item.id === occupantId) ?? null
-                      const anchor = occupantId
-                        ? placements[occupantId]?.anchorCell === cellIndex
-                        : false
+                      const occupant = allFreight.find((item) => item.id === occupantId) ?? null
                       const preview = previewCells.has(cellIndex)
                       const previewValid = preview && hoverPlacement?.valid
                       const previewInvalid = preview && !hoverPlacement?.valid
                       const previewBlocked = previewBlockedCells.has(cellIndex)
-
                       const cellPosition = boardPosition(board, cellIndex)
 
                       return (
@@ -484,8 +554,6 @@ export default function DockLoadWorkspace({
                             'trailer-puzzle-cell',
                             disabled ? 'disabled' : '',
                             occupant ? 'occupied' : '',
-                            occupant?.expected === false ? 'wrong-load' : '',
-                            anchor ? 'piece-anchor' : '',
                             previewValid ? 'preview-valid' : '',
                             previewInvalid ? 'preview-invalid' : '',
                             previewBlocked ? 'preview-blocker' : '',
@@ -502,16 +570,10 @@ export default function DockLoadWorkspace({
                             const freightId = dragEvent.dataTransfer.getData('text/plain')
                             if (freightId) placeFreight(freightId, cellIndex)
                           }}
-                          onClick={() => occupantId && removeFreight(occupantId)}
-                          title={occupant ? `Return ${occupant.label} to staging` : 'Open puzzle cell'}
-                        >
-                          {anchor && occupant && (
-                            <span className="trailer-piece-label">
-                              <strong>{occupant.label}</strong>
-                              <small>{occupant.loadRef}</small>
-                            </span>
-                          )}
-                        </button>
+                          title={occupant
+                            ? `Occupied by ${occupant.label}. Drag the cargo itself to reposition it.`
+                            : 'Open trailer position'}
+                        />
                       )
                     })}
 
@@ -519,6 +581,7 @@ export default function DockLoadWorkspace({
                       <div
                         className={[
                           'drag-preview-piece',
+                          cargoClass(draggedFreight),
                           hoverPlacement.valid ? 'valid' : 'invalid',
                           dragPreviewShape.length > 1 ? 'oversize' : 'standard',
                         ].filter(Boolean).join(' ')}
@@ -542,13 +605,14 @@ export default function DockLoadWorkspace({
                           ))}
                         </div>
                         <span>
-                          <strong>{draggedFreight.label}</strong>
+                          <strong>{draggedFreight.loadRef}</strong>
+                          <small>{draggedFreight.handlingLabel}</small>
                         </span>
                       </div>
                     )}
 
                     {Object.entries(placements).map(([freightId, placement]) => {
-                      const freight = stagedFreight.find((item) => item.id === freightId)
+                      const freight = allFreight.find((item) => item.id === freightId)
                       if (!freight) return null
 
                       const shape = rotateFreightShape(
@@ -562,12 +626,15 @@ export default function DockLoadWorkspace({
                         <button
                           type="button"
                           key={freightId}
+                          draggable
                           className={[
                             'loaded-freight-piece',
-                            freight.expected ? 'expected' : 'wrong-load',
+                            cargoClass(freight),
+                            freight.carried ? 'carried-freight' : 'current-pickup-freight',
                             freight.stackable ? 'stackable' : 'no-stack',
                             shape.length > 1 ? 'oversize' : 'standard',
                             settlingFreightId === freightId ? 'settling' : '',
+                            dragFreightId === freightId ? 'dragging' : '',
                           ].filter(Boolean).join(' ')}
                           style={{
                             gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -575,9 +642,10 @@ export default function DockLoadWorkspace({
                             '--piece-columns': bounds.width,
                             '--piece-rows': bounds.height,
                           }}
-                          onClick={() => removeFreight(freightId)}
-                          title={`Return ${freight.label} to staging`}
-                          aria-label={`Return ${freight.label} to staging`}
+                          onDragStart={(dragEvent) => startDrag(dragEvent, freightId)}
+                          onDragEnd={endDrag}
+                          title={`${freight.loadRef} · ${freight.handlingLabel} · drag to reposition · press R while dragging to rotate`}
+                          aria-label={`${freight.label}, load ${freight.loadRef}, ${freight.handlingLabel}. Drag to reposition.`}
                         >
                           <div className="loaded-freight-shape">
                             {shape.map(([x, y], index) => (
@@ -591,12 +659,8 @@ export default function DockLoadWorkspace({
                             ))}
                           </div>
                           <span className="loaded-freight-label">
-                            <strong>{freight.label}</strong>
-                            <span className="loaded-freight-tags">
-                              {!freight.expected && <small>WRONG LOAD</small>}
-                              {shape.length > 1 && <small>OVERSIZE</small>}
-                              {!freight.stackable && <small>NO STACK</small>}
-                            </span>
+                            <strong>{freight.loadRef}</strong>
+                            <span>{freight.handlingLabel}</span>
                           </span>
                         </button>
                       )
@@ -661,6 +725,14 @@ export default function DockLoadWorkspace({
             <span>TRAILER</span>
             <strong>{board.label} · {board.capacityPallets} pallet cap</strong>
           </div>
+          {carriedCargo.freight.length > 0 && (
+            <div>
+              <span>ALREADY ONBOARD</span>
+              <strong>
+                {carriedCargo.freight.length} units · {carriedLoadRefs.join(', ')}
+              </strong>
+            </div>
+          )}
           <div>
             <span>PICKUP</span>
             <strong>{event.locationLabel}</strong>
@@ -671,7 +743,7 @@ export default function DockLoadWorkspace({
           </div>
           <div>
             <span>EXPECTED</span>
-            <strong>{event.freight?.pallets ?? 0} pallets · {pounds(event.freight?.weightLbs)} lb</strong>
+            <strong>{event.freight?.pallets ?? 0} units · {pounds(event.freight?.weightLbs)} lb</strong>
           </div>
         </section>
 
@@ -697,11 +769,11 @@ export default function DockLoadWorkspace({
               <strong>{pounds(evaluation.plannedWeightLbs)} / {pounds(board.maxWeightLbs)}</strong>
             </div>
             <div>
-              <span>VERIFIED</span>
-              <strong>{evaluation.verifiedExpectedCount} / {evaluation.expectedCount}</strong>
+              <span>ONBOARD UNITS</span>
+              <strong>{evaluation.onboardCount}</strong>
             </div>
             <div>
-              <span>PLANNED</span>
+              <span>THIS PICKUP</span>
               <strong>{evaluation.plannedExpectedCount} / {evaluation.expectedCount}</strong>
             </div>
           </div>
@@ -733,13 +805,14 @@ export default function DockLoadWorkspace({
           <div className="dock-load-interaction-status" aria-live="polite">
             {invalidDropReason === 'OVERLAP' && 'That space is already occupied.'}
             {invalidDropReason === 'OUT_OF_BOUNDS' && 'That freight does not fit there.'}
+            {dragFreightId && 'R rotates the freight in hand. Drag current-pickup cargo back to the manifest to stage it again.'}
           </div>
         </section>
 
         <footer className="dock-load-focus-note">
           <span>FOCUSED MODE</span>
-          <strong>World simulation is paused while you solve the load.</strong>
-          <small>Fit the pieces now. Warehouse loading begins only after the trailer doors are closed.</small>
+          <strong>World simulation is paused while you build the trailer load plan.</strong>
+          <small>Load numbers and handling marks stay visible so placement decisions come from the freight itself.</small>
         </footer>
       </aside>
     </div>
