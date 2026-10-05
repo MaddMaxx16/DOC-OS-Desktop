@@ -67,6 +67,18 @@ function handlingClass(freight) {
   return `handling-${String(freight.handlingCode ?? 'standard').toLowerCase().replaceAll('_', '-')}`
 }
 
+function trailerCellFromPointer(pointerEvent) {
+  if (typeof document === 'undefined') return null
+
+  const cell = document
+    .elementsFromPoint(pointerEvent.clientX, pointerEvent.clientY)
+    .find((element) => element?.dataset?.trailerCellIndex != null)
+
+  if (!cell) return null
+  const cellIndex = Number(cell.dataset.trailerCellIndex)
+  return Number.isInteger(cellIndex) ? cellIndex : null
+}
+
 function FreightManifestRow({
   freight,
   rotation,
@@ -531,6 +543,23 @@ export default function DockLoadWorkspace({
                       '--board-columns': board.columns,
                       '--board-rows': board.rows,
                     }}
+                    onDragOver={(dragEvent) => {
+                      if (!draggedFreight) return
+                      const cellIndex = trailerCellFromPointer(dragEvent)
+                      if (cellIndex == null || cellIndex >= board.usableCells) return
+
+                      dragEvent.preventDefault()
+                      dragEvent.dataTransfer.dropEffect = 'move'
+                      setHoverCell(cellIndex)
+                    }}
+                    onDrop={(dragEvent) => {
+                      if (!draggedFreight) return
+                      dragEvent.preventDefault()
+
+                      const freightId = dragEvent.dataTransfer.getData('text/plain') || dragFreightId
+                      const cellIndex = trailerCellFromPointer(dragEvent) ?? hoverCell
+                      if (freightId && cellIndex != null) placeFreight(freightId, cellIndex)
+                    }}
                     onDragLeave={(dragEvent) => {
                       if (!dragEvent.currentTarget.contains(dragEvent.relatedTarget)) {
                         setHoverCell(null)
@@ -564,17 +593,7 @@ export default function DockLoadWorkspace({
                             previewBlocked ? 'preview-blocker' : '',
                           ].filter(Boolean).join(' ')}
                           disabled={disabled}
-                          onDragOver={(dragEvent) => {
-                            if (disabled || !draggedFreight) return
-                            dragEvent.preventDefault()
-                            dragEvent.dataTransfer.dropEffect = 'move'
-                            setHoverCell(cellIndex)
-                          }}
-                          onDrop={(dragEvent) => {
-                            dragEvent.preventDefault()
-                            const freightId = dragEvent.dataTransfer.getData('text/plain')
-                            if (freightId) placeFreight(freightId, cellIndex)
-                          }}
+                          data-trailer-cell-index={cellIndex}
                           title={occupant
                             ? `Occupied by ${occupant.label}. Drag the cargo itself to reposition it.`
                             : 'Open trailer position'}
