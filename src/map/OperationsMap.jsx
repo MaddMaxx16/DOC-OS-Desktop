@@ -37,6 +37,9 @@ const DRIVER_ROUTE_CASING_LAYER = 'driver-plan-casing'
 const DRIVER_ROUTE_LAYER = 'driver-plan-layer'
 const DRIVER_ROUTE_PICKUP_CASING_LAYER = 'driver-plan-pickup-casing'
 const DRIVER_ROUTE_PICKUP_LAYER = 'driver-plan-pickup-layer'
+const FLEET_ACTIVE_ROUTE_SOURCE = 'fleet-active-route-source'
+const FLEET_ACTIVE_ROUTE_CASING_LAYER = 'fleet-active-route-casing-layer'
+const FLEET_ACTIVE_ROUTE_LAYER = 'fleet-active-route-layer'
 const COMMITTED_STOP_SOURCE = 'committed-stop-source'
 const COMMITTED_STOP_CIRCLE_LAYER = 'committed-stop-circle-layer'
 const COMMITTED_STOP_BADGE_LAYER = 'committed-stop-badge-layer'
@@ -268,6 +271,60 @@ function committedRouteGeoJson(segments = [], execution = null) {
   }
 }
 
+function fleetActiveRouteGeoJson(
+  drivers = [],
+  liveDriverStates = {},
+  fleetDisplayRoutesByDriverId = {},
+  selectedDriverId = null,
+) {
+  const features = []
+
+  for (const driver of drivers) {
+    if (driver.id === selectedDriverId) continue
+
+    const live = liveDriverStates[driver.id]
+    if (live?.executionPhase !== 'en-route' || !live.activeSegmentId) continue
+
+    const segment = (fleetDisplayRoutesByDriverId[driver.id] ?? [])
+      .find((item) => item.id === live.activeSegmentId)
+    const routeShape = segment?.route?.routeShape ?? []
+
+    if (!Array.isArray(routeShape) || routeShape.length < 2) continue
+
+    features.push({
+      type: 'Feature',
+      properties: {
+        driverId: driver.id,
+        color: getDriverIdentity(driver.id).color,
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: routeShape,
+      },
+    })
+  }
+
+  return {
+    type: 'FeatureCollection',
+    features,
+  }
+}
+
+function fleetStatusLabel(driver, liveState) {
+  if (!liveState?.sent || liveState.phase === 'draft') return 'PLAN NOT SENT'
+  if (liveState.phase === 'scheduled') return 'SCHEDULED'
+  if (liveState.phase === 'closed') return 'SHIFT CLOSED'
+
+  if (liveState.executionPhase === 'en-route') return 'EN ROUTE'
+  if (liveState.executionPhase === 'service-loading') return 'LOADING'
+  if (liveState.executionPhase === 'service-unloading') return 'UNLOADING'
+  if (liveState.executionPhase === 'dwell-break') return 'ON BREAK'
+  if (liveState.executionPhase === 'arrived') return 'ARRIVED'
+  if (liveState.executionPhase === 'complete') return 'COMPLETE'
+
+  return liveState.label ?? driver.status
+}
+
 function locationType(location, fallback = 'warehouse') {
   return location?.poiType ?? fallback
 }
@@ -403,6 +460,20 @@ export default function OperationsMap({
       selectedDriver,
     ],
   )
+  const fleetActiveRouteData = useMemo(
+    () => fleetActiveRouteGeoJson(
+      drivers,
+      liveDriverStates,
+      fleetDisplayRoutesByDriverId,
+      selectedDriver?.id ?? null,
+    ),
+    [
+      drivers,
+      fleetDisplayRoutesByDriverId,
+      liveDriverStates,
+      selectedDriver,
+    ],
+  )
 
   useEffect(() => {
     onSelectSubjectRef.current = onSelectSubject
@@ -475,11 +546,12 @@ export default function OperationsMap({
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
       const identity = getDriverIdentity(driver.id)
       const selected = selectedDriver?.id === driver.id
+      const context = Boolean(selectedDriver && !selected)
       const labelOpen = openDriverLabelId === driver.id
       const motion = truckMotionRefs.current.get(driver.id)
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${labelOpen ? 'label-open' : ''}`
+      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${context ? 'context' : ''} ${labelOpen ? 'label-open' : ''}`
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
       element.dataset.facing = motion?.facing ?? 'right'
@@ -1287,6 +1359,76 @@ export default function OperationsMap({
     const map = mapRef.current
     if (!mapReady || !map) return undefined
 
+    const clearFleetActiveRoute = () => {
+      if (map.getLayer(FLEET_ACTIVE_ROUTE_LAYER)) map.removeLayer(FLEET_ACTIVE_ROUTE_LAYER)
+      if (map.getLayer(FLEET_ACTIVE_ROUTE_CASING_LAYER)) map.removeLayer(FLEET_ACTIVE_ROUTE_CASING_LAYER)
+      if (map.getSource(FLEET_ACTIVE_ROUTE_SOURCE)) map.removeSource(FLEET_ACTIVE_ROUTE_SOURCE)
+    }
+
+    clearFleetActiveRoute()
+
+    map.addSource(FLEET_ACTIVE_ROUTE_SOURCE, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: [],
+      },
+    })
+
+    const beforeId = map.getLayer(COMMITTED_STOP_CIRCLE_LAYER)
+      ? COMMITTED_STOP_CIRCLE_LAYER
+      : undefined
+
+    map.addLayer({
+      id: FLEET_ACTIVE_ROUTE_CASING_LAYER,
+      type: 'line',
+      source: FLEET_ACTIVE_ROUTE_SOURCE,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': '#0a1118',
+        'line-width': 5,
+        'line-opacity': 0.5,
+      },
+    }, beforeId)
+
+    map.addLayer({
+      id: FLEET_ACTIVE_ROUTE_LAYER,
+      type: 'line',
+      source: FLEET_ACTIVE_ROUTE_SOURCE,
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': ['get', 'color'],
+        'line-width': 2.25,
+        'line-opacity': 0.42,
+      },
+    }, beforeId)
+
+    return clearFleetActiveRoute
+  }, [mapReady])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map) return
+
+    const source = map.getSource(FLEET_ACTIVE_ROUTE_SOURCE)
+    if (!source?.setData) return
+
+    source.setData(
+      workspaceOpen || freightRoutePreview
+        ? { type: 'FeatureCollection', features: [] }
+        : fleetActiveRouteData,
+    )
+  }, [
+    fleetActiveRouteData,
+    freightRoutePreview,
+    mapReady,
+    workspaceOpen,
+  ])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map) return undefined
+
     const clearDriverRoute = () => {
       if (map.getLayer(DRIVER_ROUTE_PICKUP_LAYER)) map.removeLayer(DRIVER_ROUTE_PICKUP_LAYER)
       if (map.getLayer(DRIVER_ROUTE_PICKUP_CASING_LAYER)) map.removeLayer(DRIVER_ROUTE_PICKUP_CASING_LAYER)
@@ -1743,6 +1885,32 @@ export default function OperationsMap({
         <span>LIVE MAP</span>
         <strong>New York Metro</strong>
       </div>
+
+      {!workspaceOpen && (
+        <div className="fleet-glance" aria-label="Fleet status">
+          {drivers.map((driver) => {
+            const identity = getDriverIdentity(driver.id)
+            const live = liveDriverStates[driver.id] ?? null
+            const selected = selectedDriver?.id === driver.id
+
+            return (
+              <button
+                type="button"
+                key={driver.id}
+                className={selected ? 'selected' : ''}
+                style={{ '--driver-color': identity.color }}
+                title={driver.name}
+                aria-pressed={selected}
+                onClick={() => onSelectSubjectRef.current?.(SELECTION_TYPES.DRIVER, driver.id)}
+              >
+                <i />
+                <b>{driver.initials}</b>
+                <span>{fleetStatusLabel(driver, live)}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
     </div>
   )

@@ -32,28 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.0 Fleet Execution Foundation
+## Current packet — V2.7.4.0.1 Fleet Map Clarity
 
-V2.1 through V2.7.3.7 are accepted and locked. Route truth, native POIs, smooth directional truck motion, Lunch ranking, facility service, and click-only truck labels remain intact.
+V2.1 through V2.7.4.0 are accepted and locked. Fleet execution remains simultaneous and independent of UI selection.
 
 Core invariant:
 
 > selection is UI; simulation is world state.
 
-Guardrails:
-- every Driver Day receives a live state from the same global simulation clock regardless of which driver is selected,
-- every committed Driver Day hydrates road geometry independently of selection,
-- every truck owns its own rendered motion state, route progress, facing, and animation frame,
-- selecting Marcus, Taylor, or Derrick must not start, stop, advance, rewind, or catch up another driver's simulation,
-- switching selected drivers changes only inspection/detail context and which route/stops are emphasized,
-- the selected driver's detailed committed route may remain the only full route rendered to avoid fleet-route spaghetti,
-- hidden or temporarily filtered truck markers must continue accumulating correct world state and reappear at their current rendered/live position,
-- a driver with an unsent plan remains at the start/current truck position because Live Operations is not armed,
-- V2.7.4.0 does not yet redefine late-send recovery; retroactive schedule recovery belongs to V2.7.4.1,
-- FreightLink/planning previews may hydrate a temporary selected-driver route without replacing that driver's committed execution route,
-- camera framing may inspect a selected driver's current live position, but moving trucks never own or chase the viewport,
-- preserve the single global clock and focused-task pause behavior,
-- do not change appointment waiting, HOS depletion, late-send recovery, Lunch validation, or facility-service timing in this packet.
+Readability rules:
+- all drivers continue executing at all times,
+- only the selected driver shows the full detailed Driver Day route and committed stops,
+- non-selected live drivers may show only their current active road leg as faint context,
+- non-selected trucks are visually quieter than the selected truck but remain clickable,
+- truck name labels remain click-only; fleet readability must not reintroduce persistent map labels,
+- a compact fleet glance strip may show initials + operational status and may switch driver selection,
+- when no driver is selected, all trucks read at equal strength as a fleet overview,
+- FreightLink workspace hides fleet active-leg context to protect freight-preview readability,
+- switching selection must not affect any driver's execution position, route progress, facing, or live state,
+- do not change dispatch timing, route hydration, late-send behavior, HOS, or service timing in this patch.
 
 
 ## Verification

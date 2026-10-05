@@ -2047,3 +2047,45 @@ Only the selected driver's detailed route is rendered at full detail to keep the
 An unsent Driver Day remains unarmed and the truck stays at its start/current position.
 
 If a schedule is sent after its planned shift start, the current execution model can still evaluate against the original timeline. Correct late-dispatch recovery and downstream ETA recalculation are explicitly deferred to **V2.7.4.1**.
+
+
+---
+
+## V2.7.4.0.1 — Fleet Map Clarity
+
+V2.7.4.0 correctly made all drivers execute at once, but the first fleet playtest exposed a presentation problem: the map showed multiple live trucks without enough hierarchy to explain what each one was doing.
+
+The simulation was correct; the fleet visualization was not yet readable.
+
+### Visual hierarchy
+
+When a driver is selected:
+
+- the selected truck remains full-strength,
+- the selected driver's full route and operational stops remain the primary map story,
+- every other truck remains live but is reduced in scale/opacity,
+- non-selected trucks do not gain persistent name labels.
+
+When no driver is selected, all trucks return to equal visual strength so the map can act as a true fleet overview.
+
+### Active-leg context
+
+A non-selected driver may display only the driver's **current active road leg**.
+
+This is intentionally not the full Driver Day route. It answers one simple question:
+
+> where is that driver going right now?
+
+The active-leg line uses the driver's identity color at low opacity with a dark casing. It is removed from FreightLink preview mode to avoid competing with freight-market route evaluation.
+
+### Fleet glance strip
+
+The Live Map includes a compact clickable fleet strip showing:
+
+- driver initials,
+- driver identity color,
+- current operational state such as SCHEDULED, EN ROUTE, LOADING, UNLOADING, ON BREAK, or PLAN NOT SENT.
+
+The strip changes selection but never changes simulation state.
+
+Truck labels remain click-only. The strip is fleet status UI, not a replacement persistent map label.

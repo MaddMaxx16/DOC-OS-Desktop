@@ -392,6 +392,26 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.4.0.1 gives the live fleet a readable map hierarchy without persistent truck labels', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /FLEET_ACTIVE_ROUTE_SOURCE/)
+  assert.match(map, /FLEET_ACTIVE_ROUTE_CASING_LAYER/)
+  assert.match(map, /FLEET_ACTIVE_ROUTE_LAYER/)
+  assert.match(map, /function fleetActiveRouteGeoJson/)
+  assert.match(map, /driver\.id === selectedDriverId/)
+  assert.match(map, /live\?\.executionPhase !== 'en-route'/)
+  assert.match(map, /const context = Boolean\(selectedDriver && !selected\)/)
+  assert.match(map, /context \? 'context' : ''/)
+  assert.match(map, /className="fleet-glance"/)
+  assert.match(map, /fleetStatusLabel\(driver, live\)/)
+  assert.match(map, /onSelectSubjectRef\.current\?\.\(SELECTION_TYPES\.DRIVER, driver\.id\)/)
+  assert.match(css, /\.driver-marker\.context \.driver-truck-icon \{[\s\S]*opacity: \.52;[\s\S]*scale\(\.84\)/)
+  assert.match(css, /\.fleet-glance \{/)
+  assert.doesNotMatch(css, /\.driver-marker\.context > small \{[\s\S]*display: flex;/)
+})
+
 test('V2.7.4.0 runs truck execution for the full fleet independent of selection', async () => {
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
@@ -756,7 +776,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.4\.0 · FLEET EXECUTION/)
+  assert.match(top, /DESKTOP V2\.7\.4\.0\.1 · FLEET MAP CLARITY/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 
