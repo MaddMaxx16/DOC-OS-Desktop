@@ -51,6 +51,9 @@ const PLANNING_POI_CIRCLE_LAYER = 'planning-poi-circle-layer'
 const PLANNING_POI_ICON_LAYER = 'planning-poi-icon-layer'
 const PLANNING_POI_LABEL_LAYER = 'planning-poi-label-layer'
 
+const FLEET_GLANCE_INDIVIDUAL_LIMIT = 5
+const FLEET_ACTIVE_ROUTE_CONTEXT_LIMIT = 10
+
 const POI_ICON_IDS = Object.freeze({
   yard: 'poi-yard',
   staging: 'poi-staging',
@@ -285,6 +288,46 @@ function fleetActiveSegment(
     .find((segment) => segment.id === live.activeSegmentId) ?? null
 }
 
+function driverNeedsAttention(liveState = null) {
+  return Boolean(
+    liveState?.phase === 'dispatch-required'
+    || liveState?.attention === true
+  )
+}
+
+function fleetStatusBucket(liveState = null) {
+  if (driverNeedsAttention(liveState)) return 'attention'
+  if (!liveState?.sent || liveState?.phase === 'draft') return 'not-sent'
+  if (liveState?.phase === 'scheduled') return 'scheduled'
+  if (liveState?.executionPhase === 'en-route') return 'en-route'
+  if (['service-loading', 'service-unloading', 'arrived'].includes(liveState?.executionPhase)) {
+    return 'at-stop'
+  }
+  if (liveState?.executionPhase === 'dwell-break') return 'break'
+  if (liveState?.phase === 'closed' || liveState?.executionPhase === 'complete') return 'complete'
+  return 'other'
+}
+
+function buildFleetGlanceSummary(drivers = [], liveDriverStates = {}) {
+  const summary = {
+    attention: 0,
+    'en-route': 0,
+    'at-stop': 0,
+    break: 0,
+    scheduled: 0,
+    'not-sent': 0,
+  }
+
+  for (const driver of drivers) {
+    const bucket = fleetStatusBucket(liveDriverStates[driver.id] ?? null)
+    if (Object.prototype.hasOwnProperty.call(summary, bucket)) {
+      summary[bucket] += 1
+    }
+  }
+
+  return summary
+}
+
 function fleetActiveRouteGeoJson(
   drivers = [],
   liveDriverStates = {},
@@ -293,8 +336,16 @@ function fleetActiveRouteGeoJson(
 ) {
   const features = []
 
+  const denseFleet = drivers.length > FLEET_ACTIVE_ROUTE_CONTEXT_LIMIT
+  const contextualOpacity = drivers.length > FLEET_GLANCE_INDIVIDUAL_LIMIT
+    ? 0.24
+    : 0.42
+
   for (const driver of drivers) {
     if (driver.id === selectedDriverId) continue
+
+    const live = liveDriverStates[driver.id] ?? null
+    if (denseFleet && !driverNeedsAttention(live)) continue
 
     const segment = fleetActiveSegment(
       driver.id,
@@ -310,6 +361,7 @@ function fleetActiveRouteGeoJson(
       properties: {
         driverId: driver.id,
         color: getDriverIdentity(driver.id).color,
+        opacity: driverNeedsAttention(live) ? 0.48 : contextualOpacity,
       },
       geometry: {
         type: 'LineString',
@@ -380,6 +432,7 @@ export default function OperationsMap({
   locations = {},
   onPreviewPlanningPlace,
   onSelectSubject,
+  onOpenDrivers,
 }) {
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
@@ -477,6 +530,17 @@ export default function OperationsMap({
       liveState,
       selectedDriver,
     ],
+  )
+  const fleetGlanceSummary = useMemo(
+    () => buildFleetGlanceSummary(drivers, liveDriverStates),
+    [drivers, liveDriverStates],
+  )
+  const fleetAttentionDrivers = useMemo(
+    () => drivers.filter((driver) => (
+      driver.id !== selectedDriver?.id
+      && driverNeedsAttention(liveDriverStates[driver.id] ?? null)
+    )),
+    [drivers, liveDriverStates, selectedDriver],
   )
   const fleetActiveRouteData = useMemo(
     () => fleetActiveRouteGeoJson(
@@ -1419,7 +1483,7 @@ export default function OperationsMap({
       paint: {
         'line-color': ['get', 'color'],
         'line-width': 2.25,
-        'line-opacity': 0.42,
+        'line-opacity': ['get', 'opacity'],
       },
     }, beforeId)
 
@@ -1907,28 +1971,156 @@ export default function OperationsMap({
       </div>
 
       {!workspaceOpen && (
-        <div className="fleet-glance" aria-label="Fleet status">
-          {drivers.map((driver) => {
-            const identity = getDriverIdentity(driver.id)
-            const live = liveDriverStates[driver.id] ?? null
-            const selected = selectedDriver?.id === driver.id
+        <div
+          className={`fleet-glance ${drivers.length > FLEET_GLANCE_INDIVIDUAL_LIMIT ? 'scaled' : 'individual'}`}
+          aria-label="Fleet status"
+        >
+          {drivers.length <= FLEET_GLANCE_INDIVIDUAL_LIMIT ? (
+            drivers.map((driver) => {
+              const identity = getDriverIdentity(driver.id)
+              const live = liveDriverStates[driver.id] ?? null
+              const selected = selectedDriver?.id === driver.id
 
-            return (
+              return (
+                <button
+                  type="button"
+                  key={driver.id}
+                  className={`fleet-driver-chip ${selected ? 'selected' : ''}`}
+                  style={{ '--driver-color': identity.color }}
+                  title={driver.name}
+                  aria-pressed={selected}
+                  onClick={() => onSelectSubject?.(SELECTION_TYPES.DRIVER, driver.id)}
+                >
+                  <i />
+                  <b>{driver.initials}</b>
+                  <span>{fleetStatusLabel(driver, live)}</span>
+                </button>
+              )
+            })
+          ) : (
+            <>
+              {selectedDriver && (() => {
+                const identity = getDriverIdentity(selectedDriver.id)
+                const live = liveDriverStates[selectedDriver.id] ?? null
+
+                return (
+                  <button
+                    type="button"
+                    className={`fleet-driver-chip selected ${driverNeedsAttention(live) ? 'attention-driver' : ''}`}
+                    style={{ '--driver-color': identity.color }}
+                    title={selectedDriver.name}
+                    aria-pressed="true"
+                    onClick={() => onSelectSubject?.(
+                      SELECTION_TYPES.DRIVER,
+                      selectedDriver.id,
+                    )}
+                  >
+                    <i />
+                    <b>{selectedDriver.initials}</b>
+                    <span>{fleetStatusLabel(selectedDriver, live)}</span>
+                  </button>
+                )
+              })()}
+
+              {fleetAttentionDrivers.slice(0, 2).map((driver) => {
+                const identity = getDriverIdentity(driver.id)
+                const live = liveDriverStates[driver.id] ?? null
+
+                return (
+                  <button
+                    type="button"
+                    key={`attention:${driver.id}`}
+                    className="fleet-driver-chip attention-driver"
+                    style={{ '--driver-color': identity.color }}
+                    title={driver.name}
+                    onClick={() => onSelectSubject?.(
+                      SELECTION_TYPES.DRIVER,
+                      driver.id,
+                    )}
+                  >
+                    <i />
+                    <b>{driver.initials}</b>
+                    <span>{fleetStatusLabel(driver, live)}</span>
+                  </button>
+                )
+              })}
+
+              {fleetAttentionDrivers.length > 2 && (
+                <button
+                  type="button"
+                  className="fleet-summary-chip attention"
+                  onClick={() => onOpenDrivers?.('attention')}
+                >
+                  <b>+{fleetAttentionDrivers.length - 2}</b>
+                  <span>NEED ATTENTION</span>
+                </button>
+              )}
+
+              {fleetGlanceSummary['en-route'] > 0 && (
+                <button
+                  type="button"
+                  className="fleet-summary-chip"
+                  onClick={() => onOpenDrivers?.('en-route')}
+                >
+                  <b>{fleetGlanceSummary['en-route']}</b>
+                  <span>EN ROUTE</span>
+                </button>
+              )}
+
+              {fleetGlanceSummary['at-stop'] > 0 && (
+                <button
+                  type="button"
+                  className="fleet-summary-chip"
+                  onClick={() => onOpenDrivers?.('at-stop')}
+                >
+                  <b>{fleetGlanceSummary['at-stop']}</b>
+                  <span>AT STOP</span>
+                </button>
+              )}
+
+              {fleetGlanceSummary.break > 0 && (
+                <button
+                  type="button"
+                  className="fleet-summary-chip"
+                  onClick={() => onOpenDrivers?.('break')}
+                >
+                  <b>{fleetGlanceSummary.break}</b>
+                  <span>BREAK</span>
+                </button>
+              )}
+
+              {fleetGlanceSummary.scheduled > 0 && (
+                <button
+                  type="button"
+                  className="fleet-summary-chip"
+                  onClick={() => onOpenDrivers?.('scheduled')}
+                >
+                  <b>{fleetGlanceSummary.scheduled}</b>
+                  <span>SCHEDULED</span>
+                </button>
+              )}
+
+              {fleetGlanceSummary['not-sent'] > 0 && (
+                <button
+                  type="button"
+                  className="fleet-summary-chip muted"
+                  onClick={() => onOpenDrivers?.('not-sent')}
+                >
+                  <b>{fleetGlanceSummary['not-sent']}</b>
+                  <span>NOT SENT</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                key={driver.id}
-                className={selected ? 'selected' : ''}
-                style={{ '--driver-color': identity.color }}
-                title={driver.name}
-                aria-pressed={selected}
-                onClick={() => onSelectSubjectRef.current?.(SELECTION_TYPES.DRIVER, driver.id)}
+                className="fleet-summary-chip fleet-all-drivers"
+                onClick={() => onOpenDrivers?.('all')}
               >
-                <i />
-                <b>{driver.initials}</b>
-                <span>{fleetStatusLabel(driver, live)}</span>
+                <b>{drivers.length}</b>
+                <span>DRIVERS ▾</span>
               </button>
-            )
-          })}
+            </>
+          )}
         </div>
       )}
 

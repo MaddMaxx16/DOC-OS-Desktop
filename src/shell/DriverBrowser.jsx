@@ -1,6 +1,35 @@
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 
+const DRIVER_FILTER_LABELS = Object.freeze({
+  all: 'ALL DRIVERS',
+  attention: 'NEEDS ATTENTION',
+  'en-route': 'EN ROUTE',
+  'at-stop': 'AT STOP',
+  break: 'ON BREAK',
+  scheduled: 'SCHEDULED',
+  'not-sent': 'PLAN NOT SENT',
+})
+
+function matchesDriverFilter(filter, liveState) {
+  if (!filter || filter === 'all') return true
+  if (filter === 'attention') {
+    return liveState?.phase === 'dispatch-required' || liveState?.attention === true
+  }
+  if (filter === 'en-route') return liveState?.executionPhase === 'en-route'
+  if (filter === 'at-stop') {
+    return ['service-loading', 'service-unloading', 'arrived'].includes(
+      liveState?.executionPhase,
+    )
+  }
+  if (filter === 'break') return liveState?.executionPhase === 'dwell-break'
+  if (filter === 'scheduled') return liveState?.phase === 'scheduled'
+  if (filter === 'not-sent') {
+    return !liveState?.sent && liveState?.phase !== 'dispatch-required'
+  }
+  return true
+}
+
 function liveStatusCopy(driver, liveState) {
   if (liveState?.phase === 'dispatch-required') {
     return {
@@ -82,20 +111,41 @@ export default function DriverBrowser({
   drivers,
   activeDriverId,
   liveDriverStates = {},
+  filter = 'all',
+  onClearFilter,
   onSelectSubject,
 }) {
+  const filteredDrivers = drivers.filter((driver) => (
+    matchesDriverFilter(filter, liveDriverStates[driver.id] ?? null)
+  ))
+  const filterLabel = DRIVER_FILTER_LABELS[filter] ?? DRIVER_FILTER_LABELS.all
+
   return (
     <aside className="workstation-browser driver-browser" aria-label="Drivers">
       <header className="workstation-panel-header">
         <div>
           <span>FLEET</span>
           <strong>Drivers</strong>
-          <small>{drivers.length} active today</small>
+          <small>
+            {filter === 'all'
+              ? `${drivers.length} active today`
+              : `${filteredDrivers.length} of ${drivers.length} · ${filterLabel}`}
+          </small>
         </div>
+        {filter !== 'all' && (
+          <button
+            type="button"
+            className="driver-filter-clear"
+            onClick={onClearFilter}
+            title="Show all drivers"
+          >
+            ALL
+          </button>
+        )}
       </header>
 
       <div className="driver-list">
-        {drivers.map((driver) => {
+        {filteredDrivers.map((driver) => {
           const identity = getDriverIdentity(driver.id)
           const selected = driver.id === activeDriverId
           const liveCopy = liveStatusCopy(driver, liveDriverStates[driver.id])
@@ -119,6 +169,13 @@ export default function DriverBrowser({
             </button>
           )
         })}
+
+        {filteredDrivers.length === 0 && (
+          <div className="driver-list-empty">
+            <strong>No drivers in this group</strong>
+            <small>{filterLabel}</small>
+          </div>
+        )}
       </div>
     </aside>
   )

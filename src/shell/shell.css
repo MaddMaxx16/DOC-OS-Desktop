@@ -372,6 +372,34 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
 }
+.workstation-panel-header > button.driver-filter-clear {
+  width: auto;
+  min-width: 42px;
+  padding: 0 9px;
+  color: #9fb0bc;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+.driver-list-empty {
+  margin: 8px;
+  padding: 18px 12px;
+  display: grid;
+  gap: 5px;
+  border: 1px dashed #2b3c48;
+  background: #0b141b;
+  text-align: center;
+}
+.driver-list-empty strong {
+  color: #93a5b1;
+  font-size: var(--type-secondary);
+}
+.driver-list-empty small {
+  color: #627784;
+  font-size: var(--type-micro);
+  font-weight: 900;
+  letter-spacing: .08em;
+}
 .driver-list {
   min-height: 0;
   overflow: auto;

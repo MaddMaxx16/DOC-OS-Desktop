@@ -51,14 +51,13 @@
   gap: 6px;
   pointer-events: auto;
 }
+.fleet-glance.scaled {
+  max-width: calc(100% - 70px);
+  flex-wrap: wrap;
+}
 .fleet-glance button {
-  min-width: 92px;
   height: 30px;
   padding: 0 9px;
-  display: grid;
-  grid-template-columns: 7px auto 1fr;
-  align-items: center;
-  gap: 6px;
   border: 1px solid #263946;
   border-radius: 4px;
   background: rgba(7, 13, 19, .84);
@@ -71,7 +70,14 @@
   border-color: #536c7d;
   color: #e7eef3;
 }
-.fleet-glance button.selected {
+.fleet-driver-chip {
+  min-width: 92px;
+  display: grid;
+  grid-template-columns: 7px auto 1fr;
+  align-items: center;
+  gap: 6px;
+}
+.fleet-driver-chip.selected {
   border-color: var(--driver-color);
   background: rgba(9, 18, 25, .95);
   color: #f1f6f9;
@@ -79,20 +85,28 @@
     inset 2px 0 var(--driver-color),
     0 6px 18px rgba(0, 0, 0, .28);
 }
-.fleet-glance i {
+.fleet-driver-chip.attention-driver {
+  border-color: #704553;
+  background: rgba(28, 15, 20, .92);
+}
+.fleet-driver-chip.attention-driver span {
+  color: #e0a1ad;
+}
+.fleet-driver-chip i {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--driver-color);
   box-shadow: 0 0 8px color-mix(in srgb, var(--driver-color) 55%, transparent);
 }
-.fleet-glance b {
+.fleet-driver-chip b {
   color: var(--driver-color);
   font-size: 10px;
   font-weight: 950;
   letter-spacing: .03em;
 }
-.fleet-glance span {
+.fleet-driver-chip span,
+.fleet-summary-chip span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -100,6 +114,40 @@
   font-weight: 900;
   letter-spacing: .05em;
 }
+.fleet-summary-chip {
+  min-width: 78px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.fleet-summary-chip b {
+  color: #d5e0e7;
+  font-size: 10px;
+  font-weight: 950;
+}
+.fleet-summary-chip.attention {
+  border-color: #704553;
+  background: rgba(28, 15, 20, .92);
+  color: #e0a1ad;
+}
+.fleet-summary-chip.attention b {
+  color: #dc8292;
+}
+.fleet-summary-chip.muted {
+  color: #7f919d;
+}
+.fleet-summary-chip.muted b {
+  color: #91a1ad;
+}
+.fleet-all-drivers {
+  border-color: #435766 !important;
+  background: rgba(11, 21, 29, .94) !important;
+}
+.fleet-all-drivers b {
+  color: #dce7ed;
+}
+
 
 .maplibregl-ctrl-group {
   border: 1px solid #344652 !important;

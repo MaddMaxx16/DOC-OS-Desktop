@@ -2252,3 +2252,72 @@ The send itself is not undone merely because the late start creates new operatio
 ### Deferred appointment waiting
 
 Freight arrival still uses the existing appointment-start clamping model in this packet. Separating physical arrival from appointment/service start is intentionally deferred to **V2.7.4.2**.
+
+
+---
+
+## V2.7.4.1.1 — Fleet Glance Scaling
+
+The three-driver fleet glance works well because every driver can remain visible at once. That pattern does not scale to a 10–20 driver operation.
+
+The glance strip therefore changes representation based on fleet size.
+
+### Small fleet: 1–5 drivers
+
+Retain the current individual-chip pattern:
+
+- identity color,
+- initials,
+- live operational status,
+- direct driver selection.
+
+This keeps the current three-driver experience unchanged.
+
+### Larger fleet: 6+ drivers
+
+The strip becomes an operational summary.
+
+It may show:
+
+- the currently selected driver,
+- up to two specific drivers requiring attention,
+- EN ROUTE count,
+- AT STOP count,
+- BREAK count,
+- SCHEDULED count,
+- NOT SENT count,
+- total DRIVERS action.
+
+Attention is exception-first: the dispatcher sees who needs help before aggregate counts.
+
+### Filter handoff
+
+Fleet summary buttons open the existing Drivers browser with a matching filter.
+
+Supported groups:
+
+- NEEDS ATTENTION,
+- EN ROUTE,
+- AT STOP,
+- ON BREAK,
+- SCHEDULED,
+- PLAN NOT SENT,
+- ALL DRIVERS.
+
+The browser header reports the filtered count and provides an ALL control to return to the full roster.
+
+### Route-context scaling
+
+Fleet route context also adapts:
+
+- 1–5 drivers: normal faint active legs for non-selected drivers,
+- 6–10 drivers: active legs remain but at reduced opacity,
+- 11+ drivers: ordinary non-selected active legs are hidden by default.
+
+Truck markers still execute and remain visible. Hiding a context line never pauses or alters simulation state.
+
+Future attention states may opt into visible route context even in dense fleets.
+
+This preserves the fleet invariant:
+
+> the map shows enough context to understand the operation without rendering every possible piece of fleet state at once.

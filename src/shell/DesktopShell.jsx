@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { resolveSelectionContext } from '../domain/selection/selectionContext.js'
 import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
@@ -53,6 +53,8 @@ export default function DesktopShell({
   onCloseOperationsInspector,
   onSelectSubject,
 }) {
+  const [driverBrowserFilter, setDriverBrowserFilter] = useState('all')
+
   const { driver: selectedDriver, driverDay, stop: selectedStop } = resolveSelectionContext(
     selection,
     drivers,
@@ -96,6 +98,18 @@ export default function DesktopShell({
         })
       : []
   ), [driverDay, locations, planningActive, selectedPlanningKind])
+
+  const toggleShellApp = (appId) => {
+    if (appId === 'drivers' && activeApp !== 'drivers') {
+      setDriverBrowserFilter('all')
+    }
+    onToggleApp(appId)
+  }
+
+  const openDriversBrowser = (filter = 'all') => {
+    setDriverBrowserFilter(filter)
+    if (activeApp !== 'drivers') onToggleApp('drivers')
+  }
 
   const hasBrowser = activeApp === 'drivers' || freightlinkOpen
   const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)
@@ -160,13 +174,15 @@ export default function DesktopShell({
           style={selectedDriverIdentity ? { '--selected-driver-color': selectedDriverIdentity.color } : undefined}
           aria-label="DOC OS operations workstation"
         >
-          <CommandRail activeSection={activeApp} onToggleSection={onToggleApp} />
+          <CommandRail activeSection={activeApp} onToggleSection={toggleShellApp} />
 
           {activeApp === 'drivers' && (
             <DriverBrowser
               drivers={drivers}
               activeDriverId={selectedDriver?.id ?? null}
               liveDriverStates={liveDriverStates}
+              filter={driverBrowserFilter}
+              onClearFilter={() => setDriverBrowserFilter('all')}
               onSelectSubject={onSelectSubject}
             />
           )}
@@ -207,6 +223,7 @@ export default function DesktopShell({
               locations={locations}
               onPreviewPlanningPlace={onPreviewDriverPlanningPlace}
               onSelectSubject={onSelectSubject}
+              onOpenDrivers={openDriversBrowser}
             />
           </div>
 

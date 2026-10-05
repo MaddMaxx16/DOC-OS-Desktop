@@ -32,25 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.1 Dispatch Gating + Late Send Recovery
+## Current packet — V2.7.4.1.1 Fleet Glance Scaling
 
-V2.1 through V2.7.4.0.4 are accepted and locked. Fleet execution, fleet route truth, marker anchoring, and fleet map clarity remain intact.
+V2.1 through V2.7.4.1 are accepted and locked. Dispatch gating, late-send recovery, fleet execution, route truth, and marker anchoring remain intact.
 
-Core dispatch rules:
-- an unsent driver never begins route execution merely because the global clock reaches the planned shift start,
-- before shift start an unsent driver remains PLAN NOT SENT,
-- at or after planned shift start an unsent driver becomes DISPATCH REQUIRED and holds at the start/current truck position,
-- other drivers continue executing; dispatch-required state never pauses the fleet clock,
-- the top operations bar and fleet surfaces must surface dispatch-required drivers clearly,
-- when a late schedule is finally sent, the current absolute game minute becomes that driver's actual dispatch/departure start,
-- downstream freight arrivals, Lunch timing, Staging arrival, appointment margin, and plan analysis are recalculated from the actual dispatch start,
-- the original scheduled shift start remains preserved as schedule truth; late dispatch does not rewrite the planned shift,
-- late dispatch may create appointment/HOS warnings after the send because the delay is an operational consequence,
-- sending late must never retroactively complete route legs, service events, or freight state,
-- the driver begins at route progress zero from the start location at the actual send minute,
-- dispatch send metadata records sentAtMinutes and sentAtDayNumber,
-- V2.7.4.1 does not yet separate physical arrival from appointment waiting; that remains V2.7.4.2,
-- do not change fleet route hydration, truck animation, HOS depletion, or facility-service timing in this packet.
+Fleet glance scaling rules:
+- fleets with 1–5 drivers retain the existing one-chip-per-driver map strip,
+- fleets with 6+ drivers switch to a compact selected-driver + fleet-health summary,
+- the selected driver remains visible regardless of fleet size,
+- up to two non-selected drivers requiring attention remain individually visible by initials/status,
+- additional attention drivers collapse into a NEED ATTENTION counter,
+- fleet summary counters include EN ROUTE, AT STOP, BREAK, SCHEDULED, and NOT SENT when nonzero,
+- clicking a summary counter opens the Drivers browser filtered to that operational group,
+- clicking DRIVERS opens the complete roster,
+- the Drivers browser exposes the active filter and provides an ALL clear action,
+- fleets with 6–10 drivers retain non-selected active-leg context at reduced opacity,
+- fleets with 11+ drivers hide ordinary non-selected active legs by default; only attention-worthy context may break through,
+- truck simulation remains fully active regardless of whether route context is hidden,
+- persistent truck name labels remain click-only,
+- do not change dispatch timing, late-send recovery, route execution, HOS, or appointment/service timing in this patch.
 
 
 ## Verification
