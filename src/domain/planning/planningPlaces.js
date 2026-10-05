@@ -26,6 +26,35 @@ function eventContext(day, kind) {
   }
 }
 
+function lunchDirectionMetrics(direct, outbound) {
+  if (
+    !Number.isFinite(direct?.minutes)
+    || !Number.isFinite(outbound?.minutes)
+  ) {
+    return {
+      forwardProgressMinutes: 0,
+      backtrackMinutes: 0,
+      directionLabel: 'ROUTE POSITION UNKNOWN',
+      planningScore: Number.POSITIVE_INFINITY,
+    }
+  }
+
+  const forwardProgressMinutes = direct.minutes - outbound.minutes
+  const backtrackMinutes = Math.max(0, -forwardProgressMinutes)
+  const directionLabel = forwardProgressMinutes >= 2
+    ? `TOWARD NEXT STOP · ${Math.round(forwardProgressMinutes)} MIN CLOSER`
+    : backtrackMinutes > 0
+      ? `BACKTRACK · ${Math.round(backtrackMinutes)} MIN FARTHER`
+      : 'ROUTE NEUTRAL'
+
+  return {
+    forwardProgressMinutes,
+    backtrackMinutes,
+    directionLabel,
+    planningScore: backtrackMinutes * 3,
+  }
+}
+
 function locationOption(location, metrics, currentLocationId) {
   return {
     id: location.id,
@@ -75,11 +104,16 @@ export function buildPlanningPlaceOptions({
         ? estimateRoadLeg(previousCoordinates, nextCoordinates)
         : { miles: 0, minutes: 0 }
 
+      const detourMinutes = Math.max(0, into.minutes + out.minutes - direct.minutes)
+      const direction = lunchDirectionMetrics(direct, out)
+
       return locationOption(location, {
         travelMinutes: into.minutes + out.minutes,
         travelMiles: into.miles + out.miles,
-        detourMinutes: Math.max(0, into.minutes + out.minutes - direct.minutes),
+        detourMinutes,
         detourMiles: Math.max(0, into.miles + out.miles - direct.miles),
+        ...direction,
+        planningScore: detourMinutes + direction.planningScore,
       }, currentLocationId)
     }
 
@@ -102,8 +136,8 @@ export function buildPlanningPlaceOptions({
 
   options.sort((left, right) => {
     if (left.isCurrent !== right.isCurrent) return left.isCurrent ? -1 : 1
-    const leftScore = kind === 'lunch' ? left.detourMinutes : left.travelMinutes
-    const rightScore = kind === 'lunch' ? right.detourMinutes : right.travelMinutes
+    const leftScore = kind === 'lunch' ? left.planningScore : left.travelMinutes
+    const rightScore = kind === 'lunch' ? right.planningScore : right.travelMinutes
     return leftScore - rightScore || left.label.localeCompare(right.label)
   })
 

@@ -73,6 +73,11 @@ export default function PlanningPlaceFlyout({
                 {option.parking ? ' · PARKING' : ' · NO TRUCK PARKING'}
                 {!lunch && option.overnight === true ? ' · OVERNIGHT' : ''}
               </em>
+              {lunch && option.directionLabel && (
+                <i className={option.backtrackMinutes > 0 ? 'backtrack' : 'forward'}>
+                  {option.directionLabel}
+                </i>
+              )}
               {!lunch && option.proximityLabel && <i>{option.proximityLabel}</i>}
               {option.isCurrent && <b>CONFIRMED</b>}
               {previewing && <b>PREVIEW</b>}

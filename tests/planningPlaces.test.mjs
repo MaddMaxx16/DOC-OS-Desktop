@@ -28,7 +28,69 @@ test('Lunch place options are real gameplay POIs ranked against the current rout
   assert.equal(options[0].isCurrent, true)
   assert.ok(options.some((option) => option.id === 'garden-state-travel-plaza'))
   assert.ok(options.every((option) => Number.isFinite(option.detourMinutes)))
+  assert.ok(options.every((option) => Number.isFinite(option.forwardProgressMinutes)))
+  assert.ok(options.every((option) => Number.isFinite(option.backtrackMinutes)))
+  assert.ok(options.every((option) => Number.isFinite(option.planningScore)))
+  assert.ok(options.every((option) => typeof option.directionLabel === 'string'))
   assert.ok(options.every((option) => Array.isArray(option.coordinates)))
+})
+
+test('Lunch ranking prefers forward progress over a slightly cheaper backtrack', () => {
+  const routeDay = {
+    timeline: [
+      {
+        id: 'previous-stop',
+        kind: 'freight-stop',
+        coordinates: [-74.0, 40.7],
+      },
+      {
+        id: 'lunch-stop',
+        kind: 'lunch',
+        locationId: null,
+      },
+      {
+        id: 'next-stop',
+        kind: 'freight-stop',
+        coordinates: [-73.8, 40.7],
+      },
+    ],
+  }
+  const routeLocations = {
+    forward: {
+      id: 'forward',
+      label: 'Forward Route Diner',
+      coordinates: [-73.95, 40.75],
+      planningRoles: ['lunch'],
+      poiType: 'food',
+      truckAccess: 'easy',
+      parking: true,
+    },
+    backtrack: {
+      id: 'backtrack',
+      label: 'Backtrack Cafe',
+      coordinates: [-74.02, 40.7],
+      planningRoles: ['lunch'],
+      poiType: 'food',
+      truckAccess: 'easy',
+      parking: true,
+    },
+  }
+
+  const options = buildPlanningPlaceOptions({
+    day: routeDay,
+    kind: 'lunch',
+    locations: routeLocations,
+  })
+
+  assert.equal(options[0].id, 'forward')
+  const forward = options.find((option) => option.id === 'forward')
+  const backtrack = options.find((option) => option.id === 'backtrack')
+  assert.ok(forward.forwardProgressMinutes > 0)
+  assert.equal(forward.backtrackMinutes, 0)
+  assert.ok(backtrack.backtrackMinutes > 0)
+  assert.ok(backtrack.planningScore > backtrack.detourMinutes)
+  assert.match(forward.directionLabel, /TOWARD NEXT STOP/)
+  assert.match(backtrack.directionLabel, /BACKTRACK/)
 })
 
 test('choosing a Lunch POI persists the physical location and recalculates the Driver Day', () => {

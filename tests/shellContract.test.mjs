@@ -391,6 +391,30 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.3.6 flips the truck by route direction, overlaps clock tweens, and penalizes lunch backtracking', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const mapCss = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+  const planning = await readFile(new URL('../src/domain/planning/planningPlaces.js', import.meta.url), 'utf8')
+  const flyout = await readFile(new URL('../src/features/driver-day/PlanningPlaceFlyout.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /SIMULATION_TICK_MS/)
+  assert.match(map, /function truckFacingAlongRoute/)
+  assert.match(map, /return longitudeDelta < 0 \? 'left' : 'right'/)
+  assert.match(map, /element\.dataset\.facing = facing/)
+  assert.match(map, /animationDurationMs = SIMULATION_TICK_MS \* 1\.15/)
+  assert.match(mapCss, /\.driver-marker\[data-facing='left'\] \.driver-truck-icon svg \{[\s\S]*scaleX\(-1\)/)
+  assert.match(mapCss, /\.driver-marker\[data-facing='left'\] \.driver-truck-icon b \{[\s\S]*right: 6px;/)
+
+  assert.match(planning, /function lunchDirectionMetrics/)
+  assert.match(planning, /backtrackMinutes \* 3/)
+  assert.match(planning, /planningScore: detourMinutes \+ direction\.planningScore/)
+  assert.match(planning, /left\.planningScore/)
+  assert.match(planning, /TOWARD NEXT STOP/)
+  assert.match(planning, /BACKTRACK/)
+  assert.match(flyout, /option\.directionLabel/)
+  assert.match(flyout, /option\.backtrackMinutes > 0 \? 'backtrack' : 'forward'/)
+})
+
 test('V2.7.3.5 renders lunch and staging choices as native semantic planning POIs', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
@@ -693,7 +717,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.5 · NATIVE PLANNING POIS/)
+  assert.match(top, /DESKTOP V2\.7\.3\.6 · MOTION \+ LUNCH FLOW/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

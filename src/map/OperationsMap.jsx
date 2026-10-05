@@ -12,6 +12,7 @@ import {
   routeExecutionPosition,
   routeSegmentExecutionPhase,
 } from '../domain/live/routeExecution.js'
+import { SIMULATION_TICK_MS } from '../domain/live/liveOperations.js'
 import {
   buildDriverRouteSegments,
   markInsertionAffectedSegment,
@@ -193,6 +194,30 @@ function poiIconImageExpression() {
   ]
 }
 
+function truckFacingAlongRoute(routeShape = [], progress = 0, fallback = 'right') {
+  if (!Array.isArray(routeShape) || routeShape.length < 2) return fallback
+
+  const clampedProgress = Math.min(1, Math.max(0, Number(progress) || 0))
+  const sampleWindow = 0.004
+  const before = coordinateAlongRouteShape(
+    routeShape,
+    Math.max(0, clampedProgress - sampleWindow),
+  )
+  const after = coordinateAlongRouteShape(
+    routeShape,
+    Math.min(1, clampedProgress + sampleWindow),
+  )
+
+  if (!Array.isArray(before) || !Array.isArray(after)) return fallback
+
+  const longitudeDelta = Number(after[0]) - Number(before[0])
+  if (!Number.isFinite(longitudeDelta) || Math.abs(longitudeDelta) < 0.00002) {
+    return fallback
+  }
+
+  return longitudeDelta < 0 ? 'left' : 'right'
+}
+
 function committedRouteComplete(segments = []) {
   return segments.length > 0
     && segments.every((segment) => (
@@ -286,6 +311,7 @@ export default function OperationsMap({
     driverId: null,
     segmentId: null,
     progress: 0,
+    facing: 'right',
   })
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
@@ -400,6 +426,7 @@ export default function OperationsMap({
       element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${driverExplicitlySelected ? 'label-open' : ''}`
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
+      element.dataset.facing = 'right'
       element.setAttribute('aria-label', `Select ${driver.name}, ${identity.colorName} driver`)
       element.innerHTML = `${truckMarkup(driver.initials)}<small><i></i>${driver.name}</small>`
       element.addEventListener('click', (event) => {
@@ -488,6 +515,7 @@ export default function OperationsMap({
         driverId: selectedDriver.id,
         segmentId: activeSegmentId,
         progress: targetProgress,
+        facing: truckMotionRef.current.facing ?? 'right',
       }
       return undefined
     }
@@ -507,16 +535,23 @@ export default function OperationsMap({
         coordinateAlongRouteShape(routeShape, targetProgress)
           ?? liveTruckCoordinates,
       )
+      const facing = truckFacingAlongRoute(
+        routeShape,
+        targetProgress,
+        truckMotionRef.current.facing ?? 'right',
+      )
+      if (element) element.dataset.facing = facing
       truckMotionRef.current = {
         driverId: selectedDriver.id,
         segmentId: activeSegmentId,
         progress: targetProgress,
+        facing,
       }
       return undefined
     }
 
     const startedAt = performance.now()
-    const animationDurationMs = 900
+    const animationDurationMs = SIMULATION_TICK_MS * 1.15
 
     const animate = (now) => {
       const elapsed = Math.max(0, now - startedAt)
@@ -524,13 +559,20 @@ export default function OperationsMap({
       const renderedProgress = startProgress
         + ((targetProgress - startProgress) * frameProgress)
       const coordinates = coordinateAlongRouteShape(routeShape, renderedProgress)
+      const facing = truckFacingAlongRoute(
+        routeShape,
+        renderedProgress,
+        truckMotionRef.current.facing ?? 'right',
+      )
 
       if (Array.isArray(coordinates)) marker.setLngLat(coordinates)
+      if (element) element.dataset.facing = facing
 
       truckMotionRef.current = {
         driverId: selectedDriver.id,
         segmentId: activeSegmentId,
         progress: renderedProgress,
+        facing,
       }
 
       if (frameProgress < 1) {

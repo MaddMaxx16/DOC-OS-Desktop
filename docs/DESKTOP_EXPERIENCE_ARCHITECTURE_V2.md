@@ -1908,3 +1908,60 @@ Committed non-freight stops no longer use generic `L` or `S` letters.
 This creates the map-language invariant:
 
 > letters/numbers identify freight work; icons identify physical stop types.
+
+
+---
+
+## V2.7.3.6 — Motion + Lunch Flow Polish
+
+The V2.7.3.5 playtest exposed three polish issues:
+
+1. the truck silhouette always faced one direction even when the route reversed,
+2. route motion still had an occasional stop-start hitch between one-second simulation ticks,
+3. Lunch ranking minimized total detour but did not distinguish forward progress from backtracking toward the previous stop.
+
+### Truck facing
+
+The truck remains a horizontally oriented dispatch-map asset rather than a full heading-rotated vehicle.
+
+For each rendered frame:
+
+- sample the committed road LineString immediately before and after current route progress,
+- compare the longitude direction,
+- east/right movement uses the default truck silhouette,
+- west/left movement mirrors the truck SVG,
+- nearly vertical movement preserves the previous facing to avoid visual flicker,
+- initials are not mirrored and reposition to remain on the trailer/body side.
+
+This intentionally implements **left/right travel facing**, not continuous compass rotation.
+
+### Continuous visual motion
+
+The simulation clock still advances once per second.
+
+The visual interpolation window now runs slightly longer than that one-second cadence. The next authoritative tick normally arrives before the previous tween finishes, cancels it, and begins the next tween from the truck's current rendered progress.
+
+That overlap removes the tiny idle gap produced by a 900 ms animation on a 1000 ms clock tick while keeping clock state authoritative.
+
+### Forward-progress Lunch scoring
+
+Lunch selection now evaluates both:
+
+- added route detour,
+- whether the lunch stop moves the truck closer to or farther from the next scheduled stop.
+
+For a candidate:
+
+- **forward progress** = direct previous-stop → next-stop travel time minus candidate → next-stop travel time,
+- negative forward progress becomes **backtrack minutes**,
+- backtrack minutes receive a 3× ranking penalty on top of normal detour.
+
+This is a preference, not a hard rule. A small backtrack can still win if forward alternatives impose a substantially worse overall route.
+
+The Lunch Planner surfaces:
+
+- **TOWARD NEXT STOP**,
+- **ROUTE NEUTRAL**,
+- **BACKTRACK**,
+
+so the player can understand why one option is operationally stronger than another.

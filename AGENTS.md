@@ -32,22 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3.5 Native Planning POIs
+## Current packet — V2.7.3.6 Motion + Lunch Flow Polish
 
-V2.1 through V2.7.3.4 are accepted and locked. Complete route truth, smooth truck motion, click-only driver labels, and native committed P/D/L/S stops remain intact.
+V2.1 through V2.7.3.5 are accepted and locked. Native operational/planning POIs, complete route truth, click-only driver labels, and facility-service execution remain intact.
 
 Guardrails:
-- lunch/staging planning candidates use MapLibre-native GeoJSON layers, not HTML/DOM Marker positioning,
-- candidate POIs preserve their semantic place type: food, truck stop, staging, yard, fuel, service, or warehouse,
-- committed lunch/staging use the same semantic icon family as planning candidates,
-- pickup/delivery retain P#/D# load badges because freight sequence and identity remain operationally useful,
-- planning candidate circles use a distinct preview treatment so they read as choices rather than committed stops,
-- hovering a candidate may reveal its place label; clicking it previews that location through the existing planning workflow,
-- the currently previewed candidate is represented by the preview Driver Day route/stop and must not render twice,
-- semantic icon sprites are registered once on map load and shared by committed and planning layers,
-- planning-place DOM marker markup and CSS are retired,
-- FreightLink preview pickup/delivery DOM markers remain valid preview-only context,
-- do not alter route geometry, routing retries, truck interpolation, simulation timing, HOS, planning calculations, or facility-service timing in this packet.
+- truck artwork faces right when the local committed route is traveling east/right and faces left when the local route is traveling west/left,
+- facing is derived from a short window of the actual routed LineString around current rendered progress, not from destination geography,
+- nearly vertical road motion preserves the previous facing to avoid rapid left/right flicker,
+- flip only the truck SVG; driver initials remain readable and reposition over the box body,
+- the simulation clock remains authoritative while visual motion slightly overlaps the 1-second clock cadence to avoid stop-start gaps,
+- a new clock tick cancels the unfinished tween and continues from current rendered route progress,
+- do not introduce easing that changes gameplay timing or causes the visual truck to overshoot authoritative progress,
+- lunch planning must consider direction of travel in addition to total detour,
+- lunch options that leave the driver farther from the next scheduled stop receive a backtrack penalty,
+- small backtracks remain legal; they are penalized rather than categorically forbidden,
+- planning options expose TOWARD NEXT STOP / ROUTE NEUTRAL / BACKTRACK context to the player,
+- staging ranking remains based on end-of-day proximity and is unchanged,
+- do not alter route hydration, HOS, booking, service timing, or freight stop sequencing in this packet.
 
 
 ## Verification

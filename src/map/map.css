@@ -79,6 +79,11 @@
   width: 42px;
   height: 30px;
   overflow: visible;
+  transform-origin: center;
+  transition: transform .12s linear;
+}
+.driver-marker[data-facing='left'] .driver-truck-icon svg {
+  transform: scaleX(-1);
 }
 .driver-truck-icon .truck-box,
 .driver-truck-icon .truck-cab {
@@ -107,6 +112,10 @@
   line-height: 1;
   text-align: center;
   letter-spacing: -.02em;
+}
+.driver-marker[data-facing='left'] .driver-truck-icon b {
+  left: auto;
+  right: 6px;
 }
 .driver-marker > small {
   position: absolute;

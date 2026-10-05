@@ -121,6 +121,17 @@
 .planning-place-flyout-list small,
 .planning-place-flyout-list em,
 .planning-place-flyout-list i,
+.planning-place-flyout-list i.forward {
+  border-color: #315246;
+  background: #0b1a16;
+  color: #82b5a0;
+}
+.planning-place-flyout-list i.backtrack {
+  border-color: #654552;
+  background: #1b1015;
+  color: #d49aab;
+}
+
 .planning-place-flyout-list b {
   font-size: var(--type-micro);
 }
