@@ -400,7 +400,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.6 · FREIGHT LOADING/)
+  assert.match(top, /DESKTOP V2\.7\.5\.0\.6\.1 · CARGO READABILITY/)
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /manifest-load-number/)
   assert.match(puzzle, /pallet-piece-marking/)
@@ -428,6 +428,18 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   assert.match(css, /\.cargo-machinery-crate/)
   assert.match(css, /\.drag-preview-piece\.valid/)
   assert.match(css, /\.trailer-puzzle-cell\.preview-blocker/)
+  assert.match(puzzle, /function handlingClass/)
+  assert.match(puzzle, /function trailerCellFromPointer/)
+  assert.match(puzzle, /data-trailer-cell-index=\{cellIndex\}/)
+  assert.match(puzzle, /dragEvent\.stopPropagation\(\)/)
+  assert.match(puzzle, /loaded-freight-grip/)
+  assert.match(css, /\.puzzle-board\.drag-active \.loaded-freight-piece:not\(\.dragging\)/)
+  assert.match(css, /\.handling-fragile/)
+  assert.match(css, /\.handling-heavy/)
+  assert.match(css, /\.handling-hazmat/)
+  assert.match(css, /\.handling-upright/)
+  assert.match(css, /\.handling-no-stack/)
+  assert.match(css, /\.handling-oversize/)
 })
 
 test('V2.7.5.0.4 visual interaction foundations remain under the freight-loading pass', async () => {
@@ -1155,7 +1167,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.6 · FREIGHT LOADING/)
+  assert.match(top, /DESKTOP V2\.7\.5\.0\.6\.1 · CARGO READABILITY/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
