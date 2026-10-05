@@ -32,24 +32,21 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3.6 Motion + Lunch Flow Polish
+## Current packet — V2.7.3.7 Truck Label State
 
-V2.1 through V2.7.3.5 are accepted and locked. Native operational/planning POIs, complete route truth, click-only driver labels, and facility-service execution remain intact.
+V2.1 through V2.7.3.6 are accepted and locked. Truck direction, smooth motion, forward-progress Lunch ranking, native POIs, and route truth remain intact.
 
 Guardrails:
-- truck artwork faces right when the local committed route is traveling east/right and faces left when the local route is traveling west/left,
-- facing is derived from a short window of the actual routed LineString around current rendered progress, not from destination geography,
-- nearly vertical road motion preserves the previous facing to avoid rapid left/right flicker,
-- flip only the truck SVG; driver initials remain readable and reposition over the box body,
-- the simulation clock remains authoritative while visual motion slightly overlaps the 1-second clock cadence to avoid stop-start gaps,
-- a new clock tick cancels the unfinished tween and continues from current rendered route progress,
-- do not introduce easing that changes gameplay timing or causes the visual truck to overshoot authoritative progress,
-- lunch planning must consider direction of travel in addition to total detour,
-- lunch options that leave the driver farther from the next scheduled stop receive a backtrack penalty,
-- small backtracks remain legal; they are penalized rather than categorically forbidden,
-- planning options expose TOWARD NEXT STOP / ROUTE NEUTRAL / BACKTRACK context to the player,
-- staging ranking remains based on end-of-day proximity and is unchanged,
-- do not alter route hydration, HOS, booking, service timing, or freight stop sequencing in this packet.
+- driver selection and truck-label visibility are separate states,
+- selecting a driver from Drivers, Driver Day, a stop, FreightLink, or any other non-map surface must not open the truck name label,
+- clicking the truck itself toggles its name label,
+- clicking elsewhere on the map closes the open truck label,
+- the selected-driver glow remains independent from label visibility,
+- truck movement never opens the label automatically,
+- the label may remain visible while driving only if the player explicitly clicked that truck and has not dismissed it,
+- only one truck label may be open at a time,
+- preserve existing left/right truck facing, route interpolation, and map camera ownership,
+- do not change simulation timing, route hydration, HOS, Lunch scoring, or facility service behavior in this packet.
 
 
 ## Verification

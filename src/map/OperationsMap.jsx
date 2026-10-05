@@ -315,6 +315,7 @@ export default function OperationsMap({
   })
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
+  const [openDriverLabelId, setOpenDriverLabelId] = useState(null)
 
   const driverRouteKey = selectedDriver && driverDay
     ? `${selectedDriver.id}:${driverDay.timeline.map((event) => (
@@ -420,10 +421,10 @@ export default function OperationsMap({
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
       const identity = getDriverIdentity(driver.id)
       const selected = selectedDriver?.id === driver.id
-      const driverExplicitlySelected = isSelection(selection, SELECTION_TYPES.DRIVER, driver.id)
+      const labelOpen = openDriverLabelId === driver.id
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${driverExplicitlySelected ? 'label-open' : ''}`
+      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${labelOpen ? 'label-open' : ''}`
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
       element.dataset.facing = 'right'
@@ -432,6 +433,7 @@ export default function OperationsMap({
       element.addEventListener('click', (event) => {
         event.preventDefault()
         event.stopPropagation()
+        setOpenDriverLabelId((current) => current === driver.id ? null : driver.id)
         onSelectSubjectRef.current?.(SELECTION_TYPES.DRIVER, driver.id)
       })
 
@@ -473,7 +475,19 @@ export default function OperationsMap({
       }
     }
 
-  }, [drivers, locations, marketLanes, selectedDriver, selection, workspaceOpen])
+  }, [drivers, locations, marketLanes, openDriverLabelId, selectedDriver, selection, workspaceOpen])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map) return undefined
+
+    const closeDriverLabel = () => setOpenDriverLabelId(null)
+    map.on('click', closeDriverLabel)
+
+    return () => {
+      map.off('click', closeDriverLabel)
+    }
+  }, [mapReady])
 
   useEffect(() => {
     if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return undefined

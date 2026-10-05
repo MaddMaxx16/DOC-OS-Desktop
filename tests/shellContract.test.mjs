@@ -391,6 +391,18 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.3.7 decouples truck label visibility from global driver selection', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /const \[openDriverLabelId, setOpenDriverLabelId\] = useState\(null\)/)
+  assert.match(map, /const labelOpen = openDriverLabelId === driver\.id/)
+  assert.match(map, /setOpenDriverLabelId\(\(current\) => current === driver\.id \? null : driver\.id\)/)
+  assert.match(map, /const closeDriverLabel = \(\) => setOpenDriverLabelId\(null\)/)
+  assert.match(map, /map\.on\('click', closeDriverLabel\)/)
+  assert.match(map, /map\.off\('click', closeDriverLabel\)/)
+  assert.doesNotMatch(map, /driverExplicitlySelected/)
+})
+
 test('V2.7.3.6 flips the truck by route direction, overlaps clock tweens, and penalizes lunch backtracking', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const mapCss = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
@@ -468,8 +480,10 @@ test('V2.7.3.2 keeps driver labels click-only and FreightLink preview markers ce
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
 
-  assert.match(map, /driverExplicitlySelected = isSelection\(selection, SELECTION_TYPES\.DRIVER, driver\.id\)/)
-  assert.match(map, /driverExplicitlySelected \? 'label-open' : ''/)
+  assert.match(map, /openDriverLabelId === driver\.id/)
+  assert.match(map, /labelOpen \? 'label-open' : ''/)
+  assert.match(map, /setOpenDriverLabelId\(\(current\) => current === driver\.id \? null : driver\.id\)/)
+  assert.doesNotMatch(map, /driverExplicitlySelected/)
   assert.match(css, /\.driver-marker\.label-open > small \{[\s\S]*display: flex;/)
   assert.doesNotMatch(css, /\.driver-marker:hover > small,[\s\S]*\.driver-marker\.selected > small/)
   assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(accessCoordinates \?\? location\.coordinates\)/)
@@ -717,7 +731,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.6 · MOTION \+ LUNCH FLOW/)
+  assert.match(top, /DESKTOP V2\.7\.3\.7 · TRUCK LABEL STATE/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

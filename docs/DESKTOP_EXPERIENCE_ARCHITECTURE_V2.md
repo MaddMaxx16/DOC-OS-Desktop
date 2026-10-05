@@ -1965,3 +1965,26 @@ The Lunch Planner surfaces:
 - **BACKTRACK**,
 
 so the player can understand why one option is operationally stronger than another.
+
+
+---
+
+## V2.7.3.7 — Truck Label State
+
+The V2.7.3.6 playtest exposed one remaining interaction leak: the truck name label was tied to global driver selection.
+
+Because Marcus remains the selected driver during live execution, the label stayed visible even though the player had not just clicked the moving truck.
+
+### Interaction rule
+
+Driver selection and truck-label visibility are now independent.
+
+- selecting Marcus anywhere in the desktop may highlight his truck,
+- that selection does **not** open the name label,
+- clicking the truck itself toggles the name label,
+- clicking elsewhere on the map closes the label,
+- live movement never changes label visibility on its own.
+
+This creates the invariant:
+
+> selection answers “which driver is active?” while the map label answers “which truck did the player explicitly inspect?”
