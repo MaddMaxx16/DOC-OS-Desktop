@@ -170,8 +170,9 @@ export default function DesktopShell({
         >
           <DockLoadWorkspace
             driver={focusedDockDriver}
+            driverDay={focusedDockDay}
             event={focusedDockEvent}
-            facilityOperation={facilityOperations?.[`${focusedDockDriver.id}:${focusedDockEvent.id}`] ?? null}
+            facilityOperations={facilityOperations}
             onCommit={onCommitDockLoad}
           />
         </FocusedWorkspace>
