@@ -2617,3 +2617,81 @@ The underlying operation/load-plan state is preserved so later packets can add:
 - delivery consequences.
 
 The first goal is to prove the complete interaction boundary without destabilizing fleet execution.
+
+
+---
+
+## V2.7.5.0.1 — Puzzle Board Correction
+
+The first Dock & Load screen proved the pickup state transition but exposed the wrong interaction model: freight behaved like form rows and the trailer behaved like 26 independent parking spaces.
+
+The corrected model is a packing puzzle.
+
+### Freight pieces
+
+Staged freight is represented as movable pallet pieces.
+
+Each freight object now carries a floor footprint. Tutorial shapes include:
+
+- standard long,
+- standard wide,
+- L overhang,
+- wide overhang,
+- block,
+- long overhang.
+
+The player may rotate staged pieces before placement.
+
+Verification still matters, but the visual and mechanical center of the screen is now the shape itself rather than a freight card.
+
+### Equipment-derived board
+
+The trailer board is generated from the driver's assigned equipment.
+
+For the current 53-foot dry van:
+
+- equipment capacity remains 26 standard pallet positions,
+- max freight weight remains 44,000 lb,
+- the puzzle board uses a finer cell grid derived from that capacity so irregular freight footprints can occupy multiple cells.
+
+Future equipment with different pallet capacity automatically produces a different board size.
+
+No Dock & Load screen may hard-code a universal 26-box layout.
+
+### Placement rules
+
+A placement stores:
+
+- freight ID,
+- anchor cell,
+- rotation.
+
+The board derives the full occupied footprint from those values.
+
+Continuous validation checks:
+
+- board bounds,
+- overlap,
+- expected freight resolution,
+- expected freight placement,
+- unrelated freight,
+- trailer weight.
+
+Drag hover previews the full footprint:
+
+- valid footprint → positive preview,
+- collision/out-of-bounds → invalid preview.
+
+Placed freight remains freely editable until rear-door commitment.
+
+### Gameplay principle
+
+The core question is no longer:
+
+> Which numbered pallet box should this item occupy?
+
+It is:
+
+> Can I fit the correct shaped freight into this driver's actual trailer cleanly?
+
+That packing interaction is the foundation for later stacking, balance, height, and stop-access gameplay.

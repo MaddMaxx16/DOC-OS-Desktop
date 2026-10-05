@@ -32,35 +32,32 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0 Dock & Load Foundation
+## Current packet — V2.7.5.0.1 Puzzle Board Correction
 
-V2.1 through V2.7.4.2 are accepted and locked. Physical arrival, appointment waiting, Fleet Roster, dispatch gating, late-send recovery, fleet execution, route truth, and marker anchoring remain intact.
+V2.1 through V2.7.5.0 are accepted and locked. Facility gating, Focused Mode, rear-door commitment, background loading, route timing, and Fleet behavior remain intact.
 
-Core pickup invariant:
+Core interaction correction:
 
-> the player plans the load; the warehouse executes the load afterward.
+> Dock & Load must feel like a packing puzzle, not a form made of freight cards and fixed pallet boxes.
 
-Pickup flow in this packet:
-- road arrival and appointment waiting remain owned by V2.7.4.2,
-- when an appointment-ready pickup has no committed load plan, execution enters facility-dock-assigned instead of automatic LOADING,
-- facility-dock-assigned parks the truck at the pickup and blocks all downstream execution,
-- the assigned dock is deterministic per pickup for this foundation packet,
-- Driver Day exposes OPEN DOCK & LOAD only for the active pickup that owns the dock gate,
-- opening Dock & Load creates a Focused Mode task; the global simulation clock pauses while the player thinks,
-- closing the focused workspace without committing leaves the driver at DOCK ASSIGNED,
-- the initial puzzle shows booked-load reference, staged freight, a 26-position dry-van board, verification state, readiness, and rear-door commitment,
-- the tutorial staging set contains the complete expected pallet set plus one clearly discoverable unrelated freight unit,
-- verified freight can be dragged into trailer positions or placed into the next open position,
-- planned freight can be returned to staging before commitment,
-- the first-slice readiness gate requires all expected freight verified and planned and rejects unrelated freight in the plan,
-- closing the rear doors commits the load plan, exits Focused Mode, and starts background LOADING at the current simulation minute,
-- focused decision time consumes no simulation time,
-- a delayed door commit shifts downstream route timing from the actual loading start rather than retroactively loading,
-- warehouse loading duration still uses the existing deterministic pickup service duration in this packet,
-- automatic departure resumes after loading completes because route execution remains authoritative,
-- this packet does not yet implement stacking, weight-balance scoring, stop-access warnings, freight ambiguity difficulty, dock congestion delay, rework, final paperwork exceptions, or delivery puzzle gameplay,
-- those systems must extend the committed trailer/facility model instead of replacing it,
-- do not change live HOS depletion in this packet.
+Puzzle-board rules:
+- staged freight is rendered as draggable pallet-shaped puzzle pieces, not long text cards,
+- pieces may have different floor footprints,
+- the initial shape library includes standard, long, wide, L, block, and overhang footprints,
+- each piece may be rotated before placement,
+- dragging unverified freight into the trailer may implicitly verify it; verification remains visible but must not dominate the interaction,
+- the trailer board is generated from the selected driver's assigned equipment,
+- the current 53' dry van uses its existing 26-pallet capacity and 44,000 lb max-weight truth,
+- that capacity is translated into a finer packing grid so different freight footprints can be meaningfully fitted,
+- smaller/larger future equipment must generate a correspondingly smaller/larger puzzle board without hard-coded 26-slot UI,
+- the board validates footprint bounds and overlap continuously,
+- drag hover shows valid/invalid footprint preview,
+- clicking a placed freight piece returns it to staging before commitment,
+- the HUD reports floor-space cells used, truck weight limit, verification, and planned freight,
+- wrong/noise freight may still be placed but must remain a blocker in this tutorial slice,
+- trailer doors remain the only final commitment interaction,
+- this correction does not change the facility state machine or loading-time semantics from V2.7.5.0,
+- stacking level, balance score, stop-access scoring, and multi-view trailer analysis remain later extensions of this same board model.
 
 
 ## Verification

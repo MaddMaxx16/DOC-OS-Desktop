@@ -6,6 +6,22 @@ export const PICKUP_OPERATION_STATUS = Object.freeze({
   LOADED: 'loaded',
 })
 
+const HALF_PALLET_CELLS_PER_STANDARD_POSITION = 2
+
+const SHAPE_LIBRARY = Object.freeze([
+  Object.freeze({ id: 'standard-long', cells: Object.freeze([[0, 0], [0, 1]]) }),
+  Object.freeze({ id: 'standard-wide', cells: Object.freeze([[0, 0], [1, 0]]) }),
+  Object.freeze({ id: 'l-overhang', cells: Object.freeze([[0, 0], [0, 1], [1, 1]]) }),
+  Object.freeze({ id: 'wide-overhang', cells: Object.freeze([[0, 0], [1, 0], [2, 0]]) }),
+  Object.freeze({ id: 'block', cells: Object.freeze([[0, 0], [1, 0], [0, 1], [1, 1]]) }),
+  Object.freeze({ id: 'long-overhang', cells: Object.freeze([[0, 0], [0, 1], [0, 2]]) }),
+])
+
+function finite(value, fallback = 0) {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : fallback
+}
+
 export function facilityOperationKey(driverId, eventId) {
   return `${driverId}:${eventId}`
 }
@@ -37,6 +53,26 @@ export function pickupPlanCommitted(operation = null) {
   ].includes(operation?.status)
 }
 
+export function buildTrailerPuzzleBoard(equipment = {}) {
+  const capacityPallets = Math.max(1, finite(equipment.capacityPallets, 26))
+  const maxWeightLbs = Math.max(1, finite(equipment.maxWeightLbs, 44000))
+  const usableCells = capacityPallets * HALF_PALLET_CELLS_PER_STANDARD_POSITION
+  const columns = capacityPallets <= 12 ? 3 : 4
+  const rows = Math.ceil(usableCells / columns)
+  const totalCells = rows * columns
+
+  return {
+    label: equipment.label ?? "53' Dry Van",
+    capacityPallets,
+    maxWeightLbs,
+    columns,
+    rows,
+    usableCells,
+    totalCells,
+    disabledCellCount: totalCells - usableCells,
+  }
+}
+
 function palletWeight(totalWeightLbs, palletCount) {
   if (!palletCount) return 0
   return Math.max(1, Math.round(Number(totalWeightLbs ?? 0) / palletCount))
@@ -49,25 +85,37 @@ function destinationLabel(event = {}) {
     ?? 'Booked destination'
 }
 
+function shapeForIndex(index, expected = true) {
+  if (!expected) return SHAPE_LIBRARY[2]
+  return SHAPE_LIBRARY[index % SHAPE_LIBRARY.length]
+}
+
 export function buildTutorialStagedFreight(event = {}) {
   const palletCount = Math.max(1, Number(event.freight?.pallets ?? 1))
   const weightEach = palletWeight(event.freight?.weightLbs, palletCount)
   const loadRef = event.loadRef ?? event.loadId ?? 'LOAD'
   const destination = destinationLabel(event)
 
-  const expected = Array.from({ length: palletCount }, (_, index) => ({
-    id: `${event.id}:pallet-${index + 1}`,
-    label: `Pallet ${index + 1}`,
-    loadRef,
-    pickupNumber: loadRef,
-    destination,
-    commodity: 'Booked freight',
-    weightLbs: weightEach,
-    stackable: true,
-    maxStack: 2,
-    expected: true,
-  }))
+  const expected = Array.from({ length: palletCount }, (_, index) => {
+    const shape = shapeForIndex(index, true)
 
+    return {
+      id: `${event.id}:pallet-${index + 1}`,
+      label: `Pallet ${index + 1}`,
+      loadRef,
+      pickupNumber: loadRef,
+      destination,
+      commodity: 'Booked freight',
+      weightLbs: weightEach,
+      stackable: index % 4 !== 3,
+      maxStack: index % 4 !== 3 ? 2 : 1,
+      expected: true,
+      shapeId: shape.id,
+      shape: shape.cells.map(([x, y]) => [x, y]),
+    }
+  })
+
+  const noiseShape = shapeForIndex(0, false)
   const noise = {
     id: `${event.id}:noise-1`,
     label: 'Pallet X',
@@ -79,20 +127,149 @@ export function buildTutorialStagedFreight(event = {}) {
     stackable: true,
     maxStack: 2,
     expected: false,
+    shapeId: noiseShape.id,
+    shape: noiseShape.cells.map(([x, y]) => [x, y]),
   }
 
   return [...expected, noise]
 }
 
+function normalizeShape(cells = []) {
+  const minX = Math.min(...cells.map(([x]) => x))
+  const minY = Math.min(...cells.map(([, y]) => y))
+  return cells
+    .map(([x, y]) => [x - minX, y - minY])
+    .sort(([ax, ay], [bx, by]) => ay - by || ax - bx)
+}
+
+export function rotateFreightShape(shape = [], quarterTurns = 0) {
+  let cells = shape.map(([x, y]) => [x, y])
+  const turns = ((Number(quarterTurns) % 4) + 4) % 4
+
+  for (let turn = 0; turn < turns; turn += 1) {
+    cells = cells.map(([x, y]) => [-y, x])
+  }
+
+  return normalizeShape(cells)
+}
+
+export function boardCellCoordinates(board, cellIndex) {
+  return {
+    x: cellIndex % board.columns,
+    y: Math.floor(cellIndex / board.columns),
+  }
+}
+
+export function boardCellIndex(board, x, y) {
+  if (x < 0 || x >= board.columns || y < 0 || y >= board.rows) return null
+  const index = (y * board.columns) + x
+  return index < board.usableCells ? index : null
+}
+
+export function footprintCellIndexes({
+  board,
+  freight,
+  anchorCell,
+  rotation = 0,
+} = {}) {
+  if (!board || !freight || !Number.isInteger(Number(anchorCell))) return null
+
+  const anchor = boardCellCoordinates(board, Number(anchorCell))
+  const shape = rotateFreightShape(freight.shape, rotation)
+  const indexes = []
+
+  for (const [dx, dy] of shape) {
+    const index = boardCellIndex(board, anchor.x + dx, anchor.y + dy)
+    if (index == null) return null
+    indexes.push(index)
+  }
+
+  return indexes
+}
+
+export function placementMap({
+  board,
+  stagedFreight = [],
+  placements = {},
+} = {}) {
+  const byId = new Map(stagedFreight.map((freight) => [freight.id, freight]))
+  const occupied = new Map()
+  const invalid = new Set()
+  const collisions = new Set()
+
+  for (const [freightId, placement] of Object.entries(placements)) {
+    const freight = byId.get(freightId)
+    const cells = footprintCellIndexes({
+      board,
+      freight,
+      anchorCell: placement?.anchorCell,
+      rotation: placement?.rotation ?? 0,
+    })
+
+    if (!cells) {
+      invalid.add(freightId)
+      continue
+    }
+
+    for (const cell of cells) {
+      if (occupied.has(cell)) {
+        collisions.add(freightId)
+        collisions.add(occupied.get(cell))
+      } else {
+        occupied.set(cell, freightId)
+      }
+    }
+  }
+
+  return { occupied, invalid, collisions }
+}
+
+export function canPlaceFreight({
+  board,
+  stagedFreight = [],
+  placements = {},
+  freightId,
+  anchorCell,
+  rotation = 0,
+} = {}) {
+  const freight = stagedFreight.find((item) => item.id === freightId)
+  const cells = footprintCellIndexes({
+    board,
+    freight,
+    anchorCell,
+    rotation,
+  })
+
+  if (!cells) {
+    return { valid: false, reason: 'OUT_OF_BOUNDS', cells: [] }
+  }
+
+  const otherPlacements = Object.fromEntries(
+    Object.entries(placements).filter(([id]) => id !== freightId),
+  )
+  const map = placementMap({
+    board,
+    stagedFreight,
+    placements: otherPlacements,
+  })
+  const collision = cells.some((cell) => map.occupied.has(cell))
+
+  return {
+    valid: !collision,
+    reason: collision ? 'OVERLAP' : null,
+    cells,
+  }
+}
+
 export function evaluatePickupLoadPlan({
   event,
+  board,
   stagedFreight = [],
   verifiedIds = [],
   placements = {},
 } = {}) {
   const verified = new Set(verifiedIds)
-  const placedIds = Object.values(placements).filter(Boolean)
-  const placed = new Set(placedIds)
+  const placed = new Set(Object.keys(placements))
   const expectedFreight = stagedFreight.filter((item) => item.expected)
   const expectedIds = new Set(expectedFreight.map((item) => item.id))
   const wrongPlaced = stagedFreight.filter((item) => (
@@ -100,6 +277,7 @@ export function evaluatePickupLoadPlan({
   ))
   const missingVerified = expectedFreight.filter((item) => !verified.has(item.id))
   const missingPlaced = expectedFreight.filter((item) => !placed.has(item.id))
+  const map = placementMap({ board, stagedFreight, placements })
 
   const errors = []
   const warnings = []
@@ -125,11 +303,17 @@ export function evaluatePickupLoadPlan({
     })
   }
 
-  const duplicatePlacements = placedIds.length - placed.size
-  if (duplicatePlacements > 0) {
+  if (map.invalid.size > 0) {
     errors.push({
-      code: 'DUPLICATE_PLACEMENT',
-      message: 'The same freight unit is planned in more than one position.',
+      code: 'FREIGHT_OUT_OF_BOUNDS',
+      message: `${map.invalid.size} freight piece${map.invalid.size === 1 ? '' : 's'} does not fit inside this trailer.`,
+    })
+  }
+
+  if (map.collisions.size > 0) {
+    errors.push({
+      code: 'FREIGHT_OVERLAP',
+      message: `${map.collisions.size} freight piece${map.collisions.size === 1 ? '' : 's'} overlap another piece.`,
     })
   }
 
@@ -147,10 +331,11 @@ export function evaluatePickupLoadPlan({
     .filter((item) => placed.has(item.id))
     .reduce((sum, item) => sum + Number(item.weightLbs ?? 0), 0)
 
-  if (plannedWeightLbs > 44000) {
+  const maxWeightLbs = Math.max(1, finite(board?.maxWeightLbs, 44000))
+  if (plannedWeightLbs > maxWeightLbs) {
     errors.push({
       code: 'TRAILER_OVERWEIGHT',
-      message: `Planned trailer weight is ${Math.round(plannedWeightLbs - 44000).toLocaleString()} lb over the 44,000 lb freight limit.`,
+      message: `Planned trailer weight is ${Math.round(plannedWeightLbs - maxWeightLbs).toLocaleString()} lb over this trailer's freight limit.`,
     })
   }
 
@@ -162,6 +347,7 @@ export function evaluatePickupLoadPlan({
     verifiedExpectedCount: expectedFreight.filter((item) => verified.has(item.id)).length,
     plannedExpectedCount: expectedFreight.filter((item) => placed.has(item.id)).length,
     plannedCount: placed.size,
+    occupiedCells: map.occupied.size,
     plannedWeightLbs,
     loadRef: event?.loadRef ?? event?.loadId ?? null,
   }
