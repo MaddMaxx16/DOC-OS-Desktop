@@ -1989,8 +1989,12 @@
   pointer-events: auto;
 }
 
-.puzzle-board.drag-active .loaded-freight-piece {
+.puzzle-board.drag-active .loaded-freight-piece:not(.dragging) {
   pointer-events: none;
+}
+
+.puzzle-board.drag-active .loaded-freight-piece.dragging {
+  pointer-events: auto;
 }
 
 .loaded-freight-piece:focus-visible {
@@ -2368,6 +2372,213 @@
 
 @media (prefers-reduced-motion: reduce) {
   .loaded-freight-piece.dragging {
+    transition: none !important;
+  }
+}
+
+
+/* V2.7.5.0.6.1 — Loaded-cargo repositioning + stronger handling silhouettes */
+.loaded-freight-piece {
+  transition:
+    opacity .1s ease,
+    filter .1s ease,
+    transform .1s ease;
+}
+
+.loaded-freight-piece:hover:not(.dragging) {
+  filter:
+    drop-shadow(0 8px 8px rgba(0,0,0,.46))
+    brightness(1.08);
+}
+
+.loaded-freight-piece.dragging {
+  z-index: 11;
+  opacity: .42;
+  filter:
+    drop-shadow(0 10px 10px rgba(0,0,0,.48))
+    brightness(1.14);
+}
+
+.loaded-freight-grip {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  min-height: 16px;
+  padding: 1px 4px;
+  border: 1px solid rgba(213, 230, 239, .34);
+  border-radius: 2px;
+  background: rgba(3, 8, 11, .88);
+  color: #b8ced9;
+  font-size: 6px;
+  font-weight: 1000;
+  letter-spacing: .07em;
+  opacity: .18;
+  pointer-events: none;
+  transition: opacity .1s ease, transform .1s ease;
+}
+
+.loaded-freight-piece:hover .loaded-freight-grip,
+.loaded-freight-piece:focus-visible .loaded-freight-grip,
+.loaded-freight-piece.dragging .loaded-freight-grip {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+/* STANDARD — warm wrapped pallet. */
+.handling-standard .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-standard .loaded-freight-shape > i,
+.drag-preview-piece.handling-standard .drag-preview-shape > i {
+  border-color: #b78a58;
+  background:
+    linear-gradient(90deg, rgba(246, 229, 196, .11) 0 8%, transparent 8% 42%, rgba(246, 229, 196, .11) 42% 50%, transparent 50% 92%, rgba(246, 229, 196, .11) 92%),
+    linear-gradient(145deg, #cda473 0, #9a7049 55%, #62442c 100%);
+}
+
+/* FRAGILE — braced wood crate with a warm warning mark. */
+.handling-fragile .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-fragile .loaded-freight-shape > i,
+.drag-preview-piece.handling-fragile .drag-preview-shape > i {
+  border-color: #d68565;
+  background:
+    linear-gradient(45deg, transparent 43%, rgba(90, 47, 29, .42) 44% 50%, transparent 51%),
+    linear-gradient(-45deg, transparent 43%, rgba(90, 47, 29, .42) 44% 50%, transparent 51%),
+    repeating-linear-gradient(90deg, rgba(93, 54, 31, .22) 0 2px, transparent 2px 12px),
+    linear-gradient(145deg, #d49d6f, #a56f49 58%, #6b442c);
+}
+
+.handling-fragile .pallet-piece-marking,
+.loaded-freight-piece.handling-fragile .loaded-freight-label {
+  border-color: rgba(229, 125, 95, .6);
+}
+
+.handling-fragile .pallet-piece-marking small,
+.loaded-freight-piece.handling-fragile .loaded-freight-label > span,
+.drag-preview-piece.handling-fragile > span small {
+  color: #ff9d82;
+}
+
+/* HEAVY — dark industrial skid with a strong center band. */
+.handling-heavy .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-heavy .loaded-freight-shape > i,
+.drag-preview-piece.handling-heavy .drag-preview-shape > i {
+  border-color: #d6a64e;
+  background:
+    linear-gradient(90deg, transparent 0 39%, #d5a03d 40% 60%, transparent 61%),
+    repeating-linear-gradient(180deg, rgba(255,255,255,.045) 0 2px, transparent 2px 10px),
+    linear-gradient(145deg, #725330 0, #49351f 58%, #271f18 100%);
+  box-shadow:
+    inset 0 -9px 0 rgba(17, 14, 10, .32),
+    inset 0 2px 0 rgba(255,255,255,.08),
+    0 5px 8px rgba(0,0,0,.44);
+}
+
+.handling-heavy .pallet-piece-marking small,
+.loaded-freight-piece.handling-heavy .loaded-freight-label > span,
+.drag-preview-piece.handling-heavy > span small {
+  color: #f4c85f;
+}
+
+/* HAZMAT — cool steel/drum freight with a regulated yellow band. */
+.handling-hazmat .pallet-piece-shape,
+.loaded-freight-piece.handling-hazmat .loaded-freight-shape,
+.drag-preview-piece.handling-hazmat .drag-preview-shape {
+  filter: saturate(1.12);
+}
+
+.handling-hazmat .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-hazmat .loaded-freight-shape > i,
+.drag-preview-piece.handling-hazmat .drag-preview-shape > i {
+  border-color: #6ea8bc;
+  background:
+    linear-gradient(180deg, transparent 0 67%, rgba(237, 190, 66, .78) 68% 78%, transparent 79%),
+    radial-gradient(circle at 28% 34%, #a9cad5 0 12%, #486978 13% 25%, transparent 26%),
+    radial-gradient(circle at 72% 34%, #a9cad5 0 12%, #486978 13% 25%, transparent 26%),
+    radial-gradient(circle at 50% 70%, #a9cad5 0 12%, #486978 13% 25%, transparent 26%),
+    linear-gradient(145deg, #3e5b68, #223943 62%, #15242b);
+}
+
+.handling-hazmat .pallet-piece-marking,
+.loaded-freight-piece.handling-hazmat .loaded-freight-label {
+  border-color: rgba(236, 192, 70, .62);
+}
+
+.handling-hazmat .pallet-piece-marking small,
+.loaded-freight-piece.handling-hazmat .loaded-freight-label > span,
+.drag-preview-piece.handling-hazmat > span small {
+  color: #ffd75f;
+}
+
+/* KEEP UPRIGHT — cooler wrap with vertical directional striping. */
+.handling-upright .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-upright .loaded-freight-shape > i,
+.drag-preview-piece.handling-upright .drag-preview-shape > i {
+  border-color: #77abc1;
+  background:
+    linear-gradient(90deg, transparent 0 18%, rgba(136, 199, 224, .48) 19% 27%, transparent 28% 72%, rgba(136, 199, 224, .48) 73% 81%, transparent 82%),
+    linear-gradient(145deg, #8c958f 0, #5f706f 56%, #394a4e 100%);
+}
+
+.handling-upright .pallet-piece-marking small,
+.loaded-freight-piece.handling-upright .loaded-freight-label > span,
+.drag-preview-piece.handling-upright > span small {
+  color: #8fdaef;
+}
+
+/* NO STACK — pale wrapped freight with unmistakable warning banding. */
+.handling-no-stack .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-no-stack .loaded-freight-shape > i,
+.drag-preview-piece.handling-no-stack .drag-preview-shape > i {
+  border-color: #bb6d78;
+  background:
+    linear-gradient(180deg, transparent 0 17%, rgba(170, 62, 78, .8) 18% 28%, transparent 29% 71%, rgba(170, 62, 78, .8) 72% 82%, transparent 83%),
+    linear-gradient(145deg, #b8b0a8 0, #857b73 58%, #554d49 100%);
+}
+
+.handling-no-stack .pallet-piece-marking,
+.loaded-freight-piece.handling-no-stack .loaded-freight-label {
+  border-color: rgba(211, 100, 116, .62);
+}
+
+.handling-no-stack .pallet-piece-marking small,
+.loaded-freight-piece.handling-no-stack .loaded-freight-label > span,
+.drag-preview-piece.handling-no-stack > span small {
+  color: #ef93a0;
+}
+
+/* OVERSIZE — steel machinery/crate with visible hazard edges. */
+.handling-oversize .pallet-piece-shape i.filled,
+.loaded-freight-piece.handling-oversize .loaded-freight-shape > i,
+.drag-preview-piece.handling-oversize .drag-preview-shape > i {
+  border-color: #c59c47;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(229, 179, 59, .56) 0 7px,
+      rgba(34, 39, 42, .68) 7px 14px
+    ),
+    linear-gradient(145deg, #707d82, #46535a 60%, #273138);
+}
+
+.handling-oversize .loaded-freight-shape,
+.handling-oversize .pallet-piece-shape {
+  box-shadow:
+    inset 0 0 0 1px rgba(230, 185, 75, .18),
+    0 0 0 1px rgba(123, 138, 145, .16);
+}
+
+.handling-oversize .pallet-piece-marking small,
+.loaded-freight-piece.handling-oversize .loaded-freight-label > span,
+.drag-preview-piece.handling-oversize > span small {
+  color: #ffd162;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loaded-freight-grip,
+  .loaded-freight-piece {
     transition: none !important;
   }
 }
