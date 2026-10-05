@@ -2798,3 +2798,15 @@
     transition: none !important;
   }
 }
+
+
+/* Keep delivery badges out of the legacy oversize direct-child span geometry. */
+.loaded-freight-piece > .loaded-freight-order {
+  right: auto;
+  bottom: auto;
+}
+
+.loaded-freight-piece > .loaded-freight-grip {
+  left: auto;
+  bottom: auto;
+}
