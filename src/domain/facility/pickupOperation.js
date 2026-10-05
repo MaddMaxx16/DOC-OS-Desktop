@@ -370,12 +370,163 @@ export function canPlaceFreight({
   }
 }
 
+function loadKey(item = {}) {
+  return item.loadRef ?? item.loadId ?? null
+}
+
+export function buildDeliveryAccessOrder({
+  driverDay,
+  eventId,
+  freight = [],
+} = {}) {
+  const timeline = driverDay?.timeline ?? []
+  const currentIndex = timeline.findIndex((item) => item.id === eventId)
+  const remainingTimeline = currentIndex >= 0
+    ? timeline.slice(currentIndex + 1)
+    : timeline
+  const onboardLoadKeys = new Set(
+    freight.map((item) => loadKey(item)).filter(Boolean),
+  )
+  const seen = new Set()
+  const order = []
+
+  for (const timelineEvent of remainingTimeline) {
+    if (timelineEvent.kind !== 'freight-stop' || timelineEvent.role !== 'delivery') continue
+
+    const key = loadKey(timelineEvent)
+    if (!key || seen.has(key)) continue
+    if (onboardLoadKeys.size > 0 && !onboardLoadKeys.has(key)) continue
+
+    seen.add(key)
+    order.push({
+      rank: order.length + 1,
+      loadId: timelineEvent.loadId ?? key,
+      loadRef: timelineEvent.loadRef ?? key,
+      deliveryEventId: timelineEvent.id,
+      destination: timelineEvent.locationLabel ?? 'Delivery',
+    })
+  }
+
+  return order
+}
+
+export function evaluateTrailerDeliveryAccess({
+  board,
+  stagedFreight = [],
+  placements = {},
+  deliveryOrder = [],
+} = {}) {
+  const rankByLoad = new Map()
+  for (const stop of deliveryOrder) {
+    const rank = Number(stop.rank)
+    if (!Number.isFinite(rank)) continue
+    if (stop.loadId) rankByLoad.set(stop.loadId, rank)
+    if (stop.loadRef) rankByLoad.set(stop.loadRef, rank)
+  }
+
+  if (!board || rankByLoad.size === 0) {
+    return {
+      clear: true,
+      violations: [],
+      blockedFreightIds: [],
+      blockingFreightIds: [],
+      pairSummaries: [],
+    }
+  }
+
+  const freightById = new Map(stagedFreight.map((item) => [item.id, item]))
+  const placed = []
+
+  for (const [freightId, placement] of Object.entries(placements)) {
+    const freight = freightById.get(freightId)
+    const rank = rankByLoad.get(loadKey(freight))
+    if (!freight || !Number.isFinite(rank)) continue
+
+    const cells = footprintCellIndexes({
+      board,
+      freight,
+      anchorCell: placement?.anchorCell,
+      rotation: placement?.rotation ?? 0,
+    })
+    if (!cells) continue
+
+    placed.push({
+      freight,
+      rank,
+      cells: cells.map((cellIndex) => ({
+        cellIndex,
+        ...boardCellCoordinates(board, cellIndex),
+      })),
+    })
+  }
+
+  const violations = []
+  const violationKeys = new Set()
+
+  for (const earlier of placed) {
+    for (const later of placed) {
+      if (earlier.rank >= later.rank) continue
+
+      for (const earlierCell of earlier.cells) {
+        for (const laterCell of later.cells) {
+          if (earlierCell.x !== laterCell.x) continue
+          if (laterCell.y <= earlierCell.y) continue
+
+          const key = `${earlier.freight.id}:${later.freight.id}:${earlierCell.x}`
+          if (violationKeys.has(key)) continue
+          violationKeys.add(key)
+
+          violations.push({
+            blockedFreightId: earlier.freight.id,
+            blockingFreightId: later.freight.id,
+            blockedLoadRef: earlier.freight.loadRef ?? earlier.freight.loadId,
+            blockingLoadRef: later.freight.loadRef ?? later.freight.loadId,
+            blockedRank: earlier.rank,
+            blockingRank: later.rank,
+            column: earlierCell.x,
+            blockedRow: earlierCell.y,
+            blockingRow: laterCell.y,
+          })
+        }
+      }
+    }
+  }
+
+  const blockedFreightIds = [...new Set(
+    violations.map((issue) => issue.blockedFreightId),
+  )]
+  const blockingFreightIds = [...new Set(
+    violations.map((issue) => issue.blockingFreightId),
+  )]
+  const pairMap = new Map()
+
+  for (const issue of violations) {
+    const key = `${issue.blockedLoadRef}:${issue.blockingLoadRef}`
+    const current = pairMap.get(key) ?? {
+      blockedLoadRef: issue.blockedLoadRef,
+      blockingLoadRef: issue.blockingLoadRef,
+      count: 0,
+    }
+    current.count += 1
+    pairMap.set(key, current)
+  }
+
+  return {
+    clear: violations.length === 0,
+    violations,
+    blockedFreightIds,
+    blockingFreightIds,
+    pairSummaries: [...pairMap.values()],
+  }
+}
+
 export function evaluatePickupLoadPlan({
   event,
   board,
   stagedFreight = [],
   placements = {},
   requiredFreightIds = null,
+  deliveryOrder = [],
 } = {}) {
   const placed = new Set(Object.keys(placements))
   const required = requiredFreightIds == null
@@ -431,6 +582,23 @@ export function evaluatePickupLoadPlan({
     })
   }
 
+  const deliveryAccess = evaluateTrailerDeliveryAccess({
+    board,
+    stagedFreight,
+    placements,
+    deliveryOrder,
+  })
+
+  if (!deliveryAccess.clear) {
+    const firstConflict = deliveryAccess.pairSummaries[0]
+    errors.push({
+      code: 'DELIVERY_ACCESS_BLOCKED',
+      message: firstConflict
+        ? `${firstConflict.blockedLoadRef} delivers before ${firstConflict.blockingLoadRef}. Move ${firstConflict.blockedLoadRef} closer to the rear doors.`
+        : 'Earlier-delivery freight is blocked by freight that unloads later.',
+    })
+  }
+
   return {
     ready: errors.length === 0,
     errors,
@@ -441,6 +609,8 @@ export function evaluatePickupLoadPlan({
     onboardCount: stagedFreight.filter((item) => placed.has(item.id) && item.expected !== false).length,
     occupiedCells: map.occupied.size,
     plannedWeightLbs,
+    deliveryAccess,
+    deliveryOrder,
     loadRef: event?.loadRef ?? event?.loadId ?? null,
   }
 }
