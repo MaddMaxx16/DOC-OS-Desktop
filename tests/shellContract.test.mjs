@@ -361,7 +361,7 @@ test('V2.6.5.7 committed Driver Day road legs hydrate serially instead of Promis
   assert.match(hydration, /BETWEEN_WAVES_MS = 1200/)
 })
 
-test('V2.7.2 moves the selected truck from live execution state and phases committed route legs', async () => {
+test('V2.7.2 moves trucks from live execution state and phases the selected committed route', async () => {
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const browser = await readFile(new URL('../src/shell/DriverBrowser.jsx', import.meta.url), 'utf8')
@@ -374,7 +374,8 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(shell, /liveDriverStates=\{liveDriverStates\}/)
   assert.match(map, /routeExecutionPosition/)
   assert.match(map, /routeSegmentExecutionPhase/)
-  assert.match(map, /marker\.setLngLat\(liveTruckCoordinates\)/)
+  assert.match(map, /const targetCoordinates = routeExecutionPosition/)
+  assert.match(map, /marker\.setLngLat\(targetCoordinates\)/)
   assert.match(map, /source\.setData\(committedRouteGeoJson\(segments, liveState\)\)/)
   assert.match(map, /executionPhase/)
   assert.match(map, /completedEventIds\.has\(stop\.id\)/)
@@ -389,6 +390,28 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /coordinateAlongRouteShape/)
   assert.match(execution, /'dwell-break'/)
   assert.match(execution, /routeExecutionPosition/)
+})
+
+test('V2.7.4.0 runs truck execution for the full fleet independent of selection', async () => {
+  const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(shell, /driverDays=\{driverDays\}/)
+  assert.match(shell, /liveDriverStates=\{liveDriverStates\}/)
+  assert.match(map, /driverDays = \[\]/)
+  assert.match(map, /liveDriverStates = \{\}/)
+  assert.match(map, /truckAnimationFrameRefs = useRef\(new globalThis\.Map\(\)\)/)
+  assert.match(map, /truckMotionRefs = useRef\(new globalThis\.Map\(\)\)/)
+  assert.match(map, /fleetRouteResultsRef = useRef\(\{\}\)/)
+  assert.match(map, /fleetDisplayRoutesByDriverId/)
+  assert.match(map, /for \(const day of driverDays\)/)
+  assert.match(map, /for \(const driver of drivers\)/)
+  assert.match(map, /const live = liveDriverStates\[driverId\] \?\? null/)
+  assert.match(map, /routeExecutionPosition\([\s\S]*live,[\s\S]*routes,[\s\S]*driver\.coordinates/)
+  assert.match(map, /truckMotionRefs\.current\.set\(driverId/)
+  assert.match(map, /truckAnimationFrameRefs\.current\.set\(driverId, frameId\)/)
+  assert.match(map, /motion\?\.coordinates[\s\S]*driver\.coordinates/)
+  assert.match(map, /selectedDriverLiveCoordinates/)
 })
 
 test('V2.7.3.7 decouples truck label visibility from global driver selection', async () => {
@@ -499,7 +522,7 @@ test('V2.7.3.1 keeps the truck artwork centered on route truth and smooths each 
   assert.match(map, /coordinateAlongRouteShape/)
   assert.match(map, /truckAnimationFrameRef/)
   assert.match(map, /truckMotionRef/)
-  assert.match(map, /displayDriverRoutes\.find\(\(segment\) => segment\.id === activeSegmentId\)/)
+  assert.match(map, /routes\.find\(\(segment\) => segment\.id === activeSegmentId\)/)
   assert.match(map, /requestAnimationFrame\(animate\)/)
   assert.match(map, /coordinateAlongRouteShape\(routeShape, renderedProgress\)/)
   assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)/)
@@ -554,12 +577,13 @@ test('V2.7.1.2 frames a selection once and then releases camera ownership to the
   assert.match(shell, /\[driverDay, locations, planningActive, selectedPlanningKind\]/)
 })
 
-test('V2.7.1.1 no-selection startup cannot dereference a null route result', async () => {
+test('V2.7.1.1 no-selection startup cannot dereference selected or fleet route state', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
-  assert.match(map, /driverRouteResult[\s\S]{0,120}&& selectedDriver/)
-  assert.match(map, /Array\.isArray\(driverRouteResult\.segments\)/)
-  assert.doesNotMatch(map, /driverRouteResult\?\.driverId === selectedDriver\?\.id[\s\S]{0,120}\? driverRouteResult\.segments/)
+  assert.match(map, /if \(!selectedDriver\) return \[\]/)
+  assert.match(map, /committedSelectedRoute = selectedDriver[\s\S]*\? fleetRouteResults\[selectedDriver\.id\] \?\? null[\s\S]*: null/)
+  assert.match(map, /Array\.isArray\(committedSelectedRoute\?\.segments\)/)
+  assert.doesNotMatch(map, /fleetRouteResults\[selectedDriver\.id\]\.segments/)
 })
 
 test('V2.7.1 activates the simulation clock, focused pause, and sent-plan live-state plumbing', async () => {
@@ -593,15 +617,16 @@ test('V2.7.1 activates the simulation clock, focused pause, and sent-plan live-s
   assert.match(css, /\.clock-time-row em\.fast/)
 })
 
-test('V2.6.5.14 keeps the previous complete route visible while the same driver refreshes', async () => {
+test('V2.6.5.14 keeps complete committed or preview route truth visible while a selected route refreshes', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
 
-  assert.match(map, /driverRouteResult[\s\S]{0,100}&& selectedDriver/)
   assert.match(map, /driverRouteResult\.driverId === selectedDriver\.id/)
+  assert.match(map, /driverRouteResult\.key === driverRouteKey/)
+  assert.match(map, /committedSelectedRoute\.key === driverRouteKey/)
   assert.match(map, /Array\.isArray\(driverRouteResult\.segments\)/)
-  assert.match(map, /driverId: selectedDriver\.id/)
-  assert.doesNotMatch(map, /driverRouteResult\?\.key === driverRouteKey[\s\S]{0,180}\? driverRouteResult\.segments/)
-  assert.match(map, /\[driverRouteResult, selectedDriver\]/)
+  assert.match(map, /Array\.isArray\(committedSelectedRoute\?\.segments\)/)
+  assert.match(map, /return driverRouteResult\.segments/)
+  assert.match(map, /return committedSelectedRoute\.segments/)
 })
 
 test('V2.6.5.13 publishes the committed route only after the full serialized day resolves', async () => {
@@ -731,7 +756,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.7 · TRUCK LABEL STATE/)
+  assert.match(top, /DESKTOP V2\.7\.4\.0 · FLEET EXECUTION/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

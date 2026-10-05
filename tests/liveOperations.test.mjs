@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   advanceSimulationClock,
   buildLiveDriverState,
+  buildLiveDriverStates,
   createSimulationClock,
   FAST_FORWARD_MULTIPLIER,
   setSimulationMode,
@@ -51,6 +52,77 @@ test('draft plans are not armed for live operations', () => {
 
   assert.equal(state.phase, 'draft')
   assert.equal(state.sent, false)
+})
+
+test('fleet live state advances every driver from the same global clock without selection', () => {
+  const days = [
+    {
+      driverId: 'marcus-reed',
+      dispatchStatus: 'sent',
+      shift: { startMinutes: 420, endMinutes: 1020 },
+      timeline: [
+        {
+          id: 'marcus-reed:shift-start',
+          kind: 'shift-start',
+          locationLabel: 'Newark',
+          projectedArrivalMinutes: 420,
+        },
+        {
+          id: 'marcus-p1',
+          kind: 'freight-stop',
+          role: 'pickup',
+          locationLabel: 'Marcus Pickup',
+          projectedArrivalMinutes: 480,
+          endMinutes: 492,
+        },
+      ],
+    },
+    {
+      driverId: 'taylor-brooks',
+      dispatchStatus: 'sent',
+      shift: { startMinutes: 450, endMinutes: 1020 },
+      timeline: [
+        {
+          id: 'taylor-brooks:shift-start',
+          kind: 'shift-start',
+          locationLabel: 'Jersey City',
+          projectedArrivalMinutes: 450,
+        },
+        {
+          id: 'taylor-p1',
+          kind: 'freight-stop',
+          role: 'pickup',
+          locationLabel: 'Taylor Pickup',
+          projectedArrivalMinutes: 510,
+          endMinutes: 522,
+        },
+      ],
+    },
+    {
+      driverId: 'derrick-cole',
+      dispatchStatus: 'draft',
+      shift: { startMinutes: 480, endMinutes: 1020 },
+      timeline: [
+        {
+          id: 'derrick-cole:shift-start',
+          kind: 'shift-start',
+          locationLabel: 'Brooklyn',
+          projectedArrivalMinutes: 480,
+        },
+      ],
+    },
+  ]
+
+  const states = buildLiveDriverStates(days, createSimulationClock({
+    currentMinutes: 465,
+  }))
+
+  assert.equal(states['marcus-reed'].phase, 'active')
+  assert.equal(states['marcus-reed'].executionPhase, 'en-route')
+  assert.equal(states['taylor-brooks'].phase, 'active')
+  assert.equal(states['taylor-brooks'].executionPhase, 'en-route')
+  assert.equal(states['derrick-cole'].phase, 'draft')
+  assert.equal(states['derrick-cole'].sent, false)
 })
 
 test('sent plan waits for shift start then becomes live-ready inside the shift window', () => {

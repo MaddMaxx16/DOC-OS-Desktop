@@ -283,12 +283,22 @@ function facilityMarkup({ type, role, badge }) {
   `
 }
 
+function driverDayRouteKey(day = null) {
+  if (!day?.driverId || !Array.isArray(day.timeline)) return null
+
+  return `${day.driverId}:${day.timeline.map((event) => (
+    `${event.id}@${event.locationId ?? 'truck'}@${Array.isArray(event.coordinates) ? event.coordinates.join(',') : ''}`
+  )).join('|')}`
+}
+
 export default function OperationsMap({
   drivers,
+  driverDays = [],
   driverDay,
   selectedDriver,
   selectedStop,
   selection,
+  liveDriverStates = {},
   liveState = null,
   freightRoutePreview,
   planningPlaceOptions = [],
@@ -306,36 +316,69 @@ export default function OperationsMap({
   const onSelectSubjectRef = useRef(onSelectSubject)
   const onPreviewPlanningPlaceRef = useRef(onPreviewPlanningPlace)
   const cameraFrameKeyRef = useRef(null)
-  const truckAnimationFrameRef = useRef(null)
-  const truckMotionRef = useRef({
-    driverId: null,
-    segmentId: null,
-    progress: 0,
-    facing: 'right',
-  })
+  const truckAnimationFrameRefs = useRef(new globalThis.Map())
+  const truckMotionRefs = useRef(new globalThis.Map())
+  const fleetRouteResultsRef = useRef({})
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
+  const [fleetRouteResults, setFleetRouteResults] = useState({})
   const [openDriverLabelId, setOpenDriverLabelId] = useState(null)
 
-  const driverRouteKey = selectedDriver && driverDay
-    ? `${selectedDriver.id}:${driverDay.timeline.map((event) => (
-        `${event.id}@${event.locationId ?? 'truck'}@${Array.isArray(event.coordinates) ? event.coordinates.join(',') : ''}`
-      )).join('|')}`
+  const driverRouteKey = driverDayRouteKey(driverDay)
+  const committedSelectedRoute = selectedDriver
+    ? fleetRouteResults[selectedDriver.id] ?? null
     : null
-  const plannedDriverRoutes = useMemo(
-    () => (
+  const plannedDriverRoutes = useMemo(() => {
+    if (!selectedDriver) return []
+
+    if (
       driverRouteResult
-      && selectedDriver
+      && driverRouteResult.driverId === selectedDriver.id
+      && driverRouteResult.key === driverRouteKey
+      && Array.isArray(driverRouteResult.segments)
+    ) {
+      return driverRouteResult.segments
+    }
+
+    if (
+      committedSelectedRoute
+      && committedSelectedRoute.key === driverRouteKey
+      && Array.isArray(committedSelectedRoute.segments)
+    ) {
+      return committedSelectedRoute.segments
+    }
+
+    if (
+      driverRouteResult
       && driverRouteResult.driverId === selectedDriver.id
       && Array.isArray(driverRouteResult.segments)
-        ? driverRouteResult.segments
-        : []
-    ),
-    [driverRouteResult, selectedDriver],
-  )
+    ) {
+      return driverRouteResult.segments
+    }
+
+    return Array.isArray(committedSelectedRoute?.segments)
+      ? committedSelectedRoute.segments
+      : []
+  }, [
+    committedSelectedRoute,
+    driverRouteKey,
+    driverRouteResult,
+    selectedDriver,
+  ])
   const displayDriverRoutes = useMemo(
     () => stitchCommittedRouteSegments(plannedDriverRoutes),
     [plannedDriverRoutes],
+  )
+  const fleetDisplayRoutesByDriverId = useMemo(
+    () => Object.fromEntries(
+      driverDays.map((day) => [
+        day.driverId,
+        stitchCommittedRouteSegments(
+          fleetRouteResults[day.driverId]?.segments ?? [],
+        ),
+      ]),
+    ),
+    [driverDays, fleetRouteResults],
   )
   const nextStopId = liveState?.nextEventId ?? nextOperationalEventId(driverDay)
   const completedEventKey = (liveState?.completedEventIds ?? []).join('|')
@@ -343,13 +386,22 @@ export default function OperationsMap({
     () => new Set(completedEventKey ? completedEventKey.split('|') : []),
     [completedEventKey],
   )
-  const liveTruckCoordinates = useMemo(
-    () => routeExecutionPosition(
-      liveState,
-      displayDriverRoutes,
-      selectedDriver?.coordinates ?? null,
+  const selectedDriverLiveCoordinates = useMemo(
+    () => (
+      selectedDriver
+        ? routeExecutionPosition(
+            liveDriverStates[selectedDriver.id] ?? liveState,
+            fleetDisplayRoutesByDriverId[selectedDriver.id] ?? [],
+            selectedDriver.coordinates ?? null,
+          )
+        : null
     ),
-    [displayDriverRoutes, liveState, selectedDriver],
+    [
+      fleetDisplayRoutesByDriverId,
+      liveDriverStates,
+      liveState,
+      selectedDriver,
+    ],
   )
 
   useEffect(() => {
@@ -404,6 +456,8 @@ export default function OperationsMap({
       markerRefs.current.clear()
       previewMarkerRefs.current.forEach((marker) => marker.remove())
       previewMarkerRefs.current = []
+      truckAnimationFrameRefs.current.forEach((frameId) => cancelAnimationFrame(frameId))
+      truckAnimationFrameRefs.current.clear()
       map.remove()
       mapRef.current = null
     }
@@ -422,13 +476,18 @@ export default function OperationsMap({
       const identity = getDriverIdentity(driver.id)
       const selected = selectedDriver?.id === driver.id
       const labelOpen = openDriverLabelId === driver.id
+      const motion = truckMotionRefs.current.get(driver.id)
       const element = document.createElement('button')
       element.type = 'button'
       element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${labelOpen ? 'label-open' : ''}`
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
-      element.dataset.facing = 'right'
-      element.setAttribute('aria-label', `Select ${driver.name}, ${identity.colorName} driver`)
+      element.dataset.facing = motion?.facing ?? 'right'
+      element.dataset.livePhase = motion?.executionPhase ?? 'planned'
+      element.setAttribute(
+        'aria-label',
+        `Select ${driver.name}, ${motion?.label ?? identity.colorName}`,
+      )
       element.innerHTML = `${truckMarkup(driver.initials)}<small><i></i>${driver.name}</small>`
       element.addEventListener('click', (event) => {
         event.preventDefault()
@@ -438,7 +497,11 @@ export default function OperationsMap({
       })
 
       const marker = new Marker({ element, anchor: 'center' })
-        .setLngLat(driver.coordinates)
+        .setLngLat(
+          Array.isArray(motion?.coordinates)
+            ? motion.coordinates
+            : driver.coordinates,
+        )
         .addTo(map)
 
       markerRefs.current.set(`driver:${driver.id}`, marker)
@@ -475,7 +538,15 @@ export default function OperationsMap({
       }
     }
 
-  }, [drivers, locations, marketLanes, openDriverLabelId, selectedDriver, selection, workspaceOpen])
+  }, [
+    drivers,
+    locations,
+    marketLanes,
+    openDriverLabelId,
+    selectedDriver,
+    selection,
+    workspaceOpen,
+  ])
 
   useEffect(() => {
     const map = mapRef.current
@@ -490,128 +561,181 @@ export default function OperationsMap({
   }, [mapReady])
 
   useEffect(() => {
-    if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return undefined
-
-    const marker = markerRefs.current.get(`driver:${selectedDriver.id}`)
-    if (!marker) return undefined
-
-    if (truckAnimationFrameRef.current) {
-      cancelAnimationFrame(truckAnimationFrameRef.current)
-      truckAnimationFrameRef.current = null
-    }
-
-    const element = marker.getElement()
-    if (element) {
-      element.dataset.livePhase = liveState?.executionPhase ?? 'planned'
-      element.setAttribute(
-        'aria-label',
-        `Select ${selectedDriver.name}, ${liveState?.label ?? selectedDriver.status}`,
-      )
-    }
-
-    const activeSegmentId = liveState?.activeSegmentId ?? null
-    const targetProgress = Math.min(
-      1,
-      Math.max(0, Number(liveState?.activeSegmentProgress) || 0),
-    )
-    const activeSegment = activeSegmentId
-      ? displayDriverRoutes.find((segment) => segment.id === activeSegmentId)
-      : null
-    const routeShape = activeSegment?.route?.routeShape ?? []
-
-    if (
-      liveState?.executionPhase !== 'en-route'
-      || !activeSegmentId
-      || routeShape.length < 2
-    ) {
-      marker.setLngLat(liveTruckCoordinates)
-      truckMotionRef.current = {
-        driverId: selectedDriver.id,
-        segmentId: activeSegmentId,
-        progress: targetProgress,
-        facing: truckMotionRef.current.facing ?? 'right',
+    for (const driver of drivers) {
+      const driverId = driver.id
+      const live = liveDriverStates[driverId] ?? null
+      const routes = fleetDisplayRoutesByDriverId[driverId] ?? []
+      const marker = markerRefs.current.get(`driver:${driverId}`) ?? null
+      const element = marker?.getElement?.() ?? null
+      const previousMotion = truckMotionRefs.current.get(driverId) ?? {
+        driverId,
+        segmentId: null,
+        progress: 0,
+        facing: 'right',
+        coordinates: driver.coordinates,
+        executionPhase: 'planned',
+        label: driver.status,
       }
-      return undefined
-    }
 
-    const previousMotion = truckMotionRef.current
-    const continuingSegment = (
-      previousMotion.driverId === selectedDriver.id
-      && previousMotion.segmentId === activeSegmentId
-      && previousMotion.progress <= targetProgress
-    )
-    const startProgress = continuingSegment
-      ? previousMotion.progress
-      : 0
+      const previousFrameId = truckAnimationFrameRefs.current.get(driverId)
+      if (previousFrameId) {
+        cancelAnimationFrame(previousFrameId)
+        truckAnimationFrameRefs.current.delete(driverId)
+      }
 
-    if (targetProgress <= startProgress + 0.000001) {
-      marker.setLngLat(
-        coordinateAlongRouteShape(routeShape, targetProgress)
-          ?? liveTruckCoordinates,
+      if (element) {
+        element.dataset.livePhase = live?.executionPhase ?? 'planned'
+        element.setAttribute(
+          'aria-label',
+          `Select ${driver.name}, ${live?.label ?? driver.status}`,
+        )
+      }
+
+      const activeSegmentId = live?.activeSegmentId ?? null
+      const targetProgress = Math.min(
+        1,
+        Math.max(0, Number(live?.activeSegmentProgress) || 0),
       )
-      const facing = truckFacingAlongRoute(
+      const activeSegment = activeSegmentId
+        ? routes.find((segment) => segment.id === activeSegmentId)
+        : null
+      const routeShape = activeSegment?.route?.routeShape ?? []
+      const targetCoordinates = routeExecutionPosition(
+        live,
+        routes,
+        driver.coordinates ?? null,
+      )
+
+      if (
+        live?.executionPhase !== 'en-route'
+        || !activeSegmentId
+        || routeShape.length < 2
+      ) {
+        if (marker && Array.isArray(targetCoordinates)) {
+          marker.setLngLat(targetCoordinates)
+        }
+
+        truckMotionRefs.current.set(driverId, {
+          driverId,
+          segmentId: activeSegmentId,
+          progress: targetProgress,
+          facing: previousMotion.facing ?? 'right',
+          coordinates: Array.isArray(targetCoordinates)
+            ? targetCoordinates
+            : previousMotion.coordinates ?? driver.coordinates,
+          executionPhase: live?.executionPhase ?? 'planned',
+          label: live?.label ?? driver.status,
+        })
+        continue
+      }
+
+      const continuingSegment = (
+        previousMotion.segmentId === activeSegmentId
+        && previousMotion.progress <= targetProgress
+      )
+      const startProgress = continuingSegment
+        ? previousMotion.progress
+        : 0
+
+      const targetFacing = truckFacingAlongRoute(
         routeShape,
         targetProgress,
-        truckMotionRef.current.facing ?? 'right',
-      )
-      if (element) element.dataset.facing = facing
-      truckMotionRef.current = {
-        driverId: selectedDriver.id,
-        segmentId: activeSegmentId,
-        progress: targetProgress,
-        facing,
-      }
-      return undefined
-    }
-
-    const startedAt = performance.now()
-    const animationDurationMs = SIMULATION_TICK_MS * 1.15
-
-    const animate = (now) => {
-      const elapsed = Math.max(0, now - startedAt)
-      const frameProgress = Math.min(1, elapsed / animationDurationMs)
-      const renderedProgress = startProgress
-        + ((targetProgress - startProgress) * frameProgress)
-      const coordinates = coordinateAlongRouteShape(routeShape, renderedProgress)
-      const facing = truckFacingAlongRoute(
-        routeShape,
-        renderedProgress,
-        truckMotionRef.current.facing ?? 'right',
+        previousMotion.facing ?? 'right',
       )
 
-      if (Array.isArray(coordinates)) marker.setLngLat(coordinates)
-      if (element) element.dataset.facing = facing
-
-      truckMotionRef.current = {
-        driverId: selectedDriver.id,
-        segmentId: activeSegmentId,
-        progress: renderedProgress,
-        facing,
+      if (!marker) {
+        truckMotionRefs.current.set(driverId, {
+          driverId,
+          segmentId: activeSegmentId,
+          progress: targetProgress,
+          facing: targetFacing,
+          coordinates: Array.isArray(targetCoordinates)
+            ? targetCoordinates
+            : previousMotion.coordinates ?? driver.coordinates,
+          executionPhase: live?.executionPhase ?? 'planned',
+          label: live?.label ?? driver.status,
+        })
+        continue
       }
 
-      if (frameProgress < 1) {
-        truckAnimationFrameRef.current = requestAnimationFrame(animate)
-      } else {
-        truckAnimationFrameRef.current = null
+      if (targetProgress <= startProgress + 0.000001) {
+        const coordinates = coordinateAlongRouteShape(routeShape, targetProgress)
+          ?? targetCoordinates
+        if (Array.isArray(coordinates)) marker.setLngLat(coordinates)
+        if (element) element.dataset.facing = targetFacing
+
+        truckMotionRefs.current.set(driverId, {
+          driverId,
+          segmentId: activeSegmentId,
+          progress: targetProgress,
+          facing: targetFacing,
+          coordinates: Array.isArray(coordinates)
+            ? coordinates
+            : previousMotion.coordinates ?? driver.coordinates,
+          executionPhase: live?.executionPhase ?? 'planned',
+          label: live?.label ?? driver.status,
+        })
+        continue
       }
+
+      const startedAt = performance.now()
+      const animationDurationMs = SIMULATION_TICK_MS * 1.15
+
+      const animate = (now) => {
+        const elapsed = Math.max(0, now - startedAt)
+        const frameProgress = Math.min(1, elapsed / animationDurationMs)
+        const renderedProgress = startProgress
+          + ((targetProgress - startProgress) * frameProgress)
+        const coordinates = coordinateAlongRouteShape(routeShape, renderedProgress)
+        const facing = truckFacingAlongRoute(
+          routeShape,
+          renderedProgress,
+          truckMotionRefs.current.get(driverId)?.facing
+            ?? previousMotion.facing
+            ?? 'right',
+        )
+
+        if (Array.isArray(coordinates)) marker.setLngLat(coordinates)
+        if (element) element.dataset.facing = facing
+
+        truckMotionRefs.current.set(driverId, {
+          driverId,
+          segmentId: activeSegmentId,
+          progress: renderedProgress,
+          facing,
+          coordinates: Array.isArray(coordinates)
+            ? coordinates
+            : previousMotion.coordinates ?? driver.coordinates,
+          executionPhase: live?.executionPhase ?? 'planned',
+          label: live?.label ?? driver.status,
+        })
+
+        if (frameProgress < 1) {
+          const frameId = requestAnimationFrame(animate)
+          truckAnimationFrameRefs.current.set(driverId, frameId)
+        } else {
+          truckAnimationFrameRefs.current.delete(driverId)
+        }
+      }
+
+      const frameId = requestAnimationFrame(animate)
+      truckAnimationFrameRefs.current.set(driverId, frameId)
     }
-
-    truckAnimationFrameRef.current = requestAnimationFrame(animate)
 
     return () => {
-      if (truckAnimationFrameRef.current) {
-        cancelAnimationFrame(truckAnimationFrameRef.current)
-        truckAnimationFrameRef.current = null
-      }
+      truckAnimationFrameRefs.current.forEach((frameId) => cancelAnimationFrame(frameId))
+      truckAnimationFrameRefs.current.clear()
     }
   }, [
-    displayDriverRoutes,
-    liveState?.activeSegmentId,
-    liveState?.activeSegmentProgress,
-    liveState?.executionPhase,
-    liveState?.label,
-    liveTruckCoordinates,
+    drivers,
+    fleetDisplayRoutesByDriverId,
+    liveDriverStates,
+    locations,
+    marketLanes,
+    openDriverLabelId,
     selectedDriver,
+    selection,
+    workspaceOpen,
   ])
 
   useEffect(() => {
@@ -1046,7 +1170,82 @@ export default function OperationsMap({
   ])
 
   useEffect(() => {
+    if (!driverDays.length) return undefined
+
+    let active = true
+
+    const publishFleetRoute = (day, key, segments) => {
+      const result = {
+        key,
+        driverId: day.driverId,
+        segments,
+      }
+      fleetRouteResultsRef.current = {
+        ...fleetRouteResultsRef.current,
+        [day.driverId]: result,
+      }
+      setFleetRouteResults((current) => ({
+        ...current,
+        [day.driverId]: result,
+      }))
+    }
+
+    const hydrateFleetRoutes = async () => {
+      for (const day of driverDays) {
+        if (!active) return
+
+        const key = driverDayRouteKey(day)
+        if (!key) continue
+
+        const existing = fleetRouteResultsRef.current[day.driverId]
+        if (
+          existing?.key === key
+          && committedRouteComplete(existing.segments)
+        ) {
+          continue
+        }
+
+        const segmentSpecs = buildDriverRouteSegments(day, locations)
+        if (!segmentSpecs.length) {
+          publishFleetRoute(day, key, [])
+          continue
+        }
+
+        let retryAttempt = 0
+
+        while (active) {
+          const segments = await hydrateCommittedRouteSegments(segmentSpecs, {
+            routeSegment: calculateRoadRoute,
+            isActive: () => active,
+          })
+
+          if (!active) return
+
+          if (committedRouteComplete(segments)) {
+            publishFleetRoute(day, key, segments)
+            break
+          }
+
+          retryAttempt += 1
+          const retryDelayMs = Math.min(12000, 1800 + (retryAttempt * 1200))
+          await waitForRouteRetry(retryDelayMs, () => active)
+        }
+      }
+    }
+
+    hydrateFleetRoutes()
+
+    return () => {
+      active = false
+    }
+  }, [driverDays, locations])
+
+  useEffect(() => {
     if (!driverRouteKey || !driverDay || !selectedDriver) return undefined
+
+    const committedDay = driverDays.find((day) => day.driverId === selectedDriver.id)
+    const committedRouteKey = driverDayRouteKey(committedDay)
+    if (committedRouteKey === driverRouteKey) return undefined
 
     const segmentSpecs = buildDriverRouteSegments(driverDay, locations)
     let active = true
@@ -1082,7 +1281,7 @@ export default function OperationsMap({
     return () => {
       active = false
     }
-  }, [driverDay, driverRouteKey, locations, selectedDriver])
+  }, [driverDay, driverDays, driverRouteKey, locations, selectedDriver])
 
   useEffect(() => {
     const map = mapRef.current
@@ -1450,9 +1649,11 @@ export default function OperationsMap({
     const stopCoordinates = Array.isArray(selectedStop?.coordinates)
       ? selectedStop.coordinates
       : null
-    const driverCoordinates = Array.isArray(selectedDriver?.coordinates)
-      ? selectedDriver.coordinates
-      : null
+    const driverCoordinates = Array.isArray(selectedDriverLiveCoordinates)
+      ? selectedDriverLiveCoordinates
+      : Array.isArray(selectedDriver?.coordinates)
+        ? selectedDriver.coordinates
+        : null
     const planningSignature = planningPlaceOptions
       .map((option) => (
         `${option.id}@${Array.isArray(option.coordinates) ? option.coordinates.join(',') : ''}`
@@ -1525,7 +1726,14 @@ export default function OperationsMap({
         duration: 500,
       })
     }
-  }, [freightRoutePreview, planningPlaceOptions, selectedDriver, selectedStop, workspaceOpen])
+  }, [
+    freightRoutePreview,
+    planningPlaceOptions,
+    selectedDriver,
+    selectedDriverLiveCoordinates,
+    selectedStop,
+    workspaceOpen,
+  ])
 
   return (
     <div className="map-stage">

@@ -1988,3 +1988,62 @@ Driver selection and truck-label visibility are now independent.
 This creates the invariant:
 
 > selection answers “which driver is active?” while the map label answers “which truck did the player explicitly inspect?”
+
+
+---
+
+## V2.7.4.0 — Fleet Execution Foundation
+
+V2.7.4.0 removes the final selected-driver dependency from live truck execution.
+
+The domain layer already produces one live state per Driver Day from the shared simulation clock. The map now honors that same fleet model instead of animating only the currently inspected driver.
+
+### World-state invariant
+
+> selection is UI; simulation is world state.
+
+Marcus, Taylor, Derrick, and future drivers continue executing whether or not their Driver Day, route, or inspector is currently visible.
+
+### Fleet route runtime
+
+The map maintains:
+
+- a committed road-route result per driver,
+- a rendered route collection per driver,
+- one truck-motion record per driver,
+- one animation-frame handle per driver.
+
+Committed Driver Days hydrate in the background independent of selection. Successful road routes are cached by the existing road-routing service.
+
+Planning-place and FreightLink previews remain separate inspection routes. Preview geometry may temporarily replace the **displayed** route for the selected driver, but it never replaces that driver's committed execution geometry.
+
+### Fleet truck motion
+
+On each global clock update, every driver is evaluated.
+
+For each driver:
+
+1. read that driver's live state,
+2. read that driver's committed routed geometry,
+3. determine the authoritative live route position,
+4. update/animate that driver's own truck marker,
+5. preserve that driver's facing and rendered progress independently.
+
+If a truck marker is temporarily hidden by a workspace filter, its motion state still advances. When the marker reappears it starts from the driver's current live/rendered position rather than the original seed coordinate.
+
+### Selection behavior
+
+Changing the selected driver:
+
+- changes route/stops/inspector emphasis,
+- may frame the selected driver's current live position once,
+- does **not** alter any driver's execution state,
+- does **not** create catch-up movement.
+
+Only the selected driver's detailed route is rendered at full detail to keep the map readable as fleet size grows.
+
+### Deferred late-send behavior
+
+An unsent Driver Day remains unarmed and the truck stays at its start/current position.
+
+If a schedule is sent after its planned shift start, the current execution model can still evaluate against the original timeline. Correct late-dispatch recovery and downstream ETA recalculation are explicitly deferred to **V2.7.4.1**.

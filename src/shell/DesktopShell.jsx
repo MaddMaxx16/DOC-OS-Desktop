@@ -191,10 +191,12 @@ export default function DesktopShell({
           <div className="map-workspace">
             <OperationsMap
               drivers={drivers}
+              driverDays={driverDays}
               driverDay={mapDriverDay}
               selectedDriver={mapDriver}
               selectedStop={selectedStop}
               selection={selection}
+              liveDriverStates={liveDriverStates}
               liveState={mapLiveState}
               freightRoutePreview={activeFreightRoutePreview}
               planningPlaceOptions={planningPlaceOptions}
