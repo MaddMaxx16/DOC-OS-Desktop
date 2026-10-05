@@ -271,6 +271,20 @@ function committedRouteGeoJson(segments = [], execution = null) {
   }
 }
 
+function fleetActiveSegment(
+  driverId,
+  liveDriverStates = {},
+  fleetDisplayRoutesByDriverId = {},
+) {
+  const live = liveDriverStates[driverId] ?? null
+  if (live?.executionPhase !== 'en-route' || !live.activeSegmentId) {
+    return null
+  }
+
+  return (fleetDisplayRoutesByDriverId[driverId] ?? [])
+    .find((segment) => segment.id === live.activeSegmentId) ?? null
+}
+
 function fleetActiveRouteGeoJson(
   drivers = [],
   liveDriverStates = {},
@@ -282,11 +296,11 @@ function fleetActiveRouteGeoJson(
   for (const driver of drivers) {
     if (driver.id === selectedDriverId) continue
 
-    const live = liveDriverStates[driver.id]
-    if (live?.executionPhase !== 'en-route' || !live.activeSegmentId) continue
-
-    const segment = (fleetDisplayRoutesByDriverId[driver.id] ?? [])
-      .find((item) => item.id === live.activeSegmentId)
+    const segment = fleetActiveSegment(
+      driver.id,
+      liveDriverStates,
+      fleetDisplayRoutesByDriverId,
+    )
     const routeShape = segment?.route?.routeShape ?? []
 
     if (!Array.isArray(routeShape) || routeShape.length < 2) continue
@@ -399,23 +413,12 @@ export default function OperationsMap({
 
     if (
       committedSelectedRoute
-      && committedSelectedRoute.key === driverRouteKey
       && Array.isArray(committedSelectedRoute.segments)
     ) {
       return committedSelectedRoute.segments
     }
 
-    if (
-      driverRouteResult
-      && driverRouteResult.driverId === selectedDriver.id
-      && Array.isArray(driverRouteResult.segments)
-    ) {
-      return driverRouteResult.segments
-    }
-
-    return Array.isArray(committedSelectedRoute?.segments)
-      ? committedSelectedRoute.segments
-      : []
+    return []
   }, [
     committedSelectedRoute,
     driverRouteKey,
@@ -668,9 +671,11 @@ export default function OperationsMap({
         1,
         Math.max(0, Number(live?.activeSegmentProgress) || 0),
       )
-      const activeSegment = activeSegmentId
-        ? routes.find((segment) => segment.id === activeSegmentId)
-        : null
+      const activeSegment = fleetActiveSegment(
+        driverId,
+        liveDriverStates,
+        fleetDisplayRoutesByDriverId,
+      )
       const routeShape = activeSegment?.route?.routeShape ?? []
       const targetCoordinates = routeExecutionPosition(
         live,

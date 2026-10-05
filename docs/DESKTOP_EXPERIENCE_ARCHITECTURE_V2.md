@@ -2089,3 +2089,43 @@ The Live Map includes a compact clickable fleet strip showing:
 The strip changes selection but never changes simulation state.
 
 Truck labels remain click-only. The strip is fleet status UI, not a replacement persistent map label.
+
+
+---
+
+## V2.7.4.0.2 — Fleet Route Lock
+
+The V2.7.4.0.1 fleet playtest showed that Marcus visually tracked the selected route correctly while Taylor and Derrick could appear near—but not exactly on—the route being shown for them.
+
+Two ambiguity sources were removed.
+
+### One active segment object
+
+Fleet active-leg rendering and fleet truck motion now resolve through the same `fleetActiveSegment()` helper.
+
+For a given driver:
+
+- read the driver's live `activeSegmentId`,
+- resolve one segment from that driver's stitched committed route collection,
+- use that segment's exact `routeShape` for both the faint active-leg LineString and per-frame truck interpolation.
+
+This creates the invariant:
+
+> if the active leg is visible, the truck coordinate is sampled from that exact LineString.
+
+### Stale preview rejection
+
+The selected driver's detailed route no longer falls back to arbitrary older preview geometry for the same driver.
+
+A preview route is used only when:
+
+- it belongs to the selected driver,
+- its route key exactly matches the currently displayed preview Driver Day.
+
+Otherwise the detailed map uses committed fleet route geometry.
+
+### Context truck presentation
+
+Non-selected trucks remain de-emphasized, but are no longer scaled down.
+
+The truck SVG is asymmetric, so scaling the artwork could make a correctly anchored marker appear visually displaced relative to a thin route line. Context hierarchy now uses opacity/filter while preserving the same marker box and artwork size as the selected truck.

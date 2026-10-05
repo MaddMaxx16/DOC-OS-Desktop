@@ -392,6 +392,17 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.4.0.2 locks fleet truck motion and fleet active-leg rendering to the same route segment', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+
+  assert.match(map, /function fleetActiveSegment\(/)
+  assert.match(map, /const segment = fleetActiveSegment\([\s\S]*driver\.id,[\s\S]*liveDriverStates,[\s\S]*fleetDisplayRoutesByDriverId/)
+  assert.match(map, /const activeSegment = fleetActiveSegment\([\s\S]*driverId,[\s\S]*liveDriverStates,[\s\S]*fleetDisplayRoutesByDriverId/)
+  assert.match(map, /const routeShape = activeSegment\?\.route\?\.routeShape \?\? \[\]/)
+  assert.doesNotMatch(map, /routes\.find\(\(segment\) => segment\.id === activeSegmentId\)/)
+  assert.doesNotMatch(map, /driverRouteResult[\s\S]{0,180}driverRouteResult\.driverId === selectedDriver\.id[\s\S]{0,320}return driverRouteResult\.segments[\s\S]{0,220}return Array\.isArray\(committedSelectedRoute\?\.segments\)/)
+})
+
 test('V2.7.4.0.1 gives the live fleet a readable map hierarchy without persistent truck labels', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
@@ -407,7 +418,8 @@ test('V2.7.4.0.1 gives the live fleet a readable map hierarchy without persisten
   assert.match(map, /className="fleet-glance"/)
   assert.match(map, /fleetStatusLabel\(driver, live\)/)
   assert.match(map, /onSelectSubjectRef\.current\?\.\(SELECTION_TYPES\.DRIVER, driver\.id\)/)
-  assert.match(css, /\.driver-marker\.context \.driver-truck-icon \{[\s\S]*opacity: \.52;[\s\S]*scale\(\.84\)/)
+  assert.match(css, /\.driver-marker\.context \.driver-truck-icon \{[\s\S]*opacity: \.52;/)
+  assert.doesNotMatch(css, /\.driver-marker\.context \.driver-truck-icon \{[\s\S]{0,180}scale\(\.84\)/)
   assert.match(css, /\.fleet-glance \{/)
   assert.doesNotMatch(css, /\.driver-marker\.context > small \{[\s\S]*display: flex;/)
 })
@@ -542,7 +554,7 @@ test('V2.7.3.1 keeps the truck artwork centered on route truth and smooths each 
   assert.match(map, /coordinateAlongRouteShape/)
   assert.match(map, /truckAnimationFrameRef/)
   assert.match(map, /truckMotionRef/)
-  assert.match(map, /routes\.find\(\(segment\) => segment\.id === activeSegmentId\)/)
+  assert.match(map, /fleetActiveSegment\([\s\S]*driverId,[\s\S]*liveDriverStates,[\s\S]*fleetDisplayRoutesByDriverId/)
   assert.match(map, /requestAnimationFrame\(animate\)/)
   assert.match(map, /coordinateAlongRouteShape\(routeShape, renderedProgress\)/)
   assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)/)
@@ -602,7 +614,7 @@ test('V2.7.1.1 no-selection startup cannot dereference selected or fleet route s
 
   assert.match(map, /if \(!selectedDriver\) return \[\]/)
   assert.match(map, /committedSelectedRoute = selectedDriver[\s\S]*\? fleetRouteResults\[selectedDriver\.id\] \?\? null[\s\S]*: null/)
-  assert.match(map, /Array\.isArray\(committedSelectedRoute\?\.segments\)/)
+  assert.match(map, /committedSelectedRoute[\s\S]{0,120}&& Array\.isArray\(committedSelectedRoute\.segments\)/)
   assert.doesNotMatch(map, /fleetRouteResults\[selectedDriver\.id\]\.segments/)
 })
 
@@ -642,9 +654,9 @@ test('V2.6.5.14 keeps complete committed or preview route truth visible while a 
 
   assert.match(map, /driverRouteResult\.driverId === selectedDriver\.id/)
   assert.match(map, /driverRouteResult\.key === driverRouteKey/)
-  assert.match(map, /committedSelectedRoute\.key === driverRouteKey/)
+  assert.doesNotMatch(map, /committedSelectedRoute\.key === driverRouteKey/)
   assert.match(map, /Array\.isArray\(driverRouteResult\.segments\)/)
-  assert.match(map, /Array\.isArray\(committedSelectedRoute\?\.segments\)/)
+  assert.match(map, /committedSelectedRoute[\s\S]{0,120}&& Array\.isArray\(committedSelectedRoute\.segments\)/)
   assert.match(map, /return driverRouteResult\.segments/)
   assert.match(map, /return committedSelectedRoute\.segments/)
 })
@@ -776,7 +788,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.4\.0\.1 · FLEET MAP CLARITY/)
+  assert.match(top, /DESKTOP V2\.7\.4\.0\.2 · FLEET ROUTE LOCK/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

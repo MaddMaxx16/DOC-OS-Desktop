@@ -137,12 +137,11 @@
 }
 .driver-marker.context .driver-truck-icon {
   opacity: .52;
-  transform: scale(.84);
   filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .42));
 }
 .driver-marker.context:hover .driver-truck-icon {
   opacity: .84;
-  transform: scale(.96);
+  transform: scale(1);
 }
 .driver-truck-icon svg {
   width: 42px;
