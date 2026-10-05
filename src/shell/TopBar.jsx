@@ -7,10 +7,16 @@ import {
 export default function TopBar({
   focused = false,
   simulationClock,
+  liveDriverStates = {},
   onSimulationModeChange,
 }) {
   const requestedMode = simulationClock?.mode ?? SIMULATION_MODE.PAUSED
   const effectiveMode = focused ? SIMULATION_MODE.PAUSED : requestedMode
+  const dispatchRequiredCount = Object.values(liveDriverStates)
+    .filter((state) => state?.phase === 'dispatch-required')
+    .length
+  const operationalAlert = dispatchRequiredCount > 0
+
   const modeLabel = effectiveMode === SIMULATION_MODE.FAST
     ? '4×'
     : effectiveMode === SIMULATION_MODE.PLAYING
@@ -29,11 +35,20 @@ export default function TopBar({
         <span>New York Operations</span>
       </div>
 
-      <div className={`operations-status ${focused ? 'focused' : ''}`} aria-label="Operational status">
+      <div
+        className={`operations-status ${focused ? 'focused' : operationalAlert ? 'alert' : ''}`}
+        aria-label="Operational status"
+      >
         <span className="status-dot" />
-        <strong>{focused ? 'FOCUSED' : 'NO ALERTS'}</strong>
+        <strong>
+          {focused
+            ? 'FOCUSED'
+            : operationalAlert
+              ? `${dispatchRequiredCount} DISPATCH REQUIRED`
+              : 'NO ALERTS'}
+        </strong>
         <span className="status-divider" />
-        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.7.4.0.4 · FLEET MARKER ANCHOR'}</small>
+        <small>{focused ? 'RATE CON REVIEW · GAMEPLAY PAUSED' : 'DESKTOP V2.7.4.1 · LATE DISPATCH RECOVERY'}</small>
       </div>
 
       <div className="clock-block">

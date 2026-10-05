@@ -418,6 +418,16 @@ export default function DriverDayPanel({
         )}
       </div>
 
+      {editable && liveState?.phase === 'dispatch-required' && (
+        <div className="dispatch-required-note" role="alert">
+          <span>DISPATCH REQUIRED</span>
+          <strong>{liveState.detail}</strong>
+          <small>
+            Sending now will use the current game time as the driver's actual departure and recalculate downstream ETAs.
+          </small>
+        </div>
+      )}
+
       {planning && (
         <div className="planning-mode-note">
           <span>PLANNING MODE · READINESS + SEND</span>

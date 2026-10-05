@@ -37,6 +37,8 @@ export function sendDispatchPlan({
   driverPlans = {},
   driverDay,
   allowWarnings = false,
+  sentAtMinutes = null,
+  sentAtDayNumber = null,
 } = {}) {
   const plan = driverPlans[driverId]
   if (!plan || !driverDay || !canEditDispatchPlan(plan)) {
@@ -71,6 +73,16 @@ export function sendDispatchPlan({
         dispatchStatus: DISPATCH_PLAN_STATUS.SENT,
         sentWithWarnings: readiness.warnings.length > 0,
         sentWarningCount: readiness.warnings.length,
+        sentAtMinutes: sentAtMinutes !== null
+          && sentAtMinutes !== undefined
+          && Number.isFinite(Number(sentAtMinutes))
+          ? Number(sentAtMinutes)
+          : plan.sentAtMinutes ?? null,
+        sentAtDayNumber: sentAtDayNumber !== null
+          && sentAtDayNumber !== undefined
+          && Number.isFinite(Number(sentAtDayNumber))
+          ? Number(sentAtDayNumber)
+          : plan.sentAtDayNumber ?? null,
       },
     },
   }

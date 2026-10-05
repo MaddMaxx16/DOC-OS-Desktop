@@ -325,6 +325,7 @@ function fleetActiveRouteGeoJson(
 }
 
 function fleetStatusLabel(driver, liveState) {
+  if (liveState?.phase === 'dispatch-required') return 'DISPATCH REQUIRED'
   if (!liveState?.sent || liveState.phase === 'draft') return 'PLAN NOT SENT'
   if (liveState.phase === 'scheduled') return 'SCHEDULED'
   if (liveState.phase === 'closed') return 'SHIFT CLOSED'

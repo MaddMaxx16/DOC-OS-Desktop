@@ -2,10 +2,17 @@ import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import { SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 
 function liveStatusCopy(driver, liveState) {
+  if (liveState?.phase === 'dispatch-required') {
+    return {
+      status: 'DISPATCH REQUIRED',
+      detail: liveState.detail,
+    }
+  }
+
   if (!liveState?.sent) {
     return {
-      status: driver.status,
-      detail: driver.nextStop,
+      status: 'PLAN NOT SENT',
+      detail: liveState?.detail ?? driver.nextStop,
     }
   }
 

@@ -149,6 +149,19 @@
   height: 14px;
   background: #253642;
 }
+.operations-status.alert {
+  border-color: #6a3d46;
+  background: #181014;
+}
+.operations-status.alert .status-dot {
+  background: #d66f7e;
+  box-shadow: 0 0 9px rgba(214, 111, 126, .42);
+}
+.operations-status.alert strong,
+.operations-status.alert small {
+  color: #e3a2ae;
+}
+
 .operations-status.focused {
   border-color: #62506e;
   background: #15111a;

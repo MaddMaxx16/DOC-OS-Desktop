@@ -72,6 +72,21 @@ function isSent(day) {
   return day?.dispatchStatus === DISPATCH_PLAN_STATUS.SENT
 }
 
+export function simulationAbsoluteMinutes(clock = {}) {
+  const normalized = createSimulationClock(clock)
+  return ((normalized.dayNumber - 1) * 1440) + normalized.currentMinutes
+}
+
+export function dispatchDelayMinutes(day = {}, clock = {}) {
+  const shiftStartMinutes = finite(day?.shift?.startMinutes)
+  return Math.max(0, simulationAbsoluteMinutes(clock) - shiftStartMinutes)
+}
+
+export function requiresDispatch(day = {}, clock = {}) {
+  if (isSent(day)) return false
+  return simulationAbsoluteMinutes(clock) >= finite(day?.shift?.startMinutes)
+}
+
 function isCrossMidnightShift(shift = {}) {
   return finite(shift.endMinutes) < finite(shift.startMinutes)
 }
@@ -163,25 +178,37 @@ export function buildLiveDriverState(day = {}, clock = {}) {
   const timelineExecution = buildTimelineExecution(day, normalizedClock)
 
   if (!isSent(day)) {
+    const dispatchRequired = requiresDispatch(day, normalizedClock)
+    const delayMinutes = dispatchRequired
+      ? dispatchDelayMinutes(day, normalizedClock)
+      : 0
+    const startEvent = day?.timeline?.[0] ?? null
+    const nextEvent = day?.timeline?.[1] ?? null
+
     return {
       driverId: day?.driverId ?? null,
-      phase: 'draft',
+      phase: dispatchRequired ? 'dispatch-required' : 'draft',
       sent: false,
-      label: 'PLAN NOT SENT',
-      detail: 'Send the schedule to arm Live Operations.',
+      label: dispatchRequired ? 'DISPATCH REQUIRED' : 'PLAN NOT SENT',
+      detail: dispatchRequired
+        ? delayMinutes > 0
+          ? `Shift began ${delayMinutes} min ago · driver holding at ${startEvent?.locationLabel ?? 'start'}.`
+          : `Shift has started · driver holding at ${startEvent?.locationLabel ?? 'start'}.`
+        : 'Send the schedule to arm Live Operations.',
+      dispatchDelayMinutes: delayMinutes,
       shiftStartMinutes,
       shiftEndMinutes,
-      executionPhase: 'draft',
+      executionPhase: dispatchRequired ? 'held-dispatch' : 'draft',
       activeSegmentId: null,
       activeSegmentProgress: 0,
-      currentEventId: null,
-      currentEventKind: null,
-      currentEventLabel: null,
+      currentEventId: startEvent?.id ?? null,
+      currentEventKind: startEvent?.kind ?? null,
+      currentEventLabel: startEvent?.locationLabel ?? null,
       currentEventDepartureMinutes: null,
-      nextEventId: null,
-      nextEventKind: null,
-      nextEventLabel: null,
-      nextEventArrivalMinutes: null,
+      nextEventId: nextEvent?.id ?? null,
+      nextEventKind: nextEvent?.kind ?? null,
+      nextEventLabel: nextEvent?.locationLabel ?? null,
+      nextEventArrivalMinutes: nextEvent?.projectedArrivalMinutes ?? null,
       completedSegmentIds: [],
       completedEventIds: [],
     }

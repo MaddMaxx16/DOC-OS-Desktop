@@ -87,6 +87,11 @@ function timelineStart(driver, plan, locations) {
   const explicitStart = plan.startLocationId
     ? locations[plan.startLocationId] ?? null
     : null
+  const scheduledStartMinutes = finite(plan.shift?.startMinutes)
+  const dispatchStartMinutes = Number.isFinite(Number(plan.dispatchStartMinutes))
+    ? Number(plan.dispatchStartMinutes)
+    : scheduledStartMinutes
+  const effectiveStartMinutes = Math.max(scheduledStartMinutes, dispatchStartMinutes)
 
   if (explicitStart?.coordinates) {
     return {
@@ -94,7 +99,8 @@ function timelineStart(driver, plan, locations) {
       driverId: driver.id,
       kind: 'shift-start',
       label: 'SHIFT START',
-      projectedArrivalMinutes: plan.shift.startMinutes,
+      projectedArrivalMinutes: effectiveStartMinutes,
+      scheduledStartMinutes,
       locationId: explicitStart.id ?? plan.startLocationId,
       locationLabel: explicitStart.label ?? plan.startLocationId,
       coordinates: explicitStart.coordinates,
@@ -107,7 +113,8 @@ function timelineStart(driver, plan, locations) {
     driverId: driver.id,
     kind: 'shift-start',
     label: 'SHIFT START',
-    projectedArrivalMinutes: plan.shift.startMinutes,
+    projectedArrivalMinutes: effectiveStartMinutes,
+    scheduledStartMinutes,
     locationId: null,
     locationLabel: driver.locationLabel ?? 'Current truck position',
     coordinates: Array.isArray(driver.coordinates) ? driver.coordinates : null,
@@ -175,6 +182,21 @@ export function buildDriverDay({ driver, loads = [], plan, locations = {} } = {}
   const day = {
     driverId: driver.id,
     dispatchStatus: normalizeDispatchPlanStatus(plan),
+    dispatchStartMinutes: plan.dispatchStartMinutes !== null
+      && plan.dispatchStartMinutes !== undefined
+      && Number.isFinite(Number(plan.dispatchStartMinutes))
+      ? Number(plan.dispatchStartMinutes)
+      : null,
+    sentAtMinutes: plan.sentAtMinutes !== null
+      && plan.sentAtMinutes !== undefined
+      && Number.isFinite(Number(plan.sentAtMinutes))
+      ? Number(plan.sentAtMinutes)
+      : null,
+    sentAtDayNumber: plan.sentAtDayNumber !== null
+      && plan.sentAtDayNumber !== undefined
+      && Number.isFinite(Number(plan.sentAtDayNumber))
+      ? Number(plan.sentAtDayNumber)
+      : null,
     shift: plan.shift,
     hos: driver.hos,
     trailer: {

@@ -5,7 +5,10 @@ import {
   buildLiveDriverState,
   buildLiveDriverStates,
   createSimulationClock,
+  dispatchDelayMinutes,
   FAST_FORWARD_MULTIPLIER,
+  requiresDispatch,
+  simulationAbsoluteMinutes,
   setSimulationMode,
   simulationDateLabel,
   simulationMinutesPerTick,
@@ -52,6 +55,52 @@ test('draft plans are not armed for live operations', () => {
 
   assert.equal(state.phase, 'draft')
   assert.equal(state.sent, false)
+})
+
+test('an unsent driver becomes dispatch-required at shift start and remains held', () => {
+  const day = {
+    driverId: 'taylor-brooks',
+    dispatchStatus: 'draft',
+    shift: { startMinutes: 450, endMinutes: 1020 },
+    timeline: [
+      {
+        id: 'taylor-brooks:shift-start',
+        kind: 'shift-start',
+        locationLabel: 'Jersey City',
+        projectedArrivalMinutes: 450,
+      },
+      {
+        id: 'taylor-p1',
+        kind: 'freight-stop',
+        role: 'pickup',
+        locationLabel: 'Taylor Pickup',
+        projectedArrivalMinutes: 510,
+        endMinutes: 522,
+      },
+    ],
+  }
+
+  const before = createSimulationClock({ currentMinutes: 449 })
+  const atStart = createSimulationClock({ currentMinutes: 450 })
+  const late = createSimulationClock({ currentMinutes: 468 })
+
+  assert.equal(requiresDispatch(day, before), false)
+  assert.equal(requiresDispatch(day, atStart), true)
+  assert.equal(dispatchDelayMinutes(day, late), 18)
+  assert.equal(simulationAbsoluteMinutes(late), 468)
+
+  const state = buildLiveDriverState(day, late)
+  assert.equal(state.phase, 'dispatch-required')
+  assert.equal(state.sent, false)
+  assert.equal(state.executionPhase, 'held-dispatch')
+  assert.equal(state.label, 'DISPATCH REQUIRED')
+  assert.equal(state.dispatchDelayMinutes, 18)
+  assert.equal(state.currentEventId, 'taylor-brooks:shift-start')
+  assert.equal(state.nextEventId, 'taylor-p1')
+  assert.deepEqual(state.completedEventIds, [])
+  assert.deepEqual(state.completedSegmentIds, [])
+  assert.match(state.detail, /18 min ago/)
+  assert.match(state.detail, /holding at Jersey City/)
 })
 
 test('fleet live state advances every driver from the same global clock without selection', () => {

@@ -6,6 +6,7 @@ import { buildDriverDay } from '../src/domain/manifest/driverDayModel.js'
 import { buildDriverRouteSegments } from '../src/domain/routing/driverRoutePlan.js'
 import {
   moveDriverPlanEventToGap,
+  recalculateDriverTimeline,
   resequenceDriverStops,
 } from '../src/domain/planning/stopSequencing.js'
 
@@ -112,6 +113,35 @@ test('a reorder that would exceed trailer capacity is blocked', () => {
 
   assert.equal(result.ok, false)
   assert.match(result.reason, /exceeds trailer capacity/)
+})
+
+test('late dispatch rebases the entire remaining Driver Day from the actual departure minute', () => {
+  const actualDispatchMinute = 510
+  const recalculated = recalculateDriverTimeline({
+    driver: marcusDriver,
+    loads,
+    plan: {
+      ...driverPlans[marcusDriver.id],
+      dispatchStatus: 'sent',
+      sentAtMinutes: actualDispatchMinute,
+      sentAtDayNumber: 1,
+    },
+    locations,
+    startMinutesOverride: actualDispatchMinute,
+  })
+
+  const day = buildDriverDay({
+    driver: marcusDriver,
+    loads: recalculated.loads,
+    plan: recalculated.plan,
+    locations,
+  })
+
+  assert.equal(recalculated.plan.dispatchStartMinutes, actualDispatchMinute)
+  assert.equal(day.timeline[0].projectedArrivalMinutes, actualDispatchMinute)
+  assert.equal(day.timeline[0].scheduledStartMinutes, driverPlans[marcusDriver.id].shift.startMinutes)
+  assert.ok(day.timeline.slice(1).every((event) => event.projectedArrivalMinutes >= actualDispatchMinute))
+  assert.equal(recalculated.plan.sentAtMinutes, actualDispatchMinute)
 })
 
 test('sent plans cannot be resequenced', () => {

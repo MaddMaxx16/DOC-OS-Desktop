@@ -129,6 +129,7 @@ export default function DesktopShell({
       <TopBar
         focused={Boolean(focusedTask)}
         simulationClock={simulationClock}
+        liveDriverStates={liveDriverStates}
         onSimulationModeChange={onSimulationModeChange}
       />
 

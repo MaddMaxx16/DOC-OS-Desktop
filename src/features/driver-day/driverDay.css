@@ -462,6 +462,30 @@
   color: #d78494;
 }
 
+.dispatch-required-note {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px solid #704553;
+  border-left: 3px solid #c76c7d;
+  background: #1a1015;
+}
+.dispatch-required-note span {
+  color: #dc8292;
+  font-size: var(--type-micro);
+  font-weight: 950;
+  letter-spacing: .1em;
+}
+.dispatch-required-note strong {
+  color: #e5b3bd;
+  font-size: var(--type-secondary);
+}
+.dispatch-required-note small {
+  color: #a67d86;
+  font-size: var(--type-micro);
+  line-height: 1.35;
+}
+
 .planning-feedback {
   padding: 7px 9px;
   border-left: 3px solid #526a79;

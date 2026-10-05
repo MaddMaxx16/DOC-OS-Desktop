@@ -22,7 +22,9 @@ import {
   advanceSimulationClock,
   buildLiveDriverStates,
   createSimulationClock,
+  dispatchDelayMinutes,
   setSimulationMode,
+  simulationAbsoluteMinutes,
   SIMULATION_MODE,
   SIMULATION_TICK_MS,
 } from '../domain/live/liveOperations.js'
@@ -31,7 +33,10 @@ import {
   sendDispatchPlan,
 } from '../domain/planning/dispatchPlan.js'
 import { choosePlanningPlace } from '../domain/planning/planningPlaces.js'
-import { moveDriverPlanEventToGap } from '../domain/planning/stopSequencing.js'
+import {
+  moveDriverPlanEventToGap,
+  recalculateDriverTimeline,
+} from '../domain/planning/stopSequencing.js'
 import { createSelection, SELECTION_TYPES } from '../domain/selection/selectionModel.js'
 import DesktopShell from '../shell/DesktopShell.jsx'
 
@@ -254,6 +259,8 @@ export default function App() {
       driverPlans: operationalDriverPlans,
       driverDay,
       allowWarnings,
+      sentAtMinutes: simulationClock.currentMinutes,
+      sentAtDayNumber: simulationClock.dayNumber,
     })
 
     if (!result.ok) {
@@ -265,7 +272,39 @@ export default function App() {
       return
     }
 
-    setOperationalDriverPlans(result.driverPlans)
+    const delayMinutes = dispatchDelayMinutes(driverDay, simulationClock)
+    let nextLoads = operationalLoads
+    let nextDriverPlans = result.driverPlans
+
+    if (delayMinutes > 0) {
+      const driver = drivers.find((item) => item.id === driverId)
+      const sentPlan = result.driverPlans[driverId]
+
+      if (driver && sentPlan) {
+        const recalculated = recalculateDriverTimeline({
+          driver,
+          loads: operationalLoads,
+          plan: {
+            ...sentPlan,
+            lateDispatchMinutes: delayMinutes,
+          },
+          locations,
+          startMinutesOverride: simulationAbsoluteMinutes(simulationClock),
+        })
+
+        nextLoads = recalculated.loads
+        nextDriverPlans = {
+          ...result.driverPlans,
+          [driverId]: {
+            ...recalculated.plan,
+            lateDispatchMinutes: delayMinutes,
+          },
+        }
+      }
+    }
+
+    setOperationalLoads(nextLoads)
+    setOperationalDriverPlans(nextDriverPlans)
     setPlanningDriverId(null)
     setPlanningFeedback(null)
     setPendingPlanningPlace(null)

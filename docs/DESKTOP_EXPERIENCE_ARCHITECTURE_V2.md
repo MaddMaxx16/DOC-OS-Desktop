@@ -2197,3 +2197,58 @@ The truck marker container now uses:
 Only child artwork uses relative positioning.
 
 No driver-specific pixel correction is permitted. Every truck receives the same geographic-to-screen projection path.
+
+
+---
+
+## V2.7.4.1 — Dispatch Gating + Late Send Recovery
+
+V2.7.4.0 established fleet execution independent of selection. The next fleet failure case is an unsent schedule whose planned shift has already started.
+
+Previously, sending that schedule late armed the original timeline against the current clock. The driver could appear to jump into work that was never physically executed.
+
+### Dispatch gating
+
+An unsent Driver Day has two pre-execution states:
+
+- **PLAN NOT SENT** before planned shift start,
+- **DISPATCH REQUIRED** at or after planned shift start.
+
+A dispatch-required driver:
+
+- remains at the start/current truck position,
+- owns no active route segment,
+- has no completed route legs or service events,
+- does not gain onboard freight,
+- does not pause other fleet operations.
+
+The operations bar exposes the number of drivers requiring dispatch.
+
+### Actual dispatch start
+
+When a schedule is sent after planned shift start:
+
+- the plan records the actual send minute/day,
+- the current absolute simulation minute becomes `dispatchStartMinutes`,
+- the original planned `shift.startMinutes` remains unchanged,
+- the Driver Day shift-start event uses the later actual dispatch start,
+- the remaining timeline is recalculated forward from that minute.
+
+This ensures route execution begins at progress zero when the player actually dispatches the driver.
+
+### Recalculated downstream consequences
+
+Late dispatch recalculates:
+
+- freight projected arrivals,
+- service completion times,
+- Lunch start/end,
+- Staging arrival,
+- appointment margins,
+- schedule warnings.
+
+The send itself is not undone merely because the late start creates new operational risk. Those warnings are consequences the dispatcher must manage after the driver is finally released.
+
+### Deferred appointment waiting
+
+Freight arrival still uses the existing appointment-start clamping model in this packet. Separating physical arrival from appointment/service start is intentionally deferred to **V2.7.4.2**.

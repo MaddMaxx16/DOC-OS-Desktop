@@ -32,24 +32,25 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.4.0.4 Fleet Marker Anchor
+## Current packet — V2.7.4.1 Dispatch Gating + Late Send Recovery
 
-V2.1 through V2.7.4.0.3 are accepted and locked. Fleet execution, single route truth, and fleet map clarity remain intact.
+V2.1 through V2.7.4.0.4 are accepted and locked. Fleet execution, fleet route truth, marker anchoring, and fleet map clarity remain intact.
 
-Root cause addressed:
-- MapLibre custom markers require absolute positioning,
-- the custom .driver-marker CSS had overridden MapLibre's marker positioning with position: relative,
-- with multiple driver markers in DOM order, normal document flow could offset later markers before MapLibre's geographic transform,
-- this explains the fleet-only pattern where the first driver appeared correctly aligned while later drivers appeared beside otherwise-correct routes.
-
-Guardrails:
-- .driver-marker must remain position: absolute,
-- truck marker geometry uses a fixed 42x31 border-box with zero padding,
-- the truck's internal artwork may use relative positioning, but the MapLibre marker container may not,
-- all driver markers continue to use anchor: 'center',
-- route geometry, execution progress, and route ownership from V2.7.4.0.3 are unchanged,
-- do not compensate with per-driver pixel offsets,
-- do not change dispatch gating, late-send recovery, appointment waiting, HOS, or service timing in this patch.
+Core dispatch rules:
+- an unsent driver never begins route execution merely because the global clock reaches the planned shift start,
+- before shift start an unsent driver remains PLAN NOT SENT,
+- at or after planned shift start an unsent driver becomes DISPATCH REQUIRED and holds at the start/current truck position,
+- other drivers continue executing; dispatch-required state never pauses the fleet clock,
+- the top operations bar and fleet surfaces must surface dispatch-required drivers clearly,
+- when a late schedule is finally sent, the current absolute game minute becomes that driver's actual dispatch/departure start,
+- downstream freight arrivals, Lunch timing, Staging arrival, appointment margin, and plan analysis are recalculated from the actual dispatch start,
+- the original scheduled shift start remains preserved as schedule truth; late dispatch does not rewrite the planned shift,
+- late dispatch may create appointment/HOS warnings after the send because the delay is an operational consequence,
+- sending late must never retroactively complete route legs, service events, or freight state,
+- the driver begins at route progress zero from the start location at the actual send minute,
+- dispatch send metadata records sentAtMinutes and sentAtDayNumber,
+- V2.7.4.1 does not yet separate physical arrival from appointment waiting; that remains V2.7.4.2,
+- do not change fleet route hydration, truck animation, HOS depletion, or facility-service timing in this packet.
 
 
 ## Verification

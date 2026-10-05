@@ -109,10 +109,26 @@ export function recalculateDriverTimeline({
   loads,
   plan,
   locations,
+  startMinutesOverride = null,
 }) {
   let nextLoads = loads
+  const explicitStartMinutes = (
+    startMinutesOverride !== null
+    && startMinutesOverride !== undefined
+    && Number.isFinite(Number(startMinutesOverride))
+  )
+    ? Number(startMinutesOverride)
+    : null
   let nextPlan = {
     ...plan,
+    ...(explicitStartMinutes == null
+      ? {}
+      : {
+          dispatchStartMinutes: Math.max(
+            Number(plan.shift?.startMinutes ?? 0),
+            explicitStartMinutes,
+          ),
+        }),
     lunch: plan.lunch
       ? {
           ...plan.lunch,
@@ -129,7 +145,12 @@ export function recalculateDriverTimeline({
   const day = buildDriverDay({ driver, loads: nextLoads, plan: nextPlan, locations })
   if (!day) return { loads: nextLoads, plan: nextPlan }
 
-  let readyMinute = Number(day.shift.startMinutes ?? 0)
+  let readyMinute = Number(
+    day.timeline?.[0]?.projectedArrivalMinutes
+      ?? day.dispatchStartMinutes
+      ?? day.shift.startMinutes
+      ?? 0,
+  )
   let currentCoordinates = eventCoordinates(day.timeline[0], locations)
 
   for (const event of day.timeline.slice(1)) {
