@@ -1745,3 +1745,31 @@ For an active committed route leg:
 - dwell/service phases immediately hold the truck at the routed stop access coordinate.
 
 At 4× speed the truck covers more route per real second, but it still visibly traverses that route continuously.
+
+
+---
+
+## V2.7.3.2 — Driver Label + Marker Alignment Cleanup
+
+V2.7.3.2 is a map-presentation cleanup after the smooth-motion playtest.
+
+### Driver label interaction
+
+The truck icon is the persistent map object. The driver name is contextual detail.
+
+- Driver labels are hidden by default.
+- Clicking/selecting the truck explicitly opens its driver label.
+- Merely resolving the same driver from a selected stop or load does not open the label.
+- The selected-driver visual glow remains available without forcing the name label open.
+
+### Coordinate-bearing marker invariant
+
+Every physical stop icon uses this rule:
+
+> geographic coordinate = visual center of icon artwork
+
+Committed lunch/staging anchors, planning-place candidates, and FreightLink pickup/delivery preview markers therefore use centered MapLibre anchoring.
+
+Their labels, badges, and role chips are absolutely positioned outside a fixed icon-sized geometry box. Hover and selected states may scale an icon, but must not translate it away from the map coordinate.
+
+Committed freight P/D circles remain map-native symbols sourced from the canonical stitched route-access coordinate and do not need a DOM-anchor adjustment.

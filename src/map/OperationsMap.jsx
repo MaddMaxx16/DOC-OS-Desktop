@@ -294,9 +294,10 @@ export default function OperationsMap({
       if (loadSelected && (!selectedDriver || driver.id !== selectedDriver.id)) return
       const identity = getDriverIdentity(driver.id)
       const selected = selectedDriver?.id === driver.id
+      const driverExplicitlySelected = isSelection(selection, SELECTION_TYPES.DRIVER, driver.id)
       const element = document.createElement('button')
       element.type = 'button'
-      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''}`
+      element.className = `driver-marker ${workspaceOpen ? 'market-mode' : ''} ${selected ? 'selected' : ''} ${driverExplicitlySelected ? 'label-open' : ''}`
       element.style.setProperty('--driver-color', identity.color)
       element.dataset.driverId = driver.id
       element.setAttribute('aria-label', `Select ${driver.name}, ${identity.colorName} driver`)
@@ -394,7 +395,7 @@ export default function OperationsMap({
         routeAnchor.coordinates,
       )
 
-      const marker = new Marker({ element, anchor: 'bottom', offset })
+      const marker = new Marker({ element, anchor: 'center', offset })
         .setLngLat(markerCoordinates)
         .addTo(map)
 
@@ -444,7 +445,7 @@ export default function OperationsMap({
           })
         })
 
-        const marker = new Marker({ element, anchor: 'bottom' })
+        const marker = new Marker({ element, anchor: 'center' })
           .setLngLat(option.coordinates)
           .addTo(map)
 
@@ -1052,7 +1053,7 @@ export default function OperationsMap({
       })}<small>${location.label}</small>`
 
       previewMarkerRefs.current.push(
-        new Marker({ element, anchor: 'bottom' })
+        new Marker({ element, anchor: 'center' })
           .setLngLat(accessCoordinates ?? location.coordinates)
           .addTo(map),
       )

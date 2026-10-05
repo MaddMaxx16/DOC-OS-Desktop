@@ -32,22 +32,22 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3.1 Route-Locked Smooth Truck Motion
+## Current packet — V2.7.3.2 Driver Label + Marker Alignment Cleanup
 
-V2.1 through V2.7.3 are accepted and locked. Facility service execution remains intact.
+V2.1 through V2.7.3.1 are accepted and locked. Route-locked smooth truck motion must remain untouched.
 
 Guardrails:
-- preserve every locked planning, booking, routing, camera-ownership, live-clock, facility-service, and cargo-state invariant,
-- the truck's geographic coordinate must stay on the same committed road LineString rendered to the player,
-- smooth motion must interpolate execution progress along routed geometry, never interpolate longitude/latitude directly across road corners,
-- clock truth remains authoritative; animation only smooths presentation between clock ticks,
-- a new clock tick may cancel the previous visual tween and continue from the truck's current rendered route progress,
-- 4× simulation may cover more road per real second, but the truck must still visibly traverse that road rather than teleport between tick positions,
-- the truck marker artwork must be centered on its geographic coordinate; hover/selection labels must not change marker anchoring,
-- driver labels may float outside the marker layout but must not become part of the coordinate-bearing box,
-- manual pan/zoom remains player-owned and moving trucks must not recenter the map,
-- service phases remain parked states and must snap/hold at the routed facility access coordinate,
-- do not add vehicle physics, lane-level navigation, traffic, heading rotation, or camera following in this hotfix.
+- preserve the V2.7.3.1 route interpolation and clock behavior exactly,
+- driver name labels are hidden by default and appear only when the player explicitly selects that driver's truck,
+- selecting a stop/load that resolves to a driver must not implicitly open the driver's map label,
+- the selected-driver glow may remain independent from label visibility,
+- the geographic coordinate of every coordinate-bearing DOM marker must correspond to the visual center of its icon artwork,
+- committed lunch/staging route anchors use center anchoring,
+- planning-place and FreightLink pickup/delivery preview icons use center anchoring,
+- labels, badges, and role chips must float outside the coordinate-bearing icon box and must not change MapLibre marker geometry,
+- hover/selected scale effects may enlarge icons but must not translate them away from their geographic coordinate,
+- committed P/D freight stops remain map-native and continue using canonical stitched route access coordinates,
+- do not change route calculation, truck motion, planning timing, or facility service behavior in this cleanup.
 
 
 ## Verification

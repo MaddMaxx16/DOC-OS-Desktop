@@ -387,6 +387,22 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.3.2 shows driver labels only for explicit truck selection and centers coordinate-bearing POI icons', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /driverExplicitlySelected = isSelection\(selection, SELECTION_TYPES\.DRIVER, driver\.id\)/)
+  assert.match(map, /driverExplicitlySelected \? 'label-open' : ''/)
+  assert.match(css, /\.driver-marker\.label-open > small \{[\s\S]*display: flex;/)
+  assert.doesNotMatch(css, /\.driver-marker:hover > small,[\s\S]*\.driver-marker\.selected > small/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'center', offset \}\)/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(option\.coordinates\)/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)[\s\S]*\.setLngLat\(accessCoordinates \?\? location\.coordinates\)/)
+  assert.match(css, /\.planning-place-option,[\s\S]*\.freight-preview-marker \{[\s\S]*width: 34px;[\s\S]*height: 34px;/)
+  assert.match(css, /\.driver-route-anchor\.selected \.poi-symbol \{[\s\S]*transform: scale\(1\.08\);/)
+  assert.doesNotMatch(css, /\.driver-route-anchor\.selected \.poi-symbol \{[\s\S]{0,160}translateY/)
+})
+
 test('V2.7.3.1 keeps the truck artwork centered on route truth and smooths each live tick along road geometry', async () => {
   const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
@@ -626,7 +642,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3\.1 · SMOOTH MOTION/)
+  assert.match(top, /DESKTOP V2\.7\.3\.2 · MARKER CLEANUP/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

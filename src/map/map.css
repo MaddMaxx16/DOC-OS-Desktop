@@ -132,8 +132,7 @@
   border-radius: 50%;
   background: var(--driver-color);
 }
-.driver-marker:hover > small,
-.driver-marker.selected > small {
+.driver-marker.label-open > small {
   display: flex;
 }
 .driver-marker:hover .driver-truck-icon,
@@ -410,7 +409,7 @@
   opacity: 1;
 }
 .driver-route-anchor:hover .poi-symbol {
-  transform: translateY(-1px) scale(1.05);
+  transform: scale(1.05);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--driver-color) 16%, transparent), 0 6px 15px rgba(0, 0, 0, .4);
 }
 
@@ -418,7 +417,7 @@
 /* V2.5.2 normal Driver view may select non-freight route anchors. */
 .driver-route-anchor.selected .poi-symbol {
   opacity: 1;
-  transform: translateY(-1px) scale(1.08);
+  transform: scale(1.08);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--driver-color) 22%, transparent),
     0 7px 16px rgba(0, 0, 0, .42);
@@ -444,9 +443,42 @@
 }
 .planning-place-option:hover .poi-symbol,
 .planning-place-option:focus-within .poi-symbol {
-  transform: translateY(-2px) scale(1.08);
+  transform: scale(1.08);
   border-color: #c3a9cf;
   box-shadow: 0 0 0 4px rgba(183, 155, 197, .16), 0 9px 22px rgba(0, 0, 0, .5);
+}
+
+/* V2.7.3.2: all coordinate-bearing DOM markers use the icon box as map geometry. */
+.planning-place-option,
+.freight-preview-marker {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  overflow: visible;
+}
+
+.planning-place-option > small,
+.freight-preview-marker > small,
+.freight-preview-marker > em {
+  position: absolute;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.planning-place-option > small,
+.freight-preview-marker > small {
+  top: 40px;
+}
+
+.freight-preview-marker > em {
+  top: -20px;
+  white-space: nowrap;
 }
 
 /* V2.6.5.2: labels float outside geometry while the icon center stays on the exact route endpoint. */
