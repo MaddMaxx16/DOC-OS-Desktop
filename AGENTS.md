@@ -32,32 +32,27 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.0.1 Puzzle Board Correction
+## Current packet — V2.7.5.0.2 Trailer View
 
-V2.1 through V2.7.5.0 are accepted and locked. Facility gating, Focused Mode, rear-door commitment, background loading, route timing, and Fleet behavior remain intact.
+V2.1 through V2.7.5.0.1 are accepted and locked. The equipment-derived puzzle grid, shaped freight, rotation, overlap/bounds validation, facility gating, Focused Mode, door commitment, and background loading remain authoritative.
 
-Core interaction correction:
+Visual/gameplay correction:
 
-> Dock & Load must feel like a packing puzzle, not a form made of freight cards and fixed pallet boxes.
+> The center must read as an open truck trailer being loaded, not as a detached spreadsheet grid.
 
-Puzzle-board rules:
-- staged freight is rendered as draggable pallet-shaped puzzle pieces, not long text cards,
-- pieces may have different floor footprints,
-- the initial shape library includes standard, long, wide, L, block, and overhang footprints,
-- each piece may be rotated before placement,
-- dragging unverified freight into the trailer may implicitly verify it; verification remains visible but must not dominate the interaction,
-- the trailer board is generated from the selected driver's assigned equipment,
-- the current 53' dry van uses its existing 26-pallet capacity and 44,000 lb max-weight truth,
-- that capacity is translated into a finer packing grid so different freight footprints can be meaningfully fitted,
-- smaller/larger future equipment must generate a correspondingly smaller/larger puzzle board without hard-coded 26-slot UI,
-- the board validates footprint bounds and overlap continuously,
-- drag hover shows valid/invalid footprint preview,
-- clicking a placed freight piece returns it to staging before commitment,
-- the HUD reports floor-space cells used, truck weight limit, verification, and planned freight,
-- wrong/noise freight may still be placed but must remain a blocker in this tutorial slice,
-- trailer doors remain the only final commitment interaction,
-- this correction does not change the facility state machine or loading-time semantics from V2.7.5.0,
-- stacking level, balance score, stop-access scoring, and multi-view trailer analysis remain later extensions of this same board model.
+Trailer-view rules:
+- preserve the existing equipment-derived collision grid underneath the visual surface,
+- render that grid inside a stylized rear-open trailer body,
+- visibly communicate roof/frame, side walls, front/nose, trailer floor, rear frame, tail lights, and doors,
+- the floor narrows toward the nose to create 2.5D depth while remaining an interactive drag/drop board,
+- placed freight renders as physical pallet/crate blocks inside the trailer rather than only changing cell color,
+- full footprint preview remains green/valid or red/invalid during drag,
+- clicking placed freight still returns it to staging before commitment,
+- TRAILER VIEW is the active view for this packet,
+- TOP DOWN and SIDE VIEW are shown as disabled future views only; they must not create a second state model,
+- rear doors remain the commit interaction,
+- do not alter puzzle legality, facility timing, route timing, or background-loading behavior in this visual packet,
+- Focused Mode shell copy must be generic and must not say RATE CON REVIEW while Dock & Load is active.
 
 
 ## Verification

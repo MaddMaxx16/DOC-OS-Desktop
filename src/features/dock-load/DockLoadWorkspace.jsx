@@ -301,74 +301,109 @@ export default function DockLoadWorkspace({
         </header>
 
         <div className="dock-load-trailer-shell">
-          <div className="dock-load-nose">
-            <span>FRONT / NOSE</span>
+          <div className="trailer-view-tabs" aria-label="Trailer views">
+            <button type="button" className="active">TRAILER VIEW</button>
+            <button type="button" disabled>TOP DOWN</button>
+            <button type="button" disabled>SIDE VIEW</button>
           </div>
 
-          <div
-            className="dock-load-grid puzzle-board"
-            style={{
-              gridTemplateColumns: `repeat(${board.columns}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${board.rows}, minmax(0, 1fr))`,
-            }}
-            onDragLeave={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget)) {
-                setHoverCell(null)
-              }
-            }}
-          >
-            {Array.from({ length: board.totalCells }, (_, cellIndex) => {
-              const disabled = cellIndex >= board.usableCells
-              const occupantId = occupantForCell(cellIndex)
-              const occupant = stagedFreight.find((item) => item.id === occupantId) ?? null
-              const anchor = occupantId
-                ? placements[occupantId]?.anchorCell === cellIndex
-                : false
-              const preview = previewCells.has(cellIndex)
-              const previewValid = preview && hoverPlacement?.valid
-              const previewInvalid = preview && !hoverPlacement?.valid
+          <div className="trailer-scene">
+            <div className="trailer-visual-shell">
+              <div className="trailer-roof">
+                <i />
+                <i />
+                <i />
+                <span>{board.label}</span>
+              </div>
 
-              return (
-                <button
-                  type="button"
-                  key={cellIndex}
-                  className={[
-                    'trailer-puzzle-cell',
-                    disabled ? 'disabled' : '',
-                    occupant ? 'occupied' : '',
-                    occupant?.expected === false ? 'wrong-load' : '',
-                    anchor ? 'piece-anchor' : '',
-                    previewValid ? 'preview-valid' : '',
-                    previewInvalid ? 'preview-invalid' : '',
-                  ].filter(Boolean).join(' ')}
-                  disabled={disabled}
-                  onDragOver={(dragEvent) => {
-                    if (disabled || !draggedFreight) return
-                    dragEvent.preventDefault()
-                    dragEvent.dataTransfer.dropEffect = 'move'
-                    setHoverCell(cellIndex)
-                  }}
-                  onDrop={(dragEvent) => {
-                    dragEvent.preventDefault()
-                    const freightId = dragEvent.dataTransfer.getData('text/plain')
-                    if (freightId) placeFreight(freightId, cellIndex)
-                  }}
-                  onClick={() => occupantId && removeFreight(occupantId)}
-                  title={occupant ? `Return ${occupant.label} to staging` : 'Open puzzle cell'}
-                >
-                  {anchor && occupant && (
-                    <span className="trailer-piece-label">
-                      <strong>{occupant.label}</strong>
-                      <small>{occupant.loadRef}</small>
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+              <div className="trailer-open-cavity">
+                <div className="trailer-side-wall left">
+                  <span>53′</span>
+                </div>
+
+                <div className="trailer-floor-stage">
+                  <div className="trailer-nose-wall">
+                    <span>FRONT / NOSE</span>
+                  </div>
+
+                  <div
+                    className="dock-load-grid puzzle-board"
+                    style={{
+                      gridTemplateColumns: `repeat(${board.columns}, minmax(0, 1fr))`,
+                      gridTemplateRows: `repeat(${board.rows}, minmax(0, 1fr))`,
+                    }}
+                    onDragLeave={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setHoverCell(null)
+                      }
+                    }}
+                  >
+                    {Array.from({ length: board.totalCells }, (_, cellIndex) => {
+                      const disabled = cellIndex >= board.usableCells
+                      const occupantId = occupantForCell(cellIndex)
+                      const occupant = stagedFreight.find((item) => item.id === occupantId) ?? null
+                      const anchor = occupantId
+                        ? placements[occupantId]?.anchorCell === cellIndex
+                        : false
+                      const preview = previewCells.has(cellIndex)
+                      const previewValid = preview && hoverPlacement?.valid
+                      const previewInvalid = preview && !hoverPlacement?.valid
+
+                      return (
+                        <button
+                          type="button"
+                          key={cellIndex}
+                          className={[
+                            'trailer-puzzle-cell',
+                            disabled ? 'disabled' : '',
+                            occupant ? 'occupied' : '',
+                            occupant?.expected === false ? 'wrong-load' : '',
+                            anchor ? 'piece-anchor' : '',
+                            previewValid ? 'preview-valid' : '',
+                            previewInvalid ? 'preview-invalid' : '',
+                          ].filter(Boolean).join(' ')}
+                          disabled={disabled}
+                          onDragOver={(dragEvent) => {
+                            if (disabled || !draggedFreight) return
+                            dragEvent.preventDefault()
+                            dragEvent.dataTransfer.dropEffect = 'move'
+                            setHoverCell(cellIndex)
+                          }}
+                          onDrop={(dragEvent) => {
+                            dragEvent.preventDefault()
+                            const freightId = dragEvent.dataTransfer.getData('text/plain')
+                            if (freightId) placeFreight(freightId, cellIndex)
+                          }}
+                          onClick={() => occupantId && removeFreight(occupantId)}
+                          title={occupant ? `Return ${occupant.label} to staging` : 'Open puzzle cell'}
+                        >
+                          {occupant && <i className="loaded-cargo-block" />}
+                          {anchor && occupant && (
+                            <span className="trailer-piece-label">
+                              <strong>{occupant.label}</strong>
+                              <small>{occupant.loadRef}</small>
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="trailer-side-wall right">
+                  <span>{board.capacityPallets} PLT</span>
+                </div>
+              </div>
+
+              <div className="trailer-rear-frame">
+                <div className="trailer-tail-light left" />
+                <span>REAR / DOORS</span>
+                <div className="trailer-tail-light right" />
+              </div>
+            </div>
           </div>
 
           <div className="dock-load-rear">
-            <span>REAR / DOORS</span>
             <button
               type="button"
               className={[

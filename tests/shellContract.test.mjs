@@ -393,6 +393,29 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.5.0.2 renders the puzzle grid as a rear-open loadable trailer surface', async () => {
+  const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(puzzle, /TRAILER VIEW/)
+  assert.match(puzzle, /TOP DOWN/)
+  assert.match(puzzle, /SIDE VIEW/)
+  assert.match(puzzle, /trailer-visual-shell/)
+  assert.match(puzzle, /trailer-roof/)
+  assert.match(puzzle, /trailer-side-wall left/)
+  assert.match(puzzle, /trailer-floor-stage/)
+  assert.match(puzzle, /trailer-nose-wall/)
+  assert.match(puzzle, /loaded-cargo-block/)
+  assert.match(puzzle, /trailer-rear-frame/)
+  assert.match(puzzle, /trailer-tail-light/)
+  assert.match(css, /\.trailer-open-cavity/)
+  assert.match(css, /clip-path: polygon/)
+  assert.match(css, /\.loaded-cargo-block/)
+  assert.match(css, /\.trailer-rear-frame/)
+  assert.match(css, /\.trailer-tail-light/)
+  assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
+})
 test('V2.7.5.0.1 makes Dock & Load a truck-sized shaped-piece packing puzzle', async () => {
   const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
   const facility = await readFile(new URL('../src/domain/facility/pickupOperation.js', import.meta.url), 'utf8')
@@ -1049,8 +1072,8 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.5\.0\.1 · PUZZLE BOARD/)
-  assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
+  assert.match(top, /DESKTOP V2\.7\.5\.0\.2 · TRAILER VIEW/)
+  assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
 test('confirmed freight rebuilds operational load and driver-plan truth', async () => {

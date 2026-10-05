@@ -2695,3 +2695,63 @@ It is:
 > Can I fit the correct shaped freight into this driver's actual trailer cleanly?
 
 That packing interaction is the foundation for later stacking, balance, height, and stop-access gameplay.
+
+
+---
+
+## V2.7.5.0.2 — Trailer View
+
+The V2.7.5.0.1 correction fixed the mechanics, but the center board still visually presented as a flat matrix of cells.
+
+The interaction is now rendered as a rear-open trailer.
+
+### Separation of logic and presentation
+
+The equipment-derived puzzle grid remains the authoritative placement model.
+
+The Trailer View is a visual shell around that grid:
+
+- metallic roof/frame,
+- left and right trailer walls,
+- recessed trailer floor,
+- visible front/nose wall,
+- rear frame and tail lights,
+- rear doors as the commitment control.
+
+This keeps collision and fit calculations deterministic while making the gameplay surface communicate the object being loaded.
+
+### 2.5D floor
+
+The interactive floor narrows toward the trailer nose.
+
+The perspective treatment is visual only; the same underlying cell coordinates, footprints, rotations, overlap detection, and out-of-bounds checks remain authoritative.
+
+### Freight rendering
+
+Occupied puzzle cells now render pallet/crate material inside the trailer.
+
+The player should visually perceive freight sitting on the trailer floor rather than abstract blue occupancy.
+
+Future asset art may replace these CSS crate treatments without changing the puzzle state model.
+
+### Views
+
+The design reserves a shared-state multi-view system:
+
+- Trailer View,
+- Top Down,
+- Side View.
+
+V2.7.5.0.2 implements Trailer View only.
+
+Top Down and Side View appear as disabled view affordances so later work can expose the same load plan for balance, stop order, stacking, and height analysis without inventing a second load state.
+
+### Focused shell
+
+The top operations status must describe the mode, not a specific unrelated task.
+
+Focused work now displays:
+
+`FOCUSED MODE · GAMEPLAY PAUSED`
+
+instead of retaining Rate Confirmation copy during Dock & Load.
