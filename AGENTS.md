@@ -32,24 +32,22 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.3 Facility Service Execution
+## Current packet — V2.7.3.1 Route-Locked Smooth Truck Motion
 
-V2.1 through V2.7.2 are accepted and locked. V2.7.2 route execution, truck motion, camera ownership, and sent-plan live truth must remain intact.
+V2.1 through V2.7.3 are accepted and locked. Facility service execution remains intact.
 
 Guardrails:
-- preserve every locked planning, booking, routing, native-stop, camera-ownership, live-clock, and route-execution invariant,
-- only SENT Driver Days execute; draft plans never move or service freight,
-- pickup and delivery freight stops own deterministic service windows; default service is 12 minutes for pickup loading and 10 minutes for delivery unloading unless the stop explicitly overrides it,
-- the truck remains parked at the routed facility access point for the full service window,
-- pickup service completion is the moment the load becomes live onboard freight,
-- delivery service completion is the moment the load leaves live onboard freight,
-- outgoing route motion begins automatically when the service window ends; there is no manual Depart action,
-- Driver Day, Fleet, and map execution state must read from the same service truth,
-- completed timeline events are based on service completion/departure, not merely facility arrival,
-- completed incoming route legs may fade on arrival while the truck remains parked for service,
-- the future loading puzzle may become the gate that starts facility service, but V2.7.3 must not invent that puzzle or couple the execution engine to a specific puzzle UI,
-- do not add facility congestion, detention, paperwork completion, document generation, dock assignment, or player-controlled loading geometry in this packet,
-- service timing must remain deterministic and testable from the shared simulation clock.
+- preserve every locked planning, booking, routing, camera-ownership, live-clock, facility-service, and cargo-state invariant,
+- the truck's geographic coordinate must stay on the same committed road LineString rendered to the player,
+- smooth motion must interpolate execution progress along routed geometry, never interpolate longitude/latitude directly across road corners,
+- clock truth remains authoritative; animation only smooths presentation between clock ticks,
+- a new clock tick may cancel the previous visual tween and continue from the truck's current rendered route progress,
+- 4× simulation may cover more road per real second, but the truck must still visibly traverse that road rather than teleport between tick positions,
+- the truck marker artwork must be centered on its geographic coordinate; hover/selection labels must not change marker anchoring,
+- driver labels may float outside the marker layout but must not become part of the coordinate-bearing box,
+- manual pan/zoom remains player-owned and moving trucks must not recenter the map,
+- service phases remain parked states and must snap/hold at the routed facility access coordinate,
+- do not add vehicle physics, lane-level navigation, traffic, heading rotation, or camera following in this hotfix.
 
 
 ## Verification

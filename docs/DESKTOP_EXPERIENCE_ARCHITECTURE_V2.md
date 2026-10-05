@@ -1706,3 +1706,42 @@ The physical loading puzzle is deliberately not implemented in V2.7.3.
 The execution engine is structured so the later facility puzzle can become the gate that releases/starts the service clock. Finishing the puzzle and closing the trailer doors can trigger loading time without rewriting route movement, cargo-state, Driver Day, or Fleet behavior.
 
 Paperwork, dock congestion, detention, and facility-specific service variability remain later work.
+
+
+---
+
+## V2.7.3.1 — Route-Locked Smooth Truck Motion
+
+The first V2.7.3 desktop playtest confirmed that route execution worked, but exposed two presentation defects:
+
+1. the selected truck artwork appeared offset from its route coordinate because the visible name label participated in the MapLibre marker's bounding box while the marker used a bottom anchor,
+2. live coordinates changed only once per simulation tick, making truck motion visibly step or jump, especially at 4× speed.
+
+### Marker-coordinate invariant
+
+Truck artwork, not its floating label, owns the map coordinate.
+
+- truck markers use a center anchor,
+- the marker's coordinate-bearing box is the truck artwork dimensions,
+- selected/hover driver labels are absolutely positioned outside that box,
+- selection scaling must not vertically shift the truck away from the route.
+
+This creates the visual invariant:
+
+> route coordinate = center of truck artwork
+
+### Smooth execution invariant
+
+The shared simulation clock remains gameplay truth. Smooth motion is presentation interpolation only.
+
+For an active committed route leg:
+
+- each clock tick supplies the new authoritative segment progress,
+- the map remembers the currently rendered progress,
+- the visual tween advances from rendered progress to the new authoritative progress over the interval between clock ticks,
+- every animation frame recomputes coordinates with `coordinateAlongRouteShape()`,
+- therefore the truck follows the committed road LineString through curves and turns instead of drawing a straight shortcut between tick positions,
+- a new tick cancels the unfinished tween and continues from the currently rendered route progress,
+- dwell/service phases immediately hold the truck at the routed stop access coordinate.
+
+At 4× speed the truck covers more route per real second, but it still visibly traverses that route continuously.

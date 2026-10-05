@@ -387,6 +387,22 @@ test('V2.7.2 moves the selected truck from live execution state and phases commi
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.3.1 keeps the truck artwork centered on route truth and smooths each live tick along road geometry', async () => {
+  const map = await readFile(new URL('../src/map/OperationsMap.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/map/map.css', import.meta.url), 'utf8')
+
+  assert.match(map, /coordinateAlongRouteShape/)
+  assert.match(map, /truckAnimationFrameRef/)
+  assert.match(map, /truckMotionRef/)
+  assert.match(map, /displayDriverRoutes\.find\(\(segment\) => segment\.id === activeSegmentId\)/)
+  assert.match(map, /requestAnimationFrame\(animate\)/)
+  assert.match(map, /coordinateAlongRouteShape\(routeShape, renderedProgress\)/)
+  assert.match(map, /new Marker\(\{ element, anchor: 'center' \}\)/)
+  assert.match(css, /\.driver-marker \{[\s\S]*position: relative;[\s\S]*width: 42px;[\s\S]*height: 31px;/)
+  assert.match(css, /\.driver-marker > small \{[\s\S]*position: absolute;[\s\S]*transform: translateX\(-50%\);/)
+  assert.match(css, /\.driver-marker:hover \.driver-truck-icon,[\s\S]*\.driver-marker\.selected \.driver-truck-icon \{[\s\S]*transform: scale\(1\.08\);/)
+})
+
 test('V2.7.3 adds pickup loading, delivery unloading, and automatic service departure truth', async () => {
   const dayModel = await readFile(new URL('../src/domain/manifest/driverDayModel.js', import.meta.url), 'utf8')
   const serviceTimes = await readFile(new URL('../src/domain/freight/serviceTimes.js', import.meta.url), 'utf8')
@@ -610,7 +626,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.3 · FACILITY SERVICE/)
+  assert.match(top, /DESKTOP V2\.7\.3\.1 · SMOOTH MOTION/)
   assert.match(top, /RATE CON REVIEW · GAMEPLAY PAUSED/)
 })
 

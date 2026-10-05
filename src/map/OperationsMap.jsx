@@ -8,6 +8,7 @@ import {
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { getDriverIdentity } from '../domain/drivers/driverIdentity.js'
 import {
+  coordinateAlongRouteShape,
   routeExecutionPosition,
   routeSegmentExecutionPhase,
 } from '../domain/live/routeExecution.js'
@@ -179,6 +180,12 @@ export default function OperationsMap({
   const onSelectSubjectRef = useRef(onSelectSubject)
   const onPreviewPlanningPlaceRef = useRef(onPreviewPlanningPlace)
   const cameraFrameKeyRef = useRef(null)
+  const truckAnimationFrameRef = useRef(null)
+  const truckMotionRef = useRef({
+    driverId: null,
+    segmentId: null,
+    progress: 0,
+  })
   const [mapReady, setMapReady] = useState(false)
   const [driverRouteResult, setDriverRouteResult] = useState(null)
 
@@ -300,7 +307,7 @@ export default function OperationsMap({
         onSelectSubjectRef.current?.(SELECTION_TYPES.DRIVER, driver.id)
       })
 
-      const marker = new Marker({ element, anchor: 'bottom' })
+      const marker = new Marker({ element, anchor: 'center' })
         .setLngLat(driver.coordinates)
         .addTo(map)
 
@@ -450,12 +457,16 @@ export default function OperationsMap({
   }, [driverDay, drivers, freightRoutePreview, locations, marketLanes, pendingPlanningPlace, displayDriverRoutes, planningPlaceOptions, selectedDriver, selection, selectedStop, workspaceOpen])
 
   useEffect(() => {
-    if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return
+    if (!selectedDriver || !Array.isArray(liveTruckCoordinates)) return undefined
 
     const marker = markerRefs.current.get(`driver:${selectedDriver.id}`)
-    if (!marker) return
+    if (!marker) return undefined
 
-    marker.setLngLat(liveTruckCoordinates)
+    if (truckAnimationFrameRef.current) {
+      cancelAnimationFrame(truckAnimationFrameRef.current)
+      truckAnimationFrameRef.current = null
+    }
+
     const element = marker.getElement()
     if (element) {
       element.dataset.livePhase = liveState?.executionPhase ?? 'planned'
@@ -464,7 +475,96 @@ export default function OperationsMap({
         `Select ${selectedDriver.name}, ${liveState?.label ?? selectedDriver.status}`,
       )
     }
-  }, [liveState?.executionPhase, liveState?.label, liveTruckCoordinates, selectedDriver])
+
+    const activeSegmentId = liveState?.activeSegmentId ?? null
+    const targetProgress = Math.min(
+      1,
+      Math.max(0, Number(liveState?.activeSegmentProgress) || 0),
+    )
+    const activeSegment = activeSegmentId
+      ? displayDriverRoutes.find((segment) => segment.id === activeSegmentId)
+      : null
+    const routeShape = activeSegment?.route?.routeShape ?? []
+
+    if (
+      liveState?.executionPhase !== 'en-route'
+      || !activeSegmentId
+      || routeShape.length < 2
+    ) {
+      marker.setLngLat(liveTruckCoordinates)
+      truckMotionRef.current = {
+        driverId: selectedDriver.id,
+        segmentId: activeSegmentId,
+        progress: targetProgress,
+      }
+      return undefined
+    }
+
+    const previousMotion = truckMotionRef.current
+    const continuingSegment = (
+      previousMotion.driverId === selectedDriver.id
+      && previousMotion.segmentId === activeSegmentId
+      && previousMotion.progress <= targetProgress
+    )
+    const startProgress = continuingSegment
+      ? previousMotion.progress
+      : 0
+
+    if (targetProgress <= startProgress + 0.000001) {
+      marker.setLngLat(
+        coordinateAlongRouteShape(routeShape, targetProgress)
+          ?? liveTruckCoordinates,
+      )
+      truckMotionRef.current = {
+        driverId: selectedDriver.id,
+        segmentId: activeSegmentId,
+        progress: targetProgress,
+      }
+      return undefined
+    }
+
+    const startedAt = performance.now()
+    const animationDurationMs = 900
+
+    const animate = (now) => {
+      const elapsed = Math.max(0, now - startedAt)
+      const frameProgress = Math.min(1, elapsed / animationDurationMs)
+      const renderedProgress = startProgress
+        + ((targetProgress - startProgress) * frameProgress)
+      const coordinates = coordinateAlongRouteShape(routeShape, renderedProgress)
+
+      if (Array.isArray(coordinates)) marker.setLngLat(coordinates)
+
+      truckMotionRef.current = {
+        driverId: selectedDriver.id,
+        segmentId: activeSegmentId,
+        progress: renderedProgress,
+      }
+
+      if (frameProgress < 1) {
+        truckAnimationFrameRef.current = requestAnimationFrame(animate)
+      } else {
+        truckAnimationFrameRef.current = null
+      }
+    }
+
+    truckAnimationFrameRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (truckAnimationFrameRef.current) {
+        cancelAnimationFrame(truckAnimationFrameRef.current)
+        truckAnimationFrameRef.current = null
+      }
+    }
+  }, [
+    displayDriverRoutes,
+    liveState?.activeSegmentId,
+    liveState?.activeSegmentProgress,
+    liveState?.executionPhase,
+    liveState?.label,
+    liveTruckCoordinates,
+    selectedDriver,
+  ])
 
   useEffect(() => {
     const map = mapRef.current
