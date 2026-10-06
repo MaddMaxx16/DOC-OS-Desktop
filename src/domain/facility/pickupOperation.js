@@ -89,9 +89,42 @@ const FREIGHT_PROFILES = Object.freeze([
   }),
 ])
 
+const HAZMAT_TUTORIAL_PROFILES = Object.freeze([
+  Object.freeze({
+    classCode: '3',
+    classLabel: 'FLAMMABLE LIQUID',
+    marking: 'HAZMAT 3',
+  }),
+  Object.freeze({
+    classCode: '5.1',
+    classLabel: 'OXIDIZER',
+    marking: 'HAZMAT 5.1',
+  }),
+])
+
+const HAZMAT_SEGREGATION_PAIRS = new Set([
+  '3|5.1',
+])
+
 function finite(value, fallback = 0) {
   const number = Number(value)
   return Number.isFinite(number) ? number : fallback
+}
+
+function hazmatProfileForLoad(loadRef) {
+  const digits = String(loadRef ?? '')
+    .match(/\d/g)
+    ?.join('')
+  const numeric = Number.parseInt(digits ?? '', 10)
+  const index = Number.isFinite(numeric)
+    ? Math.abs(numeric) % HAZMAT_TUTORIAL_PROFILES.length
+    : 0
+
+  return HAZMAT_TUTORIAL_PROFILES[index]
+}
+
+function hazmatPairKey(a, b) {
+  return [String(a), String(b)].sort().join('|')
 }
 
 function freightProfileForIndex(index, expected = true) {
@@ -196,6 +229,9 @@ export function buildTutorialStagedFreight(event = {}) {
   const expected = Array.from({ length: palletCount }, (_, index) => {
     const profile = freightProfileForIndex(index, true)
     const shape = shapeForProfile(profile)
+    const hazmat = profile.handlingCode === 'HAZMAT'
+      ? hazmatProfileForLoad(loadRef)
+      : null
 
     return {
       id: `${event.id}:pallet-${index + 1}`,
@@ -208,7 +244,9 @@ export function buildTutorialStagedFreight(event = {}) {
       commodity: profile.unitName,
       cargoType: profile.cargoType,
       handlingCode: profile.handlingCode,
-      handlingLabel: profile.handlingLabel,
+      handlingLabel: hazmat?.marking ?? profile.handlingLabel,
+      hazmatClassCode: hazmat?.classCode ?? null,
+      hazmatClassLabel: hazmat?.classLabel ?? null,
       weightLbs: weightEach,
       stackable: profile.stackable,
       maxStack: profile.maxStack,
@@ -743,6 +781,103 @@ export function evaluateTrailerFragileProtection({
   }
 }
 
+export function evaluateTrailerHazmatSegregation({
+  board,
+  stagedFreight = [],
+  placements = {},
+} = {}) {
+  const freightById = new Map(stagedFreight.map((freight) => [freight.id, freight]))
+  const hazmat = []
+
+  for (const [freightId, placement] of Object.entries(placements)) {
+    const freight = freightById.get(freightId)
+    if (
+      !freight
+      || freight.handlingCode !== 'HAZMAT'
+      || !freight.hazmatClassCode
+    ) continue
+
+    const cells = footprintCellIndexes({
+      board,
+      freight,
+      anchorCell: placement?.anchorCell,
+      rotation: placement?.rotation ?? 0,
+    })
+    if (!cells?.length) continue
+
+    hazmat.push({
+      freight,
+      cells: cells.map((cellIndex) => ({
+        cellIndex,
+        ...boardCellCoordinates(board, cellIndex),
+      })),
+    })
+  }
+
+  const conflicts = []
+  const incompatiblePairs = []
+  const seenPairs = new Set()
+
+  for (let firstIndex = 0; firstIndex < hazmat.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < hazmat.length; secondIndex += 1) {
+      const first = hazmat[firstIndex]
+      const second = hazmat[secondIndex]
+      const pairKey = hazmatPairKey(
+        first.freight.hazmatClassCode,
+        second.freight.hazmatClassCode,
+      )
+
+      if (!HAZMAT_SEGREGATION_PAIRS.has(pairKey)) continue
+
+      incompatiblePairs.push({
+        firstFreightId: first.freight.id,
+        secondFreightId: second.freight.id,
+        firstClassCode: first.freight.hazmatClassCode,
+        secondClassCode: second.freight.hazmatClassCode,
+      })
+
+      let adjacent = false
+      for (const firstCell of first.cells) {
+        for (const secondCell of second.cells) {
+          const distance = Math.abs(firstCell.x - secondCell.x)
+            + Math.abs(firstCell.y - secondCell.y)
+          if (distance === 1) adjacent = true
+        }
+      }
+
+      if (!adjacent) continue
+
+      const conflictKey = [first.freight.id, second.freight.id].sort().join(':')
+      if (seenPairs.has(conflictKey)) continue
+      seenPairs.add(conflictKey)
+
+      conflicts.push({
+        firstFreightId: first.freight.id,
+        secondFreightId: second.freight.id,
+        firstLabel: first.freight.label,
+        secondLabel: second.freight.label,
+        firstLoadRef: first.freight.loadRef ?? first.freight.loadId,
+        secondLoadRef: second.freight.loadRef ?? second.freight.loadId,
+        firstClassCode: first.freight.hazmatClassCode,
+        secondClassCode: second.freight.hazmatClassCode,
+        firstClassLabel: first.freight.hazmatClassLabel,
+        secondClassLabel: second.freight.hazmatClassLabel,
+      })
+    }
+  }
+
+  return {
+    active: incompatiblePairs.length > 0,
+    clear: conflicts.length === 0,
+    hazmatCount: hazmat.length,
+    incompatiblePairs,
+    conflicts,
+    conflictFreightIds: [...new Set(
+      conflicts.flatMap((item) => [item.firstFreightId, item.secondFreightId]),
+    )],
+  }
+}
+
 export function evaluatePickupLoadPlan({
   event,
   board,
@@ -861,6 +996,26 @@ export function evaluatePickupLoadPlan({
     })
   }
 
+  const hazmatSegregationRaw = evaluateTrailerHazmatSegregation({
+    board,
+    stagedFreight,
+    placements,
+  })
+  const hazmatSegregation = {
+    ...hazmatSegregationRaw,
+    enforced: missingPlaced.length === 0 && hazmatSegregationRaw.active,
+  }
+
+  if (hazmatSegregation.enforced && !hazmatSegregation.clear) {
+    const firstConflict = hazmatSegregation.conflicts[0]
+    errors.push({
+      code: 'HAZMAT_SEGREGATION_CONFLICT',
+      message: firstConflict
+        ? `Hazmat Class ${firstConflict.firstClassCode} is directly beside Class ${firstConflict.secondClassCode}. Separate the incompatible hazmat freight.`
+        : 'Incompatible hazmat classes require separation.',
+    })
+  }
+
   return {
     ready: errors.length === 0,
     errors,
@@ -875,6 +1030,7 @@ export function evaluatePickupLoadPlan({
     deliveryOrder,
     weightBalance,
     fragileProtection,
+    hazmatSegregation,
     loadRef: event?.loadRef ?? event?.loadId ?? null,
   }
 }
