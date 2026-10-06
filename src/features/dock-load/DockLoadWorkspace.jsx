@@ -600,13 +600,6 @@ export default function DockLoadWorkspace({
   const balanceMonitoring = Boolean(
     weightBalance?.active && !weightBalance?.enforced,
   )
-  const balanceStatus = !weightBalance?.active
-    ? 'LIGHT LOAD'
-    : !weightBalance?.enforced
-      ? 'MONITOR'
-      : weightBalance.clear
-        ? 'BALANCED'
-        : 'ADJUST'
   const balanceIssueLabel = weightBalance?.issues
     ?.map((issue) => issue.label)
     .join(' + ') ?? ''
@@ -621,30 +614,33 @@ export default function DockLoadWorkspace({
   const fragileMonitoring = Boolean(
     fragileProtection?.active && !fragileProtection?.enforced,
   )
-  const fragileStatus = !fragileProtection?.active
-    ? 'CLEAR'
-    : !fragileProtection?.enforced
-      ? 'MONITOR'
-      : fragileProtection.clear
+  const deliveryNeedsAction = !evaluation.deliveryAccess?.clear
+  const blockingRuleCount = [
+    deliveryNeedsAction,
+    balanceNeedsAction,
+    fragileNeedsAction,
+  ].filter(Boolean).length
+  const anyRuleMonitoring = balanceMonitoring || fragileMonitoring
+  const trailerRuleSummary = blockingRuleCount > 0
+    ? `${blockingRuleCount} NEED${blockingRuleCount === 1 ? 'S' : ''} ATTENTION`
+    : anyRuleMonitoring
+      ? 'LIVE'
+      : 'OK'
+  const deliveryRuleStatus = deliveryNeedsAction ? 'BLOCKED' : 'CLEAR'
+  const balanceRuleStatus = balanceNeedsAction
+    ? 'ADJUST'
+    : balanceMonitoring
+      ? 'LIVE'
+      : !weightBalance?.active
+        ? 'LIGHT'
+        : 'BALANCED'
+  const fragileRuleStatus = fragileNeedsAction
+    ? 'SEPARATE'
+    : fragileMonitoring
+      ? 'LIVE'
+      : fragileProtection?.active
         ? 'PROTECTED'
-        : 'SEPARATE'
-  const handlingMonitoring = fragileMonitoring
-  const allTrailerRulesClear = Boolean(
-    evaluation.deliveryAccess?.clear
-    && !balanceNeedsAction
-    && !fragileNeedsAction
-  )
-  const combinedRuleMonitoring = Boolean(
-    (balanceMonitoring || handlingMonitoring)
-    && allTrailerRulesClear
-  )
-  const combinedTrailerRulesStatus = !evaluation.deliveryAccess?.clear
-    || balanceNeedsAction
-    || fragileNeedsAction
-    ? 'ACTION NEEDED'
-    : combinedRuleMonitoring
-      ? 'MONITORING'
-      : 'ALL CLEAR'
+        : 'CLEAR'
 
   return (
     <div
@@ -1075,226 +1071,162 @@ export default function DockLoadWorkspace({
         <section
           className={[
             'dock-load-rules',
-            allTrailerRulesClear ? 'clear' : 'attention',
-            combinedRuleMonitoring ? 'monitoring' : '',
+            'dock-load-rules-compact',
+            blockingRuleCount > 0 ? 'attention' : '',
+            blockingRuleCount === 0 && anyRuleMonitoring ? 'monitoring' : '',
           ].filter(Boolean).join(' ')}
         >
           <header>
             <span>TRAILER RULES</span>
-            <strong>{combinedTrailerRulesStatus}</strong>
+            <strong>{trailerRuleSummary}</strong>
           </header>
 
-          <div
-            className={[
-              'dock-load-trailer-rule',
-              evaluation.deliveryAccess?.clear ? 'clear' : 'blocked',
-            ].filter(Boolean).join(' ')}
-          >
-            <header>
-              <span>DELIVERY ACCESS</span>
-              <strong>{evaluation.deliveryAccess?.clear ? 'CLEAR' : 'BLOCKED'}</strong>
-            </header>
-
-            <div className="dock-load-rule-section">
-              <span>UNLOAD ORDER</span>
-              <div className="dock-load-delivery-order" aria-label="Trailer unload order">
-                {deliveryOrder.length > 0 ? deliveryOrder.map((stop) => (
-                  <span
-                    key={stop.deliveryEventId ?? `${stop.loadRef}:${stop.rank}`}
-                    className={stop.rank === 1 ? 'next' : ''}
-                    title={stop.destination}
-                  >
-                    <b>D{stop.rank}</b>
-                    <strong>{stop.loadRef}</strong>
-                  </span>
-                )) : (
-                  <span className="empty">NO DELIVERY ORDER</span>
-                )}
-              </div>
-            </div>
-
-            {evaluation.deliveryAccess?.clear ? (
-              <div className="dock-load-rule-copy clear">
-                <span>STATUS</span>
-                <strong>
-                  {deliveryOrder.length > 1
-                    ? 'Earlier deliveries have a clear path to the rear doors.'
-                    : 'Single delivery onboard. Rear-door access is clear.'}
-                </strong>
-              </div>
-            ) : (
-              <>
-                <div className="dock-load-rule-copy problem">
-                  <span>PROBLEM</span>
-                  <strong>
-                    {deliveryConflict
-                      ? `${deliveryConflict.blockedLoadRef} is blocked by ${deliveryConflict.blockingLoadRef}.`
-                      : 'Earlier-delivery freight is buried behind later freight.'}
-                  </strong>
-                </div>
-                <div className="dock-load-rule-copy fix">
-                  <span>FIX</span>
-                  <strong>
-                    {deliveryConflict
-                      ? `Move ${deliveryConflict.blockedLoadRef} closer to the rear doors.`
-                      : 'Move the earlier delivery rearward.'}
-                  </strong>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div
-            className={[
-              'dock-load-trailer-rule',
-              'dock-load-weight-rule',
-              balanceNeedsAction ? 'blocked' : 'clear',
-              !weightBalance?.active ? 'light-load' : '',
-              balanceMonitoring ? 'monitoring' : '',
-            ].filter(Boolean).join(' ')}
-          >
-            <header>
-              <span>WEIGHT DISTRIBUTION</span>
-              <strong>{balanceStatus}</strong>
-            </header>
-
-            <div className="dock-load-balance-target">
-              TARGET · {weightBalance?.targetMinPercent ?? 35}–{weightBalance?.targetMaxPercent ?? 65}% PER SIDE
-            </div>
-
-            <div className="dock-load-balance-axis">
+          <div className="dock-load-rule-list">
+            <article
+              className={[
+                'dock-load-rule-row',
+                deliveryNeedsAction ? 'blocked' : 'healthy',
+              ].filter(Boolean).join(' ')}
+            >
               <header>
-                <span>FRONT / REAR</span>
-                <strong>
-                  {weightBalance?.frontPercent ?? 50}% / {weightBalance?.rearPercent ?? 50}%
-                </strong>
+                <div>
+                  <i aria-hidden="true">{deliveryNeedsAction ? '!' : '✓'}</i>
+                  <strong>DELIVERY ACCESS</strong>
+                </div>
+                <b>{deliveryRuleStatus}</b>
               </header>
-              <div className="dock-load-balance-split" aria-label="Front and rear trailer weight distribution">
-                <i
-                  className="front"
-                  style={{ width: `${weightBalance?.frontPercent ?? 50}%` }}
-                />
-                <i
-                  className="rear"
-                  style={{ width: `${weightBalance?.rearPercent ?? 50}%` }}
-                />
-              </div>
-              <small>
-                <span>FRONT / NOSE</span>
-                <span>REAR / DOORS</span>
-              </small>
-            </div>
 
-            <div className="dock-load-balance-axis">
+              <div className="dock-load-rule-summary">
+                <span>Unload order</span>
+                <strong>
+                  {deliveryOrder.length > 0
+                    ? deliveryOrder
+                        .map((stop) => `D${stop.rank} ${stop.loadRef}`)
+                        .join(' → ')
+                    : 'No scheduled delivery order'}
+                </strong>
+              </div>
+
+              {deliveryNeedsAction && (
+                <div className="dock-load-rule-detail">
+                  <div>
+                    <span>PROBLEM</span>
+                    <strong>
+                      {deliveryConflict
+                        ? `${deliveryConflict.blockedLoadRef} is blocked by ${deliveryConflict.blockingLoadRef}.`
+                        : 'Earlier-delivery freight is buried behind later freight.'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>FIX</span>
+                    <strong>
+                      {deliveryConflict
+                        ? `Move ${deliveryConflict.blockedLoadRef} closer to the rear doors.`
+                        : 'Move the earlier delivery rearward.'}
+                    </strong>
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article
+              className={[
+                'dock-load-rule-row',
+                'weight',
+                balanceNeedsAction ? 'blocked' : '',
+                balanceMonitoring ? 'live' : '',
+                !balanceNeedsAction && !balanceMonitoring ? 'healthy' : '',
+              ].filter(Boolean).join(' ')}
+            >
               <header>
-                <span>LEFT / RIGHT</span>
-                <strong>
-                  {weightBalance?.leftPercent ?? 50}% / {weightBalance?.rightPercent ?? 50}%
-                </strong>
+                <div>
+                  <i aria-hidden="true">{balanceNeedsAction ? '!' : balanceMonitoring ? '•' : '✓'}</i>
+                  <strong>WEIGHT BALANCE</strong>
+                </div>
+                <b>{balanceRuleStatus}</b>
               </header>
-              <div className="dock-load-balance-split" aria-label="Left and right trailer weight distribution">
-                <i
-                  className="left"
-                  style={{ width: `${weightBalance?.leftPercent ?? 50}%` }}
-                />
-                <i
-                  className="right"
-                  style={{ width: `${weightBalance?.rightPercent ?? 50}%` }}
-                />
-              </div>
-              <small>
-                <span>LEFT</span>
-                <span>RIGHT</span>
-              </small>
-            </div>
 
-            {!weightBalance?.active ? (
-              <div className="dock-load-rule-copy clear">
-                <span>STATUS</span>
+              <div className="dock-load-rule-summary balance">
+                <span>
+                  F/R <strong>{weightBalance?.frontPercent ?? 50}/{weightBalance?.rearPercent ?? 50}</strong>
+                </span>
+                <span>
+                  L/R <strong>{weightBalance?.leftPercent ?? 50}/{weightBalance?.rightPercent ?? 50}</strong>
+                </span>
+                <small>
+                  {!weightBalance?.active
+                    ? `Advisory below ${pounds(weightBalance?.activationWeightLbs)} lb`
+                    : balanceMonitoring
+                      ? 'Live while loading'
+                      : 'Target 35–65'}
+                </small>
+              </div>
+
+              {balanceNeedsAction && (
+                <div className="dock-load-rule-detail">
+                  <div>
+                    <span>PROBLEM</span>
+                    <strong>{balanceIssueLabel}</strong>
+                  </div>
+                  <div>
+                    <span>FIX</span>
+                    <strong>{balanceFixText}</strong>
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article
+              className={[
+                'dock-load-rule-row',
+                'fragile',
+                fragileNeedsAction ? 'blocked' : '',
+                fragileMonitoring ? 'live' : '',
+                !fragileNeedsAction && !fragileMonitoring ? 'healthy' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <header>
+                <div>
+                  <i aria-hidden="true">{fragileNeedsAction ? '!' : fragileMonitoring ? '•' : '✓'}</i>
+                  <strong>FRAGILE PROTECTION</strong>
+                </div>
+                <b>{fragileRuleStatus}</b>
+              </header>
+
+              <div className="dock-load-rule-summary">
+                <span>Spacing</span>
                 <strong>
-                  Light load. Balance is advisory below {pounds(weightBalance?.activationWeightLbs)} lb.
+                  {fragileMonitoring
+                    ? 'Live while loading'
+                    : fragileNeedsAction
+                      ? 'Conflict detected'
+                      : fragileProtection?.active
+                        ? 'Fragile clear of HEAVY / OVERSIZE'
+                        : 'No active conflict pair'}
                 </strong>
               </div>
-            ) : balanceMonitoring ? (
-              <div className="dock-load-rule-copy monitoring">
-                <span>LIVE PREVIEW</span>
-                <strong>
-                  Final balance is checked when this pickup is fully loaded.
-                </strong>
-              </div>
-            ) : weightBalance.clear ? (
-              <div className="dock-load-rule-copy clear">
-                <span>STATUS</span>
-                <strong>Weight is distributed within the target band.</strong>
-              </div>
-            ) : (
-              <>
-                <div className="dock-load-rule-copy problem">
-                  <span>PROBLEM</span>
-                  <strong>{balanceIssueLabel}</strong>
-                </div>
-                <div className="dock-load-rule-copy fix">
-                  <span>FIX</span>
-                  <strong>{balanceFixText}</strong>
-                </div>
-              </>
-            )}
-          </div>
 
-          <div
-            className={[
-              'dock-load-trailer-rule',
-              'dock-load-fragile-rule',
-              fragileNeedsAction ? 'blocked' : 'clear',
-              fragileMonitoring ? 'monitoring' : '',
-            ].filter(Boolean).join(' ')}
-          >
-            <header>
-              <span>FRAGILE PROTECTION</span>
-              <strong>{fragileStatus}</strong>
-            </header>
-
-            <div className="dock-load-fragile-rule-line">
-              FRAGILE must not share an edge with HEAVY or OVERSIZE freight.
-            </div>
-
-            {!fragileProtection?.active ? (
-              <div className="dock-load-rule-copy clear">
-                <span>STATUS</span>
-                <strong>No fragile-to-impact cargo conflict is currently possible.</strong>
-              </div>
-            ) : fragileMonitoring ? (
-              <div className="dock-load-rule-copy monitoring">
-                <span>LIVE PREVIEW</span>
-                <strong>
-                  Fragile spacing will become enforceable when this pickup is fully loaded.
-                </strong>
-              </div>
-            ) : fragileProtection.clear ? (
-              <div className="dock-load-rule-copy clear">
-                <span>STATUS</span>
-                <strong>Fragile freight is separated from HEAVY and OVERSIZE cargo.</strong>
-              </div>
-            ) : (
-              <>
-                <div className="dock-load-rule-copy problem">
-                  <span>PROBLEM</span>
-                  <strong>
-                    {fragileConflict
-                      ? `${fragileConflict.fragileLabel} is directly beside ${fragileConflict.riskHandlingCode} freight.`
-                      : 'Fragile freight is directly beside heavy-impact cargo.'}
-                  </strong>
+              {fragileNeedsAction && (
+                <div className="dock-load-rule-detail">
+                  <div>
+                    <span>PROBLEM</span>
+                    <strong>
+                      {fragileConflict
+                        ? `${fragileConflict.fragileLabel} is beside ${fragileConflict.riskLabel}.`
+                        : 'Fragile freight is directly beside heavy-impact cargo.'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>FIX</span>
+                    <strong>
+                      {fragileConflict
+                        ? `Separate ${fragileConflict.fragileLabel} from ${fragileConflict.riskLabel}.`
+                        : 'Move the conflicting freight apart.'}
+                    </strong>
+                  </div>
                 </div>
-                <div className="dock-load-rule-copy fix">
-                  <span>FIX</span>
-                  <strong>
-                    {fragileConflict
-                      ? `Move ${fragileConflict.fragileLabel} or ${fragileConflict.riskLabel} so they no longer share an edge.`
-                      : 'Create at least one floor-position gap between the conflicting freight.'}
-                  </strong>
-                </div>
-              </>
-            )}
+              )}
+            </article>
           </div>
         </section>
 
@@ -1317,7 +1249,7 @@ export default function DockLoadWorkspace({
           ) : (
             <div className="dock-load-action-list">
               {remainingPickupUnits > 0 && (
-                <div className="dock-load-action-card error">
+                <div className="dock-load-action-card pending">
                   <strong>LOAD REMAINING FREIGHT</strong>
                   <small>
                     {remainingPickupUnits} {event.loadRef} unit{remainingPickupUnits === 1 ? '' : 's'} still need to be loaded.
@@ -1332,31 +1264,11 @@ export default function DockLoadWorkspace({
                 </div>
               ))}
 
-              {!evaluation.deliveryAccess?.clear && (
-                <div className="dock-load-action-card rule">
-                  <strong>FIX DELIVERY ACCESS</strong>
+              {remainingPickupUnits === 0 && blockingRuleCount > 0 && (
+                <div className="dock-load-action-card error">
+                  <strong>RESOLVE TRAILER RULES</strong>
                   <small>
-                    {deliveryConflict
-                      ? `Move ${deliveryConflict.blockedLoadRef} rearward so it can unload before ${deliveryConflict.blockingLoadRef}.`
-                      : 'Clear the earlier delivery path to the rear doors.'}
-                  </small>
-                </div>
-              )}
-
-              {balanceNeedsAction && (
-                <div className="dock-load-action-card rule balance">
-                  <strong>FIX WEIGHT DISTRIBUTION</strong>
-                  <small>{balanceFixText}</small>
-                </div>
-              )}
-
-              {fragileNeedsAction && (
-                <div className="dock-load-action-card rule fragile">
-                  <strong>PROTECT FRAGILE FREIGHT</strong>
-                  <small>
-                    {fragileConflict
-                      ? `Separate ${fragileConflict.fragileLabel} from ${fragileConflict.riskLabel}.`
-                      : 'Separate fragile freight from HEAVY or OVERSIZE cargo.'}
+                    {blockingRuleCount} trailer rule{blockingRuleCount === 1 ? '' : 's'} need attention above before you can close the doors.
                   </small>
                 </div>
               )}
