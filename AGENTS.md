@@ -32,31 +32,35 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.1.2 Right Panel Hierarchy Polish
+## Current packet — V2.7.5.2 Trailer Rules: Weight Distribution / Balance
 
-V2.1 through V2.7.5.1.1 are accepted and locked. Freight identity, persistent trailer state, direct onboard repositioning, reliable rotation, delivery-access rules, rear-door commitment, Focused Mode, and downstream timing remain authoritative.
+V2.1 through V2.7.5.1.2 are accepted and locked. Freight identity, persistent trailer state, direct onboard repositioning, reliable rotation, right-panel hierarchy, Delivery Access, rear-door commitment, Focused Mode, and downstream timing remain authoritative.
 
-This packet changes right-side information hierarchy only. It does not add or alter trailer simulation rules.
+This packet adds the second trailer rule:
 
-Right-panel rules:
-- the panel is organized as Load Summary → Load Completion → Trailer Status → Trailer Rules → Required Action / Ready to Close,
-- Load Summary owns load number, pickup, destination, expected freight, and freight already onboard from earlier loads,
-- do not repeat Driver or Trailer identity in the right panel when they are already clear in the focused workspace and trailer heading,
-- Load Completion owns the current-pickup loaded count and progress,
-- Trailer Status owns floor positions, total trailer weight, and total onboard unit count,
-- do not repeat THIS PICKUP in Trailer Status when Load Completion already shows the same count,
-- Trailer Rules is a dedicated section; Delivery Access remains its first rule card,
-- Delivery Access logic, unload order, CLEAR/BLOCKED state, PROBLEM/FIX copy, and readiness gating remain unchanged,
-- Required Action must have guaranteed readable space and may never collapse into a narrow warning strip,
-- when booked freight is still missing, show a direct action such as “5 M-202 units still need to be loaded,”
-- other geometry, wrong-load, overweight, delivery-access, or warning conditions remain readable action cards,
-- when the plan is fully valid, Required Action becomes a compact READY TO CLOSE state,
-- remove the right-panel Focused Mode footer because the top bar already communicates Focused Mode,
-- the panel should scroll naturally if its content exceeds available vertical space rather than compressing critical guidance,
-- preserve the larger readable text floor established in V2.7.5.1.1,
-- do not add weight distribution, axle logic, handling penalties, stacking rules, Top Down/Side View functionality, delivery puzzle, rework, HOS changes, or service-time changes.
+> a materially loaded trailer must distribute freight weight across both its length and width instead of concentrating the load at one end or on one side.
 
-After visual/gameplay acceptance, proceed to V2.7.5.2 Weight Distribution / Balance.
+Weight-balance rules:
+- calculate balance from the real placed freight weights and the actual occupied footprint cells,
+- distribute a freight unit's weight evenly across its occupied floor cells,
+- evaluate FRONT / REAR and LEFT / RIGHT as separate balance axes,
+- the acceptable target band is 35–65% on each side of an axis,
+- balance becomes active once onboard planned freight reaches 20% of the trailer's rated freight capacity,
+- below that activation weight, the rule remains advisory and reports LIGHT LOAD,
+- while the current pickup is incomplete, show live balance monitoring but do not add a readiness error solely for imbalance,
+- once all booked freight for the current pickup is placed, an active out-of-band balance becomes enforceable,
+- enforce FRONT HEAVY, REAR HEAVY, LEFT HEAVY, and RIGHT HEAVY states,
+- an enforced imbalance prevents LOAD PLAN READY / READY TO CLOSE until corrected,
+- the Trailer Rules section must include a dedicated Weight Distribution rule card below Delivery Access,
+- show live FRONT / REAR and LEFT / RIGHT percentages,
+- show target guidance and a direct directional fix when blocked,
+- Required Action should surface FIX WEIGHT DISTRIBUTION when the completed plan is materially unbalanced,
+- Delivery Access remains an independent rule and both rules must be satisfied for readiness,
+- do not claim this is DOT axle compliance, tandem/kingpin math, or certified weight distribution,
+- this is a simplified floor-balance gameplay abstraction only,
+- do not add axle weights, sliding tandems, scale tickets, legal axle limits, vertical stacking, hazmat compatibility, fragile separation, keep-upright penalties, no-stack penalties, delivery puzzle, rework, HOS changes, or service-time changes in this packet.
+
+After visual/gameplay acceptance, the next trailer-rule slice is handling restrictions.
 
 
 ## Verification
