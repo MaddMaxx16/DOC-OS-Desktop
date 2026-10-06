@@ -122,11 +122,17 @@ function activePresentation(execution = {}) {
   }
 
   if (execution.executionPhase === 'facility-dock-assigned') {
+    const delivery = execution.serviceRole === 'delivery'
+      || execution.facilityOperationType === 'delivery'
     return {
       label: `DOCK ${execution.dock ?? '—'}`,
       detail: execution.currentEventLabel
-        ? `Dock ${execution.dock ?? '—'} assigned at ${execution.currentEventLabel} · load plan required.`
-        : `Dock ${execution.dock ?? '—'} assigned · load plan required.`,
+        ? delivery
+          ? `Dock ${execution.dock ?? '—'} assigned at ${execution.currentEventLabel} · unload plan required.`
+          : `Dock ${execution.dock ?? '—'} assigned at ${execution.currentEventLabel} · load plan required.`
+        : delivery
+          ? `Dock ${execution.dock ?? '—'} assigned · unload plan required.`
+          : `Dock ${execution.dock ?? '—'} assigned · load plan required.`,
     }
   }
 
@@ -154,6 +160,15 @@ function activePresentation(execution = {}) {
       detail: execution.currentEventLabel
         ? `Unloading ${execution.serviceLoadRef ?? 'freight'} at ${execution.currentEventLabel}.`
         : 'Unloading freight at the planned delivery.',
+    }
+  }
+
+  if (execution.executionPhase === 'receiver-verification') {
+    return {
+      label: 'RECEIVER CHECK',
+      detail: execution.currentEventLabel
+        ? `Receiver verifying ${execution.serviceLoadRef ?? 'freight'} at ${execution.currentEventLabel}.`
+        : 'Receiver is checking delivered freight and paperwork.',
     }
   }
 
