@@ -393,12 +393,39 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.5.1.2 gives the right panel a stable operational hierarchy', async () => {
+  const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(top, /DESKTOP V2\.7\.5\.1\.2 · RIGHT PANEL/)
+  assert.match(puzzle, /LOAD SUMMARY/)
+  assert.match(puzzle, /dock-load-summary-route/)
+  assert.match(puzzle, /LOAD COMPLETION/)
+  assert.match(puzzle, /TRAILER STATUS/)
+  assert.match(puzzle, /TRAILER RULES/)
+  assert.match(puzzle, /REQUIRED ACTION/)
+  assert.match(puzzle, /READY TO CLOSE/)
+  assert.match(puzzle, /remainingPickupUnits/)
+  assert.match(puzzle, /unit\{remainingPickupUnits === 1 \? '' : 's'\} still need to be loaded/)
+  assert.doesNotMatch(puzzle, /dock-load-focus-note/)
+  assert.doesNotMatch(puzzle, /<span>THIS PICKUP<\/span>/)
+  assert.doesNotMatch(puzzle, /<span>DRIVER<\/span>/)
+  assert.doesNotMatch(puzzle, /<span>TRAILER<\/span>/)
+  assert.match(css, /\.dock-load-hud[\s\S]*overflow-y: auto/)
+  assert.match(css, /\.dock-load-summary-route/)
+  assert.match(css, /\.dock-load-status-grid/)
+  assert.match(css, /\.dock-load-actions/)
+  assert.match(css, /\.dock-load-action-card\.error/)
+  assert.match(css, /\.dock-load-action-card\.ready/)
+})
+
 test('V2.7.5.1.1 makes onboard rotation reliable and enlarges trailer-rule guidance', async () => {
   const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.1\.1 · ROTATION \+ READABILITY/)
+  assert.match(top, /DESKTOP V2\.7\.5\.1\.2 · RIGHT PANEL/)
   assert.match(puzzle, /function freightCanRotate/)
   assert.match(puzzle, /rotatePlacedFreight/)
   assert.match(puzzle, /hoverFreightId/)
@@ -423,7 +450,7 @@ test('V2.7.5.1 makes delivery accessibility a visible trailer-readiness rule', a
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.1\.1 · ROTATION \+ READABILITY/)
+  assert.match(top, /DESKTOP V2\.7\.5\.1\.2 · RIGHT PANEL/)
   assert.match(facility, /export function buildDeliveryAccessOrder/)
   assert.match(facility, /export function evaluateTrailerDeliveryAccess/)
   assert.match(facility, /DELIVERY_ACCESS_BLOCKED/)
@@ -449,7 +476,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.1\.1 · ROTATION \+ READABILITY/)
+  assert.match(top, /DESKTOP V2\.7\.5\.1\.2 · RIGHT PANEL/)
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /manifest-load-number/)
   assert.match(puzzle, /pallet-piece-marking/)
@@ -1216,7 +1243,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.5\.1\.1 · ROTATION \+ READABILITY/)
+  assert.match(top, /DESKTOP V2\.7\.5\.1\.2 · RIGHT PANEL/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
