@@ -1219,39 +1219,71 @@ export default function DeliveryWorkspace({
   useEffect(() => {
     if (!pointerDrag?.pointerId) return undefined
 
-    const pointerUp = (event) => releasePointer(event)
+    const cancelActivePointer = (title = 'MOVE CANCELED') => {
+      const drag = pointerDragRef.current
+      if (!drag || pointerCompletingRef.current) return
+
+      pointerCompletingRef.current = true
+      setReturnDrag({
+        freightId: drag.freightId,
+        rotation: drag.rotation,
+        width: drag.width,
+        height: drag.height,
+        startX: drag.x - drag.offsetX,
+        startY: drag.y - drag.offsetY,
+        endX: drag.originX,
+        endY: drag.originY,
+      })
+      setTimeout(() => setReturnDrag(null), 190)
+      setNotice({
+        tone: 'neutral',
+        title,
+        detail: 'Freight returned to its last valid position.',
+      })
+      pointerDragRef.current = null
+      setPointerDrag(null)
+      setTimeout(() => {
+        pointerCompletingRef.current = false
+      }, 0)
+    }
+
+    const fallbackPointerUp = (event) => {
+      const drag = pointerDragRef.current
+      if (!drag || event.pointerId !== drag.pointerId) return
+      cancelActivePointer('MOVE CANCELED')
+    }
     const pointerCancel = (event) => {
       const drag = pointerDragRef.current
       if (!drag || event.pointerId !== drag.pointerId) return
-      cancelPointerInteraction('MOVE CANCELED')
+      cancelActivePointer('MOVE CANCELED')
     }
     const lostCapture = (event) => {
       const drag = pointerDragRef.current
       if (!drag || event.pointerId !== drag.pointerId) return
-      cancelPointerInteraction('POINTER RELEASED')
+      cancelActivePointer('POINTER RELEASED')
     }
-    const windowBlur = () => cancelPointerInteraction('MOVE CANCELED')
+    const windowBlur = () => cancelActivePointer('MOVE CANCELED')
     const visibilityChange = () => {
       if (document.visibilityState !== 'visible') {
-        cancelPointerInteraction('MOVE CANCELED')
+        cancelActivePointer('MOVE CANCELED')
       }
     }
     const escapeCancel = (event) => {
       if (event.key !== 'Escape') return
       event.preventDefault()
-      cancelPointerInteraction('MOVE CANCELED')
+      cancelActivePointer('MOVE CANCELED')
     }
 
-    window.addEventListener('pointerup', pointerUp, true)
-    window.addEventListener('pointercancel', pointerCancel, true)
+    window.addEventListener('pointerup', fallbackPointerUp)
+    window.addEventListener('pointercancel', pointerCancel)
     window.addEventListener('lostpointercapture', lostCapture, true)
     window.addEventListener('blur', windowBlur)
     window.addEventListener('keydown', escapeCancel)
     document.addEventListener('visibilitychange', visibilityChange)
 
     return () => {
-      window.removeEventListener('pointerup', pointerUp, true)
-      window.removeEventListener('pointercancel', pointerCancel, true)
+      window.removeEventListener('pointerup', fallbackPointerUp)
+      window.removeEventListener('pointercancel', pointerCancel)
       window.removeEventListener('lostpointercapture', lostCapture, true)
       window.removeEventListener('blur', windowBlur)
       window.removeEventListener('keydown', escapeCancel)
