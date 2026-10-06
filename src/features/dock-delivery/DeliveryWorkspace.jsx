@@ -6,7 +6,6 @@ import {
 } from 'react'
 import {
   buildTrailerPuzzleBoard,
-  canPlaceFreight,
   placementMap,
   rotateFreightShape,
 } from '../../domain/facility/pickupOperation.js'
@@ -15,6 +14,7 @@ import {
   DELIVERY_STAGING_CAPACITY,
   deliveryStagingFootprint,
   dockNumberForDelivery,
+  evaluateDeliveryRepositionMove,
   evaluateDeliveryUnloadPlan,
   expectedFreightForDelivery,
   findDeliveryStagingPlacement,
@@ -563,6 +563,8 @@ export default function DeliveryWorkspace({
   const [doorsOpening, setDoorsOpening] = useState(true)
   const [committing, setCommitting] = useState(false)
   const suppressClickRef = useRef(false)
+  const pointerDragRef = useRef(null)
+  const pointerCompletingRef = useRef(false)
 
   useEffect(() => {
     const timer = setTimeout(() => setDoorsOpening(false), 720)
@@ -581,12 +583,15 @@ export default function DeliveryWorkspace({
       if (!freightCanRotate(freight)) return
 
       keyboardEvent.preventDefault()
-      setPointerDrag((current) => current
-        ? {
-            ...current,
-            rotation: ((current.rotation ?? 0) + 1) % 4,
-          }
-        : current)
+      setPointerDrag((current) => {
+        if (!current) return current
+        const next = {
+          ...current,
+          rotation: ((current.rotation ?? 0) + 1) % 4,
+        }
+        pointerDragRef.current = next
+        return next
+      })
     }
 
     window.addEventListener('keydown', rotateHeldFreight)
@@ -624,8 +629,8 @@ export default function DeliveryWorkspace({
 
   const unloaded = new Set(unloadedFreightIds)
   const temporary = new Set(temporaryStagedFreightIds)
-  const currentlyAccessible = new Set(
-    evaluation.access.currentlyAccessibleFreightIds ?? [],
+  const rearHandlingAccessible = new Set(
+    evaluation.handlingAccess?.accessibleFreightIds ?? [],
   )
   const currentImmediateBlockers = new Set(
     evaluation.access.immediateBlockingFreightIds ?? [],
@@ -639,6 +644,11 @@ export default function DeliveryWorkspace({
   const currentPhase = protocol.currentPhase
   const phaseIndexByFreightId = protocol.phaseIndexByFreightId ?? {}
   const currentPhaseIndex = currentPhase?.phaseIndex ?? null
+  const currentPhaseHasHandlingAccess = Boolean(
+    currentPhase?.freightIds?.some((freightId) => (
+      rearHandlingAccessible.has(freightId)
+    )),
+  )
 
   const currentStopFreight = trailerState.freight
     .filter((freight) => sameLoad(freight, event))
@@ -711,6 +721,15 @@ export default function DeliveryWorkspace({
     })
   }
 
+  const showHandlingBlocked = (freightId) => {
+    setBlockedFocusId(freightId)
+    setNotice({
+      tone: 'blocked',
+      title: 'NO REAR HANDLING PATH',
+      detail: `${describeFreight(freightId)} cannot be carried to the rear doors through the current trailer layout. Move reachable freight first or use Temp Staging when the active phase is trapped.`,
+    })
+  }
+
   const clearStagingFreight = (freightId) => {
     setTemporaryStagedFreightIds((current) => (
       current.filter((id) => id !== freightId)
@@ -762,8 +781,11 @@ export default function DeliveryWorkspace({
       return false
     }
 
-    if (source === 'trailer' && !currentlyAccessible.has(freightId)) {
-      showAccessBlocked(freightId)
+    if (source === 'trailer' && !rearHandlingAccessible.has(freightId)) {
+      const simpleBlocked = evaluation.access.currentlyBlockedFreightIds
+        ?.includes(freightId)
+      if (simpleBlocked) showAccessBlocked(freightId)
+      else showHandlingBlocked(freightId)
       return false
     }
 
@@ -824,12 +846,18 @@ export default function DeliveryWorkspace({
       currentImmediateBlockers.has(freightId)
       || focusedBlockerIds.has(freightId)
     )
+    const activePhaseTrapped = !currentPhaseHasHandlingAccess
 
-    if (!physicallyBlocking) {
+    if (source === 'trailer' && !rearHandlingAccessible.has(freightId)) {
+      showHandlingBlocked(freightId)
+      return false
+    }
+
+    if (!physicallyBlocking && !activePhaseTrapped) {
       setNotice({
         tone: 'warning',
         title: 'NO REHANDLE NEEDED',
-        detail: `${freight.loadRef} is not blocking the current receiving phase. Reposition it in the trailer instead if you want more room.`,
+        detail: `${freight.loadRef} is not blocking the active receiving phase. Reposition reachable freight in the trailer instead.`,
       })
       return false
     }
@@ -911,22 +939,42 @@ export default function DeliveryWorkspace({
       ?? workingPlacements[freightId]?.rotation
       ?? stagingPlacements[freightId]?.rotation
       ?? 0
-    const result = canPlaceFreight({
+    const result = evaluateDeliveryRepositionMove({
       board,
-      stagedFreight: trailerState.freight,
+      freight: trailerState.freight,
       placements: workingPlacements,
       freightId,
       anchorCell,
       rotation,
+      source,
     })
 
     if (!result.valid) {
+      const messages = {
+        OVERLAP: {
+          title: 'TRAILER POSITION OCCUPIED',
+          detail: 'Choose another open trailer position.',
+        },
+        OUT_OF_BOUNDS: {
+          title: 'FREIGHT DOES NOT FIT',
+          detail: 'The full freight footprint must stay on the trailer floor.',
+        },
+        SOURCE_NOT_REAR_ACCESSIBLE: {
+          title: 'FORKLIFT CANNOT REACH',
+          detail: 'This freight does not have a clear handling path from the rear doors. Move reachable freight first.',
+        },
+        DESTINATION_NOT_REAR_ACCESSIBLE: {
+          title: 'NO HANDLING PATH',
+          detail: 'That empty space exists, but the freight cannot be carried there from the rear doors through the current layout.',
+        },
+      }
+      const message = messages[result.reason] ?? {
+        title: 'MOVE BLOCKED',
+        detail: 'That trailer move is not physically reachable from the rear doors.',
+      }
       setNotice({
         tone: 'blocked',
-        title: result.reason === 'OVERLAP'
-          ? 'TRAILER POSITION OCCUPIED'
-          : 'FREIGHT DOES NOT FIT',
-        detail: 'Choose another open trailer position.',
+        ...message,
       })
       return false
     }
@@ -1023,7 +1071,7 @@ export default function DeliveryWorkspace({
     setActiveFreightId(freightId)
     setActiveSource(source)
     setNotice(null)
-    setPointerDrag({
+    const nextDrag = {
       pointerId: pointerEvent.pointerId,
       freightId,
       source,
@@ -1040,16 +1088,20 @@ export default function DeliveryWorkspace({
       rotation: sourcePlacement?.rotation ?? 0,
       overZoneId: null,
       overTrailerCell: null,
-    })
+    }
+    pointerDragRef.current = nextDrag
+    pointerCompletingRef.current = false
+    setPointerDrag(nextDrag)
   }
 
   const movePointer = (pointerEvent) => {
-    if (!pointerDrag || pointerEvent.pointerId !== pointerDrag.pointerId) return
+    const drag = pointerDragRef.current
+    if (!drag || pointerEvent.pointerId !== drag.pointerId) return
 
     pointerEvent.preventDefault()
     const distance = Math.hypot(
-      pointerEvent.clientX - pointerDrag.startX,
-      pointerEvent.clientY - pointerDrag.startY,
+      pointerEvent.clientX - drag.startX,
+      pointerEvent.clientY - drag.startY,
     )
     if (distance > 4) suppressClickRef.current = true
 
@@ -1060,16 +1112,16 @@ export default function DeliveryWorkspace({
     const overZoneId = overTrailerCell == null
       ? zoneAtPoint(pointerEvent.clientX, pointerEvent.clientY)
       : null
+    const nextDrag = {
+      ...drag,
+      x: pointerEvent.clientX,
+      y: pointerEvent.clientY,
+      overZoneId,
+      overTrailerCell,
+    }
 
-    setPointerDrag((current) => current
-      ? {
-          ...current,
-          x: pointerEvent.clientX,
-          y: pointerEvent.clientY,
-          overZoneId,
-          overTrailerCell,
-        }
-      : current)
+    pointerDragRef.current = nextDrag
+    setPointerDrag(nextDrag)
   }
 
   const animateReturn = (drag, clientX, clientY) => {
@@ -1088,9 +1140,37 @@ export default function DeliveryWorkspace({
     setTimeout(() => setReturnDrag(null), 190)
   }
 
-  const releasePointer = (pointerEvent) => {
-    if (!pointerDrag || pointerEvent.pointerId !== pointerDrag.pointerId) return
+  const finishPointerInteraction = () => {
+    pointerDragRef.current = null
+    setPointerDrag(null)
+    setTimeout(() => {
+      pointerCompletingRef.current = false
+    }, 0)
+  }
 
+  const cancelPointerInteraction = (title = 'MOVE CANCELED') => {
+    const drag = pointerDragRef.current
+    if (!drag || pointerCompletingRef.current) return
+
+    pointerCompletingRef.current = true
+    animateReturn(drag, drag.x, drag.y)
+    setNotice({
+      tone: 'neutral',
+      title,
+      detail: 'Freight returned to its last valid position.',
+    })
+    finishPointerInteraction()
+  }
+
+  const releasePointer = (pointerEvent) => {
+    const drag = pointerDragRef.current
+    if (
+      !drag
+      || pointerCompletingRef.current
+      || pointerEvent.pointerId !== drag.pointerId
+    ) return
+
+    pointerCompletingRef.current = true
     pointerEvent.preventDefault()
     pointerEvent.stopPropagation()
 
@@ -1105,36 +1185,79 @@ export default function DeliveryWorkspace({
 
     if (trailerCell != null) {
       accepted = moveToTrailer(
-        pointerDrag.freightId,
+        drag.freightId,
         trailerCell,
-        pointerDrag.source,
-        pointerDrag.rotation,
+        drag.source,
+        drag.rotation,
       )
     } else if (zoneId === 'staging') {
       accepted = stageTemporarily(
-        pointerDrag.freightId,
-        pointerDrag.source,
-        pointerDrag.rotation,
+        drag.freightId,
+        drag.source,
+        drag.rotation,
       )
     } else if (zoneId) {
       accepted = sendToReceivingZone(
-        pointerDrag.freightId,
+        drag.freightId,
         zoneId,
-        pointerDrag.source,
-        pointerDrag.rotation,
+        drag.source,
+        drag.rotation,
       )
     }
 
     if (!accepted) {
       animateReturn(
-        pointerDrag,
+        drag,
         pointerEvent.clientX,
         pointerEvent.clientY,
       )
     }
 
-    setPointerDrag(null)
+    finishPointerInteraction()
   }
+
+  useEffect(() => {
+    if (!pointerDrag?.pointerId) return undefined
+
+    const pointerUp = (event) => releasePointer(event)
+    const pointerCancel = (event) => {
+      const drag = pointerDragRef.current
+      if (!drag || event.pointerId !== drag.pointerId) return
+      cancelPointerInteraction('MOVE CANCELED')
+    }
+    const lostCapture = (event) => {
+      const drag = pointerDragRef.current
+      if (!drag || event.pointerId !== drag.pointerId) return
+      cancelPointerInteraction('POINTER RELEASED')
+    }
+    const windowBlur = () => cancelPointerInteraction('MOVE CANCELED')
+    const visibilityChange = () => {
+      if (document.visibilityState !== 'visible') {
+        cancelPointerInteraction('MOVE CANCELED')
+      }
+    }
+    const escapeCancel = (event) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      cancelPointerInteraction('MOVE CANCELED')
+    }
+
+    window.addEventListener('pointerup', pointerUp, true)
+    window.addEventListener('pointercancel', pointerCancel, true)
+    window.addEventListener('lostpointercapture', lostCapture, true)
+    window.addEventListener('blur', windowBlur)
+    window.addEventListener('keydown', escapeCancel)
+    document.addEventListener('visibilitychange', visibilityChange)
+
+    return () => {
+      window.removeEventListener('pointerup', pointerUp, true)
+      window.removeEventListener('pointercancel', pointerCancel, true)
+      window.removeEventListener('lostpointercapture', lostCapture, true)
+      window.removeEventListener('blur', windowBlur)
+      window.removeEventListener('keydown', escapeCancel)
+      document.removeEventListener('visibilitychange', visibilityChange)
+    }
+  }, [pointerDrag?.pointerId])
 
   const handleZoneClick = (zoneId) => {
     if (!activeFreightId || pointerDrag) return
@@ -1164,13 +1287,14 @@ export default function DeliveryWorkspace({
     : null
   const previewPlacement = useMemo(() => (
     pointerDrag?.overTrailerCell != null && draggedFreight
-      ? canPlaceFreight({
+      ? evaluateDeliveryRepositionMove({
           board,
-          stagedFreight: trailerState.freight,
+          freight: trailerState.freight,
           placements: workingPlacements,
           freightId: pointerDrag.freightId,
           anchorCell: pointerDrag.overTrailerCell,
           rotation: pointerDrag.rotation ?? 0,
+          source: pointerDrag.source,
         })
       : null
   ), [
@@ -1237,7 +1361,7 @@ export default function DeliveryWorkspace({
             <strong>{event.loadRef} · {event.locationLabel}</strong>
           </div>
           <small>
-            Work the same trailer you packed · reposition onboard · stage only when space demands it.
+            Work from the rear doors · reposition only through clear handling paths · stage when the active phase is trapped.
           </small>
         </header>
 
@@ -1477,7 +1601,7 @@ export default function DeliveryWorkspace({
             <footer>
               <span>Grab freight · R rotates while held</span>
               <strong>{evaluation.internalRepositionCount} internal moves</strong>
-              <span>Trailer → Trailer uses no staging space</span>
+              <span>Green path only · unreachable space stays blocked</span>
             </footer>
           </section>
         </div>
