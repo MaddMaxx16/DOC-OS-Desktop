@@ -9,6 +9,7 @@ import {
 } from '../../domain/facility/pickupOperation.js'
 import {
   buildTrailerStateForDelivery,
+  dockNumberForDelivery,
   evaluateDeliveryUnloadPlan,
   expectedFreightForDelivery,
 } from '../../domain/facility/deliveryOperation.js'
@@ -331,7 +332,7 @@ export default function DeliveryWorkspace({
         <section className="delivery-stop-summary">
           <header>
             <span>RECEIVING DOCK</span>
-            <strong>DOCK {String(event.loadRef ?? '').replace(/\D/g, '').slice(-2) || '—'}</strong>
+            <strong>DOCK {dockNumberForDelivery(event)}</strong>
           </header>
           <div>
             <span>DESTINATION</span>
