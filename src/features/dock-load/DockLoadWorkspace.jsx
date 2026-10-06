@@ -1043,7 +1043,13 @@ export default function DockLoadWorkspace({
           </div>
         </section>
 
-        <section className="dock-load-rules">
+        <section
+          className={[
+            'dock-load-rules',
+            trailerRulesClear ? 'clear' : 'attention',
+            balanceMonitoring && trailerRulesClear ? 'monitoring' : '',
+          ].filter(Boolean).join(' ')}
+        >
           <header>
             <span>TRAILER RULES</span>
             <strong>{trailerRulesStatus}</strong>
