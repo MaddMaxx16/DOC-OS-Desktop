@@ -3745,3 +3745,159 @@ This packet does not add:
 - axle calculations,
 - delivery puzzle,
 - HOS changes.
+
+
+---
+
+## V2.7.6 — Delivery Operations
+
+Delivery is the operational counterpart to Dock & Load, but it is not implemented as a reversed pickup puzzle.
+
+Pickup asks which freight belongs on the truck and how it should be arranged.
+
+Delivery asks whether the correct physical freight can be removed, accepted, and documented from the trailer state that actually survived pickup and transit.
+
+### Persistent trailer truth
+
+The delivery workspace never generates a new delivery inventory.
+
+It reconstructs the trailer from committed facility snapshots:
+
+- freight IDs,
+- load identity,
+- cargo/handling identity,
+- trailer placements,
+- retained carried freight.
+
+The matching pickup event remains the source of the expected freight-unit identities. Delivery validation compares that expected set with the actual trailer set by ID rather than relying on pallet count alone.
+
+### Facility gate
+
+A delivery appointment no longer flows directly into automatic unloading.
+
+When the driver reaches service time:
+
+**DOCK ASSIGNED**
+
+holds the live route.
+
+The driver remains at the receiver until the dispatcher opens **Dock & Delivery**, solves the unload plan, and commits it.
+
+Focused Mode pauses world time while the player reasons.
+
+### Delivery workspace
+
+The focused layout presents:
+
+- the physical trailer as packed,
+- the current receiver,
+- expected count,
+- actual freight on trailer,
+- selected unload freight,
+- blocked freight,
+- temporary staging,
+- unload-plan readiness.
+
+Rear doors animate open when the workspace appears. Opening the doors reveals the consequences of the pickup plan.
+
+The player selects the actual current-stop freight rather than clicking a separate verification control.
+
+### Rear-door accessibility
+
+Accessibility is derived from the physical trailer grid.
+
+Freight closer to the rear doors can block current-stop freight in the same trailer lane.
+
+The unload evaluator computes a valid sequence by repeatedly removing current-stop freight that has no remaining rearward blocker.
+
+If later-stop freight blocks the current delivery, that freight may be temporarily staged.
+
+### Temporary staging and rehandles
+
+Temporarily staged later-stop freight is removed from the working trailer plan while the current delivery is unloaded, then retained in the resulting trailer snapshot.
+
+Each temporarily staged freight unit counts as a rehandle and adds operational unload time.
+
+The first timing model uses:
+
+- scheduled delivery service time as base unload time,
+- +3 minutes per temporarily staged unit,
+- +3 minutes for receiver verification.
+
+These values are gameplay timing abstractions and can be tuned later by facility/skill systems.
+
+### Commit and background operation
+
+A valid unload plan commits through the Receiving Dock interaction.
+
+Commit:
+
+- closes Focused Mode,
+- begins simulated UNLOADING,
+- keeps Marcus at the receiver,
+- runs rehandle-adjusted service time,
+- transitions into RECEIVER CHECK,
+- then allows automatic route continuation.
+
+No manual DEPART action is required for a clean delivery.
+
+### Trailer after delivery
+
+Accepted freight is removed from the physical trailer state.
+
+The delivery operation stores a **trailerAfter** snapshot containing the freight and placements that remain onboard.
+
+Later pickup and delivery facilities consume this explicit snapshot when available.
+
+This is important for future exception work because refused freight can remain physical cargo rather than being deleted merely because a delivery event occurred.
+
+### Receiver verification — first active scope
+
+The first delivery slice resolves correctly delivered freight as:
+
+**ACCEPTED**
+
+No random refusal or damage is injected.
+
+The domain already keeps individual receiver results so later delivery packets can add:
+
+- ACCEPTED_WITH_DAMAGE,
+- REFUSED,
+- SHORT,
+- WRONG_DESTINATION,
+- NOT_DELIVERED.
+
+### POD ownership
+
+POD data belongs to the Documents domain, not to the delivery facility operation.
+
+On delivery commit, Documents creates:
+
+**PENDING_RECEIVER**
+
+After receiver verification time is complete:
+
+- a clean POD becomes **RECEIVED**,
+- future exception outcomes may become **REVIEW_REQUIRED**.
+
+The delivery operation stores only a document reference.
+
+The Documents workstation UI remains in its existing build phase; V2.7.6 establishes the authoritative data relationship so it does not need to be retrofitted later.
+
+### Exception philosophy
+
+V2.7.6 does not create arbitrary delivery failures.
+
+Shortage detection is already based on expected freight IDs minus actual trailer freight IDs.
+
+Wrong-delivery selection is rejected by load identity.
+
+Damage/refusal generation is intentionally deferred until there is a traceable causal source.
+
+### Locked time philosophy
+
+**Thinking does not consume simulation time. Operations do.**
+
+The player may inspect and plan the delivery indefinitely while Focused Mode is open.
+
+Once the unload plan is committed, operational time resumes and the driver remains at the facility for the real simulated work.
