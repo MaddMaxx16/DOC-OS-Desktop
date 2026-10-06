@@ -457,7 +457,7 @@ export function buildTimelineExecution(
           unloadingCompleteMinutes: deliveryOperation.unloadingCompleteMinutes ?? null,
           receiverVerificationCompleteMinutes: deliveryOperation.receiverVerificationCompleteMinutes ?? null,
           receiverResults: deliveryOperation.receiverResults ?? [],
-          podSeed: deliveryOperation.podSeed ?? null,
+          podDocumentId: deliveryOperation.podDocumentId ?? null,
         } : {}),
       }
     }
