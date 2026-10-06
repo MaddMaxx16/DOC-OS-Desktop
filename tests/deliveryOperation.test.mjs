@@ -139,13 +139,13 @@ test('a clean rear-accessible delivery unload plan is immediately ready', () => 
     event: delivery,
     freight: trailer.freight,
     placements: trailer.placements,
-    selectedFreightIds: expected.map((item) => item.id),
+    unloadedFreightIds: expected.map((item) => item.id),
   })
 
   assert.equal(plan.ready, true)
   assert.equal(plan.expectedCount, 3)
   assert.equal(plan.actualCount, 3)
-  assert.equal(plan.selectedCount, 3)
+  assert.equal(plan.unloadedCount, 3)
   assert.equal(plan.access.clear, true)
   assert.equal(plan.rehandleUnits, 0)
 })
@@ -184,6 +184,9 @@ test('later-stop freight can block delivery freight until it is temporarily stag
 
   assert.equal(blocked.clear, false)
   assert.ok(blocked.blockingFreightIds.includes(later.id))
+  assert.ok(blocked.currentlyBlockedFreightIds.includes(current[0].id))
+  assert.ok(blocked.immediateBlockingFreightIds.includes(later.id))
+  assert.deepEqual(blocked.immediateBlockerMap[current[0].id], [later.id])
 
   const clear = evaluateDeliveryUnloadAccess({
     board,
@@ -194,6 +197,37 @@ test('later-stop freight can block delivery freight until it is temporarily stag
   })
 
   assert.equal(clear.clear, true)
+  assert.ok(clear.currentlyAccessibleFreightIds.includes(current[0].id))
+})
+
+test('physical unload access updates after each freight unit leaves the trailer', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const current = buildTutorialStagedFreight(pickup).filter((item) => item.expected)
+  const placements = {
+    [current[0].id]: { anchorCell: 0, rotation: 0 },
+    [current[1].id]: { anchorCell: 20, rotation: 0 },
+    [current[2].id]: { anchorCell: 21, rotation: 0 },
+  }
+
+  const initial = evaluateDeliveryUnloadAccess({
+    board,
+    freight: current,
+    placements,
+    deliveryEvent: delivery,
+  })
+
+  assert.ok(initial.currentlyBlockedFreightIds.includes(current[0].id))
+  assert.ok(initial.currentlyAccessibleFreightIds.includes(current[1].id))
+
+  const afterRearUnit = evaluateDeliveryUnloadAccess({
+    board,
+    freight: current,
+    placements,
+    deliveryEvent: delivery,
+    unloadedFreightIds: [current[1].id],
+  })
+
+  assert.ok(afterRearUnit.currentlyAccessibleFreightIds.includes(current[0].id))
 })
 
 test('temporary staging creates rehandle time and delivered freight leaves the trailer snapshot', () => {
@@ -230,7 +264,7 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
     event: delivery,
     freight,
     placements,
-    selectedFreightIds: expected.map((item) => item.id),
+    unloadedFreightIds: expected.map((item) => item.id),
     temporaryStagedFreightIds: [later.id],
   })
 
@@ -254,6 +288,7 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
   assert.equal(operation.receiverResults.length, expected.length)
   assert.ok(operation.receiverResults.every((result) => result.status === 'ACCEPTED'))
   assert.equal(operation.shortagePieces, 0)
+  assert.deepEqual(operation.unloadPlan.unloadSequence, expected.map((item) => item.id))
 })
 
 test('delivery operation transitions from unloading to receiver verification to complete', () => {
@@ -274,7 +309,7 @@ test('delivery operation transitions from unloading to receiver verification to 
     event: delivery,
     freight: trailer.freight,
     placements: trailer.placements,
-    selectedFreightIds: expected.map((item) => item.id),
+    unloadedFreightIds: expected.map((item) => item.id),
   })
   const operation = commitDeliveryOperation({
     driverId: driver.id,
