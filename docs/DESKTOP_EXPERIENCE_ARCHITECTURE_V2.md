@@ -4885,3 +4885,52 @@ The mechanic is a grid-level abstraction: can the freight footprint move through
 No warehouse/trailer redesign is part of V2.7.6.6.
 
 The accepted V2.7.6.5 receiver floor, V2.7.6.4 shared trailer, and right-side SOP panel remain the visual baseline.
+
+
+---
+
+## V2.7.6.7 — Warehouse Fidelity
+
+V2.7.6.6 improved Delivery puzzle depth and pointer reliability. Gameplay review then identified three remaining clarity issues that do not require mechanic changes.
+
+### Receiver-floor contrast
+
+The warehouse environment is physically structured correctly but reads too dark at normal gameplay scale.
+
+V2.7.6.7 raises receiver-floor luminance and stencil/aisle contrast while preserving the dark DOC OS industrial palette.
+
+The trailer and right HUD are intentionally unchanged.
+
+### Temp Staging freight
+
+Staged freight already uses the shared physical freight visual internally, but the staging grid stretched the freight container across fractional available width.
+
+V2.7.6.7 changes staging presentation to stable pallet-scale bays.
+
+The result should preserve visual continuity:
+
+**trailer cargo → carried cargo → staged cargo**
+
+without changing the three-position staging mechanic.
+
+### Freshway semantic correction
+
+Freshway's first phase includes both FRAGILE and UPRIGHT freight.
+
+The old label **FRAGILE INSPECTION** was therefore misleading when the UI showed a count such as 0/2.
+
+Freshway now presents:
+
+- phase: **QUALITY CHECK**
+- cargo summary: **FRAGILE + KEEP UPRIGHT**
+- destination: **QUALITY CHECK**
+
+The underlying phase membership remains exactly FRAGILE + UPRIGHT.
+
+Harborline remains unchanged because its inspection phase matches FRAGILE only.
+
+### Scope
+
+No Delivery mechanics change in V2.7.6.7.
+
+Rear handling paths, pointer recovery, trailer repositioning, finite staging, receiver sequencing, and service-time behavior remain V2.7.6.6 authoritative.
