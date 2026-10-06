@@ -4600,3 +4600,183 @@ The following remain recorded but outside this packet:
 - Documents workstation UI,
 - RPG reward presentation,
 - additional receiver SOP complexity.
+
+
+---
+
+## V2.7.6.5 — Warehouse Physicalization
+
+V2.7.6.4 solved the major Delivery mechanics problem: the player can now manage space through a shared Pickup/Delivery trailer, internal trailer repositioning, finite Temp Staging, receiver SOP phases, and physical freight movement.
+
+Gameplay review confirmed that two major V2.7.6.4 areas are now working visually:
+- the Delivery trailer finally reads as the same trailer used during Pickup,
+- the right-side receiver/SOP panel is strong and readable.
+
+The remaining visual weakness is the receiver floor.
+
+Although the receiver side is technically one scene, it still reads too much like a diagram or dashboard. Receiving areas feel like bordered UI containers, and freight loses too much physical identity after leaving the trailer.
+
+V2.7.6.5 changes the warehouse presentation only.
+
+### Experience target
+
+The receiver side should read immediately as a physical warehouse floor.
+
+The desired visual relationship is:
+
+**painted warehouse receiving floor ← dock apron ← same open trailer**
+
+The player should feel that cargo is leaving the trailer and being placed onto a real operational floor.
+
+### One physical room
+
+Receiving areas remain mechanically separate drop targets, but they should visually belong to one continuous room.
+
+The floor owns:
+- one concrete-style surface,
+- shared aisle geometry,
+- shared dock-apron edge,
+- shared wear/scuff language,
+- painted zone boundaries,
+- floor stencils,
+- directional lane markings.
+
+Zones should not be drawn as isolated dashboard cards.
+
+### Environmental zone language
+
+Each zone gets a physical warehouse identity.
+
+**Controlled Receiving**
+- caution/controlled floor marking,
+- restrained hazard edge treatment,
+- floor stencil,
+- handling-pad feel.
+
+**Forklift Lane**
+- lane arrows,
+- traffic path markings,
+- forklift handling stencil,
+- broader movement corridor.
+
+**Inspection**
+- compact inspection/check pad,
+- low-profile inspection station cue,
+- smaller physical footprint than general receiving.
+
+**General Receiving**
+- broad pallet receiving area,
+- painted pallet guides,
+- open staging-lane treatment.
+
+**Temp Staging**
+- three painted dock-apron pallet positions,
+- same finite capacity already defined in V2.7.6.4.
+
+### Freight continuity
+
+The physical freight object must visually survive the entire movement path:
+
+**Trailer freight → pointer-held freight → warehouse freight**
+
+A freight unit should not change into a miniature data token after the drop.
+
+Cargo families and relative footprint remain visible.
+
+The same underlying freight visual language should be reused wherever practical.
+
+### Stable freight scale
+
+Receiver-floor cargo should not be laid out using compact responsive cards.
+
+Use a stable warehouse floor unit related to trailer pallet scale.
+
+A freight unit's visible width/height should follow its footprint rather than the remaining width of a flex/grid container.
+
+This protects:
+- wide skid width,
+- long skid length,
+- 2×2 footprint size,
+- standard 1×1 pallet identity.
+
+### Auto-placement without a second puzzle
+
+The receiver floor is not another packing game.
+
+The facility may auto-place accepted freight.
+
+The placement system should assign an open floor location inside the correct zone and preserve:
+- footprint,
+- spacing,
+- orientation,
+- readability.
+
+Received freight should accumulate from a consistent floor edge or staging direction.
+
+Avoid overlap.
+
+Do not solve crowding by shrinking all freight.
+
+### Temp Staging visualization
+
+The three V2.7.6.4 staging positions remain mechanically unchanged.
+
+They should visually become three dock-apron pallet bays rather than three UI cells.
+
+Freight placed there remains full-size and visibly consumes the available dock space.
+
+### Active-phase visual cue
+
+The current phase should be legible primarily through the environment:
+- slightly brighter painted boundary,
+- subtle stencil emphasis,
+- restrained directional cue.
+
+The right-side SOP panel still provides the explicit text state.
+
+Avoid large glowing containers.
+
+### Preserve the accepted trailer
+
+V2.7.6.5 may not alter the shared trailer shell or its proportions.
+
+The warehouse layout must adapt around the truck.
+
+Do not shrink the trailer to buy space for the receiver floor.
+
+### Preserve the accepted right HUD
+
+The right receiver/SOP panel remains structurally unchanged.
+
+Only tiny fit/spacing fixes are allowed.
+
+The panel remains secondary to the physical workspace.
+
+### Visual acceptance gate
+
+V2.7.6.5 requires a normal-scale gameplay screenshot/video proving:
+- the warehouse reads as a continuous floor,
+- zones no longer read as cards,
+- cargo remains physical after unloading,
+- cargo footprint differences remain visible,
+- Temp Staging reads as finite physical dock space,
+- the trailer remains unchanged,
+- the right HUD remains unchanged in hierarchy,
+- trailer-to-floor pointer motion still feels continuous.
+
+### Scope boundary
+
+No gameplay rules change in this packet.
+
+Do not add:
+- new receiver phases,
+- new freight rules,
+- new rehandle rules,
+- new time penalties,
+- damage/refusal,
+- forklifts/NPC simulation,
+- scoring/XP UI,
+- schedule-send changes,
+- next-event controls.
+
+V2.7.6.5 is specifically the pass that turns the already-working receiver logic into a believable physical warehouse environment.
