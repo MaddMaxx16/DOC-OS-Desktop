@@ -628,6 +628,46 @@ test('delivery commit persists internal reposition history separately from rehan
   )
 })
 
+test('Freshway quality check labels fragile and keep-upright freight accurately', () => {
+  const freshPickup = {
+    ...pickup,
+    id: 'M-202:pickup',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    deliveryLocationLabel: 'Freshway Grocery DC',
+    freight: { pallets: 6, weightLbs: 9000 },
+  }
+  const freshDelivery = {
+    ...delivery,
+    id: 'M-202:delivery',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    locationId: 'freshway-grocery-dc',
+    locationLabel: 'Freshway Grocery DC',
+    freight: { pallets: 6, weightLbs: 9000 },
+  }
+  const freight = buildTutorialStagedFreight(freshPickup)
+    .filter((item) => item.expected)
+  const protocol = buildDeliveryReceivingProtocol({
+    event: freshDelivery,
+    freight,
+  })
+  const quality = protocol.phases[0]
+  const qualityFreight = quality.freightIds
+    .map((id) => freight.find((item) => item.id === id))
+
+  assert.equal(protocol.label, 'FRESHWAY RECEIVING SOP')
+  assert.equal(quality.id, 'inspection')
+  assert.equal(quality.label, 'QUALITY CHECK')
+  assert.equal(quality.zoneLabel, 'QUALITY CHECK')
+  assert.equal(quality.cargoLabel, 'FRAGILE + KEEP UPRIGHT')
+  assert.equal(quality.freightIds.length, 2)
+  assert.deepEqual(
+    qualityFreight.map((item) => item.handlingCode).sort(),
+    ['FRAGILE', 'UPRIGHT'],
+  )
+})
+
 test('Harborline receiving SOP creates handling phases from the actual freight', () => {
   const event8 = {
     ...delivery,
