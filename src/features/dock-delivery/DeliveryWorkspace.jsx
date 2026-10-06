@@ -56,11 +56,11 @@ function DeliveryFreightPiece({
   placement,
   board,
   currentStop,
-  selected,
-  blocked,
-  blocking,
-  onSelect,
-  onTemporaryStage,
+  focusedBlocked,
+  focusedBlocker,
+  dragging,
+  onDragStart,
+  onDragEnd,
 }) {
   const shape = rotateFreightShape(freight.shape, placement.rotation ?? 0)
   const bounds = shapeBounds(shape)
@@ -69,17 +69,16 @@ function DeliveryFreightPiece({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
+      draggable
       className={[
         'loaded-freight-piece',
         'delivery-freight-piece',
         cargoClass(freight),
         handlingClass(freight),
         target ? 'delivery-target' : 'delivery-other',
-        selected ? 'selected-unload' : '',
-        blocked ? 'delivery-unload-blocked' : '',
-        blocking ? 'delivery-unload-blocker' : '',
+        focusedBlocked ? 'delivery-focus-blocked' : '',
+        focusedBlocker ? 'delivery-focus-blocker' : '',
+        dragging ? 'delivery-dragging' : '',
       ].filter(Boolean).join(' ')}
       style={{
         gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -87,24 +86,12 @@ function DeliveryFreightPiece({
         '--piece-columns': bounds.width,
         '--piece-rows': bounds.height,
       }}
-      onClick={() => {
-        if (target) onSelect(freight.id)
-        else if (blocking) onTemporaryStage(freight.id)
-      }}
-      onKeyDown={(event) => {
-        if (!['Enter', ' '].includes(event.key)) return
-        event.preventDefault()
-        if (target) onSelect(freight.id)
-        else if (blocking) onTemporaryStage(freight.id)
-      }}
+      onDragStart={(event) => onDragStart(event, freight.id)}
+      onDragEnd={onDragEnd}
       title={
         target
-          ? blocked
-            ? `${freight.label} · delivery freight · blocked by cargo closer to rear doors`
-            : `${freight.label} · click to ${selected ? 'remove from' : 'add to'} unload plan`
-          : blocking
-            ? `${freight.label} · later-stop blocker · click to stage temporarily`
-            : `${freight.label} · remains onboard for a later stop`
+          ? `${freight.loadRef} · ${freight.label} · drag through the rear doors to Receiving`
+          : `${freight.loadRef} · ${freight.label} · later-stop freight`
       }
     >
       <div className="loaded-freight-shape">
@@ -122,12 +109,36 @@ function DeliveryFreightPiece({
         <strong>{freight.loadRef}</strong>
         <span>{freight.handlingLabel}</span>
       </span>
-      <span className="delivery-piece-action">
-        {target
-          ? selected ? 'UNLOAD ✓' : blocked ? 'BLOCKED' : 'UNLOAD'
-          : blocking ? 'TEMP STAGE' : 'STAYS'}
-      </span>
+      {(focusedBlocked || focusedBlocker) && (
+        <span className="delivery-piece-action">
+          {focusedBlocked ? 'ACCESS BLOCKED' : 'IN THE WAY'}
+        </span>
+      )}
     </div>
+  )
+}
+
+function ReceivedFreightCard({ freight, recent }) {
+  return (
+    <article
+      className={[
+        'delivery-received-unit',
+        cargoClass(freight),
+        handlingClass(freight),
+        recent ? 'recent' : '',
+      ].filter(Boolean).join(' ')}
+    >
+      <div className="delivery-received-icon" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
+      <div>
+        <strong>{freight.loadRef} · {freight.label}</strong>
+        <span>{freight.handlingLabel} · {pounds(freight.weightLbs)} lb</span>
+      </div>
+      <b>RECEIVED</b>
+    </article>
   )
 }
 
@@ -155,8 +166,18 @@ export default function DeliveryWorkspace({
     () => expectedFreightForDelivery({ driverDay, event }),
     [driverDay, event],
   )
-  const [selectedFreightIds, setSelectedFreightIds] = useState([])
+  const freightById = useMemo(
+    () => new Map(trailerState.freight.map((freight) => [freight.id, freight])),
+    [trailerState.freight],
+  )
+
+  const [unloadedFreightIds, setUnloadedFreightIds] = useState([])
   const [temporaryStagedFreightIds, setTemporaryStagedFreightIds] = useState([])
+  const [dragFreightId, setDragFreightId] = useState(null)
+  const [dragOverZone, setDragOverZone] = useState(null)
+  const [blockedFocusId, setBlockedFocusId] = useState(null)
+  const [recentlyUnloadedId, setRecentlyUnloadedId] = useState(null)
+  const [notice, setNotice] = useState(null)
   const [doorsOpening, setDoorsOpening] = useState(true)
   const [committing, setCommitting] = useState(false)
 
@@ -172,46 +193,169 @@ export default function DeliveryWorkspace({
       event,
       freight: trailerState.freight,
       placements: trailerState.placements,
-      selectedFreightIds,
+      unloadedFreightIds,
       temporaryStagedFreightIds,
     }),
     [
       board,
       driverDay,
       event,
-      selectedFreightIds,
+      unloadedFreightIds,
       temporaryStagedFreightIds,
       trailerState.freight,
       trailerState.placements,
     ],
   )
 
-  const selected = new Set(selectedFreightIds)
+  const unloaded = new Set(unloadedFreightIds)
   const temporary = new Set(temporaryStagedFreightIds)
-  const blocked = new Set(evaluation.access.blockedFreightIds)
-  const blockers = new Set(evaluation.access.blockingFreightIds)
+  const currentlyAccessible = new Set(
+    evaluation.access.currentlyAccessibleFreightIds ?? [],
+  )
+  const currentImmediateBlockers = new Set(
+    evaluation.access.immediateBlockingFreightIds ?? [],
+  )
+  const focusedBlockerIds = new Set(
+    blockedFocusId
+      ? evaluation.access.immediateBlockerMap?.[blockedFocusId] ?? []
+      : [],
+  )
   const currentStopFreight = trailerState.freight.filter((freight) => sameLoad(freight, event))
-  const stagedTemporarily = trailerState.freight.filter((freight) => temporary.has(freight.id))
-  const otherOnboard = trailerState.freight.filter((freight) => (
-    !sameLoad(freight, event) && !temporary.has(freight.id)
-  ))
+  const unloadedFreight = unloadedFreightIds
+    .map((freightId) => freightById.get(freightId))
+    .filter(Boolean)
+  const stagedTemporarily = temporaryStagedFreightIds
+    .map((freightId) => freightById.get(freightId))
+    .filter(Boolean)
   const expectedWeight = currentStopFreight
     .reduce((sum, freight) => sum + Number(freight.weightLbs ?? 0), 0)
+  const receivedWeight = unloadedFreight
+    .reduce((sum, freight) => sum + Number(freight.weightLbs ?? 0), 0)
+  const remainingCount = Math.max(0, evaluation.actualCount - evaluation.unloadedCount)
 
-  const toggleUnload = (freightId) => {
-    setSelectedFreightIds((current) => (
-      current.includes(freightId)
-        ? current.filter((id) => id !== freightId)
-        : [...current, freightId]
-    ))
+  const describeFreight = (freightId) => {
+    const freight = freightById.get(freightId)
+    return freight
+      ? `${freight.loadRef} ${freight.label}`
+      : 'freight'
   }
 
-  const toggleTemporaryStage = (freightId) => {
+  const startDrag = (dragEvent, freightId) => {
+    setDragFreightId(freightId)
+    setDragOverZone(null)
+    dragEvent.dataTransfer.setData('text/plain', freightId)
+    dragEvent.dataTransfer.effectAllowed = 'move'
+
+    const dragVisual = dragEvent.currentTarget.querySelector('.loaded-freight-shape')
+    if (dragVisual) {
+      dragEvent.dataTransfer.setDragImage(
+        dragVisual,
+        dragVisual.offsetWidth / 2,
+        dragVisual.offsetHeight / 2,
+      )
+    }
+  }
+
+  const endDrag = () => {
+    setDragFreightId(null)
+    setDragOverZone(null)
+  }
+
+  const freightIdFromDrop = (dropEvent) => (
+    dropEvent.dataTransfer.getData('text/plain') || dragFreightId
+  )
+
+  const unloadIntoReceiving = (freightId) => {
+    const freight = freightById.get(freightId)
+    if (!freight || unloaded.has(freightId) || temporary.has(freightId)) return
+
+    if (!sameLoad(freight, event)) {
+      setBlockedFocusId(null)
+      setNotice({
+        tone: 'wrong',
+        title: 'NOT THIS RECEIVER',
+        detail: `${freight.loadRef} stays onboard for a later delivery.`,
+      })
+      return
+    }
+
+    if (!currentlyAccessible.has(freightId)) {
+      const blockerIds = evaluation.access.immediateBlockerMap?.[freightId] ?? []
+      const blockerNames = blockerIds.map(describeFreight)
+      setBlockedFocusId(freightId)
+      setNotice({
+        tone: 'blocked',
+        title: 'ACCESS BLOCKED',
+        detail: blockerNames.length > 0
+          ? `${blockerNames.join(' + ')} ${blockerNames.length === 1 ? 'is' : 'are'} closer to the rear doors.`
+          : 'Another freight unit must come out first.',
+      })
+      return
+    }
+
+    setUnloadedFreightIds((current) => [...current, freightId])
+    setBlockedFocusId(null)
+    setRecentlyUnloadedId(freightId)
+    setNotice({
+      tone: 'received',
+      title: 'MOVED TO RECEIVING',
+      detail: `${freight.loadRef} ${freight.label} added to the receiver handoff.`,
+    })
+  }
+
+  const stageTemporarily = (freightId) => {
+    const freight = freightById.get(freightId)
+    if (!freight || unloaded.has(freightId) || temporary.has(freightId)) return
+
+    if (sameLoad(freight, event)) {
+      setNotice({
+        tone: 'blocked',
+        title: 'DELIVER THIS FREIGHT',
+        detail: `${freight.loadRef} belongs at this receiver. Unload it into Receiving instead.`,
+      })
+      return
+    }
+
+    if (!currentImmediateBlockers.has(freightId) && !focusedBlockerIds.has(freightId)) {
+      setNotice({
+        tone: 'warning',
+        title: 'NO REHANDLE NEEDED',
+        detail: `${freight.loadRef} is not blocking the current delivery. Leave it onboard.`,
+      })
+      return
+    }
+
+    setTemporaryStagedFreightIds((current) => [...current, freightId])
+    setBlockedFocusId(null)
+    setNotice({
+      tone: 'warning',
+      title: 'TEMPORARILY STAGED',
+      detail: `${freight.loadRef} ${freight.label} will be reloaded after delivery · +3 min handling.`,
+    })
+  }
+
+  const returnToTrailer = (freightId) => {
     setTemporaryStagedFreightIds((current) => (
-      current.includes(freightId)
-        ? current.filter((id) => id !== freightId)
-        : [...current, freightId]
+      current.filter((id) => id !== freightId)
     ))
+    setBlockedFocusId(null)
+    setNotice({
+      tone: 'neutral',
+      title: 'RETURNED TO TRAILER',
+      detail: `${describeFreight(freightId)} restored to its original position.`,
+    })
+  }
+
+  const handleReceiverDrop = (dropEvent) => {
+    dropEvent.preventDefault()
+    unloadIntoReceiving(freightIdFromDrop(dropEvent))
+    endDrag()
+  }
+
+  const handleStagingDrop = (dropEvent) => {
+    dropEvent.preventDefault()
+    stageTemporarily(freightIdFromDrop(dropEvent))
+    endDrag()
   }
 
   const commit = () => {
@@ -233,14 +377,16 @@ export default function DeliveryWorkspace({
   }
 
   return (
-    <div className="delivery-workspace">
+    <div className="delivery-workspace physical-unload">
       <section className="delivery-trailer-panel">
         <header className="delivery-heading">
           <div>
-            <span>DELIVERY UNLOAD PLAN</span>
+            <span>DOCK & DELIVERY</span>
             <strong>{event.loadRef} · {event.locationLabel}</strong>
           </div>
-          <small>Rear doors open · select this stop's freight · temporarily stage blockers only when needed.</small>
+          <small>
+            Read the trailer · drag {event.loadRef} freight through the rear doors into Receiving.
+          </small>
         </header>
 
         <div className="delivery-trailer-shell">
@@ -251,7 +397,12 @@ export default function DeliveryWorkspace({
           </div>
 
           <div
-            className="dock-load-grid puzzle-board delivery-trailer-grid"
+            className={[
+              'dock-load-grid',
+              'puzzle-board',
+              'delivery-trailer-grid',
+              dragFreightId ? 'drag-active' : '',
+            ].filter(Boolean).join(' ')}
             style={{
               '--board-columns': board.columns,
               '--board-rows': board.rows,
@@ -276,8 +427,8 @@ export default function DeliveryWorkspace({
             })}
 
             {Object.entries(trailerState.placements).map(([freightId, placement]) => {
-              if (temporary.has(freightId)) return null
-              const freight = trailerState.freight.find((item) => item.id === freightId)
+              if (temporary.has(freightId) || unloaded.has(freightId)) return null
+              const freight = freightById.get(freightId)
               if (!freight) return null
 
               return (
@@ -287,11 +438,11 @@ export default function DeliveryWorkspace({
                   placement={placement}
                   board={board}
                   currentStop={event}
-                  selected={selected.has(freightId)}
-                  blocked={blocked.has(freightId)}
-                  blocking={blockers.has(freightId)}
-                  onSelect={toggleUnload}
-                  onTemporaryStage={toggleTemporaryStage}
+                  focusedBlocked={blockedFocusId === freightId}
+                  focusedBlocker={focusedBlockerIds.has(freightId)}
+                  dragging={dragFreightId === freightId}
+                  onDragStart={startDrag}
+                  onDragEnd={endDrag}
                 />
               )
             })}
@@ -310,132 +461,148 @@ export default function DeliveryWorkspace({
 
           <div className="delivery-rear-label">
             <span>REAR DOORS</span>
-            <strong>{doorsOpening ? 'OPENING…' : 'OPEN'}</strong>
+            <strong>{doorsOpening ? 'OPENING…' : 'DRAG FREIGHT OUT ↓'}</strong>
           </div>
         </div>
 
         <div className="delivery-legend">
-          <span><i className="target" /> THIS STOP</span>
-          <span><i className="selected" /> SELECTED TO UNLOAD</span>
-          <span><i className="later" /> LATER STOP</span>
-          {blockers.size > 0 && <span><i className="blocker" /> BLOCKING ACCESS</span>}
+          <span><i className="target" /> {event.loadRef} · THIS RECEIVER</span>
+          <span><i className="later" /> OTHER LOADS · STAY ONBOARD</span>
+          {blockedFocusId && <span><i className="blocker" /> HIGHLIGHTED · BLOCKING ACCESS</span>}
         </div>
       </section>
 
       <aside className="delivery-receiving-panel">
-        <section className="delivery-stop-summary">
+        <section className="delivery-stop-summary compact">
           <header>
             <span>RECEIVING DOCK</span>
             <strong>DOCK {dockNumberForDelivery(event)}</strong>
           </header>
-          <div>
-            <span>DESTINATION</span>
+          <div className="delivery-receiver-title">
+            <span>RECEIVER</span>
             <strong>{event.locationLabel}</strong>
+            <small>{event.loadRef} · {expectedFreight.length} units · {pounds(expectedWeight)} lb</small>
           </div>
-          <div className="delivery-stop-stats">
+          <div className="delivery-stop-stats physical">
             <p><span>EXPECTED</span><strong>{expectedFreight.length}</strong></p>
-            <p><span>ON TRAILER</span><strong>{evaluation.actualCount}</strong></p>
-            <p><span>SELECTED</span><strong>{evaluation.selectedCount}</strong></p>
-            <p><span>BLOCKED</span><strong>{evaluation.access.blockedFreightIds.length}</strong></p>
-          </div>
-          <div className="delivery-stop-weight">
-            <span>DELIVERY WEIGHT</span>
-            <strong>{pounds(expectedWeight)} lb</strong>
+            <p><span>RECEIVED</span><strong>{evaluation.unloadedCount}</strong></p>
+            <p><span>REHANDLES</span><strong>{evaluation.rehandleUnits}</strong></p>
           </div>
         </section>
 
-        <section className="delivery-plan-list">
+        <section
+          className={[
+            'delivery-receiving-bay',
+            dragOverZone === 'receiver' ? 'drag-over' : '',
+            evaluation.ready ? 'complete' : '',
+          ].filter(Boolean).join(' ')}
+          onDragOver={(dragEvent) => {
+            dragEvent.preventDefault()
+            dragEvent.dataTransfer.dropEffect = 'move'
+            setDragOverZone('receiver')
+          }}
+          onDragLeave={() => setDragOverZone((zone) => zone === 'receiver' ? null : zone)}
+          onDrop={handleReceiverDrop}
+        >
           <header>
-            <span>UNLOAD PLAN</span>
-            <strong>{evaluation.ready ? 'READY' : 'BUILDING'}</strong>
+            <div>
+              <span>RECEIVING BAY</span>
+              <strong>{evaluation.unloadedCount} / {evaluation.actualCount} RECEIVED</strong>
+            </div>
+            <b>{pounds(receivedWeight)} lb</b>
           </header>
 
-          <div className="delivery-plan-units">
-            {currentStopFreight.map((freight) => (
-              <button
-                type="button"
-                key={freight.id}
-                className={[
-                  selected.has(freight.id) ? 'selected' : '',
-                  blocked.has(freight.id) ? 'blocked' : '',
-                ].filter(Boolean).join(' ')}
-                onClick={() => toggleUnload(freight.id)}
-              >
-                <div>
-                  <strong>{freight.label}</strong>
-                  <span>{freight.handlingLabel}</span>
-                </div>
-                <b>
-                  {selected.has(freight.id)
-                    ? 'UNLOAD'
-                    : blocked.has(freight.id)
-                      ? 'BLOCKED'
-                      : 'SELECT'}
-                </b>
-              </button>
-            ))}
-          </div>
+          {unloadedFreight.length === 0 ? (
+            <div className="delivery-receiving-empty">
+              <i aria-hidden="true">↓</i>
+              <strong>DRAG {event.loadRef} FREIGHT HERE</strong>
+              <span>Freight must have a clear path to the rear doors.</span>
+            </div>
+          ) : (
+            <div className="delivery-received-grid">
+              {unloadedFreight.map((freight) => (
+                <ReceivedFreightCard
+                  key={freight.id}
+                  freight={freight}
+                  recent={recentlyUnloadedId === freight.id}
+                />
+              ))}
+            </div>
+          )}
+
+          {remainingCount > 0 && unloadedFreight.length > 0 && (
+            <footer>
+              <span>{remainingCount} unit{remainingCount === 1 ? '' : 's'} still onboard for this receiver</span>
+            </footer>
+          )}
         </section>
 
-        {(blockers.size > 0 || stagedTemporarily.length > 0) && (
-          <section className="delivery-temp-staging">
-            <header>
-              <span>TEMPORARY STAGING</span>
-              <strong>{stagedTemporarily.length} UNIT{stagedTemporarily.length === 1 ? '' : 'S'}</strong>
-            </header>
-            <small>Later-stop freight staged here will be reloaded after this delivery. Each unit adds handling time.</small>
+        <section
+          className={[
+            'delivery-temp-staging',
+            'physical',
+            dragOverZone === 'staging' ? 'drag-over' : '',
+            blockedFocusId ? 'recommended' : '',
+          ].filter(Boolean).join(' ')}
+          onDragOver={(dragEvent) => {
+            dragEvent.preventDefault()
+            dragEvent.dataTransfer.dropEffect = 'move'
+            setDragOverZone('staging')
+          }}
+          onDragLeave={() => setDragOverZone((zone) => zone === 'staging' ? null : zone)}
+          onDrop={handleStagingDrop}
+        >
+          <header>
+            <span>TEMP STAGING</span>
+            <strong>{stagedTemporarily.length > 0 ? `${stagedTemporarily.length} OUT` : 'EMPTY'}</strong>
+          </header>
 
-            {otherOnboard
-              .filter((freight) => blockers.has(freight.id))
-              .map((freight) => (
+          {stagedTemporarily.length === 0 ? (
+            <div className="delivery-staging-empty">
+              <strong>REHANDLE ONLY IF NEEDED</strong>
+              <span>
+                If later-stop freight blocks the delivery, drag that blocker here temporarily.
+              </span>
+            </div>
+          ) : (
+            <div className="delivery-staged-units">
+              {stagedTemporarily.map((freight) => (
                 <button
                   type="button"
                   key={freight.id}
-                  onClick={() => toggleTemporaryStage(freight.id)}
+                  onClick={() => returnToTrailer(freight.id)}
                 >
-                  <strong>{freight.loadRef} · {freight.label}</strong>
-                  <span>TEMP STAGE</span>
+                  <div>
+                    <strong>{freight.loadRef} · {freight.label}</strong>
+                    <span>+3 min handling · reloads after delivery</span>
+                  </div>
+                  <b>RETURN</b>
                 </button>
               ))}
-
-            {stagedTemporarily.map((freight) => (
-              <button
-                type="button"
-                key={freight.id}
-                className="staged"
-                onClick={() => toggleTemporaryStage(freight.id)}
-              >
-                <strong>{freight.loadRef} · {freight.label}</strong>
-                <span>RETURN TO TRAILER</span>
-              </button>
-            ))}
-          </section>
-        )}
-
-        <section className="delivery-plan-status">
-          <header>
-            <span>PLAN STATUS</span>
-            <strong>{evaluation.ready ? 'UNLOAD PLAN READY' : 'ACTION REQUIRED'}</strong>
-          </header>
-
-          {evaluation.errors.length > 0 ? (
-            <div className="delivery-plan-errors">
-              {evaluation.errors.map((issue) => (
-                <p key={issue.code}>
-                  <strong>{issue.code.replaceAll('_', ' ')}</strong>
-                  <span>{issue.message}</span>
-                </p>
-              ))}
             </div>
+          )}
+        </section>
+
+        <section
+          className={[
+            'delivery-interaction-status',
+            notice?.tone ?? 'neutral',
+          ].join(' ')}
+        >
+          {notice ? (
+            <>
+              <strong>{notice.title}</strong>
+              <span>{notice.detail}</span>
+            </>
           ) : (
-            <div className="delivery-plan-clear">
-              <strong>{evaluation.selectedCount} correct units selected</strong>
+            <>
+              <strong>{evaluation.unloadedCount === 0 ? 'READ THE TRAILER' : 'KEEP UNLOADING'}</strong>
               <span>
-                {evaluation.rehandleUnits > 0
-                  ? `${evaluation.rehandleUnits} temporary rehandle${evaluation.rehandleUnits === 1 ? '' : 's'} · +${evaluation.rehandleUnits * 3} min`
-                  : 'Rear-door access is clean · no rehandles'}
+                {evaluation.unloadedCount === 0
+                  ? `Find ${event.loadRef} freight and pull an accessible unit toward Receiving.`
+                  : `${remainingCount} ${event.loadRef} unit${remainingCount === 1 ? '' : 's'} remain.`}
               </span>
-            </div>
+            </>
           )}
         </section>
 
@@ -449,12 +616,20 @@ export default function DeliveryWorkspace({
           disabled={!evaluation.ready || committing}
           onClick={commit}
         >
-          <span>RECEIVING DOCK</span>
-          <strong>{committing ? 'SENDING UNLOAD PLAN…' : 'COMMIT UNLOAD PLAN'}</strong>
+          <span>RECEIVER HANDOFF</span>
+          <strong>
+            {committing
+              ? 'SENDING TO RECEIVER…'
+              : evaluation.ready
+                ? 'CONFIRM HANDOFF'
+                : `RECEIVE ${remainingCount} MORE`}
+          </strong>
           <small>
             {evaluation.ready
-              ? 'Focused Mode ends · unloading continues in background'
-              : 'Select the correct freight and clear any access blockers'}
+              ? evaluation.rehandleUnits > 0
+                ? `All freight extracted · ${evaluation.rehandleUnits} rehandle${evaluation.rehandleUnits === 1 ? '' : 's'} · warehouse service continues in background`
+                : 'All freight extracted · clean access · warehouse service continues in background'
+              : 'The handoff unlocks when all expected freight reaches Receiving'}
           </small>
         </button>
       </aside>
