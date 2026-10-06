@@ -73,6 +73,81 @@ function visibleFootprintCells(board, freight, anchorCell, rotation) {
     .filter((index) => index != null)
 }
 
+const WAREHOUSE_ZONE_LAYOUTS = Object.freeze({
+  controlled: Object.freeze({ columns: 3, rows: 2 }),
+  forklift: Object.freeze({ columns: 3, rows: 2 }),
+  inspection: Object.freeze({ columns: 2, rows: 2 }),
+  general: Object.freeze({ columns: 4, rows: 2 }),
+})
+
+function warehouseZoneLayout(zoneId) {
+  return WAREHOUSE_ZONE_LAYOUTS[zoneId] ?? { columns: 4, rows: 2 }
+}
+
+function warehouseFootprintCells({
+  column,
+  row,
+  width,
+  height,
+}) {
+  return Array.from({ length: width * height }, (_, index) => ({
+    column: column + (index % width),
+    row: row + Math.floor(index / width),
+  }))
+}
+
+function buildWarehouseFreightPlacements({
+  freight = [],
+  rotations = {},
+  zoneId,
+} = {}) {
+  const layout = warehouseZoneLayout(zoneId)
+  const occupied = new Set()
+  const placements = {}
+
+  for (const unit of freight) {
+    const rotation = rotations[unit.id] ?? 0
+    const bounds = shapeBounds(rotateFreightShape(unit.shape, rotation))
+    const width = Math.min(bounds.width, layout.columns)
+    const height = Math.min(bounds.height, layout.rows)
+    let placement = null
+
+    for (let row = layout.rows - height; row >= 0 && !placement; row -= 1) {
+      for (let column = 0; column <= layout.columns - width; column += 1) {
+        const cells = warehouseFootprintCells({
+          column,
+          row,
+          width,
+          height,
+        })
+        const clear = cells.every((cell) => (
+          !occupied.has(`${cell.column}:${cell.row}`)
+        ))
+
+        if (!clear) continue
+
+        placement = {
+          column: column + 1,
+          row: row + 1,
+          width,
+          height,
+        }
+        for (const cell of cells) {
+          occupied.add(`${cell.column}:${cell.row}`)
+        }
+        break
+      }
+    }
+
+    if (placement) placements[unit.id] = placement
+  }
+
+  return {
+    ...layout,
+    placements,
+  }
+}
+
 function cargoClass(freight) {
   return `cargo-${freight.cargoType ?? 'wrapped-pallet'}`
 }
@@ -195,9 +270,12 @@ function TrailerFreightPiece({
 function ReceiverFreightPiece({
   freight,
   rotation = 0,
+  placement,
 }) {
   const shape = rotateFreightShape(freight.shape, rotation)
   const bounds = shapeBounds(shape)
+
+  if (!placement) return null
 
   return (
     <article
@@ -209,10 +287,10 @@ function ReceiverFreightPiece({
         shape.length > 1 ? 'oversize' : 'standard',
       ].filter(Boolean).join(' ')}
       style={{
+        gridColumn: `${placement.column} / span ${placement.width}`,
+        gridRow: `${placement.row} / span ${placement.height}`,
         '--piece-columns': bounds.width,
         '--piece-rows': bounds.height,
-        '--receiver-piece-columns': bounds.width,
-        '--receiver-piece-rows': bounds.height,
       }}
     >
       <FreightVisual freight={freight} rotation={rotation} />
@@ -232,6 +310,11 @@ function WarehouseZone({
   const complete = phase.complete
   const current = currentPhase?.id === phase.id
   const locked = !complete && !current
+  const floor = buildWarehouseFreightPlacements({
+    freight: receivedFreight,
+    rotations: receivedRotations,
+    zoneId: phase.zoneId,
+  })
 
   return (
     <section
@@ -247,32 +330,42 @@ function WarehouseZone({
       ].filter(Boolean).join(' ')}
       onClick={onClick}
     >
-      <div className="delivery-zone-sign">
-        <span>{complete ? 'CLEARED' : current ? 'ACTIVE' : 'HOLD'}</span>
+      <div className="delivery-zone-stencil">
         <strong>{phase.zoneLabel}</strong>
-        <b>{phase.receivedCount}/{phase.totalCount}</b>
+        <span>
+          {current
+            ? `ACTIVE · ${phase.receivedCount}/${phase.totalCount}`
+            : complete
+              ? `CLEAR · ${phase.receivedCount}/${phase.totalCount}`
+              : `${phase.receivedCount}/${phase.totalCount}`}
+        </span>
       </div>
 
-      <div className="delivery-zone-marking" aria-hidden="true">
-        <i /><i /><i />
+      <div className="delivery-zone-floor-paint" aria-hidden="true">
+        <i /><i /><i /><i />
       </div>
 
-      {receivedFreight.length > 0 && (
-        <div className="delivery-zone-freight-floor">
-          {receivedFreight.map((freight) => (
-            <ReceiverFreightPiece
-              key={freight.id}
-              freight={freight}
-              rotation={receivedRotations[freight.id] ?? 0}
-            />
-          ))}
-        </div>
-      )}
+      <div
+        className="delivery-zone-freight-floor"
+        style={{
+          '--zone-columns': floor.columns,
+          '--zone-rows': floor.rows,
+        }}
+      >
+        {receivedFreight.map((freight) => (
+          <ReceiverFreightPiece
+            key={freight.id}
+            freight={freight}
+            rotation={receivedRotations[freight.id] ?? 0}
+            placement={floor.placements[freight.id]}
+          />
+        ))}
+      </div>
 
       {current && receivedFreight.length === 0 && (
         <div className="delivery-zone-current-cue">
           <i>↓</i>
-          <span>{phase.label}</span>
+          <span>ACTIVE RECEIVING AREA</span>
         </div>
       )}
     </section>
@@ -1159,6 +1252,16 @@ export default function DeliveryWorkspace({
             </header>
 
             <div className="delivery-floor-environment">
+              <div className="delivery-warehouse-back-wall" aria-hidden="true">
+                <i />
+                <span>RECEIVING · BAY {dockNumberForDelivery(event)}</span>
+                <i />
+              </div>
+              <div className="delivery-warehouse-column left" aria-hidden="true" />
+              <div className="delivery-warehouse-column right" aria-hidden="true" />
+              <div className="delivery-floor-tire-wear" aria-hidden="true">
+                <i /><i />
+              </div>
               <div className="delivery-floor-aisle main" aria-hidden="true">
                 <span>WAREHOUSE AISLE</span>
                 <i>→</i><i>→</i><i>→</i>
@@ -1203,7 +1306,7 @@ export default function DeliveryWorkspace({
                         evaluation.staging?.occupied?.[slot] ? 'occupied' : '',
                       ].filter(Boolean).join(' ')}
                     >
-                      <span>{slot + 1}</span>
+                      <i /><i /><i /><i />
                     </div>
                   ))}
 
