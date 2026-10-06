@@ -165,12 +165,6 @@ export default function DeliveryWorkspace({
     return () => clearTimeout(timer)
   }, [])
 
-  useEffect(() => {
-    setSelectedFreightIds([])
-    setTemporaryStagedFreightIds([])
-    setCommitting(false)
-  }, [event.id])
-
   const evaluation = useMemo(
     () => evaluateDeliveryUnloadPlan({
       board,
