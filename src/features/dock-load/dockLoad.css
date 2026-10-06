@@ -3100,3 +3100,332 @@
     transform: none !important;
   }
 }
+
+
+/* V2.7.5.1.2 — Right panel hierarchy polish */
+.dock-load-hud {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.dock-load-summary,
+.dock-load-completion,
+.dock-load-status,
+.dock-load-rules,
+.dock-load-actions {
+  flex: 0 0 auto;
+  border-bottom: 1px solid #21323d;
+}
+
+.dock-load-summary > header,
+.dock-load-completion > header,
+.dock-load-status > header,
+.dock-load-rules > header,
+.dock-load-actions > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 13px;
+  border-bottom: 1px solid #21323d;
+  background: #0a151d;
+}
+
+.dock-load-summary > header span,
+.dock-load-completion > header span,
+.dock-load-status > header span,
+.dock-load-rules > header span,
+.dock-load-actions > header span,
+.dock-load-summary-route span,
+.dock-load-summary-meta span,
+.dock-load-status-grid span {
+  color: #758b97;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .09em;
+  line-height: 1.2;
+}
+
+.dock-load-summary > header strong,
+.dock-load-completion > header strong,
+.dock-load-rules > header strong,
+.dock-load-actions > header strong {
+  color: #e1ebf0;
+  font-size: 13px;
+  font-weight: 1000;
+  letter-spacing: .025em;
+}
+
+.dock-load-summary-route {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 11px 13px;
+}
+
+.dock-load-summary-route > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dock-load-summary-route > div:last-child {
+  text-align: right;
+}
+
+.dock-load-summary-route > div strong {
+  overflow: hidden;
+  color: #c8d7de;
+  font-size: 11px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+.dock-load-summary-route > i {
+  color: #5c7785;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 1000;
+}
+
+.dock-load-summary-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #1d2e37;
+}
+
+.dock-load-summary-meta > div {
+  display: grid;
+  gap: 4px;
+  padding: 9px 11px;
+  background: #0a141b;
+}
+
+.dock-load-summary-meta strong {
+  color: #b8cad3;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.dock-load-completion > header {
+  background:
+    linear-gradient(90deg, rgba(49, 95, 80, .12), transparent 78%),
+    #0a151d;
+}
+
+.dock-load-completion.complete > header {
+  border-bottom-color: #365d4f;
+  background:
+    linear-gradient(90deg, rgba(64, 128, 99, .16), transparent 78%),
+    #0b1715;
+}
+
+.dock-load-completion.complete > header strong {
+  color: #9bcbb7;
+}
+
+.dock-load-progress {
+  height: 7px;
+  margin: 0 13px 12px;
+  overflow: hidden;
+  border: 1px solid #2c414c;
+  border-radius: 999px;
+  background: #071016;
+}
+
+.dock-load-progress > i {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3f7189, #5fa18b);
+  box-shadow: 0 0 9px rgba(78, 154, 130, .18);
+  transition: width .16s ease;
+}
+
+.dock-load-status > header strong {
+  color: #aabdc6;
+}
+
+.dock-load-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  gap: 1px;
+  background: #1d2e37;
+}
+
+.dock-load-status-grid > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 9px;
+  background: #0a141b;
+}
+
+.dock-load-status-grid strong {
+  color: #d1dce1;
+  font-size: 12px;
+  font-weight: 1000;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dock-load-rules > header strong {
+  padding: 3px 6px;
+  border: 1px solid #3d6656;
+  border-radius: 2px;
+  background: #102019;
+  color: #9ac8b2;
+  font-size: 9px;
+  letter-spacing: .06em;
+}
+
+.dock-load-rules:has(.dock-load-trailer-rule.blocked) > header strong {
+  border-color: #80505a;
+  background: #271318;
+  color: #e698a5;
+}
+
+.dock-load-rules .dock-load-trailer-rule {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.dock-load-actions {
+  margin-top: auto;
+}
+
+.dock-load-actions.attention > header {
+  border-bottom-color: #5f3943;
+  background:
+    linear-gradient(90deg, rgba(120, 42, 55, .14), transparent 74%),
+    #151014;
+}
+
+.dock-load-actions.attention > header strong {
+  padding: 3px 6px;
+  border: 1px solid #7f4855;
+  border-radius: 2px;
+  background: #281117;
+  color: #e38f9d;
+  font-size: 9px;
+}
+
+.dock-load-actions.ready > header {
+  border-bottom-color: #355f4f;
+  background:
+    linear-gradient(90deg, rgba(58, 124, 93, .15), transparent 74%),
+    #0e1815;
+}
+
+.dock-load-actions.ready > header strong {
+  padding: 3px 6px;
+  border: 1px solid #3f705b;
+  border-radius: 2px;
+  background: #102119;
+  color: #9dcbb6;
+  font-size: 9px;
+}
+
+.dock-load-action-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.dock-load-action-card {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #334650;
+  border-radius: 3px;
+  background: #0b151c;
+}
+
+.dock-load-action-card strong {
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: .055em;
+  line-height: 1.25;
+}
+
+.dock-load-action-card small {
+  color: #98aab3;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.dock-load-action-card.error {
+  border-color: #73414d;
+  background:
+    linear-gradient(90deg, rgba(126, 42, 58, .12), transparent 80%),
+    #181014;
+}
+
+.dock-load-action-card.error strong {
+  color: #e18d9a;
+}
+
+.dock-load-action-card.rule {
+  border-color: #6b5730;
+  background:
+    linear-gradient(90deg, rgba(122, 92, 33, .12), transparent 80%),
+    #17150e;
+}
+
+.dock-load-action-card.rule strong {
+  color: #d9b766;
+}
+
+.dock-load-action-card.warning {
+  border-color: #67552f;
+  background: #18150d;
+}
+
+.dock-load-action-card.warning strong {
+  color: #d1ad62;
+}
+
+.dock-load-action-card.ready {
+  margin: 10px;
+  border-color: #3b6956;
+  background:
+    linear-gradient(90deg, rgba(57, 123, 92, .15), transparent 82%),
+    #0e1916;
+}
+
+.dock-load-action-card.ready strong {
+  color: #96c6b0;
+}
+
+.dock-load-action-card.ready small {
+  color: #9eb6aa;
+}
+
+.dock-load-interaction-status {
+  flex: 0 0 auto;
+  border-top: 1px solid #263943;
+  background: #0b141a;
+  color: #9db0ba;
+}
+
+@media (max-width: 1450px) {
+  .dock-load-status-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dock-load-status-grid > div:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-load-progress > i {
+    transition: none !important;
+  }
+}
