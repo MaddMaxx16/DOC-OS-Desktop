@@ -3,6 +3,12 @@ import {
   facilityOperationForEvent,
   pickupPlanCommitted,
 } from '../facility/pickupOperation.js'
+import {
+  deliveryOperationForEvent,
+  deliveryOperationPhase,
+  deliveryPlanCommitted,
+  dockNumberForDelivery,
+} from '../facility/deliveryOperation.js'
 
 const EARTH_RADIUS_MILES = 3958.8
 
@@ -76,7 +82,6 @@ function normalizeTimeline(driverDay = {}, facilityOperations = null) {
 
     const operation = (
       event.kind === 'freight-stop'
-      && event.role === 'pickup'
       && facilityOperations
     )
       ? facilityOperationForEvent(
@@ -86,7 +91,7 @@ function normalizeTimeline(driverDay = {}, facilityOperations = null) {
         )
       : null
 
-    if (pickupPlanCommitted(operation)) {
+    if (event.role === 'pickup' && pickupPlanCommitted(operation)) {
       const originalDeparture = departure
       const loadingStart = Math.max(
         serviceStart,
@@ -102,6 +107,27 @@ function normalizeTimeline(driverDay = {}, facilityOperations = null) {
 
       serviceStart = loadingStart
       departure = loadingStart + loadingDuration
+      accumulatedDelayMinutes += Math.max(0, departure - originalDeparture)
+    }
+
+    if (event.role === 'delivery' && deliveryPlanCommitted(operation)) {
+      const originalDeparture = departure
+      const unloadingStart = Math.max(
+        serviceStart,
+        finite(operation.unloadingStartMinutes, serviceStart),
+      )
+      const operationDeparture = Math.max(
+        unloadingStart + 1,
+        finite(
+          operation.receiverVerificationCompleteMinutes,
+          unloadingStart
+            + finite(operation.unloadingDurationMinutes, departure - serviceStart)
+            + finite(operation.receiverVerificationMinutes, 3),
+        ),
+      )
+
+      serviceStart = unloadingStart
+      departure = operationDeparture
       accumulatedDelayMinutes += Math.max(0, departure - originalDeparture)
     }
 
@@ -222,6 +248,7 @@ export function buildTimelineExecution(
   clock = {},
   {
     pickupFacilityMode = false,
+    deliveryFacilityMode = false,
     facilityOperations = null,
   } = {},
 ) {
@@ -339,16 +366,73 @@ export function buildTimelineExecution(
     }
 
     if (
+      deliveryFacilityMode
+      && current.event.kind === 'freight-stop'
+      && current.event.role === 'delivery'
+      && currentMinutes >= current.serviceStartMinutes
+    ) {
+      const operation = deliveryOperationForEvent(
+        facilityOperations ?? {},
+        driverDay.driverId,
+        current.event.id,
+      )
+
+      if (!deliveryPlanCommitted(operation)) {
+        const heldBase = executionBase(schedule, current.arrivalMinutes)
+
+        return {
+          ...heldBase,
+          currentAbsoluteMinutes: currentMinutes,
+          executionPhase: 'facility-dock-assigned',
+          activeSegmentId: null,
+          activeSegmentProgress: 0,
+          currentEventId: current.event.id,
+          currentEventKind: current.event.kind,
+          currentEventLabel: current.event.locationLabel,
+          currentEventArrivalMinutes: current.arrivalMinutes,
+          currentEventServiceStartMinutes: current.serviceStartMinutes,
+          currentEventDepartureMinutes: null,
+          nextEventId: next?.event.id ?? null,
+          nextEventKind: next?.event.kind ?? null,
+          nextEventLabel: next?.event.locationLabel ?? null,
+          nextEventArrivalMinutes: null,
+          serviceRole: current.event.role,
+          serviceLoadId: current.event.loadId ?? null,
+          serviceLoadRef: current.event.loadRef ?? null,
+          facilityStatus: 'DOCK ASSIGNED',
+          facilityOperationType: 'delivery',
+          dock: dockNumberForDelivery(current.event),
+          facilityActionRequired: true,
+        }
+      }
+    }
+
+    if (
       currentMinutes >= current.serviceStartMinutes
       && currentMinutes < current.departureMinutes
     ) {
-      const servicePhase = current.event.kind === 'freight-stop'
+      let servicePhase = current.event.kind === 'freight-stop'
         ? current.event.role === 'pickup'
           ? 'service-loading'
           : 'service-unloading'
         : current.event.kind === 'lunch'
           ? 'dwell-break'
           : 'dwell'
+
+      const deliveryOperation = current.event.role === 'delivery'
+        ? deliveryOperationForEvent(
+            facilityOperations ?? {},
+            driverDay.driverId,
+            current.event.id,
+          )
+        : null
+      const deliveryPhase = deliveryOperation
+        ? deliveryOperationPhase(deliveryOperation, currentMinutes)
+        : null
+
+      if (deliveryPhase === 'receiver-verification') {
+        servicePhase = 'receiver-verification'
+      }
 
       return {
         ...base,
@@ -366,6 +450,15 @@ export function buildTimelineExecution(
         nextEventLabel: next?.event.locationLabel ?? null,
         nextEventArrivalMinutes: next?.arrivalMinutes ?? null,
         ...freightServiceFields(current, currentMinutes),
+        ...(deliveryOperation ? {
+          facilityOperationType: 'delivery',
+          dock: deliveryOperation.dock ?? dockNumberForDelivery(current.event),
+          deliveryOperationPhase: deliveryPhase,
+          unloadingCompleteMinutes: deliveryOperation.unloadingCompleteMinutes ?? null,
+          receiverVerificationCompleteMinutes: deliveryOperation.receiverVerificationCompleteMinutes ?? null,
+          receiverResults: deliveryOperation.receiverResults ?? [],
+          podSeed: deliveryOperation.podSeed ?? null,
+        } : {}),
       }
     }
 
