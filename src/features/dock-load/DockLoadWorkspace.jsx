@@ -600,14 +600,6 @@ export default function DockLoadWorkspace({
   const balanceMonitoring = Boolean(
     weightBalance?.active && !weightBalance?.enforced,
   )
-  const trailerRulesClear = Boolean(
-    evaluation.deliveryAccess?.clear && !balanceNeedsAction,
-  )
-  const trailerRulesStatus = !evaluation.deliveryAccess?.clear || balanceNeedsAction
-    ? 'ACTION NEEDED'
-    : balanceMonitoring
-      ? 'MONITORING'
-      : 'ALL CLEAR'
   const balanceStatus = !weightBalance?.active
     ? 'LIGHT LOAD'
     : !weightBalance?.enforced
