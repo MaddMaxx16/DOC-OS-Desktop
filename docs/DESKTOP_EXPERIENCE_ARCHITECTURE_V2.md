@@ -4046,3 +4046,194 @@ Observed during the same gameplay review but intentionally deferred:
 2. **Advance to next operational moment** — current fast-forward requires the player to sit through idle time. A later time-control pass should add an Advance to Next Event / Next Operational Moment action.
 
 These are recorded issues, not part of the V2.7.6.1 delivery interaction scope.
+
+
+---
+
+## V2.7.6.2 — Receiving Floor Protocol
+
+V2.7.6.1 correctly moved Delivery back onto the physical trailer, but gameplay review showed that physically dragging freight into one generic Receiving Bay still did not create enough decision-making.
+
+V2.7.6.2 keeps physical unloading and adds the missing second half of the puzzle: **receiver procedure**.
+
+### Core scene
+
+The delivery workspace is now one continuous dock scene:
+
+**Receiving Floor ← Dock Threshold ← 53' Trailer**
+
+The player should immediately recognize the trailer as the same physical equipment used during Pickup.
+
+The trailer visualization restores:
+
+- nose cap,
+- side walls,
+- rear frame,
+- opening doors,
+- floor grid,
+- wheels/chassis cues,
+- the exact committed freight positions.
+
+The facility floor sits directly beside the rear doors so unloading is visually a move from truck to receiver rather than from a grid into a dashboard.
+
+### Receiver-specific SOPs
+
+Delivery sequence is driven by fictional facility receiving procedures created for DOC OS gameplay.
+
+They are not universal transportation or warehouse requirements.
+
+For the first Harborline scenario:
+
+1. **CONTROLLED FREIGHT**
+   - destination: **CONTROLLED RECEIVING**
+   - applies to: HAZMAT freight
+
+2. **FORKLIFT HANDLING**
+   - destination: **FORKLIFT LANE**
+   - applies to: HEAVY and OVERSIZE freight
+
+3. **FRAGILE INSPECTION**
+   - destination: **INSPECTION**
+   - applies to: FRAGILE freight
+
+4. **GENERAL RECEIVING**
+   - destination: **GENERAL RECEIVING**
+   - applies to remaining delivery freight
+
+Freshway uses a different sequence, establishing that the rule belongs to the receiver rather than the freight category globally.
+
+### Delivery decision loop
+
+Every freight move now asks three simultaneous questions:
+
+1. **Sequence** — is this freight valid in the facility's current receiving phase?
+2. **Access** — can this physical unit reach the rear doors from its trailer position?
+3. **Destination** — is the player sending it to the correct receiving zone?
+
+A successful delivery move must satisfy all three.
+
+### Phase progression
+
+The receiver opens one phase at a time.
+
+A phase displays:
+
+- handling phase name,
+- receiving destination,
+- units received,
+- units required,
+- short facility instruction.
+
+Later phases remain visible but inactive.
+
+When all units assigned to the current phase arrive in its correct zone, the next phase opens automatically.
+
+### Wrong sequence
+
+If the player attempts to send later-phase freight while an earlier phase is still active, the receiver rejects it.
+
+The feedback states which phase must be completed first and which facility zone the attempted freight belongs to later.
+
+This creates operational order without relying on a hidden score.
+
+### Wrong receiving area
+
+Current-phase freight sent to the wrong facility zone is rejected.
+
+For example, Harborline HAZMAT freight belongs in Controlled Receiving during the Controlled Freight phase.
+
+This is a facility-gameplay rule, not a universal HAZMAT unloading requirement.
+
+### Access and rehandling
+
+Rear-door access remains physical.
+
+If current-phase freight is buried:
+
+- the move is rejected,
+- the target and physical blocker are highlighted,
+- the player must decide what must move.
+
+A blocker can be:
+
+**Another load**
+- move it to Temp Staging if it is genuinely blocking access,
+- it returns to its original trailer position after the delivery.
+
+**Same delivery, later receiving phase**
+- move it to Temp Staging,
+- once that facility phase opens, the staged freight may move directly from Temp Staging into its receiving zone.
+
+This makes receiver sequence capable of creating real rehandles even within one delivery.
+
+### Rehandle accounting
+
+Every unique freight unit placed in Temp Staging counts as:
+
+- one rehandled unit,
+- two handling moves,
+- +3 minutes simulated delivery service time.
+
+The freight history records the temporary staging event.
+
+If that staged freight is later delivered at the same receiver, its delivery history also records the final receiving zone.
+
+### Physical receiving zones
+
+The facility floor visually contains the zones defined by the protocol.
+
+Received freight accumulates in those physical areas instead of disappearing into one generic counter.
+
+The player therefore sees two changing spaces:
+
+- the trailer progressively empties,
+- the receiving floor progressively fills.
+
+### Drag reliability
+
+Physical drag remains the intended interaction.
+
+A click-selection fallback also exists:
+
+1. click the physical freight unit,
+2. click its receiving zone or Temp Staging.
+
+This exists only to avoid browser/native drag quirks blocking gameplay testing; it does not reintroduce the old freight checklist.
+
+### Facility SOP panel
+
+The right panel no longer lists the freight answers.
+
+It shows:
+
+- receiver identity,
+- Expected / Received / Rehandles,
+- the ordered facility phases,
+- current phase,
+- required destination zone,
+- contextual interaction feedback,
+- Confirm Handoff.
+
+The physical cargo markings remain the primary clue for deciding which trailer freight matches the current phase.
+
+### Pickup consequence
+
+This system strengthens the connection between Pickup and Delivery.
+
+If the player packed freight in an order compatible with the destination's receiving procedure, the delivery can be nearly rehandle-free.
+
+If current-phase freight is buried behind later-phase or later-stop freight, Delivery exposes that mistake as operational handling cost.
+
+Future planning/tutorial work should surface receiver SOP information before Pickup so skilled players can plan for it intentionally rather than learning it only after arrival.
+
+### Completion
+
+Confirm Handoff unlocks only after:
+
+- every expected actual freight unit has been physically removed,
+- facility phase order is valid,
+- each freight unit was received into its assigned facility zone.
+
+The existing V2.7.6 background sequence remains unchanged:
+
+**Confirm Handoff → UNLOADING → RECEIVER CHECK → routine automatic departure**
