@@ -375,10 +375,13 @@ export default function DockLoadWorkspace({
   const plannedIds = new Set(Object.keys(placements))
   const blockedDeliveryIds = new Set(evaluation.deliveryAccess?.blockedFreightIds ?? [])
   const blockingDeliveryIds = new Set(evaluation.deliveryAccess?.blockingFreightIds ?? [])
+  const fragileAtRiskIds = new Set(evaluation.fragileProtection?.fragileFreightIds ?? [])
+  const fragileImpactRiskIds = new Set(evaluation.fragileProtection?.riskFreightIds ?? [])
   const nonRuleErrors = evaluation.errors.filter(
     (issue) => ![
       'DELIVERY_ACCESS_BLOCKED',
       'WEIGHT_DISTRIBUTION_UNBALANCED',
+      'FRAGILE_PROTECTION_CONFLICT',
     ].includes(issue.code),
   )
   const orderedStagedFreight = [
@@ -618,6 +621,38 @@ export default function DockLoadWorkspace({
   const balanceFixText = weightBalance?.issues
     ?.map((issue) => issue.fix)
     .join(' ') ?? 'Redistribute trailer weight.'
+  const fragileProtection = evaluation.fragileProtection
+  const fragileConflict = fragileProtection?.conflicts?.[0] ?? null
+  const fragileNeedsAction = Boolean(
+    fragileProtection?.enforced && !fragileProtection?.clear,
+  )
+  const fragileMonitoring = Boolean(
+    fragileProtection?.active && !fragileProtection?.enforced,
+  )
+  const fragileStatus = !fragileProtection?.active
+    ? 'CLEAR'
+    : !fragileProtection?.enforced
+      ? 'MONITOR'
+      : fragileProtection.clear
+        ? 'PROTECTED'
+        : 'SEPARATE'
+  const handlingMonitoring = fragileMonitoring
+  const allTrailerRulesClear = Boolean(
+    evaluation.deliveryAccess?.clear
+    && !balanceNeedsAction
+    && !fragileNeedsAction
+  )
+  const combinedRuleMonitoring = Boolean(
+    (balanceMonitoring || handlingMonitoring)
+    && allTrailerRulesClear
+  )
+  const combinedTrailerRulesStatus = !evaluation.deliveryAccess?.clear
+    || balanceNeedsAction
+    || fragileNeedsAction
+    ? 'ACTION NEEDED'
+    : combinedRuleMonitoring
+      ? 'MONITORING'
+      : 'ALL CLEAR'
 
   return (
     <div
@@ -842,6 +877,8 @@ export default function DockLoadWorkspace({
                             deliveryRank === 1 ? 'delivery-next' : '',
                             blockedDeliveryIds.has(freightId) ? 'delivery-blocked' : '',
                             blockingDeliveryIds.has(freightId) ? 'delivery-blocker' : '',
+                            fragileAtRiskIds.has(freightId) ? 'fragile-at-risk' : '',
+                            fragileImpactRiskIds.has(freightId) ? 'fragile-impact-risk' : '',
                           ].filter(Boolean).join(' ')}
                           style={{
                             gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -1046,13 +1083,13 @@ export default function DockLoadWorkspace({
         <section
           className={[
             'dock-load-rules',
-            trailerRulesClear ? 'clear' : 'attention',
-            balanceMonitoring && trailerRulesClear ? 'monitoring' : '',
+            allTrailerRulesClear ? 'clear' : 'attention',
+            combinedRuleMonitoring ? 'monitoring' : '',
           ].filter(Boolean).join(' ')}
         >
           <header>
             <span>TRAILER RULES</span>
-            <strong>{trailerRulesStatus}</strong>
+            <strong>{combinedTrailerRulesStatus}</strong>
           </header>
 
           <div
@@ -1211,6 +1248,62 @@ export default function DockLoadWorkspace({
               </>
             )}
           </div>
+
+          <div
+            className={[
+              'dock-load-trailer-rule',
+              'dock-load-fragile-rule',
+              fragileNeedsAction ? 'blocked' : 'clear',
+              fragileMonitoring ? 'monitoring' : '',
+            ].filter(Boolean).join(' ')}
+          >
+            <header>
+              <span>FRAGILE PROTECTION</span>
+              <strong>{fragileStatus}</strong>
+            </header>
+
+            <div className="dock-load-fragile-rule-line">
+              FRAGILE must not share an edge with HEAVY or OVERSIZE freight.
+            </div>
+
+            {!fragileProtection?.active ? (
+              <div className="dock-load-rule-copy clear">
+                <span>STATUS</span>
+                <strong>No fragile-to-impact cargo conflict is currently possible.</strong>
+              </div>
+            ) : fragileMonitoring ? (
+              <div className="dock-load-rule-copy monitoring">
+                <span>LIVE PREVIEW</span>
+                <strong>
+                  Fragile spacing will become enforceable when this pickup is fully loaded.
+                </strong>
+              </div>
+            ) : fragileProtection.clear ? (
+              <div className="dock-load-rule-copy clear">
+                <span>STATUS</span>
+                <strong>Fragile freight is separated from HEAVY and OVERSIZE cargo.</strong>
+              </div>
+            ) : (
+              <>
+                <div className="dock-load-rule-copy problem">
+                  <span>PROBLEM</span>
+                  <strong>
+                    {fragileConflict
+                      ? `${fragileConflict.fragileLabel} is directly beside ${fragileConflict.riskHandlingCode} freight.`
+                      : 'Fragile freight is directly beside heavy-impact cargo.'}
+                  </strong>
+                </div>
+                <div className="dock-load-rule-copy fix">
+                  <span>FIX</span>
+                  <strong>
+                    {fragileConflict
+                      ? `Move ${fragileConflict.fragileLabel} or ${fragileConflict.riskLabel} so they no longer share an edge.`
+                      : 'Create at least one floor-position gap between the conflicting freight.'}
+                  </strong>
+                </div>
+              </>
+            )}
+          </div>
         </section>
 
         <section
@@ -1262,6 +1355,17 @@ export default function DockLoadWorkspace({
                 <div className="dock-load-action-card rule balance">
                   <strong>FIX WEIGHT DISTRIBUTION</strong>
                   <small>{balanceFixText}</small>
+                </div>
+              )}
+
+              {fragileNeedsAction && (
+                <div className="dock-load-action-card rule fragile">
+                  <strong>PROTECT FRAGILE FREIGHT</strong>
+                  <small>
+                    {fragileConflict
+                      ? `Separate ${fragileConflict.fragileLabel} from ${fragileConflict.riskLabel}.`
+                      : 'Separate fragile freight from HEAVY or OVERSIZE cargo.'}
+                  </small>
                 </div>
               )}
 
