@@ -32,35 +32,24 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.2 Trailer Rules: Weight Distribution / Balance
+## Current packet — V2.7.5.3 Handling Restrictions: Fragile Protection
 
-V2.1 through V2.7.5.1.2 are accepted and locked. Freight identity, persistent trailer state, direct onboard repositioning, reliable rotation, right-panel hierarchy, Delivery Access, rear-door commitment, Focused Mode, and downstream timing remain authoritative.
+V2.1 through V2.7.5.2 are accepted and locked.
 
-This packet adds the second trailer rule:
+This packet activates one handling rule only:
+- FRAGILE freight may not share an edge with HEAVY or OVERSIZE freight,
+- diagonal contact is allowed,
+- conflicts are evaluated from actual occupied footprint cells,
+- while the pickup is incomplete the rule monitors live but does not block readiness,
+- once all booked freight is loaded, any fragile conflict blocks READY TO CLOSE,
+- conflicting FRAGILE freight and the HEAVY/OVERSIZE freight causing the risk must be visually distinguishable,
+- Trailer Rules gains a FRAGILE PROTECTION card with CLEAR / MONITOR / PROTECTED / SEPARATE states,
+- Required Action must surface PROTECT FRAGILE FREIGHT with a specific move instruction,
+- this is a gameplay handling abstraction, not a regulatory cargo-securement standard.
 
-> a materially loaded trailer must distribute freight weight across both its length and width instead of concentrating the load at one end or on one side.
+Do not activate HAZMAT compatibility, NO STACK enforcement, KEEP UPRIGHT enforcement, vertical stacking, axle math, delivery puzzle, HOS changes, or service-time changes in this packet.
 
-Weight-balance rules:
-- calculate balance from the real placed freight weights and the actual occupied footprint cells,
-- distribute a freight unit's weight evenly across its occupied floor cells,
-- evaluate FRONT / REAR and LEFT / RIGHT as separate balance axes,
-- the acceptable target band is 35–65% on each side of an axis,
-- balance becomes active once onboard planned freight reaches 20% of the trailer's rated freight capacity,
-- below that activation weight, the rule remains advisory and reports LIGHT LOAD,
-- while the current pickup is incomplete, show live balance monitoring but do not add a readiness error solely for imbalance,
-- once all booked freight for the current pickup is placed, an active out-of-band balance becomes enforceable,
-- enforce FRONT HEAVY, REAR HEAVY, LEFT HEAVY, and RIGHT HEAVY states,
-- an enforced imbalance prevents LOAD PLAN READY / READY TO CLOSE until corrected,
-- the Trailer Rules section must include a dedicated Weight Distribution rule card below Delivery Access,
-- show live FRONT / REAR and LEFT / RIGHT percentages,
-- show target guidance and a direct directional fix when blocked,
-- Required Action should surface FIX WEIGHT DISTRIBUTION when the completed plan is materially unbalanced,
-- Delivery Access remains an independent rule and both rules must be satisfied for readiness,
-- do not claim this is DOT axle compliance, tandem/kingpin math, or certified weight distribution,
-- this is a simplified floor-balance gameplay abstraction only,
-- do not add axle weights, sliding tandems, scale tickets, legal axle limits, vertical stacking, hazmat compatibility, fragile separation, keep-upright penalties, no-stack penalties, delivery puzzle, rework, HOS changes, or service-time changes in this packet.
-
-After visual/gameplay acceptance, the next trailer-rule slice is handling restrictions.
+After acceptance, continue handling restrictions one rule at a time.
 
 
 ## Verification
