@@ -32,33 +32,29 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.1.1 Rotation + Rule-Panel Readability
+## Current packet — V2.7.5.1.2 Right Panel Hierarchy Polish
 
-V2.1 through V2.7.5.1 are accepted and locked. Freight identity, persistent trailer state, direct onboard repositioning, delivery-access rules, rear-door commitment, Focused Mode, and downstream timing remain authoritative.
+V2.1 through V2.7.5.1.1 are accepted and locked. Freight identity, persistent trailer state, direct onboard repositioning, reliable rotation, delivery-access rules, rear-door commitment, Focused Mode, and downstream timing remain authoritative.
 
-This packet fixes two playtest issues without adding another trailer rule.
+This packet changes right-side information hierarchy only. It does not add or alter trailer simulation rules.
 
-Rotation rules:
-- placed freight with a non-square rectangular footprint must be rotatable before dragging,
-- hovering or focusing a rotatable onboard freight piece and pressing R rotates it 90 degrees in place,
-- rotatable onboard freight exposes a visible rotate control on hover/focus for discoverability,
-- R during an active drag may remain supported but is not the only or required rotation path,
-- in-place rotation must use the existing footprint legality check,
-- if rotation would overlap freight or move out of bounds, reject the rotation and show the existing invalid interaction feedback,
-- square/1x1/2x2 freight should not show a meaningless rotate control,
-- direct drag/repositioning behavior remains unchanged.
-
-Trailer-rule readability:
-- the right-side HUD must use a comfortable gameplay text size; critical rule instructions may not use micro-label sizing,
-- separate LOAD COMPLETION from TRAILER RULES so a fully loaded but rule-blocked trailer does not read as incomplete loading,
-- Delivery Access must present UNLOAD ORDER clearly,
-- blocked Delivery Access must present distinct PROBLEM and FIX guidance,
-- CLEAR state must explain why the trailer is acceptable,
-- D1/D2/D3 badges on individual cargo appear only when more than one delivery is onboard; single-delivery trailers do not repeat D1 on every freight piece,
-- the unload order may still remain visible in the right-side rule card for a single delivery,
-- preserve delivery-access logic, amber rule warning, red geometry invalid state, and rear-door readiness gating.
-
-Do not add weight distribution, axle logic, fragile/hazmat penalties, stacking rules, Top Down/Side View functionality, delivery puzzle, rework, HOS changes, or service-time changes in this packet.
+Right-panel rules:
+- the panel is organized as Load Summary → Load Completion → Trailer Status → Trailer Rules → Required Action / Ready to Close,
+- Load Summary owns load number, pickup, destination, expected freight, and freight already onboard from earlier loads,
+- do not repeat Driver or Trailer identity in the right panel when they are already clear in the focused workspace and trailer heading,
+- Load Completion owns the current-pickup loaded count and progress,
+- Trailer Status owns floor positions, total trailer weight, and total onboard unit count,
+- do not repeat THIS PICKUP in Trailer Status when Load Completion already shows the same count,
+- Trailer Rules is a dedicated section; Delivery Access remains its first rule card,
+- Delivery Access logic, unload order, CLEAR/BLOCKED state, PROBLEM/FIX copy, and readiness gating remain unchanged,
+- Required Action must have guaranteed readable space and may never collapse into a narrow warning strip,
+- when booked freight is still missing, show a direct action such as “5 M-202 units still need to be loaded,”
+- other geometry, wrong-load, overweight, delivery-access, or warning conditions remain readable action cards,
+- when the plan is fully valid, Required Action becomes a compact READY TO CLOSE state,
+- remove the right-panel Focused Mode footer because the top bar already communicates Focused Mode,
+- the panel should scroll naturally if its content exceeds available vertical space rather than compressing critical guidance,
+- preserve the larger readable text floor established in V2.7.5.1.1,
+- do not add weight distribution, axle logic, handling penalties, stacking rules, Top Down/Side View functionality, delivery puzzle, rework, HOS changes, or service-time changes.
 
 After visual/gameplay acceptance, proceed to V2.7.5.2 Weight Distribution / Balance.
 
