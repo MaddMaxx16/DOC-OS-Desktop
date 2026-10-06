@@ -253,7 +253,7 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
   assert.ok(operation.trailerAfter.placements[later.id])
   assert.equal(operation.receiverResults.length, expected.length)
   assert.ok(operation.receiverResults.every((result) => result.status === 'ACCEPTED'))
-  assert.equal(operation.podSeed.deliveredPieces, expected.length)
+  assert.equal(operation.shortagePieces, 0)
 })
 
 test('delivery operation transitions from unloading to receiver verification to complete', () => {
