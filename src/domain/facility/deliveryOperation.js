@@ -103,6 +103,97 @@ const FACILITY_RECEIVING_PROFILES = Object.freeze({
   }),
 })
 
+export const DELIVERY_STAGING_CAPACITY = 3
+
+export function deliveryStagingFootprint(freight = {}) {
+  return Math.max(1, Array.isArray(freight.shape) ? freight.shape.length : 1)
+}
+
+export function evaluateDeliveryStaging({
+  freight = [],
+  stagingPlacements = {},
+  capacity = DELIVERY_STAGING_CAPACITY,
+} = {}) {
+  const freightById = new Map(freight.map((item) => [item.id, item]))
+  const occupied = Array.from({ length: capacity }, () => null)
+  const invalidFreightIds = new Set()
+  const collisionFreightIds = new Set()
+
+  for (const [freightId, placement] of Object.entries(stagingPlacements)) {
+    const unit = freightById.get(freightId)
+    const size = deliveryStagingFootprint(unit)
+    const startSlot = Number(placement?.startSlot)
+
+    if (
+      !unit
+      || !Number.isInteger(startSlot)
+      || size > capacity
+      || startSlot < 0
+      || startSlot + size > capacity
+    ) {
+      invalidFreightIds.add(freightId)
+      continue
+    }
+
+    for (let slot = startSlot; slot < startSlot + size; slot += 1) {
+      if (occupied[slot] != null) {
+        collisionFreightIds.add(freightId)
+        collisionFreightIds.add(occupied[slot])
+      } else {
+        occupied[slot] = freightId
+      }
+    }
+  }
+
+  return {
+    capacity,
+    used: occupied.filter(Boolean).length,
+    available: occupied.filter((item) => item == null).length,
+    occupied,
+    invalidFreightIds: [...invalidFreightIds],
+    collisionFreightIds: [...collisionFreightIds],
+    clear: invalidFreightIds.size === 0 && collisionFreightIds.size === 0,
+  }
+}
+
+export function findDeliveryStagingPlacement({
+  freight,
+  allFreight = [],
+  stagingPlacements = {},
+  capacity = DELIVERY_STAGING_CAPACITY,
+} = {}) {
+  if (!freight) return null
+
+  const size = deliveryStagingFootprint(freight)
+  if (size > capacity) return null
+
+  const withoutFreight = Object.fromEntries(
+    Object.entries(stagingPlacements)
+      .filter(([freightId]) => freightId !== freight.id),
+  )
+  const staging = evaluateDeliveryStaging({
+    freight: allFreight,
+    stagingPlacements: withoutFreight,
+    capacity,
+  })
+
+  for (let startSlot = 0; startSlot <= capacity - size; startSlot += 1) {
+    const free = Array.from({ length: size }, (_, offset) => (
+      staging.occupied[startSlot + offset] == null
+    )).every(Boolean)
+
+    if (free) {
+      return {
+        startSlot,
+        size,
+      }
+    }
+  }
+
+  return null
+}
+
+
 
 function finite(value, fallback = 0) {
   const number = Number(value)
@@ -484,7 +575,10 @@ export function evaluateDeliveryUnloadPlan({
   unloadedFreightIds = null,
   selectedFreightIds = [],
   temporaryStagedFreightIds = [],
+  rehandledFreightIds = null,
+  stagingPlacements = {},
   receivingZoneByFreightId = {},
+  internalRepositionHistory = [],
 } = {}) {
   const expectedFreight = expectedFreightForDelivery({ driverDay, event })
   const expectedIds = new Set(expectedFreight.map((item) => item.id))
@@ -523,6 +617,15 @@ export function evaluateDeliveryUnloadPlan({
     ],
     receivingZoneByFreightId,
   })
+  const staging = evaluateDeliveryStaging({
+    freight,
+    stagingPlacements,
+  })
+  const retainedStagedFreight = freight.filter((item) => (
+    temporaryIds.has(item.id)
+    && !unloadedIds.has(item.id)
+    && !sameLoad(item, event)
+  ))
 
   const errors = []
   const warnings = []
@@ -569,7 +672,26 @@ export function evaluateDeliveryUnloadPlan({
     })
   }
 
-  const rehandleUnits = temporaryIds.size
+  if (!staging.clear) {
+    errors.push({
+      code: 'TEMP_STAGING_INVALID',
+      message: 'Temporary staging freight exceeds the available dock positions or overlaps another staged unit.',
+    })
+  }
+
+  if (remainingToUnload.length === 0 && retainedStagedFreight.length > 0) {
+    errors.push({
+      code: 'STAGED_FREIGHT_NOT_RELOADED',
+      message: `${retainedStagedFreight.length} later-stop freight unit${retainedStagedFreight.length === 1 ? '' : 's'} must return to the trailer before handoff.`,
+    })
+  }
+
+  const rehandledIds = new Set(
+    rehandledFreightIds == null
+      ? temporaryStagedFreightIds
+      : rehandledFreightIds,
+  )
+  const rehandleUnits = rehandledIds.size
   const rehandleMoves = rehandleUnits * 2
 
   return {
@@ -587,6 +709,20 @@ export function evaluateDeliveryUnloadPlan({
     access,
     receivingProtocol,
     receivingZoneByFreightId: { ...receivingZoneByFreightId },
+    staging,
+    stagingPlacements: Object.fromEntries(
+      Object.entries(stagingPlacements).map(([freightId, placement]) => [
+        freightId,
+        { ...placement },
+      ]),
+    ),
+    rehandledFreightIds: [...rehandledIds],
+    internalRepositionCount: internalRepositionHistory.length,
+    internalRepositionHistory: internalRepositionHistory.map((move) => ({
+      ...move,
+      from: move.from ? { ...move.from } : null,
+      to: move.to ? { ...move.to } : null,
+    })),
     rehandleUnits,
     rehandleMoves,
     temporaryStagedFreightIds: [...temporaryIds],
@@ -639,17 +775,22 @@ export function commitDeliveryOperation({
       ?? [],
   )
   const temporarilyStaged = new Set(unloadPlan.temporaryStagedFreightIds ?? [])
+  const rehandled = new Set(
+    unloadPlan.rehandledFreightIds
+      ?? unloadPlan.temporaryStagedFreightIds
+      ?? [],
+  )
   const operationTime = Number(currentAbsoluteMinutes ?? 0)
   const remainingFreight = (trailerState?.freight ?? [])
     .filter((freight) => !unloaded.has(freight.id))
     .map((freight) => {
-      const rehandled = temporarilyStaged.has(freight.id)
+      const wasRehandled = rehandled.has(freight.id)
       return {
         ...freight,
         carried: true,
         currentLocation: 'TRAILER',
         status: freight.status === 'REFUSED' ? 'REFUSED' : 'IN_TRANSIT',
-        freightHistory: rehandled
+        freightHistory: wasRehandled
           ? [
               ...(freight.freightHistory ?? []),
               {
@@ -677,7 +818,7 @@ export function commitDeliveryOperation({
   const deliveredFreight = (trailerState?.freight ?? [])
     .filter((freight) => unloaded.has(freight.id))
     .map((freight) => {
-      const rehandled = temporarilyStaged.has(freight.id)
+      const wasRehandled = rehandled.has(freight.id)
       return {
         ...freight,
         currentLocation: 'RECEIVER',
@@ -687,7 +828,7 @@ export function commitDeliveryOperation({
         conditionKnown: freight.conditionKnown ?? true,
         freightHistory: [
           ...(freight.freightHistory ?? []),
-          ...(rehandled
+          ...(wasRehandled
             ? [{
                 event: 'TEMP_STAGED',
                 facilityId: event.locationId ?? null,
@@ -752,6 +893,19 @@ export function commitDeliveryOperation({
           }
         : null,
       temporaryStagedFreightIds: [...(unloadPlan.temporaryStagedFreightIds ?? [])],
+      stagingPlacements: Object.fromEntries(
+        Object.entries(unloadPlan.stagingPlacements ?? {}).map(([freightId, placement]) => [
+          freightId,
+          { ...placement },
+        ]),
+      ),
+      rehandledFreightIds: [...(unloadPlan.rehandledFreightIds ?? [])],
+      internalRepositionCount: unloadPlan.internalRepositionCount ?? 0,
+      internalRepositionHistory: (unloadPlan.internalRepositionHistory ?? []).map((move) => ({
+        ...move,
+        from: move.from ? { ...move.from } : null,
+        to: move.to ? { ...move.to } : null,
+      })),
       rehandleUnits: unloadPlan.rehandleUnits ?? 0,
       rehandleMoves: unloadPlan.rehandleMoves ?? 0,
     },
