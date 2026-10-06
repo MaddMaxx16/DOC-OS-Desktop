@@ -1048,24 +1048,17 @@ export default function DockLoadWorkspace({
           </div>
         </section>
 
-        <section className="dock-load-status">
+        <section className="dock-load-status dock-load-status-compact">
           <header>
-            <span>TRAILER STATUS</span>
+            <span>TRAILER</span>
+            <strong>
+              {evaluation.occupiedCells}/{board.usableCells} positions
+              <i>·</i>
+              {pounds(evaluation.plannedWeightLbs)}/{pounds(board.maxWeightLbs)} lb
+              <i>·</i>
+              {evaluation.onboardCount} units
+            </strong>
           </header>
-          <div className="dock-load-status-grid">
-            <div>
-              <span>FLOOR POSITIONS</span>
-              <strong>{evaluation.occupiedCells} / {board.usableCells}</strong>
-            </div>
-            <div>
-              <span>WEIGHT</span>
-              <strong>{pounds(evaluation.plannedWeightLbs)} / {pounds(board.maxWeightLbs)}</strong>
-            </div>
-            <div>
-              <span>ONBOARD</span>
-              <strong>{evaluation.onboardCount} units</strong>
-            </div>
-          </div>
         </section>
 
         <section
@@ -1230,23 +1223,17 @@ export default function DockLoadWorkspace({
           </div>
         </section>
 
-        <section
-          className={[
-            'dock-load-actions',
-            evaluation.ready ? 'ready' : 'attention',
-          ].filter(Boolean).join(' ')}
-        >
-          <header>
-            <span>{evaluation.ready ? 'READY TO CLOSE' : 'REQUIRED ACTION'}</span>
-            <strong>{evaluation.ready ? 'READY' : 'OPEN'}</strong>
-          </header>
+        {evaluation.ready ? (
+          <section className="dock-load-actions ready dock-load-ready-strip">
+            <strong>READY TO CLOSE</strong>
+            <span>All freight loaded · trailer rules clear</span>
+          </section>
+        ) : (
+          <section className="dock-load-actions attention">
+            <header>
+              <span>REQUIRED ACTION</span>
+            </header>
 
-          {evaluation.ready ? (
-            <div className="dock-load-action-card ready">
-              <strong>TRAILER PLAN COMPLETE</strong>
-              <small>All booked freight is loaded and current trailer rules are satisfied.</small>
-            </div>
-          ) : (
             <div className="dock-load-action-list">
               {remainingPickupUnits > 0 && (
                 <div className="dock-load-action-card pending">
@@ -1280,8 +1267,8 @@ export default function DockLoadWorkspace({
                 </div>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
         {(invalidDropReason || dragFreightId || hoverFreightId) && (
           <div className="dock-load-interaction-status" aria-live="polite">
