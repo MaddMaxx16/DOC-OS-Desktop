@@ -4934,3 +4934,58 @@ Harborline remains unchanged because its inspection phase matches FRAGILE only.
 No Delivery mechanics change in V2.7.6.7.
 
 Rear handling paths, pointer recovery, trailer repositioning, finite staging, receiver sequencing, and service-time behavior remain V2.7.6.6 authoritative.
+
+
+---
+
+## V2.7.6.8 — Dock Continuity & Placement Stability
+
+V2.7.6.7 improved receiver-floor readability and staging freight fidelity. Gameplay review then isolated three final scene-coherence issues.
+
+### Stable receiver-floor placement
+
+Earlier warehouse rendering rebuilt zone placements from the complete received-freight list every render. That made already-settled cargo vulnerable to visual reordering when new freight arrived.
+
+V2.7.6.8 assigns a receiver-floor placement once, at acceptance time.
+
+The Delivery workspace maintains a persistent placement map keyed by freight ID.
+
+A settled placement stores:
+- receiver zone,
+- column,
+- row,
+- width,
+- height.
+
+Later freight searches only the remaining free positions in its zone.
+
+Already-received freight keeps its original coordinates for the remainder of the focused Delivery operation.
+
+### Temp Staging coordinate lock
+
+The three painted staging bays and staged freight now share the same explicit grid row.
+
+Bay visuals remain beneath freight.
+
+A staged unit uses its existing start slot and footprint size to occupy the same painted bay coordinates instead of flowing into another implicit row.
+
+No staging mechanics change.
+
+### Dock threshold
+
+The warehouse/trailer connector is now localized near the trailer rear rather than reading as a full-height metal separator.
+
+The dock treatment adds:
+- warehouse-side jamb/frame,
+- dock plate / leveler,
+- bumpers,
+- stronger apron termination,
+- a localized bridge plate at the rear.
+
+This remains a stylized top-down DOC OS representation rather than an exact architectural simulation.
+
+### Preserved systems
+
+No Delivery mechanics change in V2.7.6.8.
+
+V2.7.6.6 handling paths, V2.7.6.7 freight fidelity/contrast, receiver SOPs, staging capacity, shared trailer shell, and right HUD remain authoritative.
