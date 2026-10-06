@@ -51,57 +51,13 @@ function sameLoad(freight, event) {
   return freightKey != null && eventKey != null && freightKey === eventKey
 }
 
-function TrailerFreightPiece({
+function FreightVisual({
   freight,
-  placement,
-  board,
-  currentStop,
-  focusedBlocked,
-  focusedBlocker,
-  dragging,
-  active,
-  doorsOpening,
-  onDragStart,
-  onDragEnd,
-  onActivate,
+  shape,
+  label = true,
 }) {
-  const shape = rotateFreightShape(freight.shape, placement.rotation ?? 0)
-  const bounds = shapeBounds(shape)
-  const anchor = boardPosition(board, placement.anchorCell)
-  const target = sameLoad(freight, currentStop)
-
   return (
-    <div
-      draggable={!doorsOpening}
-      role="button"
-      tabIndex={0}
-      className={[
-        'loaded-freight-piece',
-        'delivery-freight-piece',
-        cargoClass(freight),
-        handlingClass(freight),
-        target ? 'delivery-target' : 'delivery-other',
-        focusedBlocked ? 'delivery-focus-blocked' : '',
-        focusedBlocker ? 'delivery-focus-blocker' : '',
-        dragging ? 'delivery-dragging' : '',
-        active ? 'delivery-active-piece' : '',
-      ].filter(Boolean).join(' ')}
-      style={{
-        gridColumn: `${anchor.column} / span ${bounds.width}`,
-        gridRow: `${anchor.row} / span ${bounds.height}`,
-        '--piece-columns': bounds.width,
-        '--piece-rows': bounds.height,
-      }}
-      onDragStart={(dragEvent) => onDragStart(dragEvent, freight.id, 'trailer')}
-      onDragEnd={onDragEnd}
-      onClick={() => onActivate(freight.id, 'trailer')}
-      onKeyDown={(keyboardEvent) => {
-        if (!['Enter', ' '].includes(keyboardEvent.key)) return
-        keyboardEvent.preventDefault()
-        onActivate(freight.id, 'trailer')
-      }}
-      title={`${freight.loadRef} · ${freight.label} · ${freight.handlingLabel}`}
-    >
+    <>
       <div className="loaded-freight-shape">
         {shape.map(([x, y], index) => (
           <i
@@ -113,10 +69,68 @@ function TrailerFreightPiece({
           />
         ))}
       </div>
-      <span className="loaded-freight-label">
-        <strong>{freight.loadRef}</strong>
-        <span>{freight.handlingLabel}</span>
-      </span>
+      {label && (
+        <span className="loaded-freight-label">
+          <strong>{freight.loadRef}</strong>
+          <span>{freight.handlingLabel}</span>
+        </span>
+      )}
+    </>
+  )
+}
+
+function TrailerFreightPiece({
+  freight,
+  placement,
+  board,
+  currentStop,
+  focusedBlocked,
+  focusedBlocker,
+  lifting,
+  active,
+  doorsOpening,
+  onPointerDown,
+  onActivate,
+}) {
+  const shape = rotateFreightShape(freight.shape, placement.rotation ?? 0)
+  const bounds = shapeBounds(shape)
+  const anchor = boardPosition(board, placement.anchorCell)
+  const target = sameLoad(freight, currentStop)
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className={[
+        'loaded-freight-piece',
+        'delivery-freight-piece',
+        cargoClass(freight),
+        handlingClass(freight),
+        target ? 'delivery-target' : 'delivery-other',
+        focusedBlocked ? 'delivery-focus-blocked' : '',
+        focusedBlocker ? 'delivery-focus-blocker' : '',
+        lifting ? 'delivery-lifting' : '',
+        active ? 'delivery-active-piece' : '',
+      ].filter(Boolean).join(' ')}
+      style={{
+        gridColumn: `${anchor.column} / span ${bounds.width}`,
+        gridRow: `${anchor.row} / span ${bounds.height}`,
+        '--piece-columns': bounds.width,
+        '--piece-rows': bounds.height,
+      }}
+      onPointerDown={(pointerEvent) => {
+        if (doorsOpening) return
+        onPointerDown(pointerEvent, freight.id, 'trailer')
+      }}
+      onClick={() => onActivate(freight.id, 'trailer')}
+      onKeyDown={(keyboardEvent) => {
+        if (!['Enter', ' '].includes(keyboardEvent.key)) return
+        keyboardEvent.preventDefault()
+        onActivate(freight.id, 'trailer')
+      }}
+      title={`${freight.loadRef} · ${freight.label} · ${freight.handlingLabel}`}
+    >
+      <FreightVisual freight={freight} shape={shape} />
       {(focusedBlocked || focusedBlocker) && (
         <span className="delivery-piece-action">
           {focusedBlocked ? 'ACCESS BLOCKED' : 'IN THE WAY'}
@@ -142,15 +156,12 @@ function ReceivedFreightToken({ freight }) {
   )
 }
 
-function FacilityZone({
+function WarehouseZone({
   phase,
   currentPhase,
   receivedFreight,
-  dragOver,
-  activeFreightId,
-  onDragOver,
-  onDragLeave,
-  onDrop,
+  pointerOver,
+  selected,
   onClick,
 }) {
   const complete = phase.complete
@@ -161,48 +172,114 @@ function FacilityZone({
     <section
       data-delivery-zone={phase.zoneId}
       className={[
-        'delivery-facility-zone',
+        'delivery-warehouse-zone',
         `zone-${phase.zoneId}`,
         current ? 'current' : '',
         complete ? 'complete' : '',
         locked ? 'locked' : '',
-        dragOver ? 'drag-over' : '',
-        activeFreightId ? 'accepting-selection' : '',
+        pointerOver ? 'pointer-over' : '',
+        selected ? 'selection-target' : '',
       ].filter(Boolean).join(' ')}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
       onClick={onClick}
     >
-      <header>
-        <div>
-          <span>{complete ? 'COMPLETE' : current ? 'CURRENT PHASE' : 'WAITING'}</span>
-          <strong>{phase.zoneLabel}</strong>
-        </div>
+      <div className="delivery-zone-sign">
+        <span>{complete ? 'CLEARED' : current ? 'ACTIVE' : 'HOLD'}</span>
+        <strong>{phase.zoneLabel}</strong>
         <b>{phase.receivedCount}/{phase.totalCount}</b>
-      </header>
-
-      <div className="delivery-zone-floor">
-        {receivedFreight.length > 0 ? (
-          <div className="delivery-zone-freight-grid">
-            {receivedFreight.map((freight) => (
-              <ReceivedFreightToken key={freight.id} freight={freight} />
-            ))}
-          </div>
-        ) : (
-          <div className="delivery-zone-empty">
-            <i aria-hidden="true">{current ? '↓' : complete ? '✓' : '·'}</i>
-            <span>
-              {current
-                ? `Move ${phase.label.toLowerCase()} here`
-                : locked
-                  ? 'Facility phase not open'
-                  : 'Receiving complete'}
-            </span>
-          </div>
-        )}
       </div>
+
+      <div className="delivery-zone-marking" aria-hidden="true">
+        <i /><i /><i />
+      </div>
+
+      {receivedFreight.length > 0 && (
+        <div className="delivery-zone-freight-grid">
+          {receivedFreight.map((freight) => (
+            <ReceivedFreightToken key={freight.id} freight={freight} />
+          ))}
+        </div>
+      )}
+
+      {current && receivedFreight.length === 0 && (
+        <div className="delivery-zone-current-cue">
+          <i>↓</i>
+          <span>{phase.label}</span>
+        </div>
+      )}
     </section>
+  )
+}
+
+function PointerFreightGhost({
+  pointerDrag,
+  freight,
+}) {
+  if (!pointerDrag || !freight) return null
+
+  const shape = rotateFreightShape(
+    freight.shape,
+    pointerDrag.rotation ?? 0,
+  )
+  const bounds = shapeBounds(shape)
+
+  return (
+    <div
+      className={[
+        'delivery-pointer-freight',
+        cargoClass(freight),
+        handlingClass(freight),
+        pointerDrag.overZoneId ? 'over-zone' : '',
+      ].filter(Boolean).join(' ')}
+      style={{
+        left: pointerDrag.x - pointerDrag.offsetX,
+        top: pointerDrag.y - pointerDrag.offsetY,
+        width: pointerDrag.width,
+        height: pointerDrag.height,
+        '--piece-columns': bounds.width,
+        '--piece-rows': bounds.height,
+      }}
+      aria-hidden="true"
+    >
+      <FreightVisual freight={freight} shape={shape} />
+      <span className="delivery-pointer-caption">
+        {pointerDrag.overZoneId
+          ? 'RELEASE TO PLACE'
+          : 'MOVE TO FACILITY FLOOR'}
+      </span>
+    </div>
+  )
+}
+
+function ReturningFreightGhost({
+  returnDrag,
+  freight,
+}) {
+  if (!returnDrag || !freight) return null
+  const shape = rotateFreightShape(freight.shape, returnDrag.rotation ?? 0)
+  const bounds = shapeBounds(shape)
+
+  return (
+    <div
+      className={[
+        'delivery-pointer-freight',
+        'returning',
+        cargoClass(freight),
+        handlingClass(freight),
+      ].join(' ')}
+      style={{
+        '--return-start-x': `${returnDrag.startX}px`,
+        '--return-start-y': `${returnDrag.startY}px`,
+        '--return-end-x': `${returnDrag.endX}px`,
+        '--return-end-y': `${returnDrag.endY}px`,
+        width: returnDrag.width,
+        height: returnDrag.height,
+        '--piece-columns': bounds.width,
+        '--piece-rows': bounds.height,
+      }}
+      aria-hidden="true"
+    >
+      <FreightVisual freight={freight} shape={shape} />
+    </div>
   )
 }
 
@@ -238,9 +315,8 @@ export default function DeliveryWorkspace({
   const [unloadedFreightIds, setUnloadedFreightIds] = useState([])
   const [temporaryStagedFreightIds, setTemporaryStagedFreightIds] = useState([])
   const [receivingZoneByFreightId, setReceivingZoneByFreightId] = useState({})
-  const [dragFreightId, setDragFreightId] = useState(null)
-  const [dragSource, setDragSource] = useState(null)
-  const [dragOverZone, setDragOverZone] = useState(null)
+  const [pointerDrag, setPointerDrag] = useState(null)
+  const [returnDrag, setReturnDrag] = useState(null)
   const [activeFreightId, setActiveFreightId] = useState(null)
   const [activeSource, setActiveSource] = useState(null)
   const [blockedFocusId, setBlockedFocusId] = useState(null)
@@ -302,7 +378,10 @@ export default function DeliveryWorkspace({
     .filter(Boolean)
   const expectedWeight = currentStopFreight
     .reduce((sum, freight) => sum + Number(freight.weightLbs ?? 0), 0)
-  const remainingCount = Math.max(0, evaluation.actualCount - evaluation.unloadedCount)
+  const remainingCount = Math.max(
+    0,
+    evaluation.actualCount - evaluation.unloadedCount,
+  )
 
   const receivedByZone = useMemo(() => {
     const map = new Map()
@@ -323,58 +402,18 @@ export default function DeliveryWorkspace({
       : 'freight'
   }
 
-  const activateFreight = (freightId, source) => {
-    if (doorsOpening) return
-    setActiveFreightId(freightId)
-    setActiveSource(source)
-    setNotice(null)
-  }
-
-  const startDrag = (dragEvent, freightId, source) => {
-    if (doorsOpening) {
-      dragEvent.preventDefault()
-      return
-    }
-
-    setDragFreightId(freightId)
-    setDragSource(source)
-    setActiveFreightId(freightId)
-    setActiveSource(source)
-    setDragOverZone(null)
-    dragEvent.dataTransfer.setData('text/plain', freightId)
-    dragEvent.dataTransfer.setData('application/x-doc-source', source)
-    dragEvent.dataTransfer.effectAllowed = 'move'
-
-    const dragVisual = dragEvent.currentTarget.querySelector(
-      '.loaded-freight-shape, .delivery-staged-freight-visual',
-    )
-    if (dragVisual) {
-      dragEvent.dataTransfer.setDragImage(
-        dragVisual,
-        dragVisual.offsetWidth / 2,
-        dragVisual.offsetHeight / 2,
-      )
-    }
-  }
-
-  const endDrag = () => {
-    setDragFreightId(null)
-    setDragSource(null)
-    setDragOverZone(null)
-  }
-
-  const dropPayload = (dropEvent) => ({
-    freightId: dropEvent.dataTransfer.getData('text/plain') || dragFreightId,
-    source: dropEvent.dataTransfer.getData('application/x-doc-source')
-      || dragSource
-      || activeSource,
-  })
-
   const phaseForFreight = (freightId) => {
     const phaseIndex = phaseIndexByFreightId[freightId]
     return Number.isInteger(phaseIndex)
       ? protocol.phases[phaseIndex]
       : null
+  }
+
+  const activateFreight = (freightId, source) => {
+    if (doorsOpening || pointerDrag) return
+    setActiveFreightId(freightId)
+    setActiveSource(source)
+    setNotice(null)
   }
 
   const showAccessBlocked = (freightId) => {
@@ -392,7 +431,7 @@ export default function DeliveryWorkspace({
 
   const sendToReceivingZone = (freightId, zoneId, source = 'trailer') => {
     const freight = freightById.get(freightId)
-    if (!freight || unloaded.has(freightId)) return
+    if (!freight || unloaded.has(freightId)) return false
 
     if (!sameLoad(freight, event)) {
       setBlockedFocusId(null)
@@ -401,11 +440,11 @@ export default function DeliveryWorkspace({
         title: 'NOT THIS RECEIVER',
         detail: `${freight.loadRef} stays onboard for a later delivery.`,
       })
-      return
+      return false
     }
 
     const freightPhase = phaseForFreight(freightId)
-    if (!currentPhase || !freightPhase) return
+    if (!currentPhase || !freightPhase) return false
 
     if (freightPhase.id !== currentPhase.id) {
       setNotice({
@@ -413,7 +452,7 @@ export default function DeliveryWorkspace({
         title: `${currentPhase.label} FIRST`,
         detail: `${freight.handlingLabel} belongs to ${freightPhase.zoneLabel}. That facility phase is not open yet.`,
       })
-      return
+      return false
     }
 
     if (zoneId !== freightPhase.zoneId) {
@@ -422,12 +461,12 @@ export default function DeliveryWorkspace({
         title: 'WRONG RECEIVING AREA',
         detail: `${freight.handlingLabel} goes to ${freightPhase.zoneLabel} during this phase.`,
       })
-      return
+      return false
     }
 
     if (source === 'trailer' && !currentlyAccessible.has(freightId)) {
       showAccessBlocked(freightId)
-      return
+      return false
     }
 
     setUnloadedFreightIds((current) => [...current, freightId])
@@ -443,6 +482,7 @@ export default function DeliveryWorkspace({
       title: `${freightPhase.zoneLabel} RECEIVED`,
       detail: `${freight.loadRef} ${freight.label} cleared the current receiving step.`,
     })
+    return true
   }
 
   const stageTemporarily = (freightId, source = 'trailer') => {
@@ -452,7 +492,7 @@ export default function DeliveryWorkspace({
       || unloaded.has(freightId)
       || temporary.has(freightId)
       || source === 'staging'
-    ) return
+    ) return false
 
     const freightPhase = sameLoad(freight, event)
       ? phaseForFreight(freightId)
@@ -473,7 +513,7 @@ export default function DeliveryWorkspace({
         title: 'NO REHANDLE NEEDED',
         detail: `${freight.loadRef} is not blocking the current receiving phase. Leave it onboard.`,
       })
-      return
+      return false
     }
 
     if (sameLoad(freight, event) && !laterFacilityPhase) {
@@ -482,7 +522,7 @@ export default function DeliveryWorkspace({
         title: 'PROCESS THIS FREIGHT',
         detail: `${freight.handlingLabel} belongs to the current phase. Send it to ${freightPhase?.zoneLabel ?? 'receiving'} instead.`,
       })
-      return
+      return false
     }
 
     setTemporaryStagedFreightIds((current) => [...current, freightId])
@@ -494,6 +534,7 @@ export default function DeliveryWorkspace({
       title: 'MOVED TO TEMP STAGING',
       detail: `${freight.loadRef} ${freight.label} is off the trailer temporarily · +3 min handling.`,
     })
+    return true
   }
 
   const returnToTrailer = (freightId) => {
@@ -509,27 +550,138 @@ export default function DeliveryWorkspace({
     })
   }
 
-  const handleZoneDrop = (dropEvent, zoneId) => {
-    dropEvent.preventDefault()
-    const { freightId, source } = dropPayload(dropEvent)
-    sendToReceivingZone(freightId, zoneId, source)
-    endDrag()
+  const zoneAtPoint = (clientX, clientY) => {
+    const element = document.elementFromPoint(clientX, clientY)
+    return element?.closest?.('[data-delivery-zone]')?.dataset?.deliveryZone ?? null
   }
 
-  const handleStagingDrop = (dropEvent) => {
-    dropEvent.preventDefault()
-    const { freightId, source } = dropPayload(dropEvent)
-    stageTemporarily(freightId, source)
-    endDrag()
+  const startPointerMove = (pointerEvent, freightId, source) => {
+    if (doorsOpening || pointerEvent.button !== 0) return
+    const freight = freightById.get(freightId)
+    if (!freight) return
+
+    pointerEvent.preventDefault()
+    pointerEvent.stopPropagation()
+
+    const target = pointerEvent.currentTarget
+    const rect = target.getBoundingClientRect()
+    const placement = trailerState.placements[freightId]
+
+    target.setPointerCapture?.(pointerEvent.pointerId)
+
+    setActiveFreightId(freightId)
+    setActiveSource(source)
+    setNotice(null)
+    setPointerDrag({
+      pointerId: pointerEvent.pointerId,
+      freightId,
+      source,
+      x: pointerEvent.clientX,
+      y: pointerEvent.clientY,
+      originX: rect.left,
+      originY: rect.top,
+      offsetX: pointerEvent.clientX - rect.left,
+      offsetY: pointerEvent.clientY - rect.top,
+      width: rect.width,
+      height: rect.height,
+      rotation: placement?.rotation ?? 0,
+      overZoneId: null,
+    })
   }
+
+  const animateReturn = (drag) => {
+    if (!drag) return
+    setReturnDrag({
+      freightId: drag.freightId,
+      rotation: drag.rotation,
+      width: drag.width,
+      height: drag.height,
+      startX: drag.x - drag.offsetX,
+      startY: drag.y - drag.offsetY,
+      endX: drag.originX,
+      endY: drag.originY,
+    })
+    setTimeout(() => setReturnDrag(null), 180)
+  }
+
+  useEffect(() => {
+    if (!pointerDrag) return undefined
+
+    const move = (pointerEvent) => {
+      if (pointerEvent.pointerId !== pointerDrag.pointerId) return
+      pointerEvent.preventDefault()
+      const overZoneId = zoneAtPoint(pointerEvent.clientX, pointerEvent.clientY)
+      setPointerDrag((current) => current
+        ? {
+            ...current,
+            x: pointerEvent.clientX,
+            y: pointerEvent.clientY,
+            overZoneId,
+          }
+        : current)
+    }
+
+    const release = (pointerEvent) => {
+      if (pointerEvent.pointerId !== pointerDrag.pointerId) return
+      pointerEvent.preventDefault()
+
+      const zoneId = zoneAtPoint(pointerEvent.clientX, pointerEvent.clientY)
+      let accepted = false
+
+      if (zoneId === 'staging') {
+        accepted = stageTemporarily(
+          pointerDrag.freightId,
+          pointerDrag.source,
+        )
+      } else if (zoneId) {
+        accepted = sendToReceivingZone(
+          pointerDrag.freightId,
+          zoneId,
+          pointerDrag.source,
+        )
+      }
+
+      if (!accepted) {
+        animateReturn({
+          ...pointerDrag,
+          x: pointerEvent.clientX,
+          y: pointerEvent.clientY,
+        })
+      }
+
+      setPointerDrag(null)
+    }
+
+    window.addEventListener('pointermove', move, { passive: false })
+    window.addEventListener('pointerup', release, { passive: false })
+    window.addEventListener('pointercancel', release, { passive: false })
+
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', release)
+      window.removeEventListener('pointercancel', release)
+    }
+  }, [
+    pointerDrag,
+    currentPhase,
+    currentlyAccessible,
+    currentImmediateBlockers,
+    focusedBlockerIds,
+    unloaded,
+    temporary,
+  ])
 
   const handleZoneClick = (zoneId) => {
-    if (!activeFreightId) return
-    sendToReceivingZone(activeFreightId, zoneId, activeSource ?? 'trailer')
+    if (!activeFreightId || pointerDrag) return
+    sendToReceivingZone(
+      activeFreightId,
+      zoneId,
+      activeSource ?? 'trailer',
+    )
   }
 
   const handleStagingClick = () => {
-    if (!activeFreightId) return
+    if (!activeFreightId || pointerDrag) return
     stageTemporarily(activeFreightId, activeSource ?? 'trailer')
   }
 
@@ -551,8 +703,18 @@ export default function DeliveryWorkspace({
     }, 520)
   }
 
+  const pointerFreight = pointerDrag
+    ? freightById.get(pointerDrag.freightId)
+    : null
+  const returnFreight = returnDrag
+    ? freightById.get(returnDrag.freightId)
+    : null
+  const onboardCount = trailerState.freight.length
+    - unloadedFreightIds.length
+    - temporaryStagedFreightIds.filter((id) => !unloaded.has(id)).length
+
   return (
-    <div className="delivery-workspace receiving-protocol">
+    <div className="delivery-workspace receiving-protocol pointer-freight-mode">
       <section className="delivery-operation-stage">
         <header className="delivery-heading">
           <div>
@@ -560,129 +722,118 @@ export default function DeliveryWorkspace({
             <strong>{event.loadRef} · {event.locationLabel}</strong>
           </div>
           <small>
-            Work the trailer physically · follow this receiver's dock protocol.
+            Grab freight from the trailer · move it across the dock · follow receiver SOP.
           </small>
         </header>
 
-        <div className="delivery-dock-scene">
-          <section className="delivery-receiving-floor">
+        <div className="delivery-dock-scene warehouse-layout">
+          <section className="delivery-warehouse-floor">
             <header className="delivery-floor-header">
               <div>
-                <span>FACILITY FLOOR</span>
+                <span>RECEIVING FLOOR</span>
                 <strong>{event.locationLabel}</strong>
               </div>
               <b>DOCK {dockNumberForDelivery(event)}</b>
             </header>
 
-            <div className="delivery-zone-grid">
+            <div className="delivery-floor-environment">
+              <div className="delivery-floor-aisle main" aria-hidden="true">
+                <span>WAREHOUSE AISLE</span>
+                <i>→</i><i>→</i><i>→</i>
+              </div>
+              <div className="delivery-floor-aisle cross" aria-hidden="true" />
+
               {protocol.phases.map((phase) => (
-                <FacilityZone
+                <WarehouseZone
                   key={phase.id}
                   phase={phase}
                   currentPhase={currentPhase}
                   receivedFreight={receivedByZone.get(phase.zoneId) ?? []}
-                  dragOver={dragOverZone === phase.zoneId}
-                  activeFreightId={activeFreightId}
-                  onDragOver={(dragEvent) => {
-                    dragEvent.preventDefault()
-                    dragEvent.dataTransfer.dropEffect = 'move'
-                    setDragOverZone(phase.zoneId)
-                  }}
-                  onDragLeave={() => setDragOverZone((zone) => (
-                    zone === phase.zoneId ? null : zone
-                  ))}
-                  onDrop={(dropEvent) => handleZoneDrop(dropEvent, phase.zoneId)}
+                  pointerOver={pointerDrag?.overZoneId === phase.zoneId}
+                  selected={Boolean(activeFreightId)}
                   onClick={() => handleZoneClick(phase.zoneId)}
                 />
               ))}
-            </div>
 
-            <section
-              data-delivery-zone="staging"
-              className={[
-                'delivery-floor-staging',
-                dragOverZone === 'staging' ? 'drag-over' : '',
-                blockedFocusId ? 'recommended' : '',
-                activeFreightId ? 'accepting-selection' : '',
-              ].filter(Boolean).join(' ')}
-              onDragOver={(dragEvent) => {
-                dragEvent.preventDefault()
-                dragEvent.dataTransfer.dropEffect = 'move'
-                setDragOverZone('staging')
-              }}
-              onDragLeave={() => setDragOverZone((zone) => (
-                zone === 'staging' ? null : zone
-              ))}
-              onDrop={handleStagingDrop}
-              onClick={handleStagingClick}
-            >
-              <header>
-                <div>
+              <section
+                data-delivery-zone="staging"
+                className={[
+                  'delivery-warehouse-staging',
+                  pointerDrag?.overZoneId === 'staging' ? 'pointer-over' : '',
+                  blockedFocusId ? 'recommended' : '',
+                  activeFreightId ? 'selection-target' : '',
+                ].filter(Boolean).join(' ')}
+                onClick={handleStagingClick}
+              >
+                <div className="delivery-staging-sign">
                   <span>DOCK APRON</span>
                   <strong>TEMP STAGING</strong>
+                  <b>{stagedTemporarily.length} OUT</b>
                 </div>
-                <b>{stagedTemporarily.length} OUT</b>
-              </header>
+                <div className="delivery-staging-stripes" aria-hidden="true" />
 
-              {stagedTemporarily.length === 0 ? (
-                <div className="delivery-staging-empty">
-                  <strong>REHANDLE ONLY WHEN ACCESS REQUIRES IT</strong>
-                  <span>Move a physical blocker here, then continue the receiver sequence.</span>
-                </div>
-              ) : (
-                <div className="delivery-staged-freight-grid">
-                  {stagedTemporarily.map((freight) => (
-                    <article
-                      key={freight.id}
-                      draggable
-                      role="button"
-                      tabIndex={0}
-                      className={[
-                        'delivery-staged-freight',
-                        activeFreightId === freight.id ? 'active' : '',
-                      ].filter(Boolean).join(' ')}
-                      onDragStart={(dragEvent) => startDrag(
-                        dragEvent,
-                        freight.id,
-                        'staging',
-                      )}
-                      onDragEnd={endDrag}
-                      onClick={(clickEvent) => {
-                        clickEvent.stopPropagation()
-                        activateFreight(freight.id, 'staging')
-                      }}
-                      onKeyDown={(keyboardEvent) => {
-                        if (!['Enter', ' '].includes(keyboardEvent.key)) return
-                        keyboardEvent.preventDefault()
-                        activateFreight(freight.id, 'staging')
-                      }}
-                    >
-                      <div className="delivery-staged-freight-visual" aria-hidden="true">
-                        <i /><i /><i />
-                      </div>
-                      <span>
-                        <strong>{freight.loadRef} · {freight.unitCode}</strong>
-                        <small>{freight.handlingLabel}</small>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(buttonEvent) => {
-                          buttonEvent.stopPropagation()
-                          returnToTrailer(freight.id)
+                {stagedTemporarily.length === 0 ? (
+                  <small>For physical blockers only · +3 min per rehandle</small>
+                ) : (
+                  <div className="delivery-staged-freight-grid">
+                    {stagedTemporarily.map((freight) => (
+                      <article
+                        key={freight.id}
+                        role="button"
+                        tabIndex={0}
+                        className={[
+                          'delivery-staged-freight',
+                          activeFreightId === freight.id ? 'active' : '',
+                          pointerDrag?.freightId === freight.id ? 'lifting' : '',
+                        ].filter(Boolean).join(' ')}
+                        onPointerDown={(pointerEvent) => startPointerMove(
+                          pointerEvent,
+                          freight.id,
+                          'staging',
+                        )}
+                        onClick={(clickEvent) => {
+                          clickEvent.stopPropagation()
+                          activateFreight(freight.id, 'staging')
+                        }}
+                        onKeyDown={(keyboardEvent) => {
+                          if (!['Enter', ' '].includes(keyboardEvent.key)) return
+                          keyboardEvent.preventDefault()
+                          activateFreight(freight.id, 'staging')
                         }}
                       >
-                        RETURN
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
+                        <div className="delivery-staged-freight-visual" aria-hidden="true">
+                          <i /><i /><i />
+                        </div>
+                        <span>
+                          <strong>{freight.loadRef} · {freight.unitCode}</strong>
+                          <small>{freight.handlingLabel}</small>
+                        </span>
+                        <button
+                          type="button"
+                          onPointerDown={(pointerEvent) => pointerEvent.stopPropagation()}
+                          onClick={(buttonEvent) => {
+                            buttonEvent.stopPropagation()
+                            returnToTrailer(freight.id)
+                          }}
+                        >
+                          RETURN
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <div className="delivery-dock-apron" aria-hidden="true">
+                <i /><i /><i /><i />
+                <span>DOCK {dockNumberForDelivery(event)} · RECEIVING APRON</span>
+              </div>
+            </div>
           </section>
 
-          <div className="delivery-dock-threshold" aria-hidden="true">
+          <div className="delivery-dock-bridge" aria-hidden="true">
             <span>DOCK {dockNumberForDelivery(event)}</span>
-            <i>⇄</i>
+            <div><i /><i /><i /></div>
             <small>REAR DOORS</small>
           </div>
 
@@ -690,7 +841,7 @@ export default function DeliveryWorkspace({
             <header>
               <span>53' DRY VAN</span>
               <strong>PHYSICAL TRAILER</strong>
-              <small>{trailerState.freight.length - unloadedFreightIds.length - temporaryStagedFreightIds.filter((id) => !unloaded.has(id)).length} units onboard</small>
+              <small>{onboardCount} units onboard</small>
             </header>
 
             <div className="delivery-trailer-body">
@@ -705,7 +856,7 @@ export default function DeliveryWorkspace({
                   'dock-load-grid',
                   'puzzle-board',
                   'delivery-trailer-grid',
-                  dragFreightId ? 'drag-active' : '',
+                  pointerDrag ? 'pointer-active' : '',
                 ].filter(Boolean).join(' ')}
                 style={{
                   '--board-columns': board.columns,
@@ -744,11 +895,10 @@ export default function DeliveryWorkspace({
                       currentStop={event}
                       focusedBlocked={blockedFocusId === freightId}
                       focusedBlocker={focusedBlockerIds.has(freightId)}
-                      dragging={dragFreightId === freightId}
+                      lifting={pointerDrag?.freightId === freightId}
                       active={activeFreightId === freightId}
                       doorsOpening={doorsOpening}
-                      onDragStart={startDrag}
-                      onDragEnd={endDrag}
+                      onPointerDown={startPointerMove}
                       onActivate={activateFreight}
                     />
                   )
@@ -869,18 +1019,24 @@ export default function DeliveryWorkspace({
           ) : (
             <>
               <strong>
-                {activeFreightId
-                  ? 'FREIGHT SELECTED'
-                  : currentPhase
-                    ? 'WORK THE TRAILER'
-                    : 'RECEIVER READY'}
+                {pointerDrag
+                  ? 'FREIGHT IN MOTION'
+                  : activeFreightId
+                    ? 'FREIGHT SELECTED'
+                    : currentPhase
+                      ? 'WORK THE TRAILER'
+                      : 'RECEIVER READY'}
               </strong>
               <span>
-                {activeFreightId
-                  ? `${describeFreight(activeFreightId)} · drag it to the facility floor, or click its destination zone.`
-                  : currentPhase
-                    ? `${currentPhase.label}: identify an accessible unit, then place it in ${currentPhase.zoneLabel}.`
-                    : 'Confirm the completed receiver handoff.'}
+                {pointerDrag
+                  ? pointerDrag.overZoneId
+                    ? 'Release to place freight in the highlighted floor area.'
+                    : 'Carry the freight across the dock to a receiving area.'
+                  : activeFreightId
+                    ? `${describeFreight(activeFreightId)} · drag it, or click its destination on the warehouse floor.`
+                    : currentPhase
+                      ? `${currentPhase.label}: identify an accessible unit, then move it to ${currentPhase.zoneLabel}.`
+                      : 'Confirm the completed receiver handoff.'}
               </span>
             </>
           )}
@@ -913,6 +1069,15 @@ export default function DeliveryWorkspace({
           </small>
         </button>
       </aside>
+
+      <PointerFreightGhost
+        pointerDrag={pointerDrag}
+        freight={pointerFreight}
+      />
+      <ReturningFreightGhost
+        returnDrag={returnDrag}
+        freight={returnFreight}
+      />
     </div>
   )
 }
