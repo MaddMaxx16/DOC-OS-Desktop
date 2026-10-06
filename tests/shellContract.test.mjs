@@ -393,12 +393,35 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.6.7 raises warehouse contrast, preserves staging freight fidelity, and clarifies Freshway quality check', async () => {
+  const delivery = await readFile(new URL('../src/features/dock-delivery/DeliveryWorkspace.jsx', import.meta.url), 'utf8')
+  const deliveryCss = await readFile(new URL('../src/features/dock-delivery/deliveryWorkspace.css', import.meta.url), 'utf8')
+  const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
+
+  assert.match(domain, /label: 'QUALITY CHECK'/)
+  assert.match(domain, /cargoLabel: 'FRAGILE \+ KEEP UPRIGHT'/)
+  assert.match(domain, /Fragile and keep-upright freight clears quality check/)
+  assert.match(delivery, /phase\.cargoLabel \?\? phase\.zoneLabel/)
+
+  assert.match(deliveryCss, /V2\.7\.6\.7 — Warehouse Contrast \+ Staging Fidelity/)
+  assert.match(deliveryCss, /Lift only the receiver-side environment/)
+  assert.match(deliveryCss, /--delivery-staging-slot/)
+  assert.match(deliveryCss, /grid-template-columns: repeat\(3, var\(--delivery-staging-slot\)\)/)
+  assert.match(deliveryCss, /\.delivery-staged-freight \.loaded-freight-shape/)
+  assert.match(deliveryCss, /\.delivery-staged-freight \.loaded-freight-label/)
+  assert.match(deliveryCss, /#202c30/)
+  assert.match(deliveryCss, /\.delivery-warehouse-zone\.locked/)
+})
+
 test('V2.7.6.6 hardens pointer recovery and constrains Delivery moves by rear handling path', async () => {
   const delivery = await readFile(new URL('../src/features/dock-delivery/DeliveryWorkspace.jsx', import.meta.url), 'utf8')
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
 
   assert.match(domain, /findDeliveryRearHandlingPath/)
   assert.match(domain, /evaluateDeliveryHandlingAccess/)
@@ -433,7 +456,7 @@ test('V2.7.6.5 physicalizes the warehouse floor without changing Delivery mechan
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
 
   assert.match(delivery, /WAREHOUSE_ZONE_LAYOUTS/)
   assert.match(delivery, /buildWarehouseFreightPlacements/)
@@ -477,7 +500,7 @@ test('V2.7.6.4 adds Delivery space management on the exact shared Pickup trailer
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(pickup, /import TrailerShell/)
   assert.match(delivery, /import TrailerShell/)
   assert.match(pickup, /<TrailerShell/)
@@ -519,7 +542,7 @@ test('V2.7.6.3 uses pointer freight handling on a continuous warehouse floor', a
   const deliveryCss = await readFile(new URL('../src/features/dock-delivery/deliveryWorkspace.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(delivery, /startPointerMove/)
   assert.match(delivery, /onPointerMove/)
   assert.match(delivery, /onPointerUp/)
@@ -553,7 +576,7 @@ test('V2.7.6.2 adds facility receiving phases around the physical trailer', asyn
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(domain, /HARBORLINE RECEIVING SOP/)
   assert.match(domain, /FRESHWAY RECEIVING SOP/)
   assert.match(domain, /buildDeliveryReceivingProtocol/)
@@ -583,7 +606,7 @@ test('V2.7.6.1 makes the physical trailer the delivery interaction surface', asy
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(delivery, /onPointerDown/)
   assert.match(delivery, /sendToReceivingZone/)
   assert.match(delivery, /stageTemporarily/)
@@ -615,7 +638,7 @@ test('V2.7.6 adds focused delivery planning from the persistent pickup trailer s
   const documents = await readFile(new URL('../src/domain/documents/deliveryPod.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(app, /deliveryFacilityMode: true/)
   assert.match(app, /commitDockDelivery/)
   assert.match(app, /createDeliveryPodRecord/)
@@ -647,7 +670,7 @@ test('V2.7.5.4 adds compact class-based hazmat segregation without re-expanding 
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(facility, /HAZMAT_TUTORIAL_PROFILES/)
   assert.match(facility, /classCode: '3'/)
   assert.match(facility, /classCode: '5\.1'/)
@@ -671,7 +694,7 @@ test('V2.7.5.3.1 simplifies the trailer HUD with progressive rule disclosure', a
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(puzzle, /dock-load-rules-compact/)
   assert.match(puzzle, /dock-load-rule-row/)
   assert.match(puzzle, /trailerRuleSummary/)
@@ -704,7 +727,7 @@ test('V2.7.5.3 adds fragile protection as the first handling restriction', async
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(facility, /export function evaluateTrailerFragileProtection/)
   assert.match(facility, /FRAGILE_PROTECTION_CONFLICT/)
   assert.match(facility, /\['HEAVY', 'OVERSIZE'\]/)
@@ -726,7 +749,7 @@ test('V2.7.5.2 adds live trailer weight distribution as the second trailer rule'
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(facility, /export function evaluateTrailerWeightBalance/)
   assert.match(facility, /activationWeightLbs = Math\.round\(maxWeightLbs \* 0\.2\)/)
   assert.match(facility, /targetMinPercent = 35/)
@@ -754,7 +777,7 @@ test('V2.7.5.1.2 gives the right panel a stable operational hierarchy', async ()
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(puzzle, /LOAD SUMMARY/)
   assert.match(puzzle, /dock-load-summary-route/)
   assert.match(puzzle, /LOAD COMPLETION/)
@@ -781,7 +804,7 @@ test('V2.7.5.1.1 makes onboard rotation reliable and enlarges trailer-rule guida
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(puzzle, /function freightCanRotate/)
   assert.match(puzzle, /rotatePlacedFreight/)
   assert.match(puzzle, /hoverFreightId/)
@@ -806,7 +829,7 @@ test('V2.7.5.1 makes delivery accessibility a visible trailer-readiness rule', a
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(facility, /export function buildDeliveryAccessOrder/)
   assert.match(facility, /export function evaluateTrailerDeliveryAccess/)
   assert.match(facility, /DELIVERY_ACCESS_BLOCKED/)
@@ -832,7 +855,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /manifest-load-number/)
   assert.match(puzzle, /pallet-piece-marking/)
@@ -1601,7 +1624,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.6\.6 · HANDLING PATHS/)
+  assert.match(top, /DESKTOP V2\.7\.6\.7 · WAREHOUSE FIDELITY/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
