@@ -3619,3 +3619,305 @@
 .dock-load-action-card.fragile strong {
   color: #e5a083;
 }
+
+
+/* V2.7.5.3.1 — Trailer HUD simplification */
+.dock-load-hud {
+  font-size: 11px;
+}
+
+.dock-load-summary > header span,
+.dock-load-completion > header span,
+.dock-load-status > header span,
+.dock-load-rules > header span,
+.dock-load-actions > header span,
+.dock-load-summary-route span,
+.dock-load-summary-meta span,
+.dock-load-status-grid span {
+  font-size: 10px;
+}
+
+.dock-load-summary > header strong,
+.dock-load-completion > header strong,
+.dock-load-rules > header strong,
+.dock-load-actions > header strong {
+  font-size: 14px;
+}
+
+.dock-load-summary-route > div strong,
+.dock-load-summary-meta strong {
+  font-size: 12px;
+}
+
+.dock-load-status-grid strong {
+  font-size: 13px;
+}
+
+/* Completion is informative, not a success alert. Green is reserved for final readiness. */
+.dock-load-completion > header,
+.dock-load-completion.complete > header {
+  border-bottom-color: #21323d;
+  background: #0a151d;
+}
+
+.dock-load-completion.complete > header strong {
+  color: #d8e4e9;
+}
+
+.dock-load-progress > i {
+  background: linear-gradient(90deg, #3e6f87, #5f899d);
+  box-shadow: 0 0 8px rgba(78, 132, 157, .16);
+}
+
+/* Trailer Rules becomes a quiet checklist. Only the rule needing action expands. */
+.dock-load-rules-compact > header {
+  background: #0a151d;
+}
+
+.dock-load-rules-compact > header strong,
+.dock-load-rules-compact.monitoring > header strong {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8ea4ae;
+  font-size: 10px;
+  letter-spacing: .06em;
+}
+
+.dock-load-rules-compact.attention > header strong {
+  color: #e49aa5;
+}
+
+.dock-load-rule-list {
+  display: grid;
+  gap: 1px;
+  background: #1d2e37;
+}
+
+.dock-load-rule-row {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 0;
+  background: #0a141b;
+}
+
+.dock-load-rule-row + .dock-load-rule-row {
+  border-top: 1px solid #21323d;
+}
+
+.dock-load-rule-row > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dock-load-rule-row > header > div {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.dock-load-rule-row > header i {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  border: 1px solid #405661;
+  border-radius: 50%;
+  background: #0c1820;
+  color: #91a6b0;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 1000;
+}
+
+.dock-load-rule-row > header strong {
+  color: #d1dde2;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .055em;
+}
+
+.dock-load-rule-row > header b {
+  flex: 0 0 auto;
+  color: #869ca7;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: .055em;
+}
+
+.dock-load-rule-row.live > header i {
+  border-color: #476879;
+  background: #0d1a22;
+  color: #8db3c5;
+}
+
+.dock-load-rule-row.live > header b {
+  color: #8db3c5;
+}
+
+.dock-load-rule-row.blocked {
+  background:
+    linear-gradient(90deg, rgba(124, 42, 56, .11), transparent 76%),
+    #130f13;
+}
+
+.dock-load-rule-row.blocked > header i {
+  border-color: #8d4a58;
+  background: #281116;
+  color: #ef98a6;
+}
+
+.dock-load-rule-row.blocked > header strong,
+.dock-load-rule-row.blocked > header b {
+  color: #e69aa6;
+}
+
+.dock-load-rule-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding-left: 27px;
+}
+
+.dock-load-rule-summary > span {
+  flex: 0 0 auto;
+  color: #718691;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.dock-load-rule-summary > strong {
+  overflow: hidden;
+  color: #aebfc7;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.3;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-load-rule-summary.balance {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  justify-content: stretch;
+  gap: 10px;
+}
+
+.dock-load-rule-summary.balance > span {
+  display: flex;
+  gap: 4px;
+  color: #8196a0;
+  font-size: 10px;
+}
+
+.dock-load-rule-summary.balance > span strong {
+  color: #c7d4da;
+  font-size: 11px;
+}
+
+.dock-load-rule-summary.balance > small {
+  overflow: hidden;
+  color: #70858f;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dock-load-rule-detail {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid #66404a;
+  border-radius: 3px;
+  background: rgba(87, 29, 40, .12);
+}
+
+.dock-load-rule-detail > div {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.dock-load-rule-detail span {
+  color: #c77f8b;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .07em;
+}
+
+.dock-load-rule-detail strong {
+  color: #d7c6ca;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+/* Required Action is calm while loading; red is for actual blockers. */
+.dock-load-actions.attention > header {
+  border-bottom-color: #21323d;
+  background: #0a151d;
+}
+
+.dock-load-actions.attention > header strong {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8ea4ae;
+  font-size: 10px;
+}
+
+.dock-load-action-card.pending {
+  border-color: #304650;
+  background: #0b151c;
+}
+
+.dock-load-action-card.pending strong {
+  color: #c3d0d6;
+}
+
+.dock-load-action-card.pending small {
+  color: #9aadb6;
+}
+
+.dock-load-action-card strong {
+  font-size: 11px;
+}
+
+.dock-load-action-card small {
+  font-size: 11px;
+}
+
+/* Green is reserved for the final ready state in this HUD. */
+.dock-load-actions.ready > header {
+  border-bottom-color: #3d6957;
+  background:
+    linear-gradient(90deg, rgba(56, 121, 91, .15), transparent 74%),
+    #0e1815;
+}
+
+.dock-load-actions.ready > header strong {
+  color: #a2cfba;
+}
+
+@media (max-width: 1450px) {
+  .dock-load-rule-summary.balance {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dock-load-rule-summary.balance > small {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
