@@ -1148,20 +1148,6 @@ export default function DeliveryWorkspace({
     }, 0)
   }
 
-  const cancelPointerInteraction = (title = 'MOVE CANCELED') => {
-    const drag = pointerDragRef.current
-    if (!drag || pointerCompletingRef.current) return
-
-    pointerCompletingRef.current = true
-    animateReturn(drag, drag.x, drag.y)
-    setNotice({
-      tone: 'neutral',
-      title,
-      detail: 'Freight returned to its last valid position.',
-    })
-    finishPointerInteraction()
-  }
-
   const releasePointer = (pointerEvent) => {
     const drag = pointerDragRef.current
     if (
