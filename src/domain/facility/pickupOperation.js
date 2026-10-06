@@ -520,6 +520,156 @@ export function evaluateTrailerDeliveryAccess({
   }
 }
 
+export function evaluateTrailerWeightBalance({
+  board,
+  stagedFreight = [],
+  placements = {},
+} = {}) {
+  const totalWeightLbs = stagedFreight
+    .filter((freight) => placements[freight.id])
+    .reduce((sum, freight) => sum + Number(freight.weightLbs ?? 0), 0)
+  const maxWeightLbs = Math.max(1, finite(board?.maxWeightLbs, 44000))
+  const activationWeightLbs = Math.round(maxWeightLbs * 0.2)
+  const targetMinPercent = 35
+  const targetMaxPercent = 65
+
+  if (!board || totalWeightLbs <= 0) {
+    return {
+      active: false,
+      clear: true,
+      status: 'LIGHT_LOAD',
+      totalWeightLbs,
+      activationWeightLbs,
+      targetMinPercent,
+      targetMaxPercent,
+      frontWeightLbs: 0,
+      rearWeightLbs: 0,
+      leftWeightLbs: 0,
+      rightWeightLbs: 0,
+      frontPercent: 50,
+      rearPercent: 50,
+      leftPercent: 50,
+      rightPercent: 50,
+      issues: [],
+    }
+  }
+
+  const freightById = new Map(stagedFreight.map((freight) => [freight.id, freight]))
+  let frontWeightLbs = 0
+  let rearWeightLbs = 0
+  let leftWeightLbs = 0
+  let rightWeightLbs = 0
+
+  for (const [freightId, placement] of Object.entries(placements)) {
+    const freight = freightById.get(freightId)
+    if (!freight) continue
+
+    const cells = footprintCellIndexes({
+      board,
+      freight,
+      anchorCell: placement?.anchorCell,
+      rotation: placement?.rotation ?? 0,
+    })
+    if (!cells?.length) continue
+
+    const cellWeight = Number(freight.weightLbs ?? 0) / cells.length
+
+    for (const cellIndex of cells) {
+      const { x, y } = boardCellCoordinates(board, cellIndex)
+      const horizontalCenter = x + 0.5
+      const verticalCenter = y + 0.5
+      const horizontalMidpoint = board.columns / 2
+      const verticalMidpoint = board.rows / 2
+
+      if (horizontalCenter < horizontalMidpoint) {
+        leftWeightLbs += cellWeight
+      } else if (horizontalCenter > horizontalMidpoint) {
+        rightWeightLbs += cellWeight
+      } else {
+        leftWeightLbs += cellWeight / 2
+        rightWeightLbs += cellWeight / 2
+      }
+
+      if (verticalCenter < verticalMidpoint) {
+        frontWeightLbs += cellWeight
+      } else if (verticalCenter > verticalMidpoint) {
+        rearWeightLbs += cellWeight
+      } else {
+        frontWeightLbs += cellWeight / 2
+        rearWeightLbs += cellWeight / 2
+      }
+    }
+  }
+
+  const percent = (weight) => (
+    totalWeightLbs > 0
+      ? Math.round((weight / totalWeightLbs) * 100)
+      : 50
+  )
+
+  const frontPercent = percent(frontWeightLbs)
+  const rearPercent = 100 - frontPercent
+  const leftPercent = percent(leftWeightLbs)
+  const rightPercent = 100 - leftPercent
+  const active = totalWeightLbs >= activationWeightLbs
+  const issues = []
+
+  if (active && frontPercent > targetMaxPercent) {
+    issues.push({
+      code: 'FRONT_HEAVY',
+      label: 'FRONT HEAVY',
+      axis: 'longitudinal',
+      fix: 'Shift some weight toward the rear doors.',
+    })
+  } else if (active && frontPercent < targetMinPercent) {
+    issues.push({
+      code: 'REAR_HEAVY',
+      label: 'REAR HEAVY',
+      axis: 'longitudinal',
+      fix: 'Shift some weight toward the nose.',
+    })
+  }
+
+  if (active && leftPercent > targetMaxPercent) {
+    issues.push({
+      code: 'LEFT_HEAVY',
+      label: 'LEFT HEAVY',
+      axis: 'lateral',
+      fix: 'Shift some weight toward the right side.',
+    })
+  } else if (active && leftPercent < targetMinPercent) {
+    issues.push({
+      code: 'RIGHT_HEAVY',
+      label: 'RIGHT HEAVY',
+      axis: 'lateral',
+      fix: 'Shift some weight toward the left side.',
+    })
+  }
+
+  return {
+    active,
+    clear: !active || issues.length === 0,
+    status: !active
+      ? 'LIGHT_LOAD'
+      : issues.length === 0
+        ? 'BALANCED'
+        : issues.map((issue) => issue.code).join('+'),
+    totalWeightLbs,
+    activationWeightLbs,
+    targetMinPercent,
+    targetMaxPercent,
+    frontWeightLbs: Math.round(frontWeightLbs),
+    rearWeightLbs: Math.round(rearWeightLbs),
+    leftWeightLbs: Math.round(leftWeightLbs),
+    rightWeightLbs: Math.round(rightWeightLbs),
+    frontPercent,
+    rearPercent,
+    leftPercent,
+    rightPercent,
+    issues,
+  }
+}
+
 export function evaluatePickupLoadPlan({
   event,
   board,
@@ -599,6 +749,25 @@ export function evaluatePickupLoadPlan({
     })
   }
 
+  const weightBalanceRaw = evaluateTrailerWeightBalance({
+    board,
+    stagedFreight,
+    placements,
+  })
+  const weightBalance = {
+    ...weightBalanceRaw,
+    enforced: missingPlaced.length === 0 && weightBalanceRaw.active,
+  }
+
+  if (weightBalance.enforced && !weightBalance.clear) {
+    const primaryIssue = weightBalance.issues[0]
+    errors.push({
+      code: 'WEIGHT_DISTRIBUTION_UNBALANCED',
+      message: primaryIssue?.fix
+        ?? 'Redistribute trailer weight before closing the doors.',
+    })
+  }
+
   return {
     ready: errors.length === 0,
     errors,
@@ -611,6 +780,7 @@ export function evaluatePickupLoadPlan({
     plannedWeightLbs,
     deliveryAccess,
     deliveryOrder,
+    weightBalance,
     loadRef: event?.loadRef ?? event?.loadId ?? null,
   }
 }
