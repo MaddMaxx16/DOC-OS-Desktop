@@ -444,7 +444,7 @@ export function commitDeliveryOperation({
     })
   const remainingPlacements = Object.fromEntries(
     Object.entries(trailerState?.placements ?? {})
-      .filter(([freightId]) => !selected.has(freightId))
+      .filter(([freightId]) => !unloaded.has(freightId))
       .map(([freightId, placement]) => [freightId, { ...placement }]),
   )
   const deliveredFreight = (trailerState?.freight ?? [])
