@@ -799,6 +799,7 @@ export default function DockLoadWorkspace({
                             freight.stackable ? 'stackable' : 'no-stack',
                             shape.length > 1 ? 'oversize' : 'standard',
                             settlingFreightId === freightId ? 'settling' : '',
+                            rotatingFreightId === freightId ? 'rotating' : '',
                             dragFreightId === freightId ? 'dragging' : '',
                             deliveryRank === 1 ? 'delivery-next' : '',
                             blockedDeliveryIds.has(freightId) ? 'delivery-blocked' : '',
