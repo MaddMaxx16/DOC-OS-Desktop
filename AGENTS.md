@@ -32,43 +32,58 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.4 Handling Restrictions: HAZMAT Segregation
+## Current packet — V2.7.6 Delivery Operations
 
-V2.1 through V2.7.5.3.1 are accepted and locked. Freight interaction, persistent cargo, Delivery Access, Weight Balance, Fragile Protection, compact Trailer HUD behavior, rotation, rear-door commitment, and simulation timing remain authoritative.
+V2.1 through V2.7.5.4 are accepted and locked.
 
-This packet activates one additional handling rule while preserving the simplified HUD.
+Delivery is now the active packet.
 
-HUD typography:
-- apply the accepted one-notch readability increase to the right-side operational HUD,
-- keep the simplified V2.7.5.3.1 hierarchy locked,
-- do not widen the panel or reintroduce persistent charts/explanations.
+Core delivery contract:
+- delivery is not pickup in reverse,
+- delivery opens from the exact persistent trailer state produced by pickup,
+- freight IDs and trailer placements remain authoritative,
+- Focused Mode pauses simulation while the player reasons,
+- a delivery stop holds at DOCK ASSIGNED until the player commits an unload plan,
+- the player selects the current stop's actual freight,
+- rear-door accessibility is derived from physical trailer positions,
+- later-stop freight may be temporarily staged when it blocks current-stop freight,
+- temporary staging creates rehandle count and additional unload time,
+- commit ends Focused Mode and starts background unloading,
+- after unloading, a short receiver-verification phase runs in simulation,
+- clean receiver results are ACCEPTED in this first active slice,
+- routine completion automatically continues the route; no manual DEPART action,
+- accepted freight physically leaves the trailer snapshot,
+- the delivery trailerAfter snapshot becomes authoritative for later stops,
+- this architecture must preserve refused/retained freight in future exception packets.
 
-HAZMAT identity:
-- tutorial HAZMAT freight carries a visible hazard class in addition to the generic HAZMAT handling code,
-- the current tutorial subset uses Class 3 FLAMMABLE LIQUID and Division 5.1 OXIDIZER,
-- the class marking must be readable on the physical freight and in the staging manifest,
-- hazard class identity persists with carried freight between pickup stops.
+Expected versus actual:
+- expected delivery freight comes from the matching pickup freight-unit identities,
+- actual freight comes from the physical trailer snapshot,
+- shortage/wrong-delivery validation is ID-based rather than count-only,
+- clean current tutorial flows should normally have no shortage because pickup validation is strict.
 
-HAZMAT segregation:
-- segregation is class-specific; do not treat all HAZMAT as mutually incompatible,
-- for this tutorial subset, Class 3 and Division 5.1 are an incompatible pair requiring separation,
-- the game models required separation as: incompatible hazmat units may not share a trailer-floor edge,
-- diagonal placement is allowed by this simplified floor abstraction,
-- while the current pickup is incomplete, the rule is LIVE only,
-- once all booked freight is onboard, an unresolved incompatible pair blocks READY TO CLOSE,
-- conflicting HAZMAT freight must receive a restrained visual highlight,
-- Trailer Rules gains one compact HAZMAT SEGREGATION row,
-- only a HAZMAT blocker expands to show PROBLEM / FIX detail,
-- Required Action must not duplicate the expanded rule explanation.
+Documents:
+- Delivery does not own a separate POD copy,
+- the Documents domain owns POD records,
+- committing a delivery creates a PENDING_RECEIVER POD record,
+- the POD becomes RECEIVED after clean receiver verification,
+- damage/refusal/shortage outcomes will produce REVIEW_REQUIRED when those exception systems are activated,
+- the Documents workstation UI remains scheduled for its existing build phase; this packet only establishes the authoritative document data seam.
 
-Accuracy boundary:
-- this is a simplified training/gameplay subset inspired by class-specific highway segregation rules,
-- it is not a complete 49 CFR hazardous-material compliance engine,
-- do not claim the trailer plan is legally certified or regulatory-complete.
+Initial-scope boundary:
+- do not randomly generate damage,
+- do not randomly create missing or wrong freight,
+- do not activate refusal gameplay yet,
+- do not add a full claims system,
+- do not add vertical stacking/securement,
+- do not add another pickup handling rule,
+- do not alter HOS or route-planning behavior beyond delivery service timing,
+- preserve the simplified Trailer HUD and accepted pickup mechanics.
 
-Do not add additional hazard classes, placarding, shipping-paper checks, NO STACK enforcement, KEEP UPRIGHT enforcement, vertical stacking, axle math, delivery puzzle, HOS changes, or service-time changes in this packet.
-
-After visual/gameplay acceptance, continue handling restrictions one rule at a time.
+The next delivery slices after acceptance are:
+1. blocked-delivery tutorial / temporary rehandle polish,
+2. one known freight-condition exception,
+3. receiver/POD exception handling.
 
 
 ## Verification
