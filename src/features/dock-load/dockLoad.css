@@ -3429,3 +3429,139 @@
     transition: none !important;
   }
 }
+
+
+/* V2.7.5.2 — Trailer Rules: weight distribution / balance */
+.dock-load-rules.monitoring > header strong {
+  border-color: #735f33;
+  background: #211b0f;
+  color: #dfbd69;
+}
+
+.dock-load-weight-rule.monitoring {
+  border-top-color: #66552f;
+  border-bottom-color: #66552f;
+  background:
+    linear-gradient(90deg, rgba(120, 91, 34, .08), transparent 72%),
+    #12140f;
+}
+
+.dock-load-weight-rule.light-load {
+  background:
+    linear-gradient(90deg, rgba(63, 105, 90, .06), transparent 72%),
+    #0b151b;
+}
+
+.dock-load-balance-target {
+  padding: 5px 7px;
+  border: 1px solid #2f424c;
+  border-radius: 2px;
+  background: #081219;
+  color: #728893;
+  font-size: 8px;
+  font-weight: 1000;
+  letter-spacing: .075em;
+  text-align: center;
+}
+
+.dock-load-balance-axis {
+  display: grid;
+  gap: 5px;
+}
+
+.dock-load-balance-axis > header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dock-load-balance-axis > header span {
+  color: #8298a3;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .07em;
+}
+
+.dock-load-balance-axis > header strong {
+  color: #d3dee3;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: .02em;
+}
+
+.dock-load-balance-split {
+  display: flex;
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid #2f424c;
+  border-radius: 999px;
+  background: #071016;
+}
+
+.dock-load-balance-split > i {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  transition: width .16s ease;
+}
+
+.dock-load-balance-split > i.front,
+.dock-load-balance-split > i.left {
+  background: linear-gradient(90deg, #365f72, #4e849a);
+}
+
+.dock-load-balance-split > i.rear,
+.dock-load-balance-split > i.right {
+  background: linear-gradient(90deg, #4d806d, #65a088);
+}
+
+.dock-load-weight-rule.blocked .dock-load-balance-split {
+  border-color: #75454f;
+  box-shadow: 0 0 8px rgba(168, 69, 84, .09);
+}
+
+.dock-load-weight-rule.monitoring .dock-load-balance-split {
+  border-color: #6f5c33;
+}
+
+.dock-load-balance-axis > small {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #5f737d;
+  font-size: 7px;
+  font-weight: 950;
+  letter-spacing: .055em;
+}
+
+.dock-load-rule-copy.monitoring {
+  border-color: #67562f;
+  background: rgba(112, 86, 31, .12);
+}
+
+.dock-load-rule-copy.monitoring > span {
+  color: #c7a85f;
+}
+
+.dock-load-rule-copy.monitoring > strong {
+  color: #d9c38f;
+}
+
+.dock-load-action-card.balance {
+  border-color: #725b31;
+  background:
+    linear-gradient(90deg, rgba(125, 91, 28, .13), transparent 80%),
+    #17140d;
+}
+
+.dock-load-action-card.balance strong {
+  color: #ddb963;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-load-balance-split > i {
+    transition: none !important;
+  }
+}
