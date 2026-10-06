@@ -10,6 +10,7 @@ import {
   dockNumberForPickup,
   evaluatePickupLoadPlan,
   evaluateTrailerDeliveryAccess,
+  evaluateTrailerWeightBalance,
   facilityOperationKey,
   footprintCellIndexes,
   pickupPlanCommitted,
@@ -357,6 +358,113 @@ test('later-delivery freight behind an earlier load blocks rear-door access', ()
 
   assert.equal(clearPlan.deliveryAccess.clear, true)
   assert.equal(clearPlan.ready, true)
+})
+
+test('light trailer loads keep weight distribution advisory', () => {
+  const board = buildTrailerPuzzleBoard(equipment)
+  const freight = [{
+    id: 'light-1',
+    loadId: 'LIGHT',
+    loadRef: 'LIGHT',
+    weightLbs: 3000,
+    expected: true,
+    shape: [[0, 0]],
+  }]
+
+  const balance = evaluateTrailerWeightBalance({
+    board,
+    stagedFreight: freight,
+    placements: {
+      'light-1': { anchorCell: 0, rotation: 0 },
+    },
+  })
+
+  assert.equal(balance.active, false)
+  assert.equal(balance.clear, true)
+  assert.equal(balance.status, 'LIGHT_LOAD')
+  assert.equal(balance.activationWeightLbs, 8800)
+})
+
+test('completed heavy loads must be balanced front-to-rear and left-to-right', () => {
+  const board = buildTrailerPuzzleBoard(equipment)
+  const stagedFreight = Array.from({ length: 8 }, (_, index) => ({
+    id: `balance-${index + 1}`,
+    loadId: 'BAL-101',
+    loadRef: 'BAL-101',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }))
+  const requiredFreightIds = stagedFreight.map((freight) => freight.id)
+
+  const frontLeftCells = [0, 1, 4, 5, 8, 9, 12, 13]
+  const unbalancedPlacements = Object.fromEntries(
+    stagedFreight.map((freight, index) => [
+      freight.id,
+      { anchorCell: frontLeftCells[index], rotation: 0 },
+    ]),
+  )
+
+  const unbalanced = evaluateTrailerWeightBalance({
+    board,
+    stagedFreight,
+    placements: unbalancedPlacements,
+  })
+
+  assert.equal(unbalanced.active, true)
+  assert.equal(unbalanced.clear, false)
+  assert.ok(unbalanced.frontPercent > 65)
+  assert.ok(unbalanced.leftPercent > 65)
+  assert.ok(unbalanced.issues.some((issue) => issue.code === 'FRONT_HEAVY'))
+  assert.ok(unbalanced.issues.some((issue) => issue.code === 'LEFT_HEAVY'))
+
+  const blockedPlan = evaluatePickupLoadPlan({
+    event: {
+      ...event,
+      loadId: 'BAL-101',
+      loadRef: 'BAL-101',
+      freight: { pallets: 8, weightLbs: 12000 },
+    },
+    board,
+    stagedFreight,
+    placements: unbalancedPlacements,
+    requiredFreightIds,
+  })
+
+  assert.equal(blockedPlan.weightBalance.enforced, true)
+  assert.equal(blockedPlan.ready, false)
+  assert.ok(blockedPlan.errors.some((issue) => (
+    issue.code === 'WEIGHT_DISTRIBUTION_UNBALANCED'
+  )))
+
+  const balancedCells = [0, 3, 8, 11, 16, 19, 21, 23]
+  const balancedPlacements = Object.fromEntries(
+    stagedFreight.map((freight, index) => [
+      freight.id,
+      { anchorCell: balancedCells[index], rotation: 0 },
+    ]),
+  )
+  const balancedPlan = evaluatePickupLoadPlan({
+    event: {
+      ...event,
+      loadId: 'BAL-101',
+      loadRef: 'BAL-101',
+      freight: { pallets: 8, weightLbs: 12000 },
+    },
+    board,
+    stagedFreight,
+    placements: balancedPlacements,
+    requiredFreightIds,
+  })
+
+  assert.equal(balancedPlan.weightBalance.active, true)
+  assert.equal(balancedPlan.weightBalance.enforced, true)
+  assert.equal(balancedPlan.weightBalance.clear, true)
+  assert.equal(balancedPlan.weightBalance.frontPercent, 50)
+  assert.equal(balancedPlan.weightBalance.rearPercent, 50)
+  assert.equal(balancedPlan.weightBalance.leftPercent, 50)
+  assert.equal(balancedPlan.weightBalance.rightPercent, 50)
+  assert.equal(balancedPlan.ready, true)
 })
 
 test('committing the rear doors preserves the solved trailer snapshot and starts loading now', () => {
