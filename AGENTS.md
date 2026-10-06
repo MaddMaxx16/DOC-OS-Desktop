@@ -32,367 +32,212 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.6.5 Warehouse Physicalization
+## Current packet — V2.7.6.6 Delivery Handling Constraints
 
 V2.1 through V2.7.5.4 are accepted and locked.
 V2.7.6 Delivery Operations architecture remains authoritative.
-V2.7.6.2 receiver-specific SOP phases and receiving-zone validation remain authoritative.
-V2.7.6.3 pointer-owned freight movement remains authoritative.
-V2.7.6.4 space-management mechanics remain authoritative:
+V2.7.6.2 receiver-specific SOP phases and zone validation remain authoritative.
+V2.7.6.3 pointer-owned freight interaction remains authoritative.
+V2.7.6.4 Delivery Space Management remains authoritative:
 - shared Pickup/Delivery trailer shell,
 - mutable Delivery trailer placements,
-- Trailer → Trailer repositioning,
-- finite footprint-based Temp Staging,
-- internal reposition history,
-- external rehandle history,
-- receiver-floor freight persistence,
-- current-state rear-access recalculation.
+- internal Trailer → Trailer repositioning,
+- finite 3-position Temp Staging,
+- internal reposition history vs external rehandles,
+- current-state access recalculation.
+V2.7.6.5 warehouse physicalization remains visually authoritative.
 
-V2.7.6.4 visual acceptance is partial:
-- the shared Pickup/Delivery trailer is accepted,
-- the right-side receiver/SOP panel is accepted,
-- the warehouse-side receiving floor is not accepted because it still reads as a UI diagram/card layout rather than a physical warehouse.
-
-V2.7.6.5 is the active Delivery packet.
+V2.7.6.6 is the active Delivery packet.
 
 ### Purpose
 
-V2.7.6.5 is a **warehouse visual/physicalization pass**.
+Gameplay review of V2.7.6.5 found two remaining Delivery problems:
 
-Do not redesign Delivery mechanics.
+1. an interrupted pointer move could leave the workspace stuck in FREIGHT IN MOTION,
+2. internal repositioning was too permissive because any collision-free empty trailer position could be used even when the freight could not plausibly be handled there from the rear doors.
 
-The goal is to make the receiving side feel like a physical warehouse floor where the same freight objects that leave the trailer visibly settle into real operational areas.
+This packet fixes those two issues only.
 
-The intended scene should read immediately as:
+### Handling-path gameplay abstraction
 
-**Warehouse floor ← dock apron / threshold ← same Pickup trailer**
+Delivery now adds a rear handling-path rule.
 
-not:
+This is a DOC OS gameplay abstraction for dock-equipment reachability.
+It is **not** a forklift-certification, OSHA, DOT, FMCSA, or warehouse-engineering simulator.
 
-**zone panel | separator | trailer UI**
-
-### Hard preservation rules
-
-Do not change the following unless a visual bug makes it strictly necessary:
-- shared Pickup/Delivery TrailerShell,
-- trailer proportions,
-- trailer floor geometry,
-- trailer reposition rules,
-- Temp Staging capacity,
-- Temp Staging footprint rules,
-- receiver SOP phase order,
-- receiving-zone validation,
-- rear-door access logic,
-- rehandle timing,
-- unload sequence,
-- right-side SOP information hierarchy,
-- background unloading / receiver check / auto-depart flow.
+The rule exists to stop freight from teleporting through other freight during Delivery.
 
-V2.7.6.5 is not a mechanics packet.
+### Rear handling path
 
-### Warehouse must read as one environment
-
-The entire receiver side must visually read as one continuous warehouse floor.
+For a trailer freight unit to be manipulated from the trailer, DOC OS must be able to find a legal path for that freight footprint from a rear-door boundary position to its current position.
 
-Avoid:
-- large bordered cards,
-- 2×2 dashboard layouts,
-- equal-sized rectangular UI cells,
-- dark panels floating on top of the floor,
-- card-header styling inside each receiving zone,
-- tokenized freight rows inside a zone,
-- spreadsheet-like visual grouping.
+The path:
+- uses the current mutable Delivery trailer state,
+- uses the freight's current footprint and rotation,
+- moves through adjacent trailer anchor positions,
+- may not overlap other freight,
+- may not leave the usable trailer floor,
+- respects disabled/non-floor cells.
 
-Use:
-- one shared concrete/floor surface,
-- painted floor boundaries,
-- painted lane lines,
-- aisle arrows,
-- dock-apron markings,
-- receiver-area text painted or stenciled onto the floor,
-- low-contrast scuffs / wear / floor texture,
-- subtle wall/column/dock context where useful,
-- environmental rather than dashboard separation.
+A freight unit with no rear handling path is not currently manipulable.
 
-The floor should remain visually restrained and consistent with DOC OS's dark industrial style.
+### Delivery unload access
 
-Do not turn the warehouse into a decorative 3D scene that obscures gameplay.
+Receiver SOP remains authoritative, but current-phase freight must also be rear-handling accessible before it can leave the trailer.
 
-### Receiving zones remain physical drop targets
+A valid receiver unload therefore requires:
+1. correct receiver phase,
+2. correct receiver zone,
+3. rear handling path from the trailer to the doors.
 
-Controlled Receiving, Forklift Lane, Inspection, General Receiving, and Temp Staging remain mechanically distinct.
+The previous same-lane blocker model remains available for contextual blocker feedback, but the handling-path rule is the stronger physical manipulation gate.
 
-Their boundaries should be expressed as **warehouse-floor markings**, not UI cards.
+### Trailer → Trailer repositioning
 
-Each area should have a different physical cue:
+An empty destination is no longer sufficient.
 
-#### Controlled Receiving
-- controlled-material / caution floor treatment,
-- restrained hazard striping or caution border,
-- clear floor stencil,
-- should feel like a marked handling pad.
+For an internal reposition to be valid:
+- the source freight must itself be reachable from the rear doors,
+- the destination footprint must fit,
+- the destination must be collision-free,
+- the freight footprint must have a rear handling path to the destination through the current trailer layout.
 
-#### Forklift Lane
-- directional lane markings,
-- traffic arrows / travel lane cues,
-- forklift handling text or floor stencil,
-- should read as a movement/handling lane rather than a box.
+If the destination is empty but unreachable, reject with **NO HANDLING PATH**.
 
-#### Inspection
-- smaller inspection/check area,
-- floor footprint for an inspection station / check pad,
-- may include restrained table/scale/scanner cues,
-- must still be a floor destination, not a floating widget.
+If the source itself is buried beyond handling reach, reject with **FORKLIFT CANNOT REACH**.
 
-#### General Receiving
-- largest open pallet receiving / staging area,
-- painted pallet-position guides or warehouse floor lanes,
-- should read as the normal destination for general freight.
+This rule should make open trailer space useful without allowing the player to teleport freight behind blockers.
 
-#### Temp Staging
-- remains exactly 3 pallet-equivalent positions,
-- positions should look like painted pallet bays on the dock apron,
-- the finite capacity must remain obvious without looking like three spreadsheet cells.
+### Temp Staging interaction
 
-### Freight must stay visually physical after unloading
+Existing Temp Staging capacity remains exactly 3 pallet-equivalent positions.
 
-This is a must-pass requirement.
+A trailer freight unit must itself be rear-handling accessible before it may move to Temp Staging.
 
-Freight leaving the trailer may not collapse into:
-- chips,
-- list rows,
-- compact badges,
-- generic mini rectangles,
-- simplified tokens that lose cargo identity.
-
-Receiver-floor freight must preserve:
-- cargo family,
-- handling visual,
-- load marking,
-- relative footprint,
-- orientation where relevant,
-- recognizable pallet/crate/skid/drum identity.
+Existing "unnecessary staging" protection remains, with one extension:
 
-Examples:
-- wide skid remains visibly wide,
-- long skid remains visibly long,
-- drum pallet still shows drum identity,
-- fragile crate still looks like a crate,
-- heavy/machinery freight remains visually heavy/large,
-- standard pallet remains a recognizable palletized load.
+If the active receiver phase has **no rear-handling-accessible freight**, a rear-accessible later-phase or later-stop freight unit may be staged to open a handling corridor even when it is not the old same-column immediate blocker.
 
-### Receiver-floor freight scale
-
-Warehouse freight should visually relate to the same freight scale used in the trailer.
+This lets Temp Staging become necessary when the receiver sequence is physically trapped.
 
-Do not size receiver freight primarily by flexbox/card width.
+Do not increase staging capacity in this packet.
 
-Instead:
-- derive receiver freight dimensions from a stable pallet/floor-cell visual unit,
-- preserve footprint proportions,
-- allow modest visual scaling for the larger warehouse space,
-- do not shrink freight simply because a zone contains multiple units.
+### Challenge intent
 
-The floor should feel like freight is accumulating in physical space, not like a responsive list is compacting to fit.
+The intended decision becomes:
 
-### Receiver-floor placement
+1. What freight does the receiver require now?
+2. Can that freight physically reach the rear doors?
+3. If not, which freight can the dock equipment actually reach?
+4. Can a reachable blocker be repositioned to another rear-reachable trailer location?
+5. If no legal internal path exists, which blocker is worth spending scarce Temp Staging on?
 
-Receiver zones are still **not** a second packing puzzle.
+Do not add arbitrary time limits or additional receiver SOP rules to create difficulty.
 
-The player chooses the correct receiving area; the facility may auto-place the freight inside that area.
+### Pointer-interaction hardening
 
-Auto-placement must:
-- use visible physical slots / floor positions,
-- respect freight footprint and relative size,
-- avoid overlap,
-- place freight from a consistent floor edge / staging direction,
-- keep enough separation that individual cargo objects remain readable,
-- preserve visual identity even as the zone fills.
+No Delivery drag may leave the workspace indefinitely stuck in FREIGHT IN MOTION.
 
-If a zone becomes crowded, expand/flow the physical floor arrangement rather than collapsing freight into smaller UI tokens.
+The active pointer session must safely terminate on:
+- normal pointer-up,
+- pointer-cancel,
+- lost pointer capture,
+- window blur,
+- page/tab visibility loss,
+- Escape.
 
-### Physical continuity during drag
+Normal valid release still commits the move.
 
-The carried object, trailer object, and receiver-floor object should feel like the same freight unit.
+If the release cannot be resolved safely:
+- cancel the move,
+- animate freight back toward its last valid origin,
+- clear the active pointer state,
+- return control to the player,
+- show concise MOVE CANCELED / POINTER RELEASED feedback.
 
-During pointer movement:
-- preserve cargo family visuals,
-- preserve relative shape,
-- preserve load/handling identity,
-- preserve orientation when possible.
+The game must prefer safely returning freight over preserving an uncertain drag.
 
-On valid release:
-- freight should settle into the warehouse floor,
-- it should not visually transform into a different object class,
-- use a short physical settle animation rather than a UI-card transition.
+### Pointer state rules
 
-On invalid release:
-- existing snap-back behavior remains authoritative.
+Maintain an authoritative active pointer reference separate from transient React render state so late browser events cannot leave a ghost freight session active.
 
-### Environmental layering
+Guard move completion so duplicate pointer-up/capture-loss events cannot double-commit or double-cancel a freight move.
 
-The receiving floor should include enough physical context to read as a warehouse:
+### Preserved systems
 
-Recommended restrained cues:
-- concrete-style base surface,
-- painted safety/lane lines,
-- dock-apron edge,
-- aisle arrows,
-- floor-number / zone stencils,
-- occasional scuffing / tire wear,
-- subtle column or wall-edge cues,
-- low-profile inspection equipment cues,
-- receiving-bay lane guides.
+Do not redesign:
+- V2.7.6.5 warehouse presentation,
+- shared Pickup/Delivery trailer,
+- receiver SOP panel,
+- receiving-zone visuals,
+- receiver-floor freight visuals,
+- staging visuals,
+- freight families,
+- staging capacity,
+- receiver phase order,
+- rehandle time,
+- background unloading,
+- receiver verification,
+- routine auto-depart.
 
-Avoid:
-- photo-realistic texture,
-- decorative clutter,
-- forklifts/NPC animation in this packet,
-- excessive props,
-- bright arcade colors,
-- strong 3D perspective that conflicts with the top-down trailer view.
+### Visual feedback
 
-### Current phase emphasis
+Reuse the existing Trailer → Trailer footprint preview.
 
-Only the active receiver phase should receive notable visual emphasis.
+Preview should now represent both:
+- footprint/collision legality,
+- rear handling-path legality.
 
-Use environmental emphasis:
-- brighter painted boundary,
-- subtle floor glow,
-- active stencil treatment,
-- restrained directional cue.
+Green means the move can actually be handled from the rear.
+Red means either the footprint does not fit, collides, or has no handling path.
 
-Do not:
-- turn the active zone into a large glowing UI card,
-- fully hide inactive zones,
-- make completed zones bright green blocks.
+Do not add another permanent HUD card for this rule.
 
-Healthy/completed/inactive areas should remain part of the physical room.
-
-### Right-side SOP panel
-
-The right-side receiver/SOP panel from V2.7.6.4 is accepted and should remain structurally unchanged.
-
-Allowed:
-- tiny spacing/font adjustments only if the warehouse layout forces clipping.
-
-Not allowed:
-- new rule cards,
-- extra freight lists,
-- duplicate current-phase explanations,
-- major width redesign,
-- turning the panel back into the main interaction surface.
-
-The physical warehouse/trailer workspace remains primary.
-
-### Trailer
-
-The V2.7.6.4 shared Pickup/Delivery trailer is accepted.
-
-Do not:
-- resize it narrower,
-- restyle the shell,
-- create a warehouse-specific trailer variant,
-- change floor-cell scale,
-- alter its visual proportions to make room for the warehouse.
-
-If more warehouse space is needed, solve that in the receiving-floor composition rather than shrinking the truck.
-
-### Temp Staging presentation
-
-The existing finite capacity remains exactly:
-**3 pallet-equivalent positions**.
-
-V2.7.6.5 changes only how those positions look.
-
-The dock staging area should:
-- look like three physical painted pallet positions,
-- show freight occupying those positions at full recognizable cargo scale,
-- visually communicate used/free space,
-- preserve footprint-based occupancy,
-- avoid card borders and numbered spreadsheet-cell styling where possible.
-
-Do not change staging capacity or rehandle rules.
-
-### Visual acceptance requirements
-
-V2.7.6.5 is not accepted until manual gameplay confirms all of the following:
-
-1. The warehouse side reads immediately as a warehouse floor, not a dashboard.
-2. The receiving areas feel painted/marked into one shared environment.
-3. No major receiving zone looks like a UI card.
-4. Freight remains recognizable as the same physical cargo after leaving the trailer.
-5. Wide/long/multi-cell freight retains visibly different proportions on the warehouse floor.
-6. Multiple received freight units remain individually readable and do not collapse into tiny tokens.
-7. Temp Staging looks like finite dock space rather than three spreadsheet cells.
-8. Full-size staged freight visibly occupies that limited space.
-9. The active receiving phase is clear without dominating the environment.
-10. The accepted shared trailer remains visually unchanged from V2.7.6.4.
-11. The accepted right-side SOP panel remains secondary to the physical workspace.
-12. Pointer movement still feels continuous from trailer → warehouse floor.
-
-A green automated build does not satisfy these visual requirements.
-
-### Implementation guidance
-
-Prefer reusing the same freight visual component/family across:
-- trailer freight,
-- pointer freight ghost,
-- Temp Staging freight,
-- receiver-floor freight.
-
-If separate wrappers are required for layout, the freight object's internal visual should remain shared.
-
-Prefer warehouse placement data such as:
-- zone slot,
-- x/y floor position,
-- footprint width/height,
-- rotation,
-
-over responsive token/card layout.
-
-The implementation should be robust at normal desktop gameplay scale before optimizing smaller widths.
-
-### Time model remains locked
-
-No changes:
-- Focused Mode pauses simulation,
-- trailer repositioning does not directly advance time,
-- external rehandles retain their current service-time cost,
-- Confirm Handoff begins background unloading,
-- receiver verification follows,
-- routine clean delivery auto-departs.
+Contextual feedback is enough.
 
 ### Accuracy boundary
 
-Receiver SOPs remain fictional DOC OS facility procedures.
+Rear handling paths are a gameplay abstraction.
 
-Do not imply that the Harborline/Freshway order represents universal freight-handling regulation.
+Do not claim:
+- exact forklift turning-radius simulation,
+- OSHA-compliant warehouse access,
+- certified forklift maneuverability,
+- real dock-equipment clearance calculations.
 
-### Known Live Operations UX backlog — still deferred
+The model only represents whether the freight footprint can move through adjacent open trailer positions from the rear.
 
-- SEND SCHEDULE needs a normal-workflow entry point outside Planning state.
-- Add Advance to Next Event / Next Operational Moment instead of requiring manual fast-forward through idle time.
+### Acceptance requirements
 
-Do not solve these in V2.7.6.5.
+V2.7.6.6 is not accepted until gameplay confirms:
+
+1. An accidental release cannot leave FREIGHT IN MOTION stuck.
+2. Escape safely cancels a held freight move.
+3. Losing pointer capture safely returns freight.
+4. Window/tab interruption safely clears the drag state.
+5. Empty but unreachable trailer positions are rejected.
+6. Reachable internal positions still work.
+7. Rear-accessible freight can be unloaded normally.
+8. Buried freight cannot be manipulated through other cargo.
+9. Temp Staging becomes useful when the active receiver phase has no reachable freight.
+10. The accepted trailer, warehouse, and right HUD remain visually unchanged.
 
 ### Explicit non-goals
 
 Do not add:
-- new receiver SOP rules,
+- exact forklift turning radii,
+- forklift/NPC animation,
+- vertical stacking,
+- new receiver phases,
 - new Pickup rules,
 - random damage,
 - refusal/claims,
-- Documents workstation UI,
-- forklifts/NPC warehouse animation,
-- vertical stacking,
 - HOS changes,
-- route-planning changes,
 - schedule-send UX changes,
-- next-event time controls,
-- RPG XP/scoring UI.
+- next-event controls,
+- RPG scoring UI.
 
-V2.7.6.5 exists to make the already-working Delivery space-management system visually read as a physical warehouse operation.
+V2.7.6.6 exists specifically to harden Delivery pointer interaction and make internal freight movement obey the trailer's physical access constraints.
 
 
 ## Verification
