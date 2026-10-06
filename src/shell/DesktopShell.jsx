@@ -5,6 +5,7 @@ import { isSelection, SELECTION_TYPES } from '../domain/selection/selectionModel
 import { buildPlanningPlaceOptions } from '../domain/planning/planningPlaces.js'
 import PlanningPlaceFlyout from '../features/driver-day/PlanningPlaceFlyout.jsx'
 import DockLoadWorkspace from '../features/dock-load/DockLoadWorkspace.jsx'
+import DeliveryWorkspace from '../features/dock-delivery/DeliveryWorkspace.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -47,6 +48,7 @@ export default function DesktopShell({
   onConfirmBooking,
   onOpenDockLoad,
   onCommitDockLoad,
+  onCommitDockDelivery,
   onStartDriverPlanning,
   onStopDriverPlanning,
   onMoveDriverPlanEvent,
@@ -124,7 +126,7 @@ export default function DesktopShell({
   )
   const hasInspector = hasFreightInspector || hasOperationsInspector
 
-  const focusedDockDriver = focusedTask?.type === 'dock-load'
+  const focusedDockDriver = ['dock-load', 'dock-delivery'].includes(focusedTask?.type)
     ? drivers.find((driver) => driver.id === focusedTask.driverId) ?? null
     : null
   const focusedDockDay = focusedDockDriver
@@ -174,6 +176,21 @@ export default function DesktopShell({
             event={focusedDockEvent}
             facilityOperations={facilityOperations}
             onCommit={onCommitDockLoad}
+          />
+        </FocusedWorkspace>
+      ) : focusedTask?.type === 'dock-delivery' && focusedDockDriver && focusedDockEvent ? (
+        <FocusedWorkspace
+          eyebrow="DOCK & DELIVERY"
+          title={`${focusedDockDriver.name} · ${focusedDockEvent.locationLabel}`}
+          subtitle="FOCUSED · GAMEPLAY PAUSED"
+          onClose={onCloseFocusedTask}
+        >
+          <DeliveryWorkspace
+            driver={focusedDockDriver}
+            driverDay={focusedDockDay}
+            event={focusedDockEvent}
+            facilityOperations={facilityOperations}
+            onCommit={onCommitDockDelivery}
           />
         </FocusedWorkspace>
       ) : focusedTask?.type === 'rate-confirmation' && focusedLane && focusedDriver && focusedRecord ? (
