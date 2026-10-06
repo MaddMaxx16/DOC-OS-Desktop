@@ -3656,3 +3656,92 @@ This packet does not change:
 - loading time,
 - rear-door commitment,
 - route timing.
+
+
+---
+
+## V2.7.5.4 — Handling Restrictions: HAZMAT Segregation
+
+This packet activates HAZMAT as a class-specific handling mechanic while keeping the simplified Trailer HUD intact.
+
+### Why class-specific
+
+HAZMAT is not treated as one universal incompatibility category.
+
+The tutorial freight subset assigns visible hazard classes so the player can make a real classification-based decision rather than memorizing a generic “hazmat cannot touch anything” rule.
+
+The first tutorial subset uses:
+
+- **Class 3 — Flammable Liquid**
+- **Division 5.1 — Oxidizer**
+
+The load generator assigns a deterministic class by load reference so carried freight retains the same hazard identity across facilities.
+
+### Tutorial segregation abstraction
+
+For this first slice, Class 3 and Division 5.1 form the only active segregation pair.
+
+The real highway segregation model is more detailed than the 2D puzzle. DOC OS therefore uses a deliberately simplified spatial abstraction:
+
+> incompatible tutorial HAZMAT classes may not share a trailer-floor edge.
+
+Diagonal contact is allowed by the current floor model.
+
+This rule is intended to teach that hazardous-material compatibility is **class-specific**. It does not claim to replace regulatory segregation tables, packaging requirements, placarding, shipping papers, or carrier compliance procedures.
+
+### Freight readability
+
+HAZMAT freight shows the class directly on the physical cargo:
+
+- HAZMAT 3
+- HAZMAT 5.1
+
+The staging manifest also exposes the class meaning, such as FLAMMABLE LIQUID or OXIDIZER.
+
+This identity persists in the committed trailer snapshot and remains readable at later pickup stops.
+
+### Enforcement timing
+
+While the current pickup is incomplete:
+
+- HAZMAT SEGREGATION reports LIVE,
+- the player may continue loading,
+- an incompatible placement does not yet add a readiness error.
+
+Once all booked freight is onboard:
+
+- separated incompatible classes report SEPARATED,
+- edge-adjacent incompatible classes report SEPARATE,
+- conflicting pieces receive a restrained visual emphasis,
+- the rule expands with PROBLEM / FIX guidance,
+- READY TO CLOSE remains locked until the conflict is corrected.
+
+### HUD preservation
+
+HAZMAT SEGREGATION is a fourth compact row inside Trailer Rules.
+
+The row follows the V2.7.5.3.1 progressive-disclosure contract:
+
+- healthy = collapsed,
+- live = neutral,
+- blocked = expanded,
+- no new permanent chart or rule-definition card.
+
+The right-side HUD also receives the accepted one-notch typography increase without changing its width or structure.
+
+### Non-goals
+
+This packet does not add:
+
+- a complete 49 CFR segregation matrix,
+- additional hazardous-material classes,
+- placarding,
+- shipping-paper validation,
+- packaging-group logic,
+- loading/unloading certification,
+- NO STACK enforcement,
+- KEEP UPRIGHT enforcement,
+- vertical stacking,
+- axle calculations,
+- delivery puzzle,
+- HOS changes.
