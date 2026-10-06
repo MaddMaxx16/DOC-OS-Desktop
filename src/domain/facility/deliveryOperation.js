@@ -462,7 +462,8 @@ function deliveryHandlingPlacementsWithoutFreight(placements = {}, freightId) {
 
 function rearDoorAnchorCells({
   board,
-  freight,
+  freight = [],
+  unit,
   placements,
   freightId,
   rotation,
@@ -476,7 +477,7 @@ function rearDoorAnchorCells({
   for (let anchorCell = 0; anchorCell < board.usableCells; anchorCell += 1) {
     const cells = footprintCellIndexes({
       board,
-      freight,
+      freight: unit,
       anchorCell,
       rotation,
     })
@@ -484,9 +485,9 @@ function rearDoorAnchorCells({
 
     const place = canPlaceFreight({
       board,
-      stagedFreight: freight ? [freight] : [],
+      stagedFreight: freight,
       placements: {},
-      freightId: freight?.id,
+      freightId,
       anchorCell,
       rotation,
     })
@@ -497,7 +498,7 @@ function rearDoorAnchorCells({
     const rearNeighborFits = rearNeighbor != null
       ? footprintCellIndexes({
           board,
-          freight,
+          freight: unit,
           anchorCell: rearNeighbor,
           rotation,
         })
@@ -507,9 +508,9 @@ function rearDoorAnchorCells({
 
     const clearAtDoor = canPlaceFreight({
       board,
-      stagedFreight: [freight],
+      stagedFreight: freight,
       placements: otherPlacements,
-      freightId: freight.id,
+      freightId,
       anchorCell,
       rotation,
     })
@@ -570,7 +571,8 @@ export function findDeliveryRearHandlingPath({
 
   const doorAnchors = rearDoorAnchorCells({
     board,
-    freight: unit,
+    freight,
+    unit,
     placements,
     freightId,
     rotation,
