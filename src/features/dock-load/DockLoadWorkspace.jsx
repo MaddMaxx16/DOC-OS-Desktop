@@ -17,6 +17,7 @@ import {
   placementMap,
   rotateFreightShape,
 } from '../../domain/facility/pickupOperation.js'
+import TrailerShell from '../trailer/TrailerShell.jsx'
 import './dockLoad.css'
 
 function pounds(value) {
@@ -739,25 +740,21 @@ export default function DockLoadWorkspace({
           </div>
 
           <div className="trailer-scene">
-            <div className="trailer-visual-shell">
-              <div className="trailer-roof">
-                <i />
-                <i />
-                <i />
-                <span>{board.label}</span>
-              </div>
-
-              <div className="trailer-open-cavity">
-                <div className="trailer-side-wall left">
-                  <span>53′</span>
+            <TrailerShell
+              board={board}
+              overlay={(
+                <div
+                  className={`trailer-door-commit ${doorsClosing ? 'closing' : ''}`}
+                  aria-hidden="true"
+                >
+                  <i className="door-panel left" />
+                  <i className="door-panel right" />
+                  <strong>LOAD PLAN LOCKED</strong>
+                  <small>SENDING TO WAREHOUSE</small>
                 </div>
-
-                <div className="trailer-floor-stage">
-                  <div className="trailer-nose-wall">
-                    <span>FRONT / NOSE</span>
-                  </div>
-
-                  <div
+              )}
+            >
+              <div
                     className={`dock-load-grid puzzle-board ${draggedFreight ? 'drag-active' : ''}`}
                     style={{
                       '--board-columns': board.columns,
@@ -969,30 +966,8 @@ export default function DockLoadWorkspace({
                         </div>
                       )
                     })}
-                  </div>
-                </div>
-
-                <div className="trailer-side-wall right">
-                  <span>{board.capacityPallets} PLT</span>
-                </div>
               </div>
-
-              <div
-                className={`trailer-door-commit ${doorsClosing ? 'closing' : ''}`}
-                aria-hidden="true"
-              >
-                <i className="door-panel left" />
-                <i className="door-panel right" />
-                <strong>LOAD PLAN LOCKED</strong>
-                <small>SENDING TO WAREHOUSE</small>
-              </div>
-
-              <div className="trailer-rear-frame">
-                <div className="trailer-tail-light left" />
-                <span>REAR / DOORS</span>
-                <div className="trailer-tail-light right" />
-              </div>
-            </div>
+            </TrailerShell>
           </div>
 
           <div className="dock-load-rear">
