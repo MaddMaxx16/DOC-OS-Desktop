@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -63,6 +64,13 @@ function visibleFootprintCells(board, freight, anchorCell, rotation) {
 
 function cargoClass(freight) {
   return `cargo-${freight.cargoType ?? 'wrapped-pallet'}`
+}
+
+function freightCanRotate(freight) {
+  if (!freight?.shape?.length) return false
+  const base = shapeBounds(rotateFreightShape(freight.shape, 0))
+  const rotated = shapeBounds(rotateFreightShape(freight.shape, 1))
+  return base.width !== rotated.width || base.height !== rotated.height
 }
 
 function handlingClass(freight) {
@@ -236,6 +244,7 @@ export default function DockLoadWorkspace({
     )),
   ))
   const [dragFreightId, setDragFreightId] = useState(null)
+  const [hoverFreightId, setHoverFreightId] = useState(null)
   const [hoverCell, setHoverCell] = useState(null)
   const [rotatingFreightId, setRotatingFreightId] = useState(null)
   const [settlingFreightId, setSettlingFreightId] = useState(null)
@@ -257,26 +266,80 @@ export default function DockLoadWorkspace({
     if (readyTimerRef.current) clearTimeout(readyTimerRef.current)
   }, [])
 
-  useEffect(() => {
-    if (!dragFreightId) return undefined
+  const pulseRotation = useCallback((freightId) => {
+    setRotatingFreightId(freightId)
+    if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
+    rotateTimerRef.current = setTimeout(() => setRotatingFreightId(null), 170)
+  }, [])
 
-    const rotateDraggedFreight = (keyboardEvent) => {
-      if (keyboardEvent.key.toLowerCase() !== 'r' || keyboardEvent.repeat) return
-      keyboardEvent.preventDefault()
+  const rotatePlacedFreight = useCallback((freightId) => {
+    const placement = placements[freightId]
+    const freight = allFreight.find((item) => item.id === freightId)
+    if (!placement || !freightCanRotate(freight)) return
 
-      setRotations((current) => ({
-        ...current,
-        [dragFreightId]: ((current[dragFreightId] ?? 0) + 1) % 4,
-      }))
-      setRotatingFreightId(dragFreightId)
+    const currentRotation = placement.rotation ?? rotations[freightId] ?? 0
+    const nextRotation = (currentRotation + 1) % 4
+    const result = canPlaceFreight({
+      board,
+      stagedFreight: allFreight,
+      placements,
+      freightId,
+      anchorCell: placement.anchorCell,
+      rotation: nextRotation,
+    })
 
-      if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
-      rotateTimerRef.current = setTimeout(() => setRotatingFreightId(null), 170)
+    if (!result.valid) {
+      setInvalidDropReason(result.reason ?? 'INVALID')
+      if (invalidTimerRef.current) clearTimeout(invalidTimerRef.current)
+      invalidTimerRef.current = setTimeout(() => setInvalidDropReason(null), 320)
+      return
     }
 
-    window.addEventListener('keydown', rotateDraggedFreight)
-    return () => window.removeEventListener('keydown', rotateDraggedFreight)
-  }, [dragFreightId])
+    setRotations((current) => ({
+      ...current,
+      [freightId]: nextRotation,
+    }))
+    setPlacements((current) => ({
+      ...current,
+      [freightId]: {
+        ...current[freightId],
+        rotation: nextRotation,
+      },
+    }))
+    pulseRotation(freightId)
+  }, [allFreight, board, placements, pulseRotation, rotations])
+
+  useEffect(() => {
+    const rotateActiveFreight = (keyboardEvent) => {
+      if (keyboardEvent.key.toLowerCase() !== 'r' || keyboardEvent.repeat) return
+
+      if (dragFreightId) {
+        const freight = allFreight.find((item) => item.id === dragFreightId)
+        if (!freightCanRotate(freight)) return
+        keyboardEvent.preventDefault()
+
+        setRotations((current) => ({
+          ...current,
+          [dragFreightId]: ((current[dragFreightId] ?? 0) + 1) % 4,
+        }))
+        pulseRotation(dragFreightId)
+        return
+      }
+
+      if (!hoverFreightId) return
+      keyboardEvent.preventDefault()
+      rotatePlacedFreight(hoverFreightId)
+    }
+
+    window.addEventListener('keydown', rotateActiveFreight)
+    return () => window.removeEventListener('keydown', rotateActiveFreight)
+  }, [
+    allFreight,
+    dragFreightId,
+    hoverFreightId,
+    pulseRotation,
+    rotatePlacedFreight,
+  ])
 
   const evaluation = useMemo(
     () => evaluatePickupLoadPlan({
@@ -409,13 +472,14 @@ export default function DockLoadWorkspace({
     : null
 
   const rotate = (freightId) => {
+    const freight = allFreight.find((item) => item.id === freightId)
+    if (!freightCanRotate(freight)) return
+
     setRotations((current) => ({
       ...current,
       [freightId]: ((current[freightId] ?? 0) + 1) % 4,
     }))
-    setRotatingFreightId(freightId)
-    if (rotateTimerRef.current) clearTimeout(rotateTimerRef.current)
-    rotateTimerRef.current = setTimeout(() => setRotatingFreightId(null), 170)
+    pulseRotation(freightId)
   }
 
   const startDrag = (dragEvent, freightId) => {
@@ -514,6 +578,8 @@ export default function DockLoadWorkspace({
   const carriedLoadRefs = [...new Set(
     carriedCargo.freight.map((freight) => freight.loadRef).filter(Boolean),
   )]
+  const showDeliveryOrderBadges = deliveryOrder.length > 1
+  const deliveryConflict = evaluation.deliveryAccess?.pairSummaries?.[0] ?? null
 
   return (
     <div
@@ -571,7 +637,7 @@ export default function DockLoadWorkspace({
             <strong>{board.label}</strong>
           </div>
           <small>
-            {board.capacityPallets} pallet positions · Drag onboard freight to reposition it · R rotates the piece in hand.
+            {board.capacityPallets} pallet positions · Hover freight and press R to rotate · Drag onboard freight to reposition it.
           </small>
         </header>
 
@@ -718,11 +784,13 @@ export default function DockLoadWorkspace({
                         freight.loadRef ?? freight.loadId,
                       )
 
+                      const rotatable = freightCanRotate(freight)
+
                       return (
-                        <button
-                          type="button"
+                        <div
                           key={freightId}
                           draggable
+                          tabIndex={0}
                           className={[
                             'loaded-freight-piece',
                             cargoClass(freight),
@@ -742,13 +810,27 @@ export default function DockLoadWorkspace({
                             '--piece-columns': bounds.width,
                             '--piece-rows': bounds.height,
                           }}
+                          onMouseEnter={() => setHoverFreightId(freightId)}
+                          onMouseLeave={() => setHoverFreightId((current) => (
+                            current === freightId ? null : current
+                          ))}
+                          onFocus={() => setHoverFreightId(freightId)}
+                          onBlur={(focusEvent) => {
+                            if (!focusEvent.currentTarget.contains(focusEvent.relatedTarget)) {
+                              setHoverFreightId((current) => (
+                                current === freightId ? null : current
+                              ))
+                            }
+                          }}
                           onDragStart={(dragEvent) => {
                             dragEvent.stopPropagation()
                             startDrag(dragEvent, freightId)
                           }}
                           onDragEnd={endDrag}
-                          title={`${freight.loadRef} · ${freight.handlingLabel} · drag to reposition · press R while dragging to rotate`}
-                          aria-label={`${freight.label}, load ${freight.loadRef}, ${freight.handlingLabel}. Drag to reposition.`}
+                          title={rotatable
+                            ? `${freight.loadRef} · ${freight.handlingLabel} · hover + R to rotate · drag to reposition`
+                            : `${freight.loadRef} · ${freight.handlingLabel} · drag to reposition`}
+                          aria-label={`${freight.label}, load ${freight.loadRef}, ${freight.handlingLabel}. Drag to reposition${rotatable ? ' or press R to rotate' : ''}.`}
                         >
                           <div className="loaded-freight-shape">
                             {shape.map(([x, y], index) => (
@@ -765,7 +847,7 @@ export default function DockLoadWorkspace({
                             <strong>{freight.loadRef}</strong>
                             <span>{freight.handlingLabel}</span>
                           </span>
-                          {deliveryRank && (
+                          {showDeliveryOrderBadges && deliveryRank && (
                             <span
                               className="loaded-freight-order"
                               title={deliveryRank === 1 ? 'Next delivery off trailer' : `Delivery order ${deliveryRank}`}
@@ -773,8 +855,24 @@ export default function DockLoadWorkspace({
                               D{deliveryRank}
                             </span>
                           )}
+                          {rotatable && (
+                            <button
+                              type="button"
+                              className="loaded-freight-rotate"
+                              draggable={false}
+                              title="Rotate freight 90°"
+                              aria-label={`Rotate ${freight.label} 90 degrees`}
+                              onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+                              onClick={(clickEvent) => {
+                                clickEvent.stopPropagation()
+                                rotatePlacedFreight(freightId)
+                              }}
+                            >
+                              ↻ <span>R</span>
+                            </button>
+                          )}
                           <span className="loaded-freight-grip" aria-hidden="true">MOVE</span>
-                        </button>
+                        </div>
                       )
                     })}
                   </div>
@@ -867,8 +965,10 @@ export default function DockLoadWorkspace({
           ].filter(Boolean).join(' ')}
         >
           <header>
-            <span>LOAD PLAN</span>
-            <strong>{evaluation.ready ? 'READY' : 'INCOMPLETE'}</strong>
+            <span>LOAD COMPLETION</span>
+            <strong>
+              {evaluation.plannedExpectedCount} / {evaluation.expectedCount} LOADED
+            </strong>
           </header>
 
           <div className="dock-load-hud-grid">
@@ -900,29 +1000,53 @@ export default function DockLoadWorkspace({
               <span>DELIVERY ACCESS</span>
               <strong>{evaluation.deliveryAccess?.clear ? 'CLEAR' : 'BLOCKED'}</strong>
             </header>
-            <div className="dock-load-delivery-order" aria-label="Trailer unload order">
-              {deliveryOrder.length > 0 ? deliveryOrder.map((stop) => (
-                <span
-                  key={stop.deliveryEventId ?? `${stop.loadRef}:${stop.rank}`}
-                  className={stop.rank === 1 ? 'next' : ''}
-                  title={stop.destination}
-                >
-                  <b>D{stop.rank}</b>
-                  <strong>{stop.loadRef}</strong>
-                </span>
-              )) : (
-                <span className="empty">NO DELIVERY ORDER</span>
-              )}
+            <div className="dock-load-rule-section">
+              <span>UNLOAD ORDER</span>
+              <div className="dock-load-delivery-order" aria-label="Trailer unload order">
+                {deliveryOrder.length > 0 ? deliveryOrder.map((stop) => (
+                  <span
+                    key={stop.deliveryEventId ?? `${stop.loadRef}:${stop.rank}`}
+                    className={stop.rank === 1 ? 'next' : ''}
+                    title={stop.destination}
+                  >
+                    <b>D{stop.rank}</b>
+                    <strong>{stop.loadRef}</strong>
+                  </span>
+                )) : (
+                  <span className="empty">NO DELIVERY ORDER</span>
+                )}
+              </div>
             </div>
-            <small>
-              {evaluation.deliveryAccess?.clear
-                ? deliveryOrder.length > 1
-                  ? 'Earlier deliveries have a clear path to the rear doors.'
-                  : 'Only one delivery is currently onboard; rear-door access is clear.'
-                : evaluation.deliveryAccess?.pairSummaries?.[0]
-                  ? `${evaluation.deliveryAccess.pairSummaries[0].blockedLoadRef} unloads before ${evaluation.deliveryAccess.pairSummaries[0].blockingLoadRef}. Move the earlier load rearward.`
-                  : 'Earlier-delivery freight is buried behind later freight.'}
-            </small>
+
+            {evaluation.deliveryAccess?.clear ? (
+              <div className="dock-load-rule-copy clear">
+                <span>STATUS</span>
+                <strong>
+                  {deliveryOrder.length > 1
+                    ? 'Earlier deliveries have a clear path to the rear doors.'
+                    : 'Single delivery onboard. Rear-door access is clear.'}
+                </strong>
+              </div>
+            ) : (
+              <>
+                <div className="dock-load-rule-copy problem">
+                  <span>PROBLEM</span>
+                  <strong>
+                    {deliveryConflict
+                      ? `${deliveryConflict.blockedLoadRef} is blocked by ${deliveryConflict.blockingLoadRef}.`
+                      : 'Earlier-delivery freight is buried behind later freight.'}
+                  </strong>
+                </div>
+                <div className="dock-load-rule-copy fix">
+                  <span>FIX</span>
+                  <strong>
+                    {deliveryConflict
+                      ? `Move ${deliveryConflict.blockedLoadRef} closer to the rear doors.`
+                      : 'Move the earlier delivery rearward.'}
+                  </strong>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="dock-load-validation">
@@ -955,6 +1079,7 @@ export default function DockLoadWorkspace({
             {invalidDropReason === 'OVERLAP' && 'That space is already occupied.'}
             {invalidDropReason === 'OUT_OF_BOUNDS' && 'That freight does not fit there.'}
             {dragFreightId && 'R rotates the freight in hand. Drag current-pickup cargo back to the manifest to stage it again.'}
+            {!dragFreightId && hoverFreightId && 'Press R or use the rotate control to turn this freight before moving it.'}
           </div>
         </section>
 
