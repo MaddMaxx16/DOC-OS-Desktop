@@ -138,8 +138,8 @@ test('delivery expected freight IDs come from the matching pickup freight units'
   assert.ok(expected.every((item) => item.expectedDestination === 'Harborline Logistics'))
 })
 
-test('a clean rear-accessible delivery unload plan is immediately ready', () => {
-  const { board, expected, facilityOperations } = committedPickupState()
+test('a clean rear-accessible delivery plan is ready when facility protocol is satisfied', () => {
+  const { board, facilityOperations } = committedPickupState()
   const driverDay = {
     driverId: driver.id,
     timeline: [pickup, delivery],
