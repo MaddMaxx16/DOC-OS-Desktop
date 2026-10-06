@@ -1667,7 +1667,7 @@ export default function DeliveryWorkspace({
                 <i>{phase.complete ? '✓' : index + 1}</i>
                 <div>
                   <strong>{phase.label}</strong>
-                  <span>{phase.zoneLabel} · {phase.receivedCount}/{phase.totalCount}</span>
+                  <span>{phase.cargoLabel ?? phase.zoneLabel} · {phase.receivedCount}/{phase.totalCount}</span>
                 </div>
               </article>
             ))}
