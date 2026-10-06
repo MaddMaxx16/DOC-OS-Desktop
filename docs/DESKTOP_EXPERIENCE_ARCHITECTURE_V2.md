@@ -3232,3 +3232,79 @@ This packet does not add:
 - HOS changes.
 
 The next trailer-rule slice after playtest acceptance is weight distribution / balance.
+
+
+---
+
+## V2.7.5.1.1 — Rotation + Rule-Panel Readability
+
+Gameplay review of the accepted Delivery Access rule showed that the rule itself works, but two interaction/presentation problems remain before adding weight balance.
+
+### Rotation must not depend on native drag state
+
+The earlier control expected the player to begin a browser-native drag and then press **R** while holding the mouse button. That is a fragile interaction and is not the primary rotation path going forward.
+
+Placed rotatable freight now supports:
+
+- hover or keyboard focus the freight,
+- press **R**,
+- the freight rotates 90 degrees around its current anchor if the new footprint is geometrically legal.
+
+Rotatable placed freight also exposes a visible **↻ R** control on hover/focus.
+
+The rotate control and hover/focus shortcut both use the same placement legality truth:
+
+- the piece may rotate when the new footprint remains inside the trailer and does not overlap other freight,
+- an invalid in-place rotation is rejected,
+- existing invalid interaction feedback is shown,
+- delivery-access consequences are allowed to update after a geometrically legal rotation rather than preventing the rotation.
+
+Pressing **R** during an active drag may remain supported as an additional fast path, but it is not required.
+
+Square freight does not show a meaningless rotation affordance when a 90-degree turn would produce the same footprint.
+
+### Cargo delivery badges become contextual
+
+D1 / D2 / D3 badges are useful when multiple delivery sequences coexist in the trailer and become visual noise when every item is D1.
+
+Therefore:
+
+- individual onboard freight displays delivery-order badges only when more than one delivery is represented,
+- single-delivery trailers omit redundant D1 cargo badges,
+- the right-side Delivery Access rule card may still show the single unload-order entry.
+
+### Right-side HUD hierarchy
+
+The right-side panel is operational guidance and must be readable at normal desktop viewing distance.
+
+V2.7.5.1.1 raises the text hierarchy and separates concepts:
+
+**LOAD COMPLETION**
+- current pickup loaded count,
+- trailer occupancy,
+- trailer weight,
+- onboard unit count.
+
+**DELIVERY ACCESS**
+- CLEAR / BLOCKED state,
+- readable UNLOAD ORDER,
+- when blocked: a distinct PROBLEM statement,
+- when blocked: a distinct FIX statement,
+- when clear: a readable explanation of why access is acceptable.
+
+A trailer may be fully loaded while Delivery Access is blocked. The UI must represent those as two separate truths rather than calling the loading task itself incomplete.
+
+### Locked behavior
+
+This patch does not change:
+
+- delivery-access lane logic,
+- persistent carried cargo,
+- footprint geometry,
+- weight capacity,
+- rear-door commitment,
+- warehouse loading duration,
+- route timing,
+- handling penalties.
+
+The next trailer-rule slice remains V2.7.5.2 Weight Distribution / Balance.
