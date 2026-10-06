@@ -32,7 +32,7 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.6.7 Warehouse Fidelity
+## Current packet — V2.7.6.8 Dock Continuity & Placement Stability
 
 V2.1 through V2.7.5.4 are accepted and locked.
 V2.7.6 Delivery Operations architecture remains authoritative.
@@ -41,117 +41,96 @@ V2.7.6.3 pointer-owned freight movement remains authoritative.
 V2.7.6.4 Delivery Space Management remains authoritative.
 V2.7.6.5 warehouse physicalization remains authoritative.
 V2.7.6.6 rear handling paths and pointer recovery remain authoritative.
+V2.7.6.7 warehouse contrast, staging freight fidelity, and Freshway wording remain authoritative.
 
-V2.7.6.7 is the active Delivery packet.
+V2.7.6.8 is the active Delivery packet.
 
 ### Purpose
 
-Gameplay review shows the Delivery system is mechanically close to target.
+Gameplay review shows three remaining presentation/stability issues:
 
-This packet makes three tightly scoped corrections:
+1. staged freight can render beneath the painted Temp Staging bays instead of physically occupying them,
+2. already-received freight can visually shift because receiver-floor positions are recalculated as more freight arrives,
+3. the warehouse/trailer relationship still needs a stronger physical dock threshold.
 
-1. raise the receiver-floor brightness/contrast so the left side reads more clearly as an active warehouse gameplay surface,
-2. make Temp Staging freight retain the same physical cargo fidelity and stable scale as trailer freight,
-3. correct Freshway's misleading first-phase wording so its 0/2 requirement clearly describes one FRAGILE and one KEEP UPRIGHT unit rather than implying two fragile pallets.
+This packet fixes only those three issues.
 
-### Warehouse contrast
-
-Do not redesign the V2.7.6.5 warehouse layout.
-
-Keep:
-- one continuous receiving floor,
-- painted zone geometry,
-- current zone positions,
-- current cargo placement,
-- accepted trailer width and shell,
-- accepted right-side SOP panel.
-
-Change only visual legibility:
-- lift the warehouse base luminance,
-- improve floor/header/stencil contrast,
-- make inactive zones readable without turning them into cards,
-- keep active-zone emphasis restrained,
-- preserve DOC OS's dark industrial visual language.
-
-The left side should be lighter than V2.7.6.6 without becoming bright, washed out, or visually detached from the rest of the application.
-
-### Temp Staging freight fidelity
+### Temp Staging occupancy
 
 Temp Staging remains exactly 3 pallet-equivalent positions.
 
-The staging freight must use the same physical freight visual component as trailer freight.
+The painted staging bays and staged freight must occupy the same physical coordinate layer.
 
-The staging layout must not stretch freight to arbitrary fractional row widths.
+Requirements:
+- each bay is fixed to an explicit staging slot,
+- staged freight is explicitly anchored to its occupied slot(s),
+- bay visuals remain underneath freight,
+- staged freight may not fall into an implicit extra grid row,
+- footprint-based capacity remains unchanged,
+- freight fidelity from V2.7.6.7 remains unchanged.
 
-Use a stable pallet-scale visual slot so staged freight preserves:
-- cargo family,
-- pallet/crate/skid/drum appearance,
-- handling markings,
-- label treatment,
-- relative footprint,
-- recognizable physical proportions.
+### Persistent receiver-floor placement
 
-A staged piece should look like the same physical object that was just removed from the trailer.
+Receiver zones remain automatic placement areas, not a second packing puzzle.
 
-No staging-capacity or rehandle-rule changes are allowed.
+Once freight is accepted into a receiver zone:
+- assign its physical warehouse position once,
+- preserve that position for the remainder of the focused Delivery operation,
+- do not recompute settled cargo positions when later freight arrives,
+- new freight must choose from the remaining free zone positions,
+- settled freight may not visually shuffle/repack.
 
-### Freshway Quality Check wording
+Implementation should retain a persistent map keyed by freight ID rather than deriving every warehouse position from the current received-freight array on each render.
 
-Freshway's first receiver phase currently matches:
-- FRAGILE,
-- UPRIGHT / KEEP UPRIGHT.
+### Dock continuity
 
-The gameplay rule is correct, but the label FRAGILE INSPECTION is misleading when the phase count includes keep-upright freight.
+Do not redesign the warehouse or trailer.
 
-Freshway first phase is now:
+Strengthen only the physical connection at the dock:
+- warehouse-side dock door/jamb,
+- dock threshold,
+- dock plate / leveler,
+- dock bumpers,
+- apron termination at the door,
+- a localized rear connector between warehouse and trailer.
 
-**QUALITY CHECK**
+The previous full-height divider should visually recede.
+The physical connector should read near the trailer rear / receiving apron.
 
-Cargo summary:
-
-**FRAGILE + KEEP UPRIGHT**
-
-Destination:
-
-**QUALITY CHECK**
-
-The instruction should explicitly state that fragile and keep-upright freight clear quality check before controlled materials.
-
-This is a wording/clarity correction only.
-Do not change which freight IDs belong to the phase.
-
-Harborline keeps its existing FRAGILE INSPECTION phase because Harborline's inspection phase matches FRAGILE only.
+Temp Staging may shift modestly toward the dock threshold so it reads as dock-apron space, but:
+- staging capacity remains 3,
+- receiver zones remain in their current overall layout,
+- trailer proportions remain unchanged,
+- right HUD remains unchanged.
 
 ### Preserved mechanics
 
 Do not alter:
-- rear handling-path rules,
-- source/destination reachability,
-- pointer recovery behavior,
+- handling-path rules,
+- pointer recovery,
 - trailer repositioning,
-- staging capacity,
-- staging footprint accounting,
-- receiver phase order,
-- phase membership,
+- staging capacity or footprint accounting,
+- receiver SOP order or membership,
+- Freshway QUALITY CHECK wording,
 - rehandle timing,
+- unload sequence,
 - background unload / receiver verification / auto-depart,
-- Pickup trailer visual shell,
-- Delivery trailer visual shell.
+- Pickup/Delivery shared TrailerShell,
+- right-side receiver/SOP hierarchy.
 
 ### Acceptance requirements
 
-V2.7.6.7 requires gameplay confirmation that:
+V2.7.6.8 requires gameplay confirmation that:
 
-1. the receiver floor is noticeably easier to read at normal scale,
-2. the warehouse remains dark/industrial rather than bright,
-3. staging freight looks like the same physical cargo used in the trailer,
-4. staged freight no longer appears stretched or flattened by the staging layout,
-5. Freshway shows QUALITY CHECK instead of FRAGILE INSPECTION,
-6. Freshway's phase summary clearly says FRAGILE + KEEP UPRIGHT,
-7. the Freshway phase count still reflects the actual matching freight,
-8. Harborline wording remains unchanged,
-9. V2.7.6.6 handling-path difficulty remains unchanged,
-10. the accepted trailer and right HUD remain unchanged.
+1. staged freight sits directly inside the painted staging bays,
+2. multi-slot staged freight spans the correct physical bays,
+3. no staged freight renders beneath the target bays,
+4. receiver-floor freight stays in the position where it originally settled,
+5. adding new freight does not shuffle earlier received freight,
+6. the dock door/threshold/leveler reads more physically,
+7. the full-height separator no longer dominates the warehouse/trailer relationship,
+8. Temp Staging visually belongs near the dock apron,
+9. accepted trailer, warehouse freight visuals, handling-path gameplay, and right HUD remain unchanged.
 
 ### Explicit non-goals
 
@@ -166,7 +145,7 @@ Do not add:
 - schedule-send changes,
 - next-event controls.
 
-V2.7.6.7 is a focused warehouse readability, staging-fidelity, and SOP-wording correction packet.
+V2.7.6.8 is a focused placement-stability and dock-continuity pass.
 
 
 ## Verification
