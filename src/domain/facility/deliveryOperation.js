@@ -676,23 +676,34 @@ export function commitDeliveryOperation({
   )
   const deliveredFreight = (trailerState?.freight ?? [])
     .filter((freight) => unloaded.has(freight.id))
-    .map((freight) => ({
-      ...freight,
-      currentLocation: 'RECEIVER',
-      status: 'ACCEPTED',
-      receiverStatus: RECEIVER_STATUS.ACCEPTED,
-      condition: freight.condition ?? 'GOOD',
-      conditionKnown: freight.conditionKnown ?? true,
-      freightHistory: [
-        ...(freight.freightHistory ?? []),
-        {
-          event: 'DELIVERED',
-          facilityId: event.locationId ?? null,
-          time: operationTime,
-          receiverStatus: RECEIVER_STATUS.ACCEPTED,
-        },
-      ],
-    }))
+    .map((freight) => {
+      const rehandled = temporarilyStaged.has(freight.id)
+      return {
+        ...freight,
+        currentLocation: 'RECEIVER',
+        status: 'ACCEPTED',
+        receiverStatus: RECEIVER_STATUS.ACCEPTED,
+        condition: freight.condition ?? 'GOOD',
+        conditionKnown: freight.conditionKnown ?? true,
+        freightHistory: [
+          ...(freight.freightHistory ?? []),
+          ...(rehandled
+            ? [{
+                event: 'TEMP_STAGED',
+                facilityId: event.locationId ?? null,
+                time: operationTime,
+              }]
+            : []),
+          {
+            event: 'DELIVERED',
+            facilityId: event.locationId ?? null,
+            time: operationTime,
+            receiverStatus: RECEIVER_STATUS.ACCEPTED,
+            receivingZoneId: unloadPlan.receivingZoneByFreightId?.[freight.id] ?? null,
+          },
+        ],
+      }
+    })
 
   const duration = deliveryServiceDuration({ event, unloadPlan })
   const unloadingStartMinutes = operationTime
