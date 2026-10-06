@@ -96,56 +96,59 @@ function warehouseFootprintCells({
   }))
 }
 
-function buildWarehouseFreightPlacements({
-  freight = [],
-  rotations = {},
+function findWarehouseFreightPlacement({
+  freight,
+  rotation = 0,
   zoneId,
+  existingPlacements = {},
 } = {}) {
+  if (!freight || !zoneId) return null
+
   const layout = warehouseZoneLayout(zoneId)
   const occupied = new Set()
-  const placements = {}
 
-  for (const unit of freight) {
-    const rotation = rotations[unit.id] ?? 0
-    const bounds = shapeBounds(rotateFreightShape(unit.shape, rotation))
-    const width = Math.min(bounds.width, layout.columns)
-    const height = Math.min(bounds.height, layout.rows)
-    let placement = null
+  for (const placement of Object.values(existingPlacements)) {
+    if (placement?.zoneId !== zoneId) continue
 
-    for (let row = layout.rows - height; row >= 0 && !placement; row -= 1) {
-      for (let column = 0; column <= layout.columns - width; column += 1) {
-        const cells = warehouseFootprintCells({
-          column,
-          row,
-          width,
-          height,
-        })
-        const clear = cells.every((cell) => (
-          !occupied.has(`${cell.column}:${cell.row}`)
-        ))
+    const cells = warehouseFootprintCells({
+      column: placement.column - 1,
+      row: placement.row - 1,
+      width: placement.width,
+      height: placement.height,
+    })
+    for (const cell of cells) {
+      occupied.add(`${cell.column}:${cell.row}`)
+    }
+  }
 
-        if (!clear) continue
+  const bounds = shapeBounds(rotateFreightShape(freight.shape, rotation))
+  const width = Math.min(bounds.width, layout.columns)
+  const height = Math.min(bounds.height, layout.rows)
 
-        placement = {
-          column: column + 1,
-          row: row + 1,
-          width,
-          height,
-        }
-        for (const cell of cells) {
-          occupied.add(`${cell.column}:${cell.row}`)
-        }
-        break
+  for (let row = layout.rows - height; row >= 0; row -= 1) {
+    for (let column = 0; column <= layout.columns - width; column += 1) {
+      const cells = warehouseFootprintCells({
+        column,
+        row,
+        width,
+        height,
+      })
+      const clear = cells.every((cell) => (
+        !occupied.has(`${cell.column}:${cell.row}`)
+      ))
+      if (!clear) continue
+
+      return {
+        zoneId,
+        column: column + 1,
+        row: row + 1,
+        width,
+        height,
       }
     }
-
-    if (placement) placements[unit.id] = placement
   }
 
-  return {
-    ...layout,
-    placements,
-  }
+  return null
 }
 
 function cargoClass(freight) {
@@ -303,6 +306,7 @@ function WarehouseZone({
   currentPhase,
   receivedFreight,
   receivedRotations,
+  warehousePlacementByFreightId,
   pointerOver,
   selected,
   onClick,
@@ -310,11 +314,7 @@ function WarehouseZone({
   const complete = phase.complete
   const current = currentPhase?.id === phase.id
   const locked = !complete && !current
-  const floor = buildWarehouseFreightPlacements({
-    freight: receivedFreight,
-    rotations: receivedRotations,
-    zoneId: phase.zoneId,
-  })
+  const floor = warehouseZoneLayout(phase.zoneId)
 
   return (
     <section
@@ -357,7 +357,7 @@ function WarehouseZone({
             key={freight.id}
             freight={freight}
             rotation={receivedRotations[freight.id] ?? 0}
-            placement={floor.placements[freight.id]}
+            placement={warehousePlacementByFreightId[freight.id]}
           />
         ))}
       </div>
@@ -401,6 +401,7 @@ function StagedFreightPiece({
       ].filter(Boolean).join(' ')}
       style={{
         gridColumn: `${placement.startSlot + 1} / span ${placement.size}`,
+        gridRow: 1,
         '--piece-columns': bounds.width,
         '--piece-rows': bounds.height,
       }}
@@ -553,6 +554,7 @@ export default function DeliveryWorkspace({
   const [stagingPlacements, setStagingPlacements] = useState({})
   const [receivingZoneByFreightId, setReceivingZoneByFreightId] = useState({})
   const [receivedRotations, setReceivedRotations] = useState({})
+  const [warehousePlacementByFreightId, setWarehousePlacementByFreightId] = useState({})
   const [internalRepositionHistory, setInternalRepositionHistory] = useState([])
   const [pointerDrag, setPointerDrag] = useState(null)
   const [returnDrag, setReturnDrag] = useState(null)
@@ -793,6 +795,22 @@ export default function DeliveryWorkspace({
       ?? workingPlacements[freightId]?.rotation
       ?? stagingPlacements[freightId]?.rotation
       ?? 0
+    const warehousePlacement = warehousePlacementByFreightId[freightId]
+      ?? findWarehouseFreightPlacement({
+        freight,
+        rotation: sourceRotation,
+        zoneId,
+        existingPlacements: warehousePlacementByFreightId,
+      })
+
+    if (!warehousePlacement) {
+      setNotice({
+        tone: 'blocked',
+        title: 'RECEIVING FLOOR OCCUPIED',
+        detail: 'The receiver floor could not assign a stable freight position. Try the move again.',
+      })
+      return false
+    }
 
     setUnloadedFreightIds((current) => [...current, freightId])
     setReceivingZoneByFreightId((current) => ({
@@ -803,6 +821,14 @@ export default function DeliveryWorkspace({
       ...current,
       [freightId]: sourceRotation,
     }))
+    setWarehousePlacementByFreightId((current) => (
+      current[freightId]
+        ? current
+        : {
+            ...current,
+            [freightId]: warehousePlacement,
+          }
+    ))
     setWorkingPlacements((current) => {
       const next = { ...current }
       delete next[freightId]
@@ -1417,6 +1443,7 @@ export default function DeliveryWorkspace({
                   currentPhase={currentPhase}
                   receivedFreight={receivedByZone.get(phase.zoneId) ?? []}
                   receivedRotations={receivedRotations}
+                  warehousePlacementByFreightId={warehousePlacementByFreightId}
                   pointerOver={pointerDrag?.overZoneId === phase.zoneId}
                   selected={Boolean(activeFreightId)}
                   onClick={() => handleZoneClick(phase.zoneId)}
@@ -1447,6 +1474,10 @@ export default function DeliveryWorkspace({
                         'delivery-staging-cell',
                         evaluation.staging?.occupied?.[slot] ? 'occupied' : '',
                       ].filter(Boolean).join(' ')}
+                      style={{
+                        gridColumn: slot + 1,
+                        gridRow: 1,
+                      }}
                     >
                       <i /><i /><i /><i />
                     </div>
@@ -1477,6 +1508,21 @@ export default function DeliveryWorkspace({
                 </small>
               </section>
 
+              <div className="delivery-dock-threshold" aria-hidden="true">
+                <div className="delivery-dock-door-frame">
+                  <i className="jamb top" />
+                  <span>DOCK {dockNumberForDelivery(event)}</span>
+                  <i className="jamb bottom" />
+                </div>
+                <div className="delivery-dock-leveler">
+                  <i /><i /><i /><i />
+                  <strong>DOCK PLATE</strong>
+                </div>
+                <div className="delivery-dock-bumpers">
+                  <i /><i />
+                </div>
+              </div>
+
               <div className="delivery-dock-apron" aria-hidden="true">
                 <i /><i /><i /><i />
                 <span>DOCK {dockNumberForDelivery(event)} · RECEIVING APRON</span>
@@ -1485,9 +1531,14 @@ export default function DeliveryWorkspace({
           </section>
 
           <div className="delivery-dock-bridge" aria-hidden="true">
-            <span>DOCK {dockNumberForDelivery(event)}</span>
-            <div><i /><i /><i /></div>
-            <small>REAR DOORS</small>
+            <div className="delivery-dock-bridge-frame">
+              <i className="bumper upper" />
+              <div className="delivery-dock-bridge-plate">
+                <i /><i /><i />
+                <span>LEVELER</span>
+              </div>
+              <i className="bumper lower" />
+            </div>
           </div>
 
           <section className="delivery-shared-trailer-panel">
