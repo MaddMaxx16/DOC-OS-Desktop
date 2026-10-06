@@ -10,6 +10,7 @@ import {
   dockNumberForPickup,
   evaluatePickupLoadPlan,
   evaluateTrailerDeliveryAccess,
+  evaluateTrailerFragileProtection,
   evaluateTrailerWeightBalance,
   facilityOperationKey,
   footprintCellIndexes,
@@ -465,6 +466,106 @@ test('completed heavy loads must be balanced front-to-rear and left-to-right', (
   assert.equal(balancedPlan.weightBalance.leftPercent, 50)
   assert.equal(balancedPlan.weightBalance.rightPercent, 50)
   assert.equal(balancedPlan.ready, true)
+})
+
+test('fragile protection detects edge-adjacent heavy or oversize freight', () => {
+  const board = buildTrailerPuzzleBoard(equipment)
+  const fragile = {
+    id: 'fragile-1',
+    label: 'Crate 01',
+    loadId: 'F-101',
+    loadRef: 'F-101',
+    handlingCode: 'FRAGILE',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }
+  const heavy = {
+    id: 'heavy-1',
+    label: 'Long Skid 02',
+    loadId: 'F-101',
+    loadRef: 'F-101',
+    handlingCode: 'HEAVY',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }
+  const stagedFreight = [fragile, heavy]
+
+  const adjacent = evaluateTrailerFragileProtection({
+    board,
+    stagedFreight,
+    placements: {
+      [fragile.id]: { anchorCell: 0, rotation: 0 },
+      [heavy.id]: { anchorCell: 1, rotation: 0 },
+    },
+  })
+
+  assert.equal(adjacent.active, true)
+  assert.equal(adjacent.clear, false)
+  assert.deepEqual(adjacent.fragileFreightIds, [fragile.id])
+  assert.deepEqual(adjacent.riskFreightIds, [heavy.id])
+  assert.equal(adjacent.conflicts[0].riskHandlingCode, 'HEAVY')
+
+  const separated = evaluateTrailerFragileProtection({
+    board,
+    stagedFreight,
+    placements: {
+      [fragile.id]: { anchorCell: 0, rotation: 0 },
+      [heavy.id]: { anchorCell: 2, rotation: 0 },
+    },
+  })
+
+  assert.equal(separated.clear, true)
+})
+
+test('fragile protection becomes enforceable when the current pickup is complete', () => {
+  const board = buildTrailerPuzzleBoard(equipment)
+  const fragile = {
+    id: 'fragile-1',
+    label: 'Crate 01',
+    loadId: 'F-101',
+    loadRef: 'F-101',
+    handlingCode: 'FRAGILE',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }
+  const oversize = {
+    id: 'oversize-1',
+    label: 'Machinery Crate 02',
+    loadId: 'F-101',
+    loadRef: 'F-101',
+    handlingCode: 'OVERSIZE',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }
+  const stagedFreight = [fragile, oversize]
+  const placements = {
+    [fragile.id]: { anchorCell: 4, rotation: 0 },
+    [oversize.id]: { anchorCell: 5, rotation: 0 },
+  }
+
+  const plan = evaluatePickupLoadPlan({
+    event: {
+      ...event,
+      loadId: 'F-101',
+      loadRef: 'F-101',
+      freight: { pallets: 2, weightLbs: 3000 },
+    },
+    board,
+    stagedFreight,
+    placements,
+    requiredFreightIds: [fragile.id, oversize.id],
+  })
+
+  assert.equal(plan.fragileProtection.enforced, true)
+  assert.equal(plan.fragileProtection.clear, false)
+  assert.equal(plan.ready, false)
+  assert.ok(plan.errors.some((issue) => (
+    issue.code === 'FRAGILE_PROTECTION_CONFLICT'
+  )))
 })
 
 test('committing the rear doors preserves the solved trailer snapshot and starts loading now', () => {
