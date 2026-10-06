@@ -4354,3 +4354,249 @@ Visual acceptance should specifically verify:
 - the warehouse reads as one physical environment,
 - the trailer remains visually dominant enough to read immediately,
 - the right panel stays secondary to the physical workspace.
+
+
+---
+
+## V2.7.6.4 — Delivery Space Management
+
+V2.7.6.3 established two useful directions: freight should be physically manipulated with pointer-owned movement, and the receiver should read as one continuous warehouse environment. Gameplay review still exposed three structural weaknesses:
+
+1. freight lost its physical identity after entering the receiver floor,
+2. Temp Staging acted as an effectively unlimited escape hatch,
+3. Delivery could not use open trailer space to solve access problems.
+
+A fourth visual continuity problem was also identified: the Delivery trailer had drifted away from the proportions of the Pickup trailer.
+
+V2.7.6.4 addresses all four together as one space-management packet.
+
+### Core puzzle
+
+Delivery is now defined as management of three connected physical spaces:
+
+**Trailer Floor → Dock / Temp Staging → Receiver Floor**
+
+The player is not simply deciding which freight to unload. The player decides where blockers should go while maintaining receiver sequence and rear-door access.
+
+Valid actions are:
+
+- unload to the active receiver area,
+- reposition inside the trailer,
+- temporarily stage outside the trailer.
+
+The intended expertise progression is that a strong player uses the trailer's available space intelligently and relies on external staging only when genuinely necessary.
+
+### Exact Pickup trailer continuity
+
+Delivery must not maintain a separately tuned trailer shell.
+
+The Delivery trailer must use the same visual system and proportions as Pickup.
+
+The safest architecture is one shared trailer-shell presentation consumed by both modes.
+
+The shared shell owns:
+- 53' dry-van silhouette,
+- width,
+- wall thickness,
+- nose treatment,
+- rear door frame,
+- floor dimensions,
+- floor-cell scale,
+- relative freight scale,
+- overall body proportions.
+
+Pickup and Delivery may add mode-specific overlays and interactions around this shared shell, but may not independently reshape it.
+
+The result should feel like the same physical trailer traveled from Pickup to Delivery.
+
+### Internal trailer repositioning
+
+Delivery can now rearrange freight inside the trailer.
+
+A trailer-to-trailer move:
+- starts from the current working placement,
+- previews the freight footprint over candidate cells,
+- checks collision and floor legality,
+- commits to the new placement on a valid release,
+- snaps back to the previous placement on an invalid release.
+
+The current Delivery trailer state becomes mutable during the focused interaction.
+
+Rear-door accessibility is recalculated against the working placements after every successful reposition.
+
+This creates a new solution path:
+
+> Move the blocker deeper or sideways inside the trailer rather than automatically removing it to the dock.
+
+Internal repositioning uses Pickup's proven footprint and placement concepts but does not restart Pickup's load-completion rule set.
+
+### Limited Temp Staging
+
+Temp Staging is a physical resource.
+
+Initial staging capacity is **3 pallet-equivalent floor cells**.
+
+Freight consumes staging cells by footprint:
+
+- 1×1 = 1 cell,
+- 1×2 / 2×1 = 2 cells,
+- 2×2 = 4 cells.
+
+A 2×2 unit therefore cannot fit into a three-cell staging area.
+
+This is intentional: some blockers must be solved by trailer repositioning rather than being dumped onto the dock.
+
+The staging area visibly renders its limited positions and occupied cells.
+
+Staging rules:
+- freight must fit in available staging cells,
+- overlap is impossible,
+- full staging rejects another move,
+- staged freight can later move to the trailer or receiver,
+- later-phase same-delivery freight may be staged when it physically blocks the current phase,
+- later-stop freight may be staged when it physically blocks the current delivery,
+- unnecessary staging remains invalid.
+
+### Internal moves versus external rehandles
+
+Two efficiency concepts are stored separately.
+
+**Internal reposition**
+- freight stays on the trailer,
+- changes trailer placement,
+- increments internal reposition history/count.
+
+**External rehandle**
+- freight leaves the trailer for Temp Staging,
+- later returns to the trailer or proceeds to receiver,
+- increments unique rehandled freight count,
+- adds +3 minutes simulated service time per unique freight unit in the current tuning.
+
+A freight unit does not receive repeated external-rehandle penalties merely for being adjusted within Temp Staging.
+
+### Physical freight on receiver floor
+
+Freight retains its physical representation after unloading.
+
+The receiver floor should display recognizable cargo objects:
+- standard wrapped pallet,
+- fragile crate,
+- drum pallet,
+- long skid,
+- wide skid,
+- machinery/heavy crate,
+- other existing freight families.
+
+The facility may auto-place received freight inside the correct receiver area, but placement should use the freight's real footprint or a proportional receiver-floor footprint.
+
+Do not reduce received freight to:
+- chips,
+- list rows,
+- miniature generic rectangles,
+- text badges.
+
+This visual continuity is required so the warehouse appears to fill with the same objects that left the trailer.
+
+### Receiver-floor snapping
+
+Receiver zones are not another player packing puzzle in this packet.
+
+After a valid zone drop:
+1. the facility finds a free visual placement inside that zone,
+2. the freight settles into that location,
+3. the full freight representation remains visible,
+4. later received freight occupies another free location.
+
+If a zone becomes visually crowded, the facility layout may compact intelligently, but physical identity and relative footprint remain visible.
+
+### Pointer paths
+
+The pointer engine must support every physical move path needed by Delivery:
+
+**Trailer → Receiver**
+- validates phase, zone, and rear access.
+
+**Trailer → Trailer**
+- validates floor placement and collisions.
+
+**Trailer → Temp Staging**
+- validates genuine-blocker requirement and staging capacity.
+
+**Temp Staging → Trailer**
+- validates trailer placement and collision.
+
+**Temp Staging → Receiver**
+- validates active receiver phase and zone.
+
+All invalid moves visually return to their previous position.
+
+### Access recalculation
+
+Delivery access always uses the current mutable trailer placements.
+
+This means player actions can change the puzzle dynamically:
+
+- repositioning deeper may clear a delivery lane,
+- repositioning rearward may block another unit,
+- staging removes a blocker from the trailer,
+- unloading removes delivered freight.
+
+The original Pickup snapshot is the starting state, not an immutable Delivery layout.
+
+### Connection to Pickup
+
+This packet strengthens the intended causal loop.
+
+A well-packed Pickup may arrive with:
+- current-phase freight already accessible,
+- little or no internal repositioning,
+- no external staging.
+
+A poor Pickup may require:
+- multiple internal trailer moves,
+- scarce Temp Staging,
+- additional simulated service time.
+
+Receiver SOP information should eventually be visible before Pickup so expert players can intentionally load around the destination requirements. That planning-surface work remains outside V2.7.6.4.
+
+### RPG data seam
+
+Do not expose RPG scoring yet.
+
+Persist enough data for later progression:
+- unloadSequence,
+- internalRepositionCount,
+- reposition history by freight ID,
+- unique staged freight IDs,
+- externalRehandleCount,
+- receiving zones.
+
+Later systems may convert this into:
+- Freight Operations XP,
+- clean-operation ratings,
+- warehouse handling-time bonuses/penalties,
+- tutorial feedback.
+
+### Visual acceptance gate
+
+Automated tests cannot approve V2.7.6.4.
+
+Manual gameplay must confirm:
+- Pickup and Delivery trailer shells visibly match,
+- trailer scale remains stable,
+- freight remains physical in the warehouse,
+- staging visibly has finite capacity,
+- internal trailer repositioning is understandable,
+- pointer previews make valid/invalid trailer placements clear,
+- access changes correctly after reposition,
+- the warehouse remains environmental rather than spreadsheet-like.
+
+### Deferred work
+
+The following remain recorded but outside this packet:
+- normal-workflow SEND SCHEDULE access,
+- Advance to Next Event / Next Operational Moment,
+- damage/refusal/claims,
+- Documents workstation UI,
+- RPG reward presentation,
+- additional receiver SOP complexity.
