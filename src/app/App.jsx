@@ -18,6 +18,7 @@ import { commitBookedFreight } from '../domain/booking/commitBookedFreight.js'
 import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
+import { commitDeliveryOperation } from '../domain/facility/deliveryOperation.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
   advanceSimulationClock,
@@ -65,6 +66,7 @@ export default function App() {
   const liveDriverStates = useMemo(
     () => buildLiveDriverStates(driverDays, simulationClock, {
       pickupFacilityMode: true,
+      deliveryFacilityMode: true,
       facilityOperations,
     }),
     [driverDays, facilityOperations, simulationClock],
@@ -505,7 +507,7 @@ export default function App() {
     if (
       !event
       || event.kind !== 'freight-stop'
-      || event.role !== 'pickup'
+      || !['pickup', 'delivery'].includes(event.role)
       || liveState?.executionPhase !== 'facility-dock-assigned'
       || liveState.currentEventId !== eventId
     ) {
@@ -513,7 +515,7 @@ export default function App() {
     }
 
     setFocusedTask({
-      type: 'dock-load',
+      type: event.role === 'delivery' ? 'dock-delivery' : 'dock-load',
       driverId,
       eventId,
     })
@@ -528,6 +530,31 @@ export default function App() {
       driverId,
       event,
       loadPlan,
+      currentAbsoluteMinutes: simulationAbsoluteMinutes(simulationClock),
+    })
+
+    setFacilityOperations((current) => ({
+      ...current,
+      [operation.key]: operation,
+    }))
+    setFocusedTask(null)
+  }
+
+  const commitDockDelivery = ({
+    driverId,
+    eventId,
+    trailerState,
+    unloadPlan,
+  }) => {
+    const day = driverDays.find((item) => item.driverId === driverId)
+    const event = day?.timeline?.find((item) => item.id === eventId)
+    if (!event || event.kind !== 'freight-stop' || event.role !== 'delivery') return
+
+    const operation = commitDeliveryOperation({
+      driverId,
+      event,
+      trailerState,
+      unloadPlan,
       currentAbsoluteMinutes: simulationAbsoluteMinutes(simulationClock),
     })
 
@@ -571,6 +598,7 @@ export default function App() {
       onConfirmBooking={confirmBooking}
       onOpenDockLoad={openDockLoad}
       onCommitDockLoad={commitDockLoad}
+      onCommitDockDelivery={commitDockDelivery}
       onStartDriverPlanning={startDriverPlanning}
       onStopDriverPlanning={stopDriverPlanning}
       onMoveDriverPlanEvent={moveDriverPlanEvent}
