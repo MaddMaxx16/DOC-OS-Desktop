@@ -363,7 +363,12 @@ export function evaluateDeliveryUnloadPlan({
     rehandleUnits,
     rehandleMoves,
     temporaryStagedFreightIds: [...temporaryIds],
-    unloadedFreightIds: [...unloadedIds],
+    unloadedFreightIds: [
+      ...(unloadedFreightIds == null ? selectedFreightIds : unloadedFreightIds),
+    ],
+    unloadSequence: [
+      ...(unloadedFreightIds == null ? selectedFreightIds : unloadedFreightIds),
+    ],
     selectedFreightIds: [...unloadedIds],
   }
 }
@@ -491,6 +496,7 @@ export function commitDeliveryOperation({
     receiverVerificationCompleteMinutes,
     unloadPlan: {
       unloadedFreightIds: [...unloaded],
+      unloadSequence: [...(unloadPlan.unloadSequence ?? [...unloaded])],
       temporaryStagedFreightIds: [...(unloadPlan.temporaryStagedFreightIds ?? [])],
       rehandleUnits: unloadPlan.rehandleUnits ?? 0,
       rehandleMoves: unloadPlan.rehandleMoves ?? 0,
