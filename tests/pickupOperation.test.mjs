@@ -11,6 +11,7 @@ import {
   evaluatePickupLoadPlan,
   evaluateTrailerDeliveryAccess,
   evaluateTrailerFragileProtection,
+  evaluateTrailerHazmatSegregation,
   evaluateTrailerWeightBalance,
   facilityOperationKey,
   footprintCellIndexes,
@@ -74,7 +75,11 @@ test('staged freight uses realistic rectangular footprints and readable handling
   assert.ok(expected.every((item) => item.handlingLabel))
   assert.ok(expected.every((item) => item.cargoType))
   assert.ok(expected.some((item) => item.handlingLabel === 'FRAGILE'))
-  assert.ok(expected.some((item) => item.handlingLabel === 'HAZMAT'))
+  assert.ok(expected.some((item) => item.handlingCode === 'HAZMAT'))
+  const hazmat = expected.find((item) => item.handlingCode === 'HAZMAT')
+  assert.ok(hazmat.hazmatClassCode)
+  assert.ok(hazmat.hazmatClassLabel)
+  assert.match(hazmat.handlingLabel, /^HAZMAT /)
   assert.ok(expected.some((item) => item.handlingLabel === 'HEAVY'))
   assert.ok(expected.some((item) => item.shape.length > 1))
   assert.ok(expected.every((item) => item.shapeId !== 'l-overhang'))
@@ -565,6 +570,145 @@ test('fragile protection becomes enforceable when the current pickup is complete
   assert.equal(plan.ready, false)
   assert.ok(plan.errors.some((issue) => (
     issue.code === 'FRAGILE_PROTECTION_CONFLICT'
+  )))
+})
+
+test('tutorial hazmat classes are deterministic by load and visibly marked', () => {
+  const first = buildTutorialStagedFreight({
+    ...event,
+    id: 'M-101:pickup',
+    loadId: 'M-101',
+    loadRef: 'M-101',
+    freight: { pallets: 6, weightLbs: 9000 },
+  }).find((item) => item.handlingCode === 'HAZMAT')
+
+  const second = buildTutorialStagedFreight({
+    ...event,
+    id: 'M-202:pickup',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    freight: { pallets: 6, weightLbs: 9000 },
+  }).find((item) => item.handlingCode === 'HAZMAT')
+
+  assert.ok(first)
+  assert.ok(second)
+  assert.notEqual(first.hazmatClassCode, second.hazmatClassCode)
+  assert.match(first.handlingLabel, /^HAZMAT /)
+  assert.match(second.handlingLabel, /^HAZMAT /)
+})
+
+test('incompatible tutorial hazmat classes require floor separation', () => {
+  const board = buildTrailerPuzzleBoard(equipment)
+  const class3 = {
+    id: 'hazmat-3',
+    label: 'Drum Pallet 01',
+    loadId: 'HZ-3',
+    loadRef: 'HZ-3',
+    handlingCode: 'HAZMAT',
+    handlingLabel: 'HAZMAT 3',
+    hazmatClassCode: '3',
+    hazmatClassLabel: 'FLAMMABLE LIQUID',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }
+  const class51 = {
+    id: 'hazmat-51',
+    label: 'Drum Pallet 02',
+    loadId: 'HZ-51',
+    loadRef: 'HZ-51',
+    handlingCode: 'HAZMAT',
+    handlingLabel: 'HAZMAT 5.1',
+    hazmatClassCode: '5.1',
+    hazmatClassLabel: 'OXIDIZER',
+    weightLbs: 1500,
+    expected: true,
+    shape: [[0, 0]],
+  }
+  const stagedFreight = [class3, class51]
+
+  const adjacent = evaluateTrailerHazmatSegregation({
+    board,
+    stagedFreight,
+    placements: {
+      [class3.id]: { anchorCell: 0, rotation: 0 },
+      [class51.id]: { anchorCell: 1, rotation: 0 },
+    },
+  })
+
+  assert.equal(adjacent.active, true)
+  assert.equal(adjacent.clear, false)
+  assert.deepEqual(
+    new Set(adjacent.conflictFreightIds),
+    new Set([class3.id, class51.id]),
+  )
+
+  const separated = evaluateTrailerHazmatSegregation({
+    board,
+    stagedFreight,
+    placements: {
+      [class3.id]: { anchorCell: 0, rotation: 0 },
+      [class51.id]: { anchorCell: 2, rotation: 0 },
+    },
+  })
+
+  assert.equal(separated.active, true)
+  assert.equal(separated.clear, true)
+})
+
+test('hazmat segregation becomes enforceable after the pickup is complete', () => {
+  const board = buildTrailerPuzzleBoard(equipment)
+  const stagedFreight = [
+    {
+      id: 'hazmat-3',
+      label: 'Drum Pallet 01',
+      loadId: 'HZ',
+      loadRef: 'HZ',
+      handlingCode: 'HAZMAT',
+      handlingLabel: 'HAZMAT 3',
+      hazmatClassCode: '3',
+      hazmatClassLabel: 'FLAMMABLE LIQUID',
+      weightLbs: 1500,
+      expected: true,
+      shape: [[0, 0]],
+    },
+    {
+      id: 'hazmat-51',
+      label: 'Drum Pallet 02',
+      loadId: 'HZ',
+      loadRef: 'HZ',
+      handlingCode: 'HAZMAT',
+      handlingLabel: 'HAZMAT 5.1',
+      hazmatClassCode: '5.1',
+      hazmatClassLabel: 'OXIDIZER',
+      weightLbs: 1500,
+      expected: true,
+      shape: [[0, 0]],
+    },
+  ]
+  const placements = {
+    'hazmat-3': { anchorCell: 8, rotation: 0 },
+    'hazmat-51': { anchorCell: 9, rotation: 0 },
+  }
+
+  const plan = evaluatePickupLoadPlan({
+    event: {
+      ...event,
+      loadId: 'HZ',
+      loadRef: 'HZ',
+      freight: { pallets: 2, weightLbs: 3000 },
+    },
+    board,
+    stagedFreight,
+    placements,
+    requiredFreightIds: stagedFreight.map((item) => item.id),
+  })
+
+  assert.equal(plan.hazmatSegregation.enforced, true)
+  assert.equal(plan.hazmatSegregation.clear, false)
+  assert.equal(plan.ready, false)
+  assert.ok(plan.errors.some((issue) => (
+    issue.code === 'HAZMAT_SEGREGATION_CONFLICT'
   )))
 })
 
