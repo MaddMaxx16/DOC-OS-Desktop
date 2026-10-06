@@ -4237,3 +4237,120 @@ Confirm Handoff unlocks only after:
 The existing V2.7.6 background sequence remains unchanged:
 
 **Confirm Handoff → UNLOADING → RECEIVER CHECK → routine automatic departure**
+
+
+---
+
+## V2.7.6.3 — Pointer Freight Handling + Warehouse Floor
+
+Gameplay review of V2.7.6.2 confirmed that the delivery decision model was moving in the right direction, but two interaction problems remained:
+
+1. native browser drag did not reliably feel like grabbing and moving freight,
+2. the facility floor still visually read as a dashboard because the receiving areas were presented as large rectangular cells.
+
+V2.7.6.3 keeps the V2.7.6.2 receiving logic and replaces those two presentation layers.
+
+### Pointer-owned freight movement
+
+DOC OS now owns freight movement directly with pointer events.
+
+The delivery workspace no longer relies on browser HTML drag/drop for its main interaction.
+
+When the player presses a freight unit:
+
+- the freight lifts from its origin,
+- the original unit dims in place,
+- a floating freight representation follows the pointer,
+- the floor area under the cursor is detected continuously,
+- eligible facility areas react beneath the carried freight.
+
+On release:
+
+- the existing delivery rule engine evaluates the destination,
+- a valid move settles the freight into that facility area,
+- an invalid move returns the freight to its original position.
+
+The visual return is intentionally immediate and physical so an invalid action feels like a rejected warehouse move rather than a form validation error.
+
+### Click fallback
+
+Click-selection remains available:
+
+1. click freight,
+2. click the intended facility area.
+
+This is a fallback/accessibility path, not the primary visual interaction.
+
+### Continuous warehouse environment
+
+The receiving side is one room rather than a set of cards.
+
+The warehouse floor now uses:
+
+- continuous concrete-style floor texture,
+- painted operating boundaries,
+- aisle markings,
+- dock apron markings,
+- hazard-pattern controlled area,
+- forklift traffic lane cues,
+- inspection station cues,
+- general pallet-receiving markings.
+
+The mechanical zones still exist in the DOM for hit testing, but they are presented as locations in the environment rather than dashboard panels.
+
+### Floor layout
+
+The first warehouse layout places:
+
+- **Controlled Receiving** as a marked controlled-material floor area,
+- **Forklift Lane** as a traffic/handling area,
+- **Inspection** as a smaller check station,
+- **General Receiving** as the largest pallet staging area,
+- **Temp Staging** along the dock apron.
+
+The right-side Facility SOP HUD remains the authoritative text explanation of the active receiver phase.
+
+### Trailer prominence
+
+The trailer remains a full physical object and receives more of the scene width.
+
+The dock connection is reduced to a narrow physical bridge between the rear doors and warehouse apron.
+
+The visual relationship should read as:
+
+**warehouse floor ← dock bridge ← open trailer**
+
+rather than:
+
+**UI column | separator | UI column**
+
+### Rule preservation
+
+No delivery mechanics change in V2.7.6.3.
+
+The following V2.7.6.2 rules remain authoritative:
+
+- receiver-specific phase order,
+- correct-zone validation,
+- physical rear-door accessibility,
+- later-phase and later-stop temporary rehandles,
+- +3 minutes per rehandled unit,
+- persistent unload sequence,
+- receiving-zone history,
+- trailerAfter persistence,
+- Confirm Handoff → background unloading → receiver check → auto-depart.
+
+### Interaction goal
+
+The feel target is:
+
+> When the player grabs a freight unit, it should feel like they grabbed something out of the trailer and carried it onto a warehouse floor.
+
+Visual acceptance should specifically verify:
+
+- freight follows the pointer smoothly,
+- active floor areas react under the carried freight,
+- invalid release visibly returns to origin,
+- the warehouse reads as one physical environment,
+- the trailer remains visually dominant enough to read immediately,
+- the right panel stays secondary to the physical workspace.
