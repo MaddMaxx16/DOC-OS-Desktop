@@ -556,7 +556,7 @@ test('V2.7.5.0.3 uses true square pallet slots and physical cargo boxes', async 
   assert.match(facility, /id: 'standard', cells: Object\.freeze\(\[\[0, 0\]\]\)/)
   assert.match(puzzle, /pallet positions/)
   assert.match(puzzle, /loaded-freight-piece/)
-  assert.match(puzzle, /FLOOR SLOTS/)
+  assert.match(puzzle, /FLOOR POSITIONS/)
   assert.match(css, /--slot-size:/)
   assert.match(css, /grid-template-columns: repeat\(var\(--board-columns\), var\(--slot-size\)\)/)
   assert.match(css, /grid-template-rows: repeat\(var\(--board-rows\), var\(--slot-size\)\)/)
@@ -645,7 +645,7 @@ test('V2.7.5.0 inserts playable Dock & Load planning between dock assignment and
 
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /TRAILER LOAD PLAN/)
-  assert.match(puzzle, /BOOKED LOAD/)
+  assert.match(puzzle, /LOAD SUMMARY/)
   assert.match(puzzle, /LOAD PLAN/)
   assert.match(puzzle, /Match the load number/)
   assert.match(puzzle, /draggable=\{!planned\}/)
