@@ -373,9 +373,37 @@ export function commitDeliveryOperation({
   }
 
   const selected = new Set(unloadPlan.selectedFreightIds ?? [])
+  const temporarilyStaged = new Set(unloadPlan.temporaryStagedFreightIds ?? [])
+  const operationTime = Number(currentAbsoluteMinutes ?? 0)
   const remainingFreight = (trailerState?.freight ?? [])
     .filter((freight) => !selected.has(freight.id))
-    .map((freight) => ({ ...freight, carried: true }))
+    .map((freight) => {
+      const rehandled = temporarilyStaged.has(freight.id)
+      return {
+        ...freight,
+        carried: true,
+        currentLocation: 'TRAILER',
+        status: freight.status === 'REFUSED' ? 'REFUSED' : 'IN_TRANSIT',
+        freightHistory: rehandled
+          ? [
+              ...(freight.freightHistory ?? []),
+              {
+                event: 'TEMP_STAGED',
+                facilityId: event.locationId ?? null,
+                time: operationTime,
+              },
+              {
+                event: 'RELOADED',
+                facilityId: event.locationId ?? null,
+                time: operationTime,
+                trailerPosition: trailerState?.placements?.[freight.id]
+                  ? { ...trailerState.placements[freight.id] }
+                  : null,
+              },
+            ]
+          : [...(freight.freightHistory ?? [])],
+      }
+    })
   const remainingPlacements = Object.fromEntries(
     Object.entries(trailerState?.placements ?? {})
       .filter(([freightId]) => !selected.has(freightId))
@@ -388,10 +416,21 @@ export function commitDeliveryOperation({
       currentLocation: 'RECEIVER',
       status: 'ACCEPTED',
       receiverStatus: RECEIVER_STATUS.ACCEPTED,
+      condition: freight.condition ?? 'GOOD',
+      conditionKnown: freight.conditionKnown ?? true,
+      freightHistory: [
+        ...(freight.freightHistory ?? []),
+        {
+          event: 'DELIVERED',
+          facilityId: event.locationId ?? null,
+          time: operationTime,
+          receiverStatus: RECEIVER_STATUS.ACCEPTED,
+        },
+      ],
     }))
 
   const duration = deliveryServiceDuration({ event, unloadPlan })
-  const unloadingStartMinutes = Number(currentAbsoluteMinutes ?? 0)
+  const unloadingStartMinutes = operationTime
   const unloadingCompleteMinutes = unloadingStartMinutes + duration.unloadMinutes
   const receiverVerificationCompleteMinutes = unloadingStartMinutes + duration.totalMinutes
 
