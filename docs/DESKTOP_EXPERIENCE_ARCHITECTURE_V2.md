@@ -3308,3 +3308,105 @@ This patch does not change:
 - handling penalties.
 
 The next trailer-rule slice remains V2.7.5.2 Weight Distribution / Balance.
+
+
+---
+
+## V2.7.5.1.2 — Right Panel Hierarchy Polish
+
+Gameplay screenshots after the rotation/readability pass confirmed that text size was no longer the primary problem. The remaining issue was structural: the right panel still behaved like several independent status/debug boxes competing for vertical space.
+
+At partial loads, critical warnings such as REQUIRED FREIGHT NOT PLANNED could collapse into a thin strip. At completed loads, the same panel could leave large dead areas and repeat information already visible elsewhere.
+
+V2.7.5.1.2 reorganizes the right-side panel without changing trailer-rule behavior.
+
+### Load Summary
+
+The first section owns only the current load identity and route:
+
+- load number,
+- pickup,
+- destination,
+- expected units and weight,
+- freight already onboard from earlier loads.
+
+Driver identity is already visible in the focused workspace title. Trailer identity/capacity is already visible in the trailer heading. Those duplicate rows are removed from this panel.
+
+### Load Completion
+
+Current-pickup progress becomes a dedicated section:
+
+**LOAD COMPLETION — X / Y LOADED**
+
+A simple progress bar reinforces the count.
+
+This section is the single source of truth for how much of the current pickup has been loaded. The old duplicate THIS PICKUP status tile is removed.
+
+### Trailer Status
+
+Trailer Status owns total physical occupancy:
+
+- floor positions used / available,
+- current trailer weight / trailer limit,
+- total onboard units.
+
+These values describe the whole trailer, including carried freight and current-pickup freight.
+
+### Trailer Rules
+
+Trailer Rules is a dedicated section intended to scale as future rules are added.
+
+Delivery Access remains the first rule card and retains:
+
+- CLEAR / BLOCKED state,
+- unload order,
+- STATUS when clear,
+- PROBLEM and FIX when blocked,
+- existing readiness gating.
+
+Future Weight Distribution / Balance should be added as another rule card in this section rather than inventing a new panel hierarchy.
+
+### Required Action
+
+Critical action guidance receives guaranteed readable space.
+
+Examples:
+
+- “5 M-202 units still need to be loaded.”
+- geometry/overlap/out-of-bounds correction,
+- wrong-load correction,
+- overweight correction,
+- “Fix Delivery Access.”
+
+The panel may scroll when necessary. Critical actions must never be compressed into a narrow unreadable strip merely to keep all sections visible at once.
+
+When the entire load plan is valid, Required Action becomes:
+
+**READY TO CLOSE**
+
+with a compact confirmation that booked freight is loaded and current trailer rules are satisfied.
+
+This replaces the redundant standalone LOAD PLAN READY card.
+
+### Focused Mode duplication removed
+
+The right-panel Focused Mode footer is removed.
+
+Focused Mode and gameplay pause state remain visible in the top bar and focused workspace heading, so repeating the same information at the bottom of the operational panel adds noise without improving comprehension.
+
+### Locked behavior
+
+This packet does not change:
+
+- freight geometry,
+- drag/drop,
+- rotation,
+- persistent cargo,
+- delivery-access calculation,
+- trailer weight capacity,
+- rear-door commit,
+- loading duration,
+- route timing,
+- handling penalties.
+
+The next planned trailer-rule slice remains V2.7.5.2 Weight Distribution / Balance.
