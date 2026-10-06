@@ -6,9 +6,11 @@ import {
   commitPickupOperation,
 } from '../src/domain/facility/pickupOperation.js'
 import {
+  buildDeliveryReceivingProtocol,
   buildTrailerStateForDelivery,
   commitDeliveryOperation,
   deliveryOperationPhase,
+  evaluateDeliveryReceivingProtocol,
   evaluateDeliveryUnloadAccess,
   evaluateDeliveryUnloadPlan,
   expectedFreightForDelivery,
@@ -46,6 +48,22 @@ const delivery = {
   locationLabel: 'Harborline Logistics',
   freight: { pallets: 3, weightLbs: 4500 },
   serviceMinutes: 15,
+}
+
+function protocolPlan(event, freight) {
+  const protocol = buildDeliveryReceivingProtocol({ event, freight })
+  const unloadedFreightIds = protocol.phases.flatMap((phase) => phase.freightIds)
+  const receivingZoneByFreightId = Object.fromEntries(
+    protocol.phases.flatMap((phase) => (
+      phase.freightIds.map((freightId) => [freightId, phase.zoneId])
+    )),
+  )
+
+  return {
+    protocol,
+    unloadedFreightIds,
+    receivingZoneByFreightId,
+  }
 }
 
 function committedPickupState({
@@ -139,7 +157,7 @@ test('a clean rear-accessible delivery unload plan is immediately ready', () => 
     event: delivery,
     freight: trailer.freight,
     placements: trailer.placements,
-    unloadedFreightIds: expected.map((item) => item.id),
+    ...protocolPlan(delivery, trailer.freight),
   })
 
   assert.equal(plan.ready, true)
@@ -264,7 +282,7 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
     event: delivery,
     freight,
     placements,
-    unloadedFreightIds: expected.map((item) => item.id),
+    ...protocolPlan(delivery, freight),
     temporaryStagedFreightIds: [later.id],
   })
 
@@ -288,7 +306,92 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
   assert.equal(operation.receiverResults.length, expected.length)
   assert.ok(operation.receiverResults.every((result) => result.status === 'ACCEPTED'))
   assert.equal(operation.shortagePieces, 0)
-  assert.deepEqual(operation.unloadPlan.unloadSequence, expected.map((item) => item.id))
+  assert.deepEqual(
+    operation.unloadPlan.unloadSequence,
+    protocolPlan(delivery, freight).unloadedFreightIds,
+  )
+})
+
+test('Harborline receiving SOP creates handling phases from the actual freight', () => {
+  const event8 = {
+    ...delivery,
+    freight: { pallets: 8, weightLbs: 12000 },
+  }
+  const pickup8 = {
+    ...pickup,
+    freight: { pallets: 8, weightLbs: 12000 },
+  }
+  const freight = buildTutorialStagedFreight(pickup8)
+    .filter((item) => item.expected)
+  const protocol = buildDeliveryReceivingProtocol({
+    event: event8,
+    freight,
+  })
+
+  assert.equal(protocol.label, 'HARBORLINE RECEIVING SOP')
+  assert.deepEqual(
+    protocol.phases.map((phase) => phase.id),
+    ['controlled', 'forklift', 'inspection', 'general'],
+  )
+  assert.ok(protocol.phases[0].freightIds.some((id) => (
+    freight.find((item) => item.id === id)?.handlingCode === 'HAZMAT'
+  )))
+  assert.ok(protocol.phases[1].freightIds.every((id) => (
+    ['HEAVY', 'OVERSIZE'].includes(
+      freight.find((item) => item.id === id)?.handlingCode,
+    )
+  )))
+})
+
+test('facility receiving protocol rejects later phases and wrong receiving zones', () => {
+  const event8 = {
+    ...delivery,
+    freight: { pallets: 8, weightLbs: 12000 },
+  }
+  const pickup8 = {
+    ...pickup,
+    freight: { pallets: 8, weightLbs: 12000 },
+  }
+  const freight = buildTutorialStagedFreight(pickup8)
+    .filter((item) => item.expected)
+  const protocol = buildDeliveryReceivingProtocol({
+    event: event8,
+    freight,
+  })
+  const controlledId = protocol.phases[0].freightIds[0]
+  const generalId = protocol.phases.at(-1).freightIds[0]
+
+  const outOfOrder = evaluateDeliveryReceivingProtocol({
+    event: event8,
+    freight,
+    unloadedFreightIds: [generalId],
+    receivingZoneByFreightId: {
+      [generalId]: 'general',
+    },
+  })
+  assert.equal(outOfOrder.sequenceViolations.length, 1)
+
+  const wrongZone = evaluateDeliveryReceivingProtocol({
+    event: event8,
+    freight,
+    unloadedFreightIds: [controlledId],
+    receivingZoneByFreightId: {
+      [controlledId]: 'general',
+    },
+  })
+  assert.equal(wrongZone.zoneViolations.length, 1)
+
+  const correct = evaluateDeliveryReceivingProtocol({
+    event: event8,
+    freight,
+    unloadedFreightIds: [controlledId],
+    receivingZoneByFreightId: {
+      [controlledId]: 'controlled',
+    },
+  })
+  assert.equal(correct.sequenceViolations.length, 0)
+  assert.equal(correct.zoneViolations.length, 0)
+  assert.equal(correct.currentPhase.id, 'forklift')
 })
 
 test('delivery operation transitions from unloading to receiver verification to complete', () => {
@@ -309,7 +412,7 @@ test('delivery operation transitions from unloading to receiver verification to 
     event: delivery,
     freight: trailer.freight,
     placements: trailer.placements,
-    unloadedFreightIds: expected.map((item) => item.id),
+    ...protocolPlan(delivery, trailer.freight),
   })
   const operation = commitDeliveryOperation({
     driverId: driver.id,
