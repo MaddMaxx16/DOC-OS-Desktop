@@ -19,6 +19,11 @@ import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
 import { commitDeliveryOperation } from '../domain/facility/deliveryOperation.js'
+import {
+  advanceDeliveryDocuments,
+  createDeliveryPodRecord,
+  deliveryPodId,
+} from '../domain/documents/deliveryPod.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
   advanceSimulationClock,
@@ -51,6 +56,7 @@ export default function App() {
   const [operationalDriverPlans, setOperationalDriverPlans] = useState(() => ({ ...seedDriverPlans }))
   const [bookingRecords, setBookingRecords] = useState({})
   const [facilityOperations, setFacilityOperations] = useState({})
+  const [documentRecords, setDocumentRecords] = useState({})
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
   const [planningFeedback, setPlanningFeedback] = useState(null)
@@ -81,6 +87,14 @@ export default function App() {
 
     return () => clearInterval(timer)
   }, [focusedTask, simulationClock.mode])
+
+  useEffect(() => {
+    setDocumentRecords((current) => advanceDeliveryDocuments(
+      current,
+      simulationAbsoluteMinutes(simulationClock),
+    ))
+  }, [simulationClock])
+
 
   const setSimulationClockMode = (mode) => {
     setSimulationClock((current) => setSimulationMode(current, mode))
@@ -557,10 +571,24 @@ export default function App() {
       unloadPlan,
       currentAbsoluteMinutes: simulationAbsoluteMinutes(simulationClock),
     })
+    const podDocumentId = deliveryPodId(event.id)
+    const committedOperation = {
+      ...operation,
+      podDocumentId,
+    }
+    const podRecord = createDeliveryPodRecord({
+      driverId,
+      event,
+      deliveryOperation: committedOperation,
+    })
 
     setFacilityOperations((current) => ({
       ...current,
-      [operation.key]: operation,
+      [committedOperation.key]: committedOperation,
+    }))
+    setDocumentRecords((current) => ({
+      ...current,
+      [podRecord.id]: podRecord,
     }))
     setFocusedTask(null)
   }
@@ -574,6 +602,7 @@ export default function App() {
       locations={locations}
       bookingRecords={bookingRecords}
       facilityOperations={facilityOperations}
+      documentRecords={documentRecords}
       selection={selection}
       activeApp={activeApp}
       focusedTask={focusedTask}
