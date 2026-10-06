@@ -178,15 +178,35 @@ export function evaluateDeliveryUnloadAccess({
   placements = {},
   deliveryEvent,
   temporaryStagedFreightIds = [],
+  unloadedFreightIds = [],
 } = {}) {
-  const temporary = new Set(temporaryStagedFreightIds)
+  const excluded = new Set([
+    ...temporaryStagedFreightIds,
+    ...unloadedFreightIds,
+  ])
   const active = placedFreightEntries({
     board,
     freight,
     placements,
-    excludedFreightIds: temporary,
+    excludedFreightIds: excluded,
   })
   const currentLoad = active.filter((item) => sameLoad(item.freight, deliveryEvent))
+  const immediateBlockerMap = new Map()
+  const currentlyAccessibleFreightIds = []
+  const currentlyBlockedFreightIds = []
+
+  for (const target of currentLoad) {
+    const blockers = freightBlockedByRearCargo(target, active)
+    immediateBlockerMap.set(target.freight.id, blockers)
+    if (blockers.length > 0) currentlyBlockedFreightIds.push(target.freight.id)
+    else currentlyAccessibleFreightIds.push(target.freight.id)
+  }
+
+  const immediateBlockingFreightIds = [...new Set(
+    currentlyBlockedFreightIds.flatMap((freightId) => (
+      immediateBlockerMap.get(freightId) ?? []
+    )),
+  )]
   const remaining = new Map(currentLoad.map((item) => [item.freight.id, item]))
   const workingActive = new Map(active.map((item) => [item.freight.id, item]))
   const unloadOrder = []
@@ -231,6 +251,15 @@ export function evaluateDeliveryUnloadAccess({
         blockerMap.get(freightId) ?? [],
       ]),
     ),
+    currentlyAccessibleFreightIds,
+    currentlyBlockedFreightIds,
+    immediateBlockingFreightIds,
+    immediateBlockerMap: Object.fromEntries(
+      currentLoad.map((item) => [
+        item.freight.id,
+        immediateBlockerMap.get(item.freight.id) ?? [],
+      ]),
+    ),
   }
 }
 
@@ -240,6 +269,7 @@ export function evaluateDeliveryUnloadPlan({
   event,
   freight = [],
   placements = {},
+  unloadedFreightIds = null,
   selectedFreightIds = [],
   temporaryStagedFreightIds = [],
 } = {}) {
@@ -247,16 +277,20 @@ export function evaluateDeliveryUnloadPlan({
   const expectedIds = new Set(expectedFreight.map((item) => item.id))
   const actualForStop = freight.filter((item) => sameLoad(item, event))
   const actualIds = new Set(actualForStop.map((item) => item.id))
-  const selectedIds = new Set(selectedFreightIds)
+  const unloadedIds = new Set(
+    unloadedFreightIds == null
+      ? selectedFreightIds
+      : unloadedFreightIds,
+  )
   const temporaryIds = new Set(temporaryStagedFreightIds)
 
   const shortageFreight = expectedFreight.filter((item) => !actualIds.has(item.id))
   const unexpectedFreight = freight.filter((item) => (
     sameLoad(item, event) && !expectedIds.has(item.id)
   ))
-  const missingSelection = actualForStop.filter((item) => !selectedIds.has(item.id))
-  const wrongSelection = freight.filter((item) => (
-    selectedIds.has(item.id) && !sameLoad(item, event)
+  const remainingToUnload = actualForStop.filter((item) => !unloadedIds.has(item.id))
+  const wrongUnload = freight.filter((item) => (
+    unloadedIds.has(item.id) && !sameLoad(item, event)
   ))
 
   const access = evaluateDeliveryUnloadAccess({
@@ -265,6 +299,7 @@ export function evaluateDeliveryUnloadPlan({
     placements,
     deliveryEvent: event,
     temporaryStagedFreightIds,
+    unloadedFreightIds: [...unloadedIds],
   })
 
   const illegalTemporaryStage = freight.filter((item) => (
@@ -288,17 +323,17 @@ export function evaluateDeliveryUnloadPlan({
     })
   }
 
-  if (missingSelection.length > 0) {
+  if (remainingToUnload.length > 0) {
     errors.push({
-      code: 'DELIVERY_FREIGHT_NOT_SELECTED',
-      message: `${missingSelection.length} delivery unit${missingSelection.length === 1 ? '' : 's'} still need to be selected for unload.`,
+      code: 'DELIVERY_FREIGHT_REMAINING',
+      message: `${remainingToUnload.length} delivery unit${remainingToUnload.length === 1 ? '' : 's'} still need to come through the rear doors.`,
     })
   }
 
-  if (wrongSelection.length > 0) {
+  if (wrongUnload.length > 0) {
     errors.push({
       code: 'WRONG_DELIVERY_FREIGHT',
-      message: `${wrongSelection.length} selected unit${wrongSelection.length === 1 ? '' : 's'} belong to another delivery.`,
+      message: `${wrongUnload.length} unloaded unit${wrongUnload.length === 1 ? '' : 's'} belong to another delivery.`,
     })
   }
 
@@ -306,14 +341,6 @@ export function evaluateDeliveryUnloadPlan({
     errors.push({
       code: 'DELIVERY_FREIGHT_TEMP_STAGED',
       message: 'Current-stop freight cannot be marked as temporary staging.',
-    })
-  }
-
-  const selectedBlocked = access.blockedFreightIds.filter((id) => selectedIds.has(id))
-  if (selectedBlocked.length > 0) {
-    errors.push({
-      code: 'DELIVERY_ACCESS_BLOCKED',
-      message: `${selectedBlocked.length} selected delivery unit${selectedBlocked.length === 1 ? ' is' : 's are'} blocked by freight closer to the rear doors.`,
     })
   }
 
@@ -328,14 +355,16 @@ export function evaluateDeliveryUnloadPlan({
     expectedCount: expectedFreight.length,
     actualForStop,
     actualCount: actualForStop.length,
-    selectedCount: actualForStop.filter((item) => selectedIds.has(item.id)).length,
+    unloadedCount: actualForStop.filter((item) => unloadedIds.has(item.id)).length,
+    selectedCount: actualForStop.filter((item) => unloadedIds.has(item.id)).length,
     shortageFreight,
     unexpectedFreight,
     access,
     rehandleUnits,
     rehandleMoves,
     temporaryStagedFreightIds: [...temporaryIds],
-    selectedFreightIds: [...selectedIds],
+    unloadedFreightIds: [...unloadedIds],
+    selectedFreightIds: [...unloadedIds],
   }
 }
 
@@ -372,11 +401,15 @@ export function commitDeliveryOperation({
     throw new Error('Delivery unload plan must be ready before commit.')
   }
 
-  const selected = new Set(unloadPlan.selectedFreightIds ?? [])
+  const unloaded = new Set(
+    unloadPlan.unloadedFreightIds
+      ?? unloadPlan.selectedFreightIds
+      ?? [],
+  )
   const temporarilyStaged = new Set(unloadPlan.temporaryStagedFreightIds ?? [])
   const operationTime = Number(currentAbsoluteMinutes ?? 0)
   const remainingFreight = (trailerState?.freight ?? [])
-    .filter((freight) => !selected.has(freight.id))
+    .filter((freight) => !unloaded.has(freight.id))
     .map((freight) => {
       const rehandled = temporarilyStaged.has(freight.id)
       return {
@@ -410,7 +443,7 @@ export function commitDeliveryOperation({
       .map(([freightId, placement]) => [freightId, { ...placement }]),
   )
   const deliveredFreight = (trailerState?.freight ?? [])
-    .filter((freight) => selected.has(freight.id))
+    .filter((freight) => unloaded.has(freight.id))
     .map((freight) => ({
       ...freight,
       currentLocation: 'RECEIVER',
@@ -457,7 +490,7 @@ export function commitDeliveryOperation({
     receiverVerificationMinutes: duration.receiverVerificationMinutes,
     receiverVerificationCompleteMinutes,
     unloadPlan: {
-      selectedFreightIds: [...(unloadPlan.selectedFreightIds ?? [])],
+      unloadedFreightIds: [...unloaded],
       temporaryStagedFreightIds: [...(unloadPlan.temporaryStagedFreightIds ?? [])],
       rehandleUnits: unloadPlan.rehandleUnits ?? 0,
       rehandleMoves: unloadPlan.rehandleMoves ?? 0,
