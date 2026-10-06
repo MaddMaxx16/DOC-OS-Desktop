@@ -430,17 +430,7 @@ export function commitDeliveryOperation({
       placements: remainingPlacements,
       board: trailerState?.board ? { ...trailerState.board } : null,
     },
-    podSeed: {
-      loadId: event.loadId ?? null,
-      loadRef: event.loadRef ?? event.loadId ?? null,
-      deliveryEventId: event.id,
-      deliveredPieces: receiverResults.length,
-      refusedPieces: 0,
-      shortagePieces: 0,
-      damageNoted: false,
-      signaturePresent: true,
-      receiverStatus: 'ACCEPTED',
-    },
+    shortagePieces: unloadPlan.shortageFreight?.length ?? 0,
   }
 }
 
