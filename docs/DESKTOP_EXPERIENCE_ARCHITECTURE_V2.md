@@ -4780,3 +4780,108 @@ Do not add:
 - next-event controls.
 
 V2.7.6.5 is specifically the pass that turns the already-working receiver logic into a believable physical warehouse environment.
+
+
+---
+
+## V2.7.6.6 — Delivery Handling Constraints
+
+V2.7.6.5 brought the Delivery scene close to the desired presentation, but gameplay review identified one reliability bug and one remaining puzzle-depth issue.
+
+### Reliability issue
+
+An interrupted freight drag could leave the interface stuck in an active pointer state even though the mouse button had already been released.
+
+The visible symptoms were:
+- floating freight ghost remained active,
+- right HUD continued to show FREIGHT IN MOTION,
+- normal interaction stopped progressing.
+
+V2.7.6.6 requires fail-safe pointer cleanup.
+
+The active move now has recovery paths for:
+- pointer-up,
+- pointer-cancel,
+- lost pointer capture,
+- window blur,
+- hidden tab/page,
+- Escape.
+
+When DOC OS cannot safely resolve a move, the freight returns to its last valid origin and the interaction state clears.
+
+### Difficulty issue
+
+V2.7.6.4 allowed a player to move freight to any collision-free trailer position.
+
+That solved space management technically, but it made Delivery too easy because open cells acted like teleport destinations.
+
+V2.7.6.6 adds a rear handling-path abstraction.
+
+### Rear handling-path model
+
+The trailer floor remains a discrete grid.
+
+For a given freight footprint and rotation, DOC OS finds candidate positions along the rear boundary where that freight could enter or exit the usable trailer floor.
+
+From those rear positions, the system searches adjacent legal anchor positions.
+
+Every step must:
+- keep the full freight footprint on usable floor cells,
+- avoid all other active freight,
+- preserve the selected rotation for that move.
+
+If no path reaches the freight's current anchor, the freight is considered buried beyond current dock-equipment reach.
+
+If no path reaches a proposed destination anchor, that empty destination is not a legal internal reposition.
+
+### Source reachability
+
+A Trailer → Trailer move requires the source freight to be rear-handling accessible.
+
+This prevents the player from grabbing a buried pallet through intervening freight.
+
+### Destination reachability
+
+A Trailer → Trailer destination requires a rear handling path after the source freight is conceptually lifted from its current position.
+
+This allows legitimate internal rearrangement while preventing teleporting cargo through blockers.
+
+### Receiver unloading
+
+Current-phase freight must be rear-handling accessible before it can be accepted into the receiver floor.
+
+The receiver SOP still decides **what** freight is valid.
+
+The handling path decides whether the player can physically manipulate that freight **right now**.
+
+### Temp Staging
+
+The existing three-position staging system is unchanged.
+
+Staging becomes a corridor-management tool.
+
+If the active receiver phase has no rear-accessible freight, the player may stage a reachable later-phase or later-stop unit to open space, provided it still satisfies staging capacity.
+
+This creates the intended pressure:
+- use internal repositioning when there is a legal rear path,
+- spend finite staging space when there is not.
+
+### Gameplay abstraction boundary
+
+This is not exact forklift physics.
+
+DOC OS does not simulate:
+- turning radius,
+- mast dimensions,
+- steering geometry,
+- operator certification,
+- rack clearances,
+- OSHA warehouse rules.
+
+The mechanic is a grid-level abstraction: can the freight footprint move through contiguous open trailer positions from the rear?
+
+### Preserved presentation
+
+No warehouse/trailer redesign is part of V2.7.6.6.
+
+The accepted V2.7.6.5 receiver floor, V2.7.6.4 shared trailer, and right-side SOP panel remain the visual baseline.
