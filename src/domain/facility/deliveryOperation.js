@@ -774,7 +774,6 @@ export function commitDeliveryOperation({
       ?? unloadPlan.selectedFreightIds
       ?? [],
   )
-  const temporarilyStaged = new Set(unloadPlan.temporaryStagedFreightIds ?? [])
   const rehandled = new Set(
     unloadPlan.rehandledFreightIds
       ?? unloadPlan.temporaryStagedFreightIds
@@ -790,24 +789,35 @@ export function commitDeliveryOperation({
         carried: true,
         currentLocation: 'TRAILER',
         status: freight.status === 'REFUSED' ? 'REFUSED' : 'IN_TRANSIT',
-        freightHistory: wasRehandled
-          ? [
-              ...(freight.freightHistory ?? []),
-              {
-                event: 'TEMP_STAGED',
-                facilityId: event.locationId ?? null,
-                time: operationTime,
-              },
-              {
-                event: 'RELOADED',
-                facilityId: event.locationId ?? null,
-                time: operationTime,
-                trailerPosition: trailerState?.placements?.[freight.id]
-                  ? { ...trailerState.placements[freight.id] }
-                  : null,
-              },
-            ]
-          : [...(freight.freightHistory ?? [])],
+        freightHistory: [
+          ...(freight.freightHistory ?? []),
+          ...(unloadPlan.internalRepositionHistory ?? [])
+            .filter((move) => move.freightId === freight.id)
+            .map((move) => ({
+              event: 'REPOSITIONED_IN_TRAILER',
+              facilityId: event.locationId ?? null,
+              time: operationTime,
+              from: move.from ? { ...move.from } : null,
+              to: move.to ? { ...move.to } : null,
+            })),
+          ...(wasRehandled
+            ? [
+                {
+                  event: 'TEMP_STAGED',
+                  facilityId: event.locationId ?? null,
+                  time: operationTime,
+                },
+                {
+                  event: 'RELOADED',
+                  facilityId: event.locationId ?? null,
+                  time: operationTime,
+                  trailerPosition: trailerState?.placements?.[freight.id]
+                    ? { ...trailerState.placements[freight.id] }
+                    : null,
+                },
+              ]
+            : []),
+        ],
       }
     })
   const remainingPlacements = Object.fromEntries(
@@ -828,6 +838,15 @@ export function commitDeliveryOperation({
         conditionKnown: freight.conditionKnown ?? true,
         freightHistory: [
           ...(freight.freightHistory ?? []),
+          ...(unloadPlan.internalRepositionHistory ?? [])
+            .filter((move) => move.freightId === freight.id)
+            .map((move) => ({
+              event: 'REPOSITIONED_IN_TRAILER',
+              facilityId: event.locationId ?? null,
+              time: operationTime,
+              from: move.from ? { ...move.from } : null,
+              to: move.to ? { ...move.to } : null,
+            })),
           ...(wasRehandled
             ? [{
                 event: 'TEMP_STAGED',
