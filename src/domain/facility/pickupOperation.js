@@ -670,6 +670,79 @@ export function evaluateTrailerWeightBalance({
   }
 }
 
+export function evaluateTrailerFragileProtection({
+  board,
+  stagedFreight = [],
+  placements = {},
+} = {}) {
+  const freightById = new Map(stagedFreight.map((freight) => [freight.id, freight]))
+  const placed = []
+
+  for (const [freightId, placement] of Object.entries(placements)) {
+    const freight = freightById.get(freightId)
+    if (!freight) continue
+
+    const cells = footprintCellIndexes({
+      board,
+      freight,
+      anchorCell: placement?.anchorCell,
+      rotation: placement?.rotation ?? 0,
+    })
+    if (!cells?.length) continue
+
+    placed.push({
+      freight,
+      cells: cells.map((cellIndex) => ({
+        cellIndex,
+        ...boardCellCoordinates(board, cellIndex),
+      })),
+    })
+  }
+
+  const fragile = placed.filter((item) => item.freight.handlingCode === 'FRAGILE')
+  const impactRisk = placed.filter((item) => (
+    ['HEAVY', 'OVERSIZE'].includes(item.freight.handlingCode)
+  ))
+  const conflicts = []
+  const seen = new Set()
+
+  for (const fragileItem of fragile) {
+    for (const riskItem of impactRisk) {
+      for (const fragileCell of fragileItem.cells) {
+        for (const riskCell of riskItem.cells) {
+          const distance = Math.abs(fragileCell.x - riskCell.x)
+            + Math.abs(fragileCell.y - riskCell.y)
+          if (distance !== 1) continue
+
+          const key = `${fragileItem.freight.id}:${riskItem.freight.id}`
+          if (seen.has(key)) continue
+          seen.add(key)
+
+          conflicts.push({
+            fragileFreightId: fragileItem.freight.id,
+            riskFreightId: riskItem.freight.id,
+            fragileLabel: fragileItem.freight.label,
+            riskLabel: riskItem.freight.label,
+            fragileLoadRef: fragileItem.freight.loadRef ?? fragileItem.freight.loadId,
+            riskLoadRef: riskItem.freight.loadRef ?? riskItem.freight.loadId,
+            riskHandlingCode: riskItem.freight.handlingCode,
+          })
+        }
+      }
+    }
+  }
+
+  return {
+    active: fragile.length > 0 && impactRisk.length > 0,
+    clear: conflicts.length === 0,
+    fragileCount: fragile.length,
+    impactRiskCount: impactRisk.length,
+    conflicts,
+    fragileFreightIds: [...new Set(conflicts.map((item) => item.fragileFreightId))],
+    riskFreightIds: [...new Set(conflicts.map((item) => item.riskFreightId))],
+  }
+}
+
 export function evaluatePickupLoadPlan({
   event,
   board,
@@ -768,6 +841,26 @@ export function evaluatePickupLoadPlan({
     })
   }
 
+  const fragileProtectionRaw = evaluateTrailerFragileProtection({
+    board,
+    stagedFreight,
+    placements,
+  })
+  const fragileProtection = {
+    ...fragileProtectionRaw,
+    enforced: missingPlaced.length === 0 && fragileProtectionRaw.active,
+  }
+
+  if (fragileProtection.enforced && !fragileProtection.clear) {
+    const firstConflict = fragileProtection.conflicts[0]
+    errors.push({
+      code: 'FRAGILE_PROTECTION_CONFLICT',
+      message: firstConflict
+        ? `${firstConflict.fragileLabel} is directly beside ${firstConflict.riskHandlingCode} freight. Separate the pieces before closing the doors.`
+        : 'Fragile freight is directly beside heavy-impact cargo.',
+    })
+  }
+
   return {
     ready: errors.length === 0,
     errors,
@@ -781,6 +874,7 @@ export function evaluatePickupLoadPlan({
     deliveryAccess,
     deliveryOrder,
     weightBalance,
+    fragileProtection,
     loadRef: event?.loadRef ?? event?.loadId ?? null,
   }
 }
