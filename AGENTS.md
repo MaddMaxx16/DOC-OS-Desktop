@@ -32,33 +32,35 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.1 Trailer Rules: Delivery Access
+## Current packet — V2.7.5.1.1 Rotation + Rule-Panel Readability
 
-V2.1 through V2.7.5.0.6.1 are accepted and locked. Equipment-derived capacity, realistic freight identity, persistent trailer snapshots, direct onboard repositioning, keyboard rotation, rear-door commitment, background loading, Focused Mode, and route timing remain authoritative.
+V2.1 through V2.7.5.1 are accepted and locked. Freight identity, persistent trailer state, direct onboard repositioning, delivery-access rules, rear-door commitment, Focused Mode, and downstream timing remain authoritative.
 
-This packet introduces the first actual trailer-loading rule:
+This packet fixes two playtest issues without adding another trailer rule.
 
-> freight that delivers earlier must remain accessible from the rear doors before freight that delivers later.
+Rotation rules:
+- placed freight with a non-square rectangular footprint must be rotatable before dragging,
+- hovering or focusing a rotatable onboard freight piece and pressing R rotates it 90 degrees in place,
+- rotatable onboard freight exposes a visible rotate control on hover/focus for discoverability,
+- R during an active drag may remain supported but is not the only or required rotation path,
+- in-place rotation must use the existing footprint legality check,
+- if rotation would overlap freight or move out of bounds, reject the rotation and show the existing invalid interaction feedback,
+- square/1x1/2x2 freight should not show a meaningless rotate control,
+- direct drag/repositioning behavior remains unchanged.
 
-Delivery-access rules:
-- derive unload order from the driver's real remaining Driver Day delivery sequence,
-- label onboard loads with D1, D2, D3… according to that delivery order,
-- trailer rows increase from FRONT / NOSE toward REAR / DOORS,
-- model rear-door access lane-by-lane using the existing trailer columns,
-- if an earlier-delivery freight piece occupies a lane and later-delivery freight sits farther rearward in that same lane, the earlier piece is blocked,
-- blocked earlier freight and the later freight causing the block must be visually distinguishable,
-- the right-side trailer-rule card must show the unload sequence and CLEAR / BLOCKED state,
-- a delivery-access conflict prevents LOAD PLAN READY and rear-door commitment,
-- placement itself remains player-owned: DOC OS warns and blocks readiness rather than snapping cargo into a correct answer,
-- dragging a piece into a delivery-access conflict may show an amber rule warning while ordinary overlap/out-of-bounds remains the red legality state,
-- single-load trailers are automatically clear for delivery access,
-- delivery-access truth must include carried freight from prior pickups and current-pickup freight together,
-- do not add full 3D forklift pathfinding; lane-based rear-door access is the intentional abstraction for this packet,
-- do not add axle/weight-balance scoring yet,
-- do not activate fragile, hazmat, no-stack, upright, or heavy handling penalties yet,
-- do not add vertical stacking, Top Down functionality, Side View functionality, delivery puzzle, rework, HOS changes, or service-time changes.
+Trailer-rule readability:
+- the right-side HUD must use a comfortable gameplay text size; critical rule instructions may not use micro-label sizing,
+- separate LOAD COMPLETION from TRAILER RULES so a fully loaded but rule-blocked trailer does not read as incomplete loading,
+- Delivery Access must present UNLOAD ORDER clearly,
+- blocked Delivery Access must present distinct PROBLEM and FIX guidance,
+- CLEAR state must explain why the trailer is acceptable,
+- D1/D2/D3 badges on individual cargo appear only when more than one delivery is onboard; single-delivery trailers do not repeat D1 on every freight piece,
+- the unload order may still remain visible in the right-side rule card for a single delivery,
+- preserve delivery-access logic, amber rule warning, red geometry invalid state, and rear-door readiness gating.
 
-After visual/gameplay acceptance, the next trailer-rule slice is weight distribution / balance.
+Do not add weight distribution, axle logic, fragile/hazmat penalties, stacking rules, Top Down/Side View functionality, delivery puzzle, rework, HOS changes, or service-time changes in this packet.
+
+After visual/gameplay acceptance, proceed to V2.7.5.2 Weight Distribution / Balance.
 
 
 ## Verification
