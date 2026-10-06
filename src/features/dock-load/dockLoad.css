@@ -2810,3 +2810,293 @@
   left: auto;
   bottom: auto;
 }
+
+
+/* V2.7.5.1.1 — Reliable rotation + rule-panel readability */
+.dock-load-workspace {
+  grid-template-columns: minmax(330px, 28%) minmax(0, 1fr) minmax(310px, 24%);
+}
+
+.dock-load-hud {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.dock-load-booked > header,
+.dock-load-readiness > header {
+  padding: 13px 14px;
+}
+
+.dock-load-booked header span,
+.dock-load-readiness header span,
+.dock-load-booked > div span,
+.dock-load-hud-grid span,
+.dock-load-focus-note span {
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.dock-load-booked header strong,
+.dock-load-readiness header strong {
+  font-size: 15px;
+  line-height: 1.15;
+}
+
+.dock-load-booked > div {
+  gap: 4px;
+  padding: 9px 13px;
+}
+
+.dock-load-booked > div strong {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.dock-load-readiness {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
+
+.dock-load-hud-grid > div {
+  gap: 5px;
+  padding: 10px 11px;
+}
+
+.dock-load-hud-grid strong {
+  font-size: 13px;
+  line-height: 1.15;
+}
+
+.dock-load-validation {
+  gap: 8px;
+  padding: 10px;
+}
+
+.dock-load-validation > div {
+  gap: 5px;
+  padding: 10px;
+}
+
+.dock-load-validation strong {
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.dock-load-validation small {
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.dock-load-interaction-status {
+  min-height: 31px;
+  padding: 8px 11px;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.dock-load-focus-note {
+  gap: 5px;
+  padding: 11px 13px;
+}
+
+.dock-load-focus-note strong {
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.dock-load-focus-note small {
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.dock-load-trailer-rule {
+  gap: 12px;
+  padding: 12px;
+}
+
+.dock-load-trailer-rule > header span {
+  font-size: 10px;
+}
+
+.dock-load-trailer-rule > header strong {
+  padding: 4px 7px;
+  font-size: 11px;
+}
+
+.dock-load-rule-section,
+.dock-load-rule-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.dock-load-rule-section > span,
+.dock-load-rule-copy > span {
+  color: #748b97;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .085em;
+}
+
+.dock-load-rule-copy {
+  padding: 9px 10px;
+  border: 1px solid #334650;
+  border-radius: 3px;
+  background: rgba(8, 18, 24, .78);
+}
+
+.dock-load-rule-copy > strong {
+  color: #c4d3da;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.4;
+}
+
+.dock-load-rule-copy.clear {
+  border-color: #355c4d;
+  background: rgba(29, 71, 54, .15);
+}
+
+.dock-load-rule-copy.clear > strong {
+  color: #a8cdbc;
+}
+
+.dock-load-rule-copy.problem {
+  border-color: #72434e;
+  background: rgba(111, 36, 50, .16);
+}
+
+.dock-load-rule-copy.problem > span,
+.dock-load-rule-copy.problem > strong {
+  color: #e4a1ac;
+}
+
+.dock-load-rule-copy.fix {
+  border-color: #6e5a31;
+  background: rgba(118, 88, 28, .12);
+}
+
+.dock-load-rule-copy.fix > span {
+  color: #c9a95f;
+}
+
+.dock-load-rule-copy.fix > strong {
+  color: #e4d0a0;
+}
+
+.dock-load-delivery-order {
+  gap: 7px;
+}
+
+.dock-load-delivery-order > span {
+  min-height: 30px;
+  gap: 7px;
+  padding: 5px 8px;
+}
+
+.dock-load-delivery-order > span::after {
+  font-size: 10px;
+}
+
+.dock-load-delivery-order b {
+  font-size: 9px;
+}
+
+.dock-load-delivery-order strong {
+  font-size: 12px;
+}
+
+.loaded-freight-rotate {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 34px;
+  min-height: 21px;
+  padding: 2px 5px;
+  border: 1px solid rgba(125, 181, 208, .55);
+  border-radius: 3px;
+  background: rgba(5, 15, 21, .94);
+  color: #d0edf8;
+  font-size: 10px;
+  font-weight: 1000;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .22;
+  transform: translateY(-1px);
+  transition:
+    opacity .1s ease,
+    border-color .1s ease,
+    background .1s ease,
+    transform .1s ease;
+}
+
+.loaded-freight-rotate span {
+  font-size: 7px;
+  letter-spacing: .04em;
+}
+
+.loaded-freight-piece:hover .loaded-freight-rotate,
+.loaded-freight-piece:focus-within .loaded-freight-rotate,
+.loaded-freight-rotate:focus-visible {
+  opacity: 1;
+  border-color: rgba(128, 205, 238, .9);
+  background: rgba(11, 37, 49, .97);
+  transform: translateY(-2px);
+}
+
+.loaded-freight-rotate:focus-visible {
+  outline: 2px solid rgba(125, 202, 235, .72);
+  outline-offset: 1px;
+}
+
+.loaded-freight-piece.rotating .loaded-freight-rotate {
+  opacity: 1;
+  transform: rotate(90deg);
+}
+
+.loaded-freight-piece .loaded-freight-grip {
+  top: 31px;
+  right: 7px;
+}
+
+.loaded-freight-piece.delivery-next .loaded-freight-rotate,
+.loaded-freight-piece.delivery-blocked .loaded-freight-rotate,
+.loaded-freight-piece.delivery-blocker .loaded-freight-rotate {
+  right: 6px;
+}
+
+.loaded-freight-order {
+  min-width: 26px;
+  min-height: 20px;
+  font-size: 8px;
+}
+
+/* Single-delivery trailers intentionally omit per-piece D1 badges in JSX. */
+.dock-load-trailer-rule.clear .dock-load-delivery-order > span:only-child {
+  border-color: #355c4d;
+  background: #0f1e19;
+}
+
+@media (max-width: 1500px) {
+  .dock-load-workspace {
+    grid-template-columns: minmax(315px, 29%) minmax(0, 1fr) minmax(290px, 24%);
+  }
+}
+
+@media (max-width: 1300px) {
+  .dock-load-workspace {
+    grid-template-columns: minmax(260px, 31%) minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loaded-freight-rotate {
+    transition: none !important;
+  }
+
+  .loaded-freight-piece.rotating .loaded-freight-rotate {
+    transform: none !important;
+  }
+}
