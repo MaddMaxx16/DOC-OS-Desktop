@@ -148,6 +148,168 @@ test('pickup facility mode changes appointment-ready pickup into a dock-assigned
   assert.deepEqual(state.onboardLoadIds, [])
 })
 
+test('delivery facility mode holds a receiver stop until an unload plan is committed', () => {
+  const day = {
+    driverId: 'marcus-reed',
+    dispatchStatus: 'sent',
+    shift: { startMinutes: 420, endMinutes: 1020 },
+    timeline: [
+      {
+        id: 'marcus-reed:shift-start',
+        kind: 'shift-start',
+        locationLabel: 'Newark',
+        projectedArrivalMinutes: 420,
+      },
+      {
+        id: 'M-101:pickup',
+        kind: 'freight-stop',
+        role: 'pickup',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        locationLabel: 'Empire Freight Terminal',
+        projectedArrivalMinutes: 480,
+        serviceStartMinutes: 480,
+        serviceMinutes: 12,
+        endMinutes: 492,
+      },
+      {
+        id: 'M-101:delivery',
+        kind: 'freight-stop',
+        role: 'delivery',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        locationLabel: 'Harborline Logistics',
+        projectedArrivalMinutes: 700,
+        physicalArrivalMinutes: 700,
+        serviceStartMinutes: 700,
+        serviceMinutes: 15,
+        endMinutes: 715,
+      },
+    ],
+  }
+
+  const state = buildLiveDriverState(
+    day,
+    createSimulationClock({ currentMinutes: 704 }),
+    {
+      deliveryFacilityMode: true,
+      facilityOperations: {},
+    },
+  )
+
+  assert.equal(state.executionPhase, 'facility-dock-assigned')
+  assert.equal(state.serviceRole, 'delivery')
+  assert.equal(state.facilityOperationType, 'delivery')
+  assert.equal(state.facilityActionRequired, true)
+  assert.match(state.detail, /unload plan required/)
+  assert.ok(state.onboardLoadIds.includes('M-101'))
+})
+
+test('committed delivery runs unloading then receiver verification before auto departure', () => {
+  const day = {
+    driverId: 'marcus-reed',
+    dispatchStatus: 'sent',
+    shift: { startMinutes: 420, endMinutes: 1020 },
+    timeline: [
+      {
+        id: 'marcus-reed:shift-start',
+        kind: 'shift-start',
+        locationLabel: 'Newark',
+        projectedArrivalMinutes: 420,
+      },
+      {
+        id: 'M-101:pickup',
+        kind: 'freight-stop',
+        role: 'pickup',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        locationLabel: 'Empire Freight Terminal',
+        projectedArrivalMinutes: 480,
+        serviceStartMinutes: 480,
+        serviceMinutes: 12,
+        endMinutes: 492,
+      },
+      {
+        id: 'M-101:delivery',
+        kind: 'freight-stop',
+        role: 'delivery',
+        loadId: 'M-101',
+        loadRef: 'M-101',
+        locationLabel: 'Harborline Logistics',
+        projectedArrivalMinutes: 700,
+        physicalArrivalMinutes: 700,
+        serviceStartMinutes: 700,
+        serviceMinutes: 15,
+        endMinutes: 715,
+      },
+      {
+        id: 'marcus-reed:staging',
+        kind: 'staging',
+        locationLabel: 'Metroline Yard',
+        projectedArrivalMinutes: 760,
+        endMinutes: 760,
+      },
+    ],
+  }
+  const operation = {
+    key: 'marcus-reed:M-101:delivery',
+    driverId: 'marcus-reed',
+    eventId: 'M-101:delivery',
+    loadId: 'M-101',
+    loadRef: 'M-101',
+    status: 'plan-committed',
+    dock: 7,
+    unloadingStartMinutes: 700,
+    unloadingDurationMinutes: 15,
+    unloadingCompleteMinutes: 715,
+    receiverVerificationMinutes: 3,
+    receiverVerificationCompleteMinutes: 718,
+    receiverResults: [
+      { freightId: 'M-101:pickup:pallet-1', status: 'ACCEPTED' },
+    ],
+    podDocumentId: 'POD:M-101:delivery',
+  }
+  const facilityOperations = {
+    [operation.key]: operation,
+  }
+
+  const unloading = buildLiveDriverState(
+    day,
+    createSimulationClock({ currentMinutes: 710 }),
+    {
+      deliveryFacilityMode: true,
+      facilityOperations,
+    },
+  )
+  assert.equal(unloading.executionPhase, 'service-unloading')
+  assert.equal(unloading.currentEventDepartureMinutes, 718)
+  assert.equal(unloading.podDocumentId, 'POD:M-101:delivery')
+
+  const verifying = buildLiveDriverState(
+    day,
+    createSimulationClock({ currentMinutes: 716 }),
+    {
+      deliveryFacilityMode: true,
+      facilityOperations,
+    },
+  )
+  assert.equal(verifying.executionPhase, 'receiver-verification')
+  assert.equal(verifying.label, 'RECEIVER CHECK')
+
+  const departed = buildLiveDriverState(
+    day,
+    createSimulationClock({ currentMinutes: 719 }),
+    {
+      deliveryFacilityMode: true,
+      facilityOperations,
+    },
+  )
+  assert.equal(departed.executionPhase, 'en-route')
+  assert.equal(departed.currentEventId, 'M-101:delivery')
+  assert.ok(departed.completedEventIds.includes('M-101:delivery'))
+  assert.equal(departed.onboardLoadIds.includes('M-101'), false)
+})
+
 test('live state reports WAITING when a driver physically arrives before an appointment', () => {
   const day = {
     driverId: 'marcus-reed',
