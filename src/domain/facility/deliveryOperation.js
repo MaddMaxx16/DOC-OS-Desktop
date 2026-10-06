@@ -71,11 +71,12 @@ const FACILITY_RECEIVING_PROFILES = Object.freeze({
     phases: Object.freeze([
       Object.freeze({
         id: 'inspection',
-        label: 'FRAGILE INSPECTION',
+        label: 'QUALITY CHECK',
         zoneId: 'inspection',
         zoneLabel: 'QUALITY CHECK',
+        cargoLabel: 'FRAGILE + KEEP UPRIGHT',
         handlingCodes: Object.freeze(['FRAGILE', 'UPRIGHT']),
-        instruction: 'Inspection freight clears quality check before controlled materials.',
+        instruction: 'Fragile and keep-upright freight clears quality check before controlled materials.',
       }),
       Object.freeze({
         id: 'controlled',
@@ -247,6 +248,7 @@ export function buildDeliveryReceivingProtocol({
       zoneId: phase.zoneId,
       zoneLabel: phase.zoneLabel,
       instruction: phase.instruction,
+      cargoLabel: phase.cargoLabel ?? null,
       handlingCodes: phase.handlingCodes ? [...phase.handlingCodes] : null,
       freightIds: matching.map((item) => item.id),
     })
