@@ -153,7 +153,12 @@ function FreightManifestRow({
           <span>{freight.unitCode}</span>
         </div>
         <b className="manifest-load-number">LOAD {freight.loadRef}</b>
-        <small>{freight.handlingLabel} · {pounds(freight.weightLbs)} lb</small>
+        <small>
+          {freight.hazmatClassLabel
+            ? `${freight.hazmatClassLabel} · ${freight.handlingLabel}`
+            : freight.handlingLabel}
+          {' · '}{pounds(freight.weightLbs)} lb
+        </small>
         <small>{freight.destination}</small>
       </div>
 
