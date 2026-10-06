@@ -1804,3 +1804,675 @@
     animation: none;
   }
 }
+
+
+/* V2.7.6.5 — Warehouse Physicalization */
+
+/* One continuous concrete receiving environment. */
+.delivery-warehouse-floor {
+  border-color: #33454b;
+  background:
+    linear-gradient(165deg, rgba(255,255,255,.025), transparent 32%),
+    linear-gradient(16deg, rgba(0,0,0,.12), transparent 44%),
+    #11191c;
+  box-shadow:
+    inset 0 0 54px rgba(0, 0, 0, .18),
+    0 18px 34px rgba(0, 0, 0, .14);
+}
+
+.delivery-floor-environment {
+  background:
+    radial-gradient(ellipse at 15% 26%, rgba(116, 129, 132, .035), transparent 26%),
+    radial-gradient(ellipse at 76% 67%, rgba(0, 0, 0, .09), transparent 28%),
+    repeating-linear-gradient(
+      7deg,
+      transparent 0,
+      transparent 47px,
+      rgba(148, 158, 158, .018) 48px,
+      transparent 49px
+    ),
+    linear-gradient(180deg, #151d1f 0%, #11191c 58%, #0f1719 100%);
+}
+
+.delivery-floor-environment::before {
+  background:
+    linear-gradient(90deg, transparent 0 49.6%, rgba(174, 184, 185, .035) 49.8% 50.2%, transparent 50.4% 100%),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 71px,
+      rgba(139, 150, 151, .018) 72px,
+      transparent 73px
+    );
+}
+
+.delivery-floor-environment::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(102deg, transparent 0 18%, rgba(4, 8, 9, .07) 18.2% 18.8%, transparent 19% 100%),
+    linear-gradient(82deg, transparent 0 72%, rgba(4, 8, 9, .055) 72.2% 72.8%, transparent 73% 100%);
+  pointer-events: none;
+}
+
+.delivery-warehouse-back-wall {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 2px solid rgba(91, 105, 109, .28);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(72, 83, 87, .28) 0,
+      rgba(72, 83, 87, .28) 36px,
+      rgba(48, 59, 63, .28) 36px,
+      rgba(48, 59, 63, .28) 38px
+    ),
+    rgba(17, 25, 28, .82);
+  box-shadow: 0 5px 12px rgba(0,0,0,.16);
+  color: rgba(164, 177, 181, .34);
+  font-size: 7px;
+  font-weight: 1000;
+  letter-spacing: .13em;
+  pointer-events: none;
+}
+
+.delivery-warehouse-back-wall i {
+  height: 2px;
+  background: rgba(140, 153, 157, .09);
+}
+
+.delivery-warehouse-column {
+  position: absolute;
+  z-index: 1;
+  top: 24px;
+  width: 11px;
+  height: 37px;
+  border: 1px solid rgba(88, 100, 104, .34);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(151, 119, 49, .22) 0,
+      rgba(151, 119, 49, .22) 5px,
+      rgba(40, 48, 49, .32) 5px,
+      rgba(40, 48, 49, .32) 10px
+    );
+  box-shadow: 0 5px 8px rgba(0,0,0,.14);
+  pointer-events: none;
+}
+
+.delivery-warehouse-column.left {
+  left: 46%;
+}
+
+.delivery-warehouse-column.right {
+  right: 5%;
+}
+
+.delivery-floor-tire-wear {
+  position: absolute;
+  z-index: 0;
+  left: 13%;
+  right: 11%;
+  top: 45%;
+  height: 68px;
+  transform: rotate(-1.5deg);
+  pointer-events: none;
+}
+
+.delivery-floor-tire-wear i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(2, 5, 6, .055);
+  filter: blur(1px);
+}
+
+.delivery-floor-tire-wear i:first-child {
+  top: 16px;
+}
+
+.delivery-floor-tire-wear i:last-child {
+  bottom: 15px;
+}
+
+/* Aisles are painted onto the room, not borders around cards. */
+.delivery-floor-aisle {
+  z-index: 1;
+}
+
+.delivery-floor-aisle.main {
+  left: 4%;
+  right: 4%;
+  top: 43%;
+  height: 48px;
+  border-top: 2px dashed rgba(166, 177, 178, .12);
+  border-bottom: 2px dashed rgba(166, 177, 178, .12);
+  color: rgba(175, 186, 188, .24);
+}
+
+.delivery-floor-aisle.main i {
+  color: rgba(181, 192, 194, .2);
+}
+
+.delivery-floor-aisle.cross {
+  top: 8%;
+  bottom: 16%;
+  left: 49%;
+  width: 48px;
+  border-left: 2px dashed rgba(158, 171, 173, .08);
+  border-right: 2px dashed rgba(158, 171, 173, .08);
+}
+
+/* Receiver zones are painted floor destinations. No card backgrounds or panel borders. */
+.delivery-warehouse-zone {
+  --zone-paint: rgba(129, 146, 151, .28);
+  z-index: 2;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: .76;
+  overflow: visible;
+}
+
+.delivery-warehouse-zone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(var(--zone-paint), var(--zone-paint)) left top / 38px 2px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) left top / 2px 38px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) right top / 38px 2px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) right top / 2px 38px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) left bottom / 38px 2px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) left bottom / 2px 38px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) right bottom / 38px 2px no-repeat,
+    linear-gradient(var(--zone-paint), var(--zone-paint)) right bottom / 2px 38px no-repeat;
+  pointer-events: none;
+}
+
+.delivery-warehouse-zone::after {
+  display: none;
+}
+
+.delivery-warehouse-zone.zone-controlled {
+  --zone-paint: rgba(184, 144, 66, .38);
+  left: 5%;
+  top: 9%;
+  width: 37%;
+  height: 27%;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(180, 137, 52, .055) 0,
+      rgba(180, 137, 52, .055) 7px,
+      transparent 7px,
+      transparent 16px
+    );
+}
+
+.delivery-warehouse-zone.zone-controlled::after {
+  display: block;
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(215, 174, 83, .34) 0,
+      rgba(215, 174, 83, .34) 5px,
+      rgba(43, 45, 38, .18) 5px,
+      rgba(43, 45, 38, .18) 10px
+    );
+  pointer-events: none;
+}
+
+.delivery-warehouse-zone.zone-forklift {
+  --zone-paint: rgba(103, 138, 151, .3);
+  right: 5%;
+  top: 9%;
+  width: 43%;
+  height: 27%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 48px,
+      rgba(106, 137, 149, .055) 48px,
+      rgba(106, 137, 149, .055) 51px
+    );
+}
+
+.delivery-warehouse-zone.zone-forklift::after {
+  display: block;
+  content: '→   →   →';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 9px;
+  color: rgba(129, 159, 170, .22);
+  font-size: 15px;
+  font-weight: 1000;
+  letter-spacing: .2em;
+  text-align: center;
+  pointer-events: none;
+}
+
+.delivery-warehouse-zone.zone-inspection {
+  --zone-paint: rgba(119, 132, 157, .3);
+  left: 8%;
+  top: 58%;
+  width: 31%;
+  height: 20%;
+  background: transparent;
+}
+
+.delivery-warehouse-zone.zone-inspection::after {
+  display: block;
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 14px;
+  height: 9px;
+  border: 1px solid rgba(132, 145, 169, .21);
+  border-top-width: 3px;
+  background: rgba(103, 117, 137, .055);
+  box-shadow:
+    10px 4px 0 -3px rgba(110, 124, 144, .12),
+    -10px 4px 0 -3px rgba(110, 124, 144, .12);
+  pointer-events: none;
+}
+
+.delivery-warehouse-zone.zone-general {
+  --zone-paint: rgba(91, 130, 111, .3);
+  right: 5%;
+  top: 56%;
+  width: 49%;
+  height: 23%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 44px,
+      rgba(91, 130, 111, .05) 44px,
+      rgba(91, 130, 111, .05) 47px
+    );
+}
+
+.delivery-zone-stencil {
+  position: absolute;
+  z-index: 6;
+  top: 6px;
+  left: 9px;
+  display: grid;
+  gap: 2px;
+  max-width: calc(100% - 18px);
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.delivery-zone-stencil strong {
+  color: rgba(183, 195, 198, .5);
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: .07em;
+}
+
+.delivery-zone-stencil span {
+  color: rgba(155, 169, 173, .34);
+  font-size: 7px;
+  font-weight: 1000;
+  letter-spacing: .08em;
+}
+
+.delivery-zone-floor-paint {
+  position: absolute;
+  inset: 27px 9px 9px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.delivery-zone-floor-paint i {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: rgba(151, 165, 169, .08);
+  border-style: solid;
+}
+
+.delivery-zone-floor-paint i:nth-child(1) {
+  left: 0;
+  top: 0;
+  border-width: 1px 0 0 1px;
+}
+
+.delivery-zone-floor-paint i:nth-child(2) {
+  right: 0;
+  top: 0;
+  border-width: 1px 1px 0 0;
+}
+
+.delivery-zone-floor-paint i:nth-child(3) {
+  left: 0;
+  bottom: 0;
+  border-width: 0 0 1px 1px;
+}
+
+.delivery-zone-floor-paint i:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-width: 0 1px 1px 0;
+}
+
+.delivery-warehouse-zone.locked {
+  opacity: .46;
+}
+
+.delivery-warehouse-zone.current {
+  opacity: 1;
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.delivery-warehouse-zone.current::before {
+  filter: brightness(1.7);
+}
+
+.delivery-warehouse-zone.current .delivery-zone-stencil strong {
+  color: rgba(215, 230, 235, .8);
+  text-shadow: 0 0 12px rgba(98, 155, 177, .12);
+}
+
+.delivery-warehouse-zone.current .delivery-zone-stencil span {
+  color: rgba(172, 200, 211, .7);
+}
+
+.delivery-warehouse-zone.complete {
+  opacity: .62;
+  border: 0;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.delivery-warehouse-zone.pointer-over,
+.delivery-warehouse-zone.selection-target:hover {
+  z-index: 8;
+  border: 0;
+  background-color: rgba(77, 130, 151, .055);
+  box-shadow:
+    inset 0 0 0 2px rgba(111, 166, 187, .13),
+    0 0 18px rgba(70, 129, 152, .08);
+  transform: none;
+  cursor: pointer;
+}
+
+.delivery-zone-current-cue {
+  inset: 31px 8px 8px;
+  color: rgba(170, 203, 215, .32);
+}
+
+.delivery-zone-current-cue i {
+  font-size: 16px;
+}
+
+.delivery-zone-current-cue span {
+  font-size: 7px;
+  letter-spacing: .1em;
+}
+
+/* Stable pallet-scale placement prevents received freight from collapsing into UI tokens. */
+.delivery-zone-freight-floor {
+  --warehouse-slot-size: clamp(38px, 2.9vw, 48px);
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  top: 30px;
+  bottom: 8px;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(var(--zone-columns), var(--warehouse-slot-size));
+  grid-template-rows: repeat(var(--zone-rows), var(--warehouse-slot-size));
+  gap: 5px;
+  align-content: end;
+  justify-content: start;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.delivery-receiver-freight {
+  position: relative;
+  align-self: stretch;
+  justify-self: stretch;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  pointer-events: none;
+  filter:
+    drop-shadow(0 7px 7px rgba(0,0,0,.42))
+    drop-shadow(0 0 5px rgba(202, 157, 83, .05));
+  animation: delivery-receiver-freight-settle .24s cubic-bezier(.22, .8, .34, 1);
+}
+
+.delivery-receiver-freight .loaded-freight-shape {
+  inset: 0;
+  gap: 4px;
+}
+
+.delivery-receiver-freight .loaded-freight-shape > i {
+  margin: 5px 4px 4px;
+}
+
+.delivery-receiver-freight .loaded-freight-label {
+  left: 5px !important;
+  right: 5px;
+  bottom: 5px !important;
+  max-width: none;
+  padding: 3px 4px !important;
+}
+
+.delivery-receiver-freight .loaded-freight-label strong {
+  font-size: 8px !important;
+}
+
+.delivery-receiver-freight .loaded-freight-label > span {
+  font-size: 6px;
+}
+
+@keyframes delivery-receiver-freight-settle {
+  from {
+    transform: translateY(-7px) scale(1.025);
+    opacity: .3;
+  }
+  62% {
+    transform: translateY(1px) scale(.995);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Temp Staging reads as three painted pallet bays on the dock apron. */
+.delivery-warehouse-staging {
+  left: 7%;
+  right: 7%;
+  bottom: 4%;
+  height: 17%;
+  min-height: 96px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.delivery-warehouse-staging::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(166, 131, 64, .32), rgba(166, 131, 64, .32)) left top / 44px 2px no-repeat,
+    linear-gradient(rgba(166, 131, 64, .32), rgba(166, 131, 64, .32)) left top / 2px 32px no-repeat,
+    linear-gradient(rgba(166, 131, 64, .32), rgba(166, 131, 64, .32)) right top / 44px 2px no-repeat,
+    linear-gradient(rgba(166, 131, 64, .32), rgba(166, 131, 64, .32)) right top / 2px 32px no-repeat;
+  pointer-events: none;
+}
+
+.delivery-staging-sign {
+  top: 5px;
+  left: 6px;
+}
+
+.delivery-staging-sign span {
+  color: rgba(167, 146, 103, .54);
+}
+
+.delivery-staging-sign strong {
+  color: rgba(205, 184, 132, .72);
+}
+
+.delivery-staging-sign b {
+  color: rgba(183, 155, 93, .64);
+}
+
+.delivery-staging-grid {
+  left: 5px;
+  right: 5px;
+  top: 27px;
+  bottom: 4px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.delivery-staging-cell {
+  position: relative;
+  border: 0;
+  background: transparent;
+}
+
+.delivery-staging-cell::before,
+.delivery-staging-cell::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+}
+
+.delivery-staging-cell::before {
+  border: 2px dashed rgba(182, 144, 72, .24);
+}
+
+.delivery-staging-cell::after {
+  background:
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) left top / 16px 2px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) left top / 2px 16px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) right top / 16px 2px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) right top / 2px 16px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) left bottom / 16px 2px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) left bottom / 2px 16px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) right bottom / 16px 2px no-repeat,
+    linear-gradient(rgba(184, 145, 71, .22), rgba(184, 145, 71, .22)) right bottom / 2px 16px no-repeat;
+}
+
+.delivery-staging-cell > i {
+  display: none;
+}
+
+.delivery-staging-cell.occupied::before {
+  border-color: rgba(171, 132, 64, .13);
+}
+
+.delivery-staged-freight {
+  margin: 0;
+  min-height: 0;
+}
+
+.delivery-staged-freight .loaded-freight-shape > i {
+  margin: 5px 4px 4px;
+}
+
+.delivery-staged-freight .loaded-freight-label {
+  left: 5px !important;
+  right: 5px;
+  bottom: 5px !important;
+  padding: 3px 4px !important;
+}
+
+.delivery-warehouse-staging.pointer-over,
+.delivery-warehouse-staging.recommended,
+.delivery-warehouse-staging.selection-target:hover {
+  border: 0;
+  background: rgba(115, 84, 34, .055);
+  box-shadow: inset 0 0 0 2px rgba(168, 129, 61, .12);
+}
+
+/* Dock apron is a physical threshold, not a footer row. */
+.delivery-dock-apron {
+  z-index: 1;
+  left: 4%;
+  right: 4%;
+  bottom: 0;
+  height: 3.8%;
+  border-top: 3px solid rgba(180, 145, 72, .18);
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(179, 142, 69, .06) 0,
+      rgba(179, 142, 69, .06) 10px,
+      transparent 10px,
+      transparent 20px
+    );
+}
+
+.delivery-dock-apron span {
+  color: rgba(167, 177, 178, .28);
+}
+
+@media (max-width: 1500px) {
+  .delivery-zone-freight-floor {
+    --warehouse-slot-size: clamp(35px, 2.65vw, 43px);
+  }
+}
+
+@media (max-width: 1220px) {
+  .delivery-zone-freight-floor {
+    --warehouse-slot-size: 31px;
+    gap: 4px;
+  }
+
+  .delivery-zone-stencil strong {
+    font-size: 8px;
+  }
+
+  .delivery-zone-stencil span {
+    font-size: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delivery-receiver-freight {
+    animation: none;
+  }
+}
