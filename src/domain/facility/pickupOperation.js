@@ -1058,6 +1058,30 @@ export function buildOnboardCargoForPickup({
     if (timelineEvent.kind !== 'freight-stop') continue
 
     if (timelineEvent.role === 'delivery') {
+      const deliveryOperation = facilityOperationForEvent(
+        facilityOperations,
+        driverId,
+        timelineEvent.id,
+      )
+      const deliverySnapshot = Array.isArray(deliveryOperation?.trailerAfter?.freightManifest)
+        ? deliveryOperation.trailerAfter.freightManifest
+        : null
+
+      if (deliverySnapshot) {
+        activeFreight.clear()
+        for (const key of Object.keys(activePlacements)) delete activePlacements[key]
+
+        for (const freight of deliverySnapshot) {
+          activeFreight.set(freight.id, {
+            ...freight,
+            carried: true,
+          })
+          const placement = deliveryOperation.trailerAfter?.placements?.[freight.id]
+          if (placement) activePlacements[freight.id] = { ...placement }
+        }
+        continue
+      }
+
       for (const [freightId, freight] of activeFreight.entries()) {
         if (!sameLoad(freight, timelineEvent)) continue
         activeFreight.delete(freightId)
