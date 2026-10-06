@@ -48,7 +48,7 @@ export default function TopBar({
               : 'NO ALERTS'}
         </strong>
         <span className="status-divider" />
-        <small>{focused ? 'FOCUSED MODE · GAMEPLAY PAUSED' : 'DESKTOP V2.7.6 · DELIVERY OPERATIONS'}</small>
+        <small>{focused ? 'FOCUSED MODE · GAMEPLAY PAUSED' : 'DESKTOP V2.7.6.1 · PHYSICAL UNLOAD'}</small>
       </div>
 
       <div className="clock-block">
