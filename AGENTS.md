@@ -32,35 +32,43 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.5.3.1 Trailer HUD Simplification
+## Current packet — V2.7.5.4 Handling Restrictions: HAZMAT Segregation
 
-V2.1 through V2.7.5.3 are accepted and locked. Freight interaction, persistent cargo, Delivery Access, Weight Balance, Fragile Protection, rotation, rear-door commitment, and simulation timing remain authoritative.
+V2.1 through V2.7.5.3.1 are accepted and locked. Freight interaction, persistent cargo, Delivery Access, Weight Balance, Fragile Protection, compact Trailer HUD behavior, rotation, rear-door commitment, and simulation timing remain authoritative.
 
-This packet changes information hierarchy only. It does not weaken or remove trailer rules.
+This packet activates one additional handling rule while preserving the simplified HUD.
 
-HUD rules:
-- healthy trailer rules render as compact rows rather than expanded cards,
-- only a rule that actually needs player action expands to show PROBLEM / FIX detail,
-- live/incomplete rule evaluation uses a neutral LIVE state rather than warning-color treatment,
-- reserve red for actual blockers,
-- reserve green for final READY TO CLOSE success,
-- normal/healthy rule states use neutral/muted styling,
-- Delivery Access stays readable in one compact row with unload order,
-- Weight Balance stays readable in one compact row using F/R and L/R percentages,
-- Fragile Protection stays readable in one compact row,
-- remove persistent weight bars, target callouts, fragile rule-definition copy, and healthy explanatory boxes from normal play,
-- preserve the underlying rule calculations and readiness gating unchanged,
-- Required Action should not duplicate the full fix already expanded inside a blocked rule,
-- while freight is still missing, LOAD REMAINING FREIGHT is a neutral pending action rather than an error state,
-- when all freight is loaded but rules are blocked, Required Action may summarize that trailer rules still need attention,
-- Trailer Status collapses to one line containing positions, weight, and onboard units,
-- final success is one READY TO CLOSE strip; do not repeat it with a second TRAILER PLAN COMPLETE card,
-- right-panel text must remain readable at normal desktop viewing distance,
-- scrolling remains a fallback, not the normal information model.
+HUD typography:
+- apply the accepted one-notch readability increase to the right-side operational HUD,
+- keep the simplified V2.7.5.3.1 hierarchy locked,
+- do not widen the panel or reintroduce persistent charts/explanations.
 
-Do not add HAZMAT, NO STACK, KEEP UPRIGHT, additional handling restrictions, axle math, vertical stacking, delivery puzzle, HOS changes, or service-time changes in this packet.
+HAZMAT identity:
+- tutorial HAZMAT freight carries a visible hazard class in addition to the generic HAZMAT handling code,
+- the current tutorial subset uses Class 3 FLAMMABLE LIQUID and Division 5.1 OXIDIZER,
+- the class marking must be readable on the physical freight and in the staging manifest,
+- hazard class identity persists with carried freight between pickup stops.
 
-After visual acceptance, continue handling restrictions one rule at a time.
+HAZMAT segregation:
+- segregation is class-specific; do not treat all HAZMAT as mutually incompatible,
+- for this tutorial subset, Class 3 and Division 5.1 are an incompatible pair requiring separation,
+- the game models required separation as: incompatible hazmat units may not share a trailer-floor edge,
+- diagonal placement is allowed by this simplified floor abstraction,
+- while the current pickup is incomplete, the rule is LIVE only,
+- once all booked freight is onboard, an unresolved incompatible pair blocks READY TO CLOSE,
+- conflicting HAZMAT freight must receive a restrained visual highlight,
+- Trailer Rules gains one compact HAZMAT SEGREGATION row,
+- only a HAZMAT blocker expands to show PROBLEM / FIX detail,
+- Required Action must not duplicate the expanded rule explanation.
+
+Accuracy boundary:
+- this is a simplified training/gameplay subset inspired by class-specific highway segregation rules,
+- it is not a complete 49 CFR hazardous-material compliance engine,
+- do not claim the trailer plan is legally certified or regulatory-complete.
+
+Do not add additional hazard classes, placarding, shipping-paper checks, NO STACK enforcement, KEEP UPRIGHT enforcement, vertical stacking, axle math, delivery puzzle, HOS changes, or service-time changes in this packet.
+
+After visual/gameplay acceptance, continue handling restrictions one rule at a time.
 
 
 ## Verification
