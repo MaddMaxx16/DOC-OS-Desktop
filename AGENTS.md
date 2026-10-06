@@ -32,69 +32,99 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.6.1 Physical Delivery Unload
+## Current packet — V2.7.6.2 Receiving Floor Protocol
 
 V2.1 through V2.7.5.4 are accepted and locked.
-V2.7.6 Delivery Operations architecture is preserved, but its first unload interaction was rejected as too checklist-driven.
+V2.7.6 Delivery Operations architecture is preserved.
+V2.7.6.1 established that Delivery must physically manipulate the persistent trailer rather than use a checklist, but its single generic Receiving Bay was not sufficient gameplay.
 
-This packet changes the delivery interaction layer only.
+This packet expands physical unloading into a two-space puzzle:
 
-Core interaction:
-- the physical trailer is the primary delivery interaction surface,
-- do not use a right-side freight checklist as the player's answer key,
-- the player knows the receiver, load reference, expected count, and expected weight,
-- freight load numbers on the physical cargo are the primary identity clue,
-- the player drags freight from the trailer into the Receiving Bay,
-- removing a freight unit updates physical accessibility immediately,
-- a freight unit can leave through the rear doors only when no active freight is farther rearward in an overlapping trailer lane,
-- if a delivery unit is blocked, the attempted unload is rejected,
-- only after that failed attempt should DOC OS identify/highlight the physical blocker,
-- if the blocker is another unit for the same receiver, unload that unit first,
-- if the blocker belongs to a later stop, it may be dragged to Temporary Staging,
-- unnecessary later-stop rehandles should be rejected rather than encouraged,
-- each temporary staged unit remains a two-move rehandle and adds +3 minutes of simulated service time,
-- staged later-stop freight is automatically reloaded into its original trailer position when the delivery plan commits,
-- the actual unload sequence must be preserved on the committed delivery operation.
+**Receiving Floor ← Dock Threshold ← Physical Trailer**
 
-Receiving-side hierarchy:
-- Receiving Dock / receiver identity,
-- Expected / Received / Rehandles only,
-- large Receiving Bay drop zone,
-- Temporary Staging drop zone,
-- contextual interaction feedback,
-- final Confirm Handoff action.
+Physical trailer:
+- Delivery must visibly read as the same 53' trailer used during Pickup,
+- preserve the 4×7 trailer floor model and committed freight positions,
+- show trailer nose, side walls, rear frame/doors, floor grid, and wheels/chassis cues,
+- freight remains physically draggable from the trailer,
+- clicking a freight unit may select it as an accessibility fallback, but must not replace physical cargo identity,
+- unloaded or temporarily staged freight leaves the visible trailer,
+- rear-door accessibility remains derived from actual trailer positions.
 
-Do not permanently display BLOCKED 0, a per-unit SELECT list, or a full list of which units belong to the receiver. The player should read the physical load markings.
+Facility receiving floor:
+- render physical receiving zones beside the trailer rather than one generic drop box,
+- each active facility protocol defines ordered receiving phases,
+- each phase maps a handling family to a named receiving zone,
+- the facility floor visibly shows received freight accumulating in the correct zone,
+- Temporary Staging remains a physical dock-apron zone.
 
-Color/information behavior:
-- do not highlight all correct delivery freight in advance,
-- normal trailer cargo remains visually neutral,
-- blocked target and blocking freight receive attention styling only after an attempted inaccessible unload,
-- wrong-receiver freight dropped in Receiving is rejected with contextual feedback,
-- final handoff success may use the accepted success treatment.
+Harborline gameplay SOP:
+1. CONTROLLED FREIGHT → CONTROLLED RECEIVING — HAZMAT
+2. FORKLIFT HANDLING → FORKLIFT LANE — HEAVY / OVERSIZE
+3. FRAGILE INSPECTION → INSPECTION — FRAGILE
+4. GENERAL RECEIVING → GENERAL RECEIVING — remaining freight
+
+Freshway has a different receiver-specific sequence to establish that facility protocols are not universal rules.
+
+Critical accuracy boundary:
+- these are fictional facility receiving procedures for DOC OS gameplay,
+- do not describe them as universal DOT/FMCSA/warehouse rules,
+- HAZMAT does not universally have to unload first,
+- facility SOP is the source of the sequence requirement.
+
+Delivery decision model:
+1. What is the receiver's current phase?
+2. Which physical freight belongs to that phase?
+3. Can that freight physically reach the rear doors?
+4. Which receiving zone must it enter?
+5. If blocked, is a rehandle required?
+
+Phase enforcement:
+- only freight assigned to the current facility phase may be accepted,
+- freight sent before its phase opens is rejected,
+- freight sent to the wrong receiving zone is rejected,
+- successful receipt advances phase progress,
+- when all freight in a phase is received, the next phase opens,
+- the handoff cannot complete until all active phases are complete.
+
+Temporary staging:
+- later-stop freight may be staged when it physically blocks the active delivery,
+- same-delivery freight from a later receiving phase may also be staged when it physically blocks the current phase,
+- same-delivery freight staged for access may later move directly from Temp Staging into its receiving zone once that phase opens,
+- unnecessary rehandles are rejected,
+- each unique staged unit remains one rehandle / two handling moves / +3 minutes service time,
+- later-stop freight remaining after delivery is restored to its original trailer placement.
+
+Interaction:
+- drag physical freight from Trailer → facility zone,
+- drag blocking freight from Trailer → Temp Staging,
+- staged freight remains draggable,
+- click freight then click a zone is a fallback for browser/native drag reliability,
+- the right panel is a compact Facility SOP/progress panel, not a freight answer list,
+- do not pre-highlight all correct current-phase freight.
+
+Persistence:
+- receivingZoneByFreightId is stored in the unload plan,
+- actual unloadSequence remains ordered,
+- delivered freight history records its receiving zone,
+- same-stop Temp Staging history is retained before delivery,
+- trailerAfter remains authoritative for later stops.
 
 Time model remains locked:
-- Focused Mode does not advance simulation time,
-- drag/remove interactions represent the unload sequence/plan,
-- operational unloading time begins after Confirm Handoff,
-- rehandles add simulated service time,
-- receiver verification follows unloading,
-- routine completion auto-departs.
+- Focused Mode pauses world time,
+- physical manipulation is planning/coordination time,
+- Confirm Handoff begins simulated unloading,
+- rehandles add service time,
+- receiver verification follows,
+- routine clean delivery auto-departs.
 
-Persistent-state architecture remains locked:
-- Delivery opens the exact pickup trailer snapshot,
-- accepted freight leaves trailerAfter,
-- later stops inherit trailerAfter,
-- refused/retained freight architecture remains available for future exception packets,
-- POD remains owned by Documents.
+Known Live Operations UX backlog remains deferred:
+- SEND SCHEDULE needs a normal-workflow entry point outside Planning state,
+- add Advance to Next Event / Next Operational Moment instead of manually waiting through fast-forward.
 
-Known Live Operations UX backlog — note only, do not solve in this packet:
-- SEND SCHEDULE is currently reachable only while the Driver Day is in Planning state; provide a normal-workflow dispatch/send entry point later,
-- time controls currently require manual fast-forward through idle stretches; add an Advance to Next Event / Next Operational Moment control later.
+Do not add damage/refusal randomness, claims, Documents UI, HOS changes, a new Pickup handling rule, or Live Operations time-navigation changes in this packet.
 
-Do not add random damage, refusal gameplay, claims, another pickup rule, HOS changes, Documents UI, or next-event time navigation in this packet.
-
-After visual/gameplay acceptance, continue with one authored delivery exception rather than adding more normal-delivery UI.
+Visual/gameplay acceptance is required before the next delivery exception packet.
 
 
 ## Verification
