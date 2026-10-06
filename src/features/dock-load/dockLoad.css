@@ -3975,3 +3975,74 @@
   font-weight: 800;
   line-height: 1.35;
 }
+
+
+/* V2.7.5.4 — HAZMAT Segregation + locked HUD typography nudge */
+.dock-load-hud {
+  font-size: 12px;
+}
+
+.dock-load-summary > header span,
+.dock-load-completion > header span,
+.dock-load-status > header span,
+.dock-load-rules > header span,
+.dock-load-actions > header span,
+.dock-load-summary-route span,
+.dock-load-summary-meta span,
+.dock-load-status-grid span {
+  font-size: 11px;
+}
+
+.dock-load-summary > header strong,
+.dock-load-completion > header strong,
+.dock-load-rules > header strong,
+.dock-load-actions > header strong {
+  font-size: 15px;
+}
+
+.dock-load-summary-route > div strong,
+.dock-load-summary-meta strong,
+.dock-load-status-compact > header strong {
+  font-size: 13px;
+}
+
+.dock-load-rule-row > header strong,
+.dock-load-rule-summary > strong,
+.dock-load-rule-detail strong,
+.dock-load-action-card strong,
+.dock-load-action-card small,
+.dock-load-ready-strip > span {
+  font-size: 12px;
+}
+
+.dock-load-rule-row > header b,
+.dock-load-rule-summary > span,
+.dock-load-rule-summary.balance > span,
+.dock-load-rule-summary.balance > small,
+.dock-load-rule-detail span {
+  font-size: 11px;
+}
+
+.dock-load-ready-strip > strong {
+  font-size: 14px;
+}
+
+/* Keep the fourth rule visually consistent with the compact checklist. */
+.dock-load-rule-row.hazmat .dock-load-rule-summary strong {
+  letter-spacing: .01em;
+}
+
+.loaded-freight-piece.hazmat-segregation-conflict .loaded-freight-shape {
+  box-shadow:
+    inset 0 0 0 2px rgba(226, 111, 84, .5),
+    0 0 0 1px rgba(226, 111, 84, .28),
+    0 0 12px rgba(226, 111, 84, .2);
+}
+
+.loaded-freight-piece.hazmat-segregation-conflict .loaded-freight-label {
+  border-color: rgba(229, 119, 88, .72);
+}
+
+.loaded-freight-piece.hazmat-segregation-conflict .loaded-freight-label > span {
+  color: #ffad86;
+}
