@@ -377,11 +377,13 @@ export default function DockLoadWorkspace({
   const blockingDeliveryIds = new Set(evaluation.deliveryAccess?.blockingFreightIds ?? [])
   const fragileAtRiskIds = new Set(evaluation.fragileProtection?.fragileFreightIds ?? [])
   const fragileImpactRiskIds = new Set(evaluation.fragileProtection?.riskFreightIds ?? [])
+  const hazmatConflictIds = new Set(evaluation.hazmatSegregation?.conflictFreightIds ?? [])
   const nonRuleErrors = evaluation.errors.filter(
     (issue) => ![
       'DELIVERY_ACCESS_BLOCKED',
       'WEIGHT_DISTRIBUTION_UNBALANCED',
       'FRAGILE_PROTECTION_CONFLICT',
+      'HAZMAT_SEGREGATION_CONFLICT',
     ].includes(issue.code),
   )
   const orderedStagedFreight = [
@@ -615,17 +617,6 @@ export default function DockLoadWorkspace({
     fragileProtection?.active && !fragileProtection?.enforced,
   )
   const deliveryNeedsAction = !evaluation.deliveryAccess?.clear
-  const blockingRuleCount = [
-    deliveryNeedsAction,
-    balanceNeedsAction,
-    fragileNeedsAction,
-  ].filter(Boolean).length
-  const anyRuleMonitoring = balanceMonitoring || fragileMonitoring
-  const trailerRuleSummary = blockingRuleCount > 0
-    ? `${blockingRuleCount} NEED${blockingRuleCount === 1 ? 'S' : ''} ATTENTION`
-    : anyRuleMonitoring
-      ? 'LIVE'
-      : 'OK'
   const deliveryRuleStatus = deliveryNeedsAction ? 'BLOCKED' : 'CLEAR'
   const balanceRuleStatus = balanceNeedsAction
     ? 'ADJUST'
@@ -641,6 +632,39 @@ export default function DockLoadWorkspace({
       : fragileProtection?.active
         ? 'PROTECTED'
         : 'CLEAR'
+  const hazmatSegregation = evaluation.hazmatSegregation
+  const hazmatConflict = hazmatSegregation?.conflicts?.[0] ?? null
+  const hazmatNeedsAction = Boolean(
+    hazmatSegregation?.enforced && !hazmatSegregation?.clear,
+  )
+  const hazmatMonitoring = Boolean(
+    hazmatSegregation?.active && !hazmatSegregation?.enforced,
+  )
+  const hazmatRuleStatus = hazmatNeedsAction
+    ? 'SEPARATE'
+    : hazmatMonitoring
+      ? 'LIVE'
+      : hazmatSegregation?.active
+        ? 'SEPARATED'
+        : 'CLEAR'
+  const onboardHazmatClasses = [...new Set(
+    allFreight
+      .filter((freight) => placements[freight.id] && freight.handlingCode === 'HAZMAT')
+      .map((freight) => freight.hazmatClassCode)
+      .filter(Boolean),
+  )]
+  const blockingRuleCount = [
+    deliveryNeedsAction,
+    balanceNeedsAction,
+    fragileNeedsAction,
+    hazmatNeedsAction,
+  ].filter(Boolean).length
+  const anyRuleMonitoring = balanceMonitoring || fragileMonitoring || hazmatMonitoring
+  const trailerRuleSummary = blockingRuleCount > 0
+    ? `${blockingRuleCount} NEED${blockingRuleCount === 1 ? 'S' : ''} ATTENTION`
+    : anyRuleMonitoring
+      ? 'LIVE'
+      : 'OK'
 
   return (
     <div
@@ -867,6 +891,7 @@ export default function DockLoadWorkspace({
                             blockingDeliveryIds.has(freightId) ? 'delivery-blocker' : '',
                             fragileAtRiskIds.has(freightId) ? 'fragile-at-risk' : '',
                             fragileImpactRiskIds.has(freightId) ? 'fragile-impact-risk' : '',
+                            hazmatConflictIds.has(freightId) ? 'hazmat-segregation-conflict' : '',
                           ].filter(Boolean).join(' ')}
                           style={{
                             gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -1215,6 +1240,54 @@ export default function DockLoadWorkspace({
                       {fragileConflict
                         ? `Separate ${fragileConflict.fragileLabel} from ${fragileConflict.riskLabel}.`
                         : 'Move the conflicting freight apart.'}
+                    </strong>
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article
+              className={[
+                'dock-load-rule-row',
+                'hazmat',
+                hazmatNeedsAction ? 'blocked' : '',
+                hazmatMonitoring ? 'live' : '',
+                !hazmatNeedsAction && !hazmatMonitoring ? 'healthy' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <header>
+                <div>
+                  <i aria-hidden="true">{hazmatNeedsAction ? '!' : hazmatMonitoring ? '•' : '✓'}</i>
+                  <strong>HAZMAT SEGREGATION</strong>
+                </div>
+                <b>{hazmatRuleStatus}</b>
+              </header>
+
+              <div className="dock-load-rule-summary">
+                <span>Classes</span>
+                <strong>
+                  {onboardHazmatClasses.length > 0
+                    ? onboardHazmatClasses.map((classCode) => `Class ${classCode}`).join(' + ')
+                    : 'No classified hazmat onboard'}
+                </strong>
+              </div>
+
+              {hazmatNeedsAction && (
+                <div className="dock-load-rule-detail">
+                  <div>
+                    <span>PROBLEM</span>
+                    <strong>
+                      {hazmatConflict
+                        ? `Class ${hazmatConflict.firstClassCode} is directly beside Class ${hazmatConflict.secondClassCode}.`
+                        : 'Incompatible hazmat classes are too close together.'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>FIX</span>
+                    <strong>
+                      {hazmatConflict
+                        ? `Separate ${hazmatConflict.firstLabel} from ${hazmatConflict.secondLabel} by at least one floor position.`
+                        : 'Separate the incompatible hazmat freight.'}
                     </strong>
                   </div>
                 </div>
