@@ -3410,3 +3410,129 @@ This packet does not change:
 - handling penalties.
 
 The next planned trailer-rule slice remains V2.7.5.2 Weight Distribution / Balance.
+
+
+---
+
+## V2.7.5.2 — Trailer Rules: Weight Distribution / Balance
+
+Dock & Load now has stable freight interaction, persistent cargo, Delivery Access, and a readable right-side rule hierarchy. The next gameplay layer is simplified load balance.
+
+This is intentionally **not** a DOT axle-weight simulation.
+
+### Weight truth
+
+Each placed freight unit contributes its actual modeled freight weight.
+
+For multi-position freight, that weight is distributed evenly across every occupied floor cell. This means long skids, wide skids, and machinery crates affect balance according to their real puzzle footprint rather than only their anchor cell.
+
+The trailer floor is evaluated on two axes:
+
+- FRONT / REAR,
+- LEFT / RIGHT.
+
+A center-row floor cell contributes equally to front and rear. A center-column cell, on equipment layouts that have one, contributes equally to left and right.
+
+### Target band
+
+A trailer is considered acceptably balanced when each side of an axis carries between **35% and 65%** of the modeled freight weight.
+
+Examples:
+
+- 52% front / 48% rear = balanced,
+- 64% left / 36% right = balanced,
+- 72% front / 28% rear = FRONT HEAVY,
+- 30% left / 70% right = RIGHT HEAVY.
+
+The tolerance is deliberately broad. The goal is to prevent obviously bad loading patterns, not to impersonate a certified scale or axle calculation.
+
+### Light-load activation
+
+Weight distribution becomes an enforceable rule only after planned onboard freight reaches **20% of the trailer's rated freight capacity**.
+
+For a 44,000 lb freight rating, the activation threshold is 8,800 lb.
+
+Below that threshold:
+
+- the card reports LIGHT LOAD,
+- distribution remains visible,
+- imbalance does not block readiness.
+
+This prevents one- or two-pallet loads from becoming artificial balance puzzles.
+
+### Live monitoring vs. enforcement
+
+While the current pickup is still incomplete:
+
+- the weight card updates live,
+- Trailer Rules may report MONITORING,
+- the player can see where the balance is trending,
+- imbalance by itself does not add a readiness error yet.
+
+Once all booked freight for the current pickup is placed:
+
+- an active in-band load reports BALANCED,
+- an active out-of-band load reports ADJUST,
+- the specific condition may be FRONT HEAVY, REAR HEAVY, LEFT HEAVY, RIGHT HEAVY, or a combination,
+- Required Action surfaces a directional correction,
+- rear-door commitment remains locked until the balance is corrected.
+
+This avoids punishing the player halfway through a load while still making the completed arrangement matter.
+
+### Right-panel presentation
+
+Weight Distribution is the second card in **TRAILER RULES**, directly below Delivery Access.
+
+The card shows:
+
+- status: LIGHT LOAD / MONITOR / BALANCED / ADJUST,
+- target: 35–65% per side,
+- live FRONT / REAR percentages,
+- live LEFT / RIGHT percentages,
+- visual split bars,
+- STATUS while valid,
+- LIVE PREVIEW while still loading,
+- PROBLEM + FIX when enforceably unbalanced.
+
+The top-level Trailer Rules state becomes:
+
+- ALL CLEAR,
+- MONITORING,
+- ACTION NEEDED.
+
+Delivery Access and Weight Distribution remain independent rules.
+
+### Gameplay consequence
+
+A player can no longer load every heavy piece into the nose or stack nearly all freight down one side and still receive READY.
+
+The player must now solve for:
+
+1. freight identity,
+2. physical fit,
+3. delivery accessibility,
+4. weight distribution.
+
+At multi-pickup facilities, carried freight from earlier stops participates in the same balance calculation, so a new pickup may require reorganizing existing cargo.
+
+### Non-goals
+
+V2.7.5.2 does not add:
+
+- certified DOT compliance,
+- steer/drive/trailer axle calculations,
+- kingpin position,
+- sliding tandems,
+- scale tickets,
+- legal axle-limit enforcement,
+- cargo height/center-of-gravity simulation,
+- vertical stacking,
+- hazardous-material compatibility,
+- fragile separation,
+- keep-upright enforcement,
+- no-stack enforcement,
+- delivery unloading puzzle,
+- service-time changes,
+- HOS changes.
+
+The next planned trailer-rule layer after playtest acceptance is handling restrictions.
