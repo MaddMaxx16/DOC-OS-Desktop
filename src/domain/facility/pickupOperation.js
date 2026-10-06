@@ -241,7 +241,17 @@ export function buildTutorialStagedFreight(event = {}) {
       loadRef,
       pickupNumber: loadRef,
       destination,
+      expectedDestination: destination,
+      shipmentId: loadRef,
       commodity: profile.unitName,
+      currentLocation: 'FACILITY',
+      status: 'STAGED',
+      condition: 'GOOD',
+      conditionKnown: true,
+      freightHistory: [{
+        event: 'STAGED',
+        facilityId: event.locationId ?? null,
+      }],
       cargoType: profile.cargoType,
       handlingCode: profile.handlingCode,
       handlingLabel: hazmat?.marking ?? profile.handlingLabel,
@@ -266,7 +276,17 @@ export function buildTutorialStagedFreight(event = {}) {
     loadRef: `${loadRef}-ALT`,
     pickupNumber: `${loadRef}-ALT`,
     destination: 'Albany, NY',
+    expectedDestination: 'Albany, NY',
+    shipmentId: `${loadRef}-ALT`,
     commodity: 'Staged freight',
+    currentLocation: 'FACILITY',
+    status: 'STAGED',
+    condition: 'GOOD',
+    conditionKnown: true,
+    freightHistory: [{
+      event: 'STAGED',
+      facilityId: event.locationId ?? null,
+    }],
     cargoType: profile.cargoType,
     handlingCode: profile.handlingCode,
     handlingLabel: profile.handlingLabel,
@@ -1153,6 +1173,31 @@ export function commitPickupOperation({
     throw new Error('Pickup operation requires a driver and freight event.')
   }
 
+  const freightManifest = Array.isArray(loadPlan?.freightManifest)
+    ? loadPlan.freightManifest.map((freight) => {
+        if (!sameLoad(freight, event)) return { ...freight }
+
+        return {
+          ...freight,
+          currentLocation: 'TRAILER',
+          status: 'IN_TRANSIT',
+          condition: freight.condition ?? 'GOOD',
+          conditionKnown: freight.conditionKnown ?? true,
+          freightHistory: [
+            ...(freight.freightHistory ?? []),
+            {
+              event: 'LOADED',
+              facilityId: event.locationId ?? null,
+              time: Number(currentAbsoluteMinutes ?? 0),
+              trailerPosition: loadPlan?.placements?.[freight.id]
+                ? { ...loadPlan.placements[freight.id] }
+                : null,
+            },
+          ],
+        }
+      })
+    : loadPlan?.freightManifest
+
   return {
     key: facilityOperationKey(driverId, event.id),
     driverId,
@@ -1165,6 +1210,9 @@ export function commitPickupOperation({
     planCommittedTime: Number(currentAbsoluteMinutes ?? 0),
     loadingStartMinutes: Number(currentAbsoluteMinutes ?? 0),
     loadingDurationMinutes: Math.max(1, Number(event.serviceMinutes ?? 12)),
-    loadPlan,
+    loadPlan: {
+      ...loadPlan,
+      freightManifest,
+    },
   }
 }
