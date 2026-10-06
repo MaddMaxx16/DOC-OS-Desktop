@@ -1,7 +1,9 @@
 import {
   boardCellCoordinates,
+  boardCellIndex,
   buildOnboardCargoForPickup,
   buildTutorialStagedFreight,
+  canPlaceFreight,
   facilityOperationKey,
   footprintCellIndexes,
 } from './pickupOperation.js'
@@ -450,6 +452,304 @@ function placedFreightEntries({
   return placed
 }
 
+function deliveryHandlingPlacementsWithoutFreight(placements = {}, freightId) {
+  return Object.fromEntries(
+    Object.entries(placements)
+      .filter(([id]) => id !== freightId)
+      .map(([id, placement]) => [id, { ...placement }]),
+  )
+}
+
+function rearDoorAnchorCells({
+  board,
+  freight,
+  placements,
+  freightId,
+  rotation,
+} = {}) {
+  const otherPlacements = deliveryHandlingPlacementsWithoutFreight(
+    placements,
+    freightId,
+  )
+  const anchors = []
+
+  for (let anchorCell = 0; anchorCell < board.usableCells; anchorCell += 1) {
+    const cells = footprintCellIndexes({
+      board,
+      freight,
+      anchorCell,
+      rotation,
+    })
+    if (!cells?.length) continue
+
+    const place = canPlaceFreight({
+      board,
+      stagedFreight: freight ? [freight] : [],
+      placements: {},
+      freightId: freight?.id,
+      anchorCell,
+      rotation,
+    })
+    if (!place.valid) continue
+
+    const { x, y } = boardCellCoordinates(board, anchorCell)
+    const rearNeighbor = boardCellIndex(board, x, y + 1)
+    const rearNeighborFits = rearNeighbor != null
+      ? footprintCellIndexes({
+          board,
+          freight,
+          anchorCell: rearNeighbor,
+          rotation,
+        })
+      : null
+
+    if (rearNeighborFits) continue
+
+    const clearAtDoor = canPlaceFreight({
+      board,
+      stagedFreight: [freight],
+      placements: otherPlacements,
+      freightId: freight.id,
+      anchorCell,
+      rotation,
+    })
+    if (clearAtDoor.valid) anchors.push(anchorCell)
+  }
+
+  return anchors
+}
+
+function deliveryHandlingNeighborAnchors(board, anchorCell) {
+  const { x, y } = boardCellCoordinates(board, anchorCell)
+  return [
+    boardCellIndex(board, x - 1, y),
+    boardCellIndex(board, x + 1, y),
+    boardCellIndex(board, x, y - 1),
+    boardCellIndex(board, x, y + 1),
+  ].filter((cell) => cell != null)
+}
+
+export function findDeliveryRearHandlingPath({
+  board,
+  freight = [],
+  placements = {},
+  freightId,
+  anchorCell,
+  rotation = 0,
+} = {}) {
+  const unit = freight.find((item) => item.id === freightId)
+  if (!board || !unit || !Number.isInteger(Number(anchorCell))) {
+    return {
+      clear: false,
+      reason: 'INVALID_REQUEST',
+      path: [],
+    }
+  }
+
+  const targetCell = Number(anchorCell)
+  const otherPlacements = deliveryHandlingPlacementsWithoutFreight(
+    placements,
+    freightId,
+  )
+  const targetPlacement = canPlaceFreight({
+    board,
+    stagedFreight: freight,
+    placements: otherPlacements,
+    freightId,
+    anchorCell: targetCell,
+    rotation,
+  })
+
+  if (!targetPlacement.valid) {
+    return {
+      clear: false,
+      reason: targetPlacement.reason ?? 'INVALID_PLACEMENT',
+      path: [],
+    }
+  }
+
+  const doorAnchors = rearDoorAnchorCells({
+    board,
+    freight: unit,
+    placements,
+    freightId,
+    rotation,
+  })
+  if (doorAnchors.length === 0) {
+    return {
+      clear: false,
+      reason: 'NO_REAR_ENTRY',
+      path: [],
+    }
+  }
+
+  const queue = doorAnchors.map((cell) => [cell])
+  const visited = new Set(doorAnchors)
+
+  while (queue.length > 0) {
+    const path = queue.shift()
+    const current = path[path.length - 1]
+    if (current === targetCell) {
+      return {
+        clear: true,
+        reason: null,
+        path,
+      }
+    }
+
+    for (const neighbor of deliveryHandlingNeighborAnchors(board, current)) {
+      if (visited.has(neighbor)) continue
+
+      const step = canPlaceFreight({
+        board,
+        stagedFreight: freight,
+        placements: otherPlacements,
+        freightId,
+        anchorCell: neighbor,
+        rotation,
+      })
+      if (!step.valid) continue
+
+      visited.add(neighbor)
+      queue.push([...path, neighbor])
+    }
+  }
+
+  return {
+    clear: false,
+    reason: 'NO_HANDLING_PATH',
+    path: [],
+  }
+}
+
+export function evaluateDeliveryHandlingAccess({
+  board,
+  freight = [],
+  placements = {},
+  excludedFreightIds = [],
+} = {}) {
+  const excluded = new Set(excludedFreightIds)
+  const accessibleFreightIds = []
+  const blockedFreightIds = []
+  const pathByFreightId = {}
+
+  for (const [freightId, placement] of Object.entries(placements)) {
+    if (excluded.has(freightId)) continue
+
+    const access = findDeliveryRearHandlingPath({
+      board,
+      freight,
+      placements,
+      freightId,
+      anchorCell: placement?.anchorCell,
+      rotation: placement?.rotation ?? 0,
+    })
+    pathByFreightId[freightId] = access.path
+
+    if (access.clear) accessibleFreightIds.push(freightId)
+    else blockedFreightIds.push(freightId)
+  }
+
+  return {
+    accessibleFreightIds,
+    blockedFreightIds,
+    pathByFreightId,
+  }
+}
+
+export function evaluateDeliveryRepositionMove({
+  board,
+  freight = [],
+  placements = {},
+  freightId,
+  anchorCell,
+  rotation = 0,
+  source = 'trailer',
+} = {}) {
+  const unit = freight.find((item) => item.id === freightId)
+  if (!unit) {
+    return {
+      valid: false,
+      reason: 'FREIGHT_NOT_FOUND',
+      destinationPath: [],
+      sourcePath: [],
+    }
+  }
+
+  const destination = canPlaceFreight({
+    board,
+    stagedFreight: freight,
+    placements,
+    freightId,
+    anchorCell,
+    rotation,
+  })
+  if (!destination.valid) {
+    return {
+      valid: false,
+      reason: destination.reason ?? 'INVALID_PLACEMENT',
+      destinationPath: [],
+      sourcePath: [],
+    }
+  }
+
+  let sourcePath = []
+  if (source === 'trailer') {
+    const sourcePlacement = placements[freightId]
+    if (!sourcePlacement) {
+      return {
+        valid: false,
+        reason: 'SOURCE_NOT_ON_TRAILER',
+        destinationPath: [],
+        sourcePath: [],
+      }
+    }
+
+    const sourceAccess = findDeliveryRearHandlingPath({
+      board,
+      freight,
+      placements,
+      freightId,
+      anchorCell: sourcePlacement.anchorCell,
+      rotation: sourcePlacement.rotation ?? 0,
+    })
+    if (!sourceAccess.clear) {
+      return {
+        valid: false,
+        reason: 'SOURCE_NOT_REAR_ACCESSIBLE',
+        destinationPath: [],
+        sourcePath: sourceAccess.path,
+      }
+    }
+    sourcePath = sourceAccess.path
+  }
+
+  const destinationAccess = findDeliveryRearHandlingPath({
+    board,
+    freight,
+    placements,
+    freightId,
+    anchorCell,
+    rotation,
+  })
+  if (!destinationAccess.clear) {
+    return {
+      valid: false,
+      reason: 'DESTINATION_NOT_REAR_ACCESSIBLE',
+      destinationPath: destinationAccess.path,
+      sourcePath,
+    }
+  }
+
+  return {
+    valid: true,
+    reason: null,
+    cells: destination.cells,
+    destinationPath: destinationAccess.path,
+    sourcePath,
+  }
+}
+
 function freightBlockedByRearCargo(target, active = []) {
   const targetColumns = new Map()
 
@@ -608,6 +908,15 @@ export function evaluateDeliveryUnloadPlan({
     temporaryStagedFreightIds,
     unloadedFreightIds: [...unloadedIds],
   })
+  const handlingAccess = evaluateDeliveryHandlingAccess({
+    board,
+    freight,
+    placements,
+    excludedFreightIds: [
+      ...temporaryStagedFreightIds,
+      ...unloadedIds,
+    ],
+  })
 
   const receivingProtocol = evaluateDeliveryReceivingProtocol({
     event,
@@ -707,6 +1016,7 @@ export function evaluateDeliveryUnloadPlan({
     shortageFreight,
     unexpectedFreight,
     access,
+    handlingAccess,
     receivingProtocol,
     receivingZoneByFreightId: { ...receivingZoneByFreightId },
     staging,
