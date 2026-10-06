@@ -3901,3 +3901,148 @@ Damage/refusal generation is intentionally deferred until there is a traceable c
 The player may inspect and plan the delivery indefinitely while Focused Mode is open.
 
 Once the unload plan is committed, operational time resumes and the driver remains at the facility for the real simulated work.
+
+
+---
+
+## V2.7.6.1 — Physical Delivery Unload
+
+Gameplay review of the first Delivery Operations implementation found that the underlying architecture worked, but the interaction layer did not.
+
+The first screen exposed a per-unit UNLOAD PLAN list on the right. Because the list already identified every correct freight unit, the player could ignore the trailer and click through the answers. Persistent trailer state was visible, but it was not the actual game surface.
+
+V2.7.6.1 corrects that.
+
+### Primary player verb
+
+Pickup uses:
+
+**PLACE**
+
+Delivery now uses:
+
+**REMOVE**
+
+The player interacts directly with physical freight in the trailer and drags it through the rear-door side into the receiver's **Receiving Bay**.
+
+The right side is no longer a selectable freight checklist.
+
+### Information given to the player
+
+At the receiver, DOC OS provides:
+
+- receiver/facility identity,
+- load reference,
+- expected unit count,
+- expected weight,
+- received unit count,
+- rehandle count.
+
+The physical load markings on cargo remain the clue for deciding which freight belongs at the stop.
+
+DOC OS does not permanently list the correct units for the player.
+
+### Immediate accessibility
+
+The delivery domain now distinguishes between:
+
+- freight that can physically exit through the rear doors **right now**,
+- delivery freight currently blocked,
+- the exact active freight causing that immediate blockage.
+
+Accessibility recalculates after every unload and every temporary rehandle.
+
+A unit farther toward the trailer nose may become accessible only after a rearward unit leaves.
+
+### Discovery before explanation
+
+The game does not announce every blocked unit in advance.
+
+When the player attempts to drag an inaccessible delivery unit into Receiving:
+
+1. the drop is rejected,
+2. the attempted freight is highlighted,
+3. the physical blocking freight is highlighted,
+4. contextual text explains what is closer to the rear doors.
+
+This keeps the first task spatial: read the trailer.
+
+### Same-stop blocker
+
+If the blocker belongs to the same receiver, the fix is simply to unload the blocking delivery unit first.
+
+That creates a natural extraction sequence without requiring a separate sequence UI.
+
+### Later-stop blocker
+
+If freight for a later delivery blocks the current delivery, the player may drag that blocker into **Temporary Staging**.
+
+Temporary Staging:
+
+- removes the blocker from the working trailer,
+- opens access for the current delivery,
+- records one rehandled unit,
+- represents two handling moves,
+- adds +3 minutes of simulated service time,
+- automatically reloads that freight into its original trailer position when the delivery plan commits.
+
+Dragging an unrelated later-stop unit to staging when it is not needed is rejected.
+
+### Receiving Bay
+
+The Receiving Bay is a physical drop destination.
+
+Successfully extracted freight appears there as received units, preserving the feeling that cargo actually moved out of the trailer.
+
+The bay shows progress such as:
+
+**3 / 6 RECEIVED**
+
+rather than presenting six SELECT buttons before the interaction begins.
+
+### Handoff
+
+Once all expected actual freight has been physically extracted:
+
+**CONFIRM HANDOFF**
+
+becomes available.
+
+This preserves the V2.7.6 time philosophy:
+
+- the focused drag interaction represents the unload sequence/plan,
+- Focused Mode itself consumes no world time,
+- Confirm Handoff begins simulated warehouse unloading,
+- rehandles influence service duration,
+- receiver verification follows,
+- routine clean delivery auto-departs.
+
+### Preserved sequence data
+
+The committed delivery operation now stores the physical unload sequence.
+
+This provides a future input for:
+
+- operational efficiency,
+- rehandle scoring,
+- Freight Operations XP,
+- facility performance,
+- authored exceptions.
+
+### Removed interaction pattern
+
+The following V2.7.6 presentation is no longer authoritative:
+
+- right-side per-unit SELECT list,
+- selecting all freight without touching the trailer,
+- permanent BLOCKED count as primary guidance,
+- always-visible answer-state highlighting.
+
+### Known Live Operations UX backlog
+
+Observed during the same gameplay review but intentionally deferred:
+
+1. **Schedule send access** — SEND SCHEDULE is currently coupled to Planning state. A later Live Operations UX pass should expose a normal-workflow way to dispatch/send the completed plan.
+2. **Advance to next operational moment** — current fast-forward requires the player to sit through idle time. A later time-control pass should add an Advance to Next Event / Next Operational Moment action.
+
+These are recorded issues, not part of the V2.7.6.1 delivery interaction scope.
