@@ -375,8 +375,11 @@ export default function DockLoadWorkspace({
   const plannedIds = new Set(Object.keys(placements))
   const blockedDeliveryIds = new Set(evaluation.deliveryAccess?.blockedFreightIds ?? [])
   const blockingDeliveryIds = new Set(evaluation.deliveryAccess?.blockingFreightIds ?? [])
-  const nonAccessErrors = evaluation.errors.filter(
-    (issue) => issue.code !== 'DELIVERY_ACCESS_BLOCKED',
+  const nonRuleErrors = evaluation.errors.filter(
+    (issue) => ![
+      'DELIVERY_ACCESS_BLOCKED',
+      'WEIGHT_DISTRIBUTION_UNBALANCED',
+    ].includes(issue.code),
   )
   const orderedStagedFreight = [
     ...stagedFreight.filter((freight) => !plannedIds.has(freight.id)),
@@ -584,9 +587,37 @@ export default function DockLoadWorkspace({
     0,
     evaluation.expectedCount - evaluation.plannedExpectedCount,
   )
-  const otherActionErrors = nonAccessErrors.filter(
+  const otherActionErrors = nonRuleErrors.filter(
     (issue) => issue.code !== 'REQUIRED_FREIGHT_NOT_PLANNED',
   )
+  const weightBalance = evaluation.weightBalance
+  const balanceNeedsAction = Boolean(
+    weightBalance?.enforced && !weightBalance?.clear,
+  )
+  const balanceMonitoring = Boolean(
+    weightBalance?.active && !weightBalance?.enforced,
+  )
+  const trailerRulesClear = Boolean(
+    evaluation.deliveryAccess?.clear && !balanceNeedsAction,
+  )
+  const trailerRulesStatus = !evaluation.deliveryAccess?.clear || balanceNeedsAction
+    ? 'ACTION NEEDED'
+    : balanceMonitoring
+      ? 'MONITORING'
+      : 'ALL CLEAR'
+  const balanceStatus = !weightBalance?.active
+    ? 'LIGHT LOAD'
+    : !weightBalance?.enforced
+      ? 'MONITOR'
+      : weightBalance.clear
+        ? 'BALANCED'
+        : 'ADJUST'
+  const balanceIssueLabel = weightBalance?.issues
+    ?.map((issue) => issue.label)
+    .join(' + ') ?? ''
+  const balanceFixText = weightBalance?.issues
+    ?.map((issue) => issue.fix)
+    .join(' ') ?? 'Redistribute trailer weight.'
 
   return (
     <div
@@ -1015,9 +1046,7 @@ export default function DockLoadWorkspace({
         <section className="dock-load-rules">
           <header>
             <span>TRAILER RULES</span>
-            <strong>
-              {evaluation.deliveryAccess?.clear ? 'ALL CLEAR' : 'ACTION NEEDED'}
-            </strong>
+            <strong>{trailerRulesStatus}</strong>
           </header>
 
           <div
@@ -1079,6 +1108,103 @@ export default function DockLoadWorkspace({
               </>
             )}
           </div>
+
+          <div
+            className={[
+              'dock-load-trailer-rule',
+              'dock-load-weight-rule',
+              balanceNeedsAction ? 'blocked' : 'clear',
+              !weightBalance?.active ? 'light-load' : '',
+              balanceMonitoring ? 'monitoring' : '',
+            ].filter(Boolean).join(' ')}
+          >
+            <header>
+              <span>WEIGHT DISTRIBUTION</span>
+              <strong>{balanceStatus}</strong>
+            </header>
+
+            <div className="dock-load-balance-target">
+              TARGET · {weightBalance?.targetMinPercent ?? 35}–{weightBalance?.targetMaxPercent ?? 65}% PER SIDE
+            </div>
+
+            <div className="dock-load-balance-axis">
+              <header>
+                <span>FRONT / REAR</span>
+                <strong>
+                  {weightBalance?.frontPercent ?? 50}% / {weightBalance?.rearPercent ?? 50}%
+                </strong>
+              </header>
+              <div className="dock-load-balance-split" aria-label="Front and rear trailer weight distribution">
+                <i
+                  className="front"
+                  style={{ width: `${weightBalance?.frontPercent ?? 50}%` }}
+                />
+                <i
+                  className="rear"
+                  style={{ width: `${weightBalance?.rearPercent ?? 50}%` }}
+                />
+              </div>
+              <small>
+                <span>FRONT / NOSE</span>
+                <span>REAR / DOORS</span>
+              </small>
+            </div>
+
+            <div className="dock-load-balance-axis">
+              <header>
+                <span>LEFT / RIGHT</span>
+                <strong>
+                  {weightBalance?.leftPercent ?? 50}% / {weightBalance?.rightPercent ?? 50}%
+                </strong>
+              </header>
+              <div className="dock-load-balance-split" aria-label="Left and right trailer weight distribution">
+                <i
+                  className="left"
+                  style={{ width: `${weightBalance?.leftPercent ?? 50}%` }}
+                />
+                <i
+                  className="right"
+                  style={{ width: `${weightBalance?.rightPercent ?? 50}%` }}
+                />
+              </div>
+              <small>
+                <span>LEFT</span>
+                <span>RIGHT</span>
+              </small>
+            </div>
+
+            {!weightBalance?.active ? (
+              <div className="dock-load-rule-copy clear">
+                <span>STATUS</span>
+                <strong>
+                  Light load. Balance is advisory below {pounds(weightBalance?.activationWeightLbs)} lb.
+                </strong>
+              </div>
+            ) : balanceMonitoring ? (
+              <div className="dock-load-rule-copy monitoring">
+                <span>LIVE PREVIEW</span>
+                <strong>
+                  Final balance is checked when this pickup is fully loaded.
+                </strong>
+              </div>
+            ) : weightBalance.clear ? (
+              <div className="dock-load-rule-copy clear">
+                <span>STATUS</span>
+                <strong>Weight is distributed within the target band.</strong>
+              </div>
+            ) : (
+              <>
+                <div className="dock-load-rule-copy problem">
+                  <span>PROBLEM</span>
+                  <strong>{balanceIssueLabel}</strong>
+                </div>
+                <div className="dock-load-rule-copy fix">
+                  <span>FIX</span>
+                  <strong>{balanceFixText}</strong>
+                </div>
+              </>
+            )}
+          </div>
         </section>
 
         <section
@@ -1123,6 +1249,13 @@ export default function DockLoadWorkspace({
                       ? `Move ${deliveryConflict.blockedLoadRef} rearward so it can unload before ${deliveryConflict.blockingLoadRef}.`
                       : 'Clear the earlier delivery path to the rear doors.'}
                   </small>
+                </div>
+              )}
+
+              {balanceNeedsAction && (
+                <div className="dock-load-action-card rule balance">
+                  <strong>FIX WEIGHT DISTRIBUTION</strong>
+                  <small>{balanceFixText}</small>
                 </div>
               )}
 
