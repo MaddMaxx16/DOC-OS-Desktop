@@ -46,13 +46,17 @@ function AppointmentWait({ item, liveState }) {
 function ServiceProgress({ item, liveState }) {
   const active = (
     liveState?.currentEventId === item.id
-    && ['service-loading', 'service-unloading'].includes(liveState?.executionPhase)
+    && ['service-loading', 'service-unloading', 'receiver-verification'].includes(liveState?.executionPhase)
   )
   if (!active) return null
 
   const progress = Math.max(0, Math.min(100, Math.round((liveState.serviceProgress ?? 0) * 100)))
   const remaining = Math.max(0, Math.ceil(liveState.serviceRemainingMinutes ?? 0))
-  const label = item.role === 'pickup' ? 'LOADING' : 'UNLOADING'
+  const label = liveState.executionPhase === 'receiver-verification'
+    ? 'RECEIVER CHECK'
+    : item.role === 'pickup'
+      ? 'LOADING'
+      : 'UNLOADING'
 
   return (
     <div className={`facility-service-progress ${item.role}`}>
@@ -485,9 +489,15 @@ export default function DriverDayPanel({
                 : liveState?.executionPhase === 'waiting-appointment'
                   ? `Arrived early at ${liveState.currentEventLabel ?? 'planned stop'} · appointment opens at ${formatClock(liveState.waitingUntilMinutes)} · ${Math.ceil(liveState.waitRemainingMinutes ?? 0)} min waiting.`
                 : liveState?.executionPhase === 'facility-dock-assigned'
-                  ? `Dock ${liveState.dock ?? '—'} is ready. Open Dock & Load to verify freight and build the trailer plan.`
-                : ['service-loading', 'service-unloading'].includes(liveState?.executionPhase)
-                  ? `${liveState.executionPhase === 'service-loading' ? 'Loading' : 'Unloading'} ${liveState.serviceLoadRef ?? 'freight'} · ${Math.ceil(liveState.serviceRemainingMinutes ?? 0)} min remaining · automatic departure at ${formatClock(liveState.currentEventDepartureMinutes)}.`
+                  ? liveState.serviceRole === 'delivery'
+                    ? `Dock ${liveState.dock ?? '—'} is ready. Open Dock & Delivery to inspect the trailer and build the unload plan.`
+                    : `Dock ${liveState.dock ?? '—'} is ready. Open Dock & Load to verify freight and build the trailer plan.`
+                : ['service-loading', 'service-unloading', 'receiver-verification'].includes(liveState?.executionPhase)
+                  ? `${liveState.executionPhase === 'service-loading'
+                    ? 'Loading'
+                    : liveState.executionPhase === 'receiver-verification'
+                      ? 'Receiver checking'
+                      : 'Unloading'} ${liveState.serviceLoadRef ?? 'freight'} · ${Math.ceil(liveState.serviceRemainingMinutes ?? 0)} min remaining · automatic departure at ${formatClock(liveState.currentEventDepartureMinutes)}.`
                 : liveState?.executionPhase === 'arrived'
                   ? `At ${liveState.currentEventLabel ?? 'planned stop'} · next movement begins on the live clock.`
                   : liveState?.executionPhase === 'dwell-break'
@@ -513,8 +523,16 @@ export default function DriverDayPanel({
           })}
         >
           <span>DOCK {liveState.dock ?? '—'} ASSIGNED</span>
-          <strong>OPEN DOCK & LOAD</strong>
-          <small>Focused Mode · verify freight and plan the trailer</small>
+          <strong>
+            {liveState.serviceRole === 'delivery'
+              ? 'OPEN DOCK & DELIVERY'
+              : 'OPEN DOCK & LOAD'}
+          </strong>
+          <small>
+            {liveState.serviceRole === 'delivery'
+              ? 'Focused Mode · inspect freight and plan the unload'
+              : 'Focused Mode · verify freight and plan the trailer'}
+          </small>
         </button>
       )}
 
