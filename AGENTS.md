@@ -32,212 +32,141 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.6.6 Delivery Handling Constraints
+## Current packet — V2.7.6.7 Warehouse Fidelity
 
 V2.1 through V2.7.5.4 are accepted and locked.
 V2.7.6 Delivery Operations architecture remains authoritative.
-V2.7.6.2 receiver-specific SOP phases and zone validation remain authoritative.
-V2.7.6.3 pointer-owned freight interaction remains authoritative.
-V2.7.6.4 Delivery Space Management remains authoritative:
-- shared Pickup/Delivery trailer shell,
-- mutable Delivery trailer placements,
-- internal Trailer → Trailer repositioning,
-- finite 3-position Temp Staging,
-- internal reposition history vs external rehandles,
-- current-state access recalculation.
-V2.7.6.5 warehouse physicalization remains visually authoritative.
+V2.7.6.2 receiver-specific SOP logic remains authoritative.
+V2.7.6.3 pointer-owned freight movement remains authoritative.
+V2.7.6.4 Delivery Space Management remains authoritative.
+V2.7.6.5 warehouse physicalization remains authoritative.
+V2.7.6.6 rear handling paths and pointer recovery remain authoritative.
 
-V2.7.6.6 is the active Delivery packet.
+V2.7.6.7 is the active Delivery packet.
 
 ### Purpose
 
-Gameplay review of V2.7.6.5 found two remaining Delivery problems:
+Gameplay review shows the Delivery system is mechanically close to target.
 
-1. an interrupted pointer move could leave the workspace stuck in FREIGHT IN MOTION,
-2. internal repositioning was too permissive because any collision-free empty trailer position could be used even when the freight could not plausibly be handled there from the rear doors.
+This packet makes three tightly scoped corrections:
 
-This packet fixes those two issues only.
+1. raise the receiver-floor brightness/contrast so the left side reads more clearly as an active warehouse gameplay surface,
+2. make Temp Staging freight retain the same physical cargo fidelity and stable scale as trailer freight,
+3. correct Freshway's misleading first-phase wording so its 0/2 requirement clearly describes one FRAGILE and one KEEP UPRIGHT unit rather than implying two fragile pallets.
 
-### Handling-path gameplay abstraction
+### Warehouse contrast
 
-Delivery now adds a rear handling-path rule.
+Do not redesign the V2.7.6.5 warehouse layout.
 
-This is a DOC OS gameplay abstraction for dock-equipment reachability.
-It is **not** a forklift-certification, OSHA, DOT, FMCSA, or warehouse-engineering simulator.
+Keep:
+- one continuous receiving floor,
+- painted zone geometry,
+- current zone positions,
+- current cargo placement,
+- accepted trailer width and shell,
+- accepted right-side SOP panel.
 
-The rule exists to stop freight from teleporting through other freight during Delivery.
+Change only visual legibility:
+- lift the warehouse base luminance,
+- improve floor/header/stencil contrast,
+- make inactive zones readable without turning them into cards,
+- keep active-zone emphasis restrained,
+- preserve DOC OS's dark industrial visual language.
 
-### Rear handling path
+The left side should be lighter than V2.7.6.6 without becoming bright, washed out, or visually detached from the rest of the application.
 
-For a trailer freight unit to be manipulated from the trailer, DOC OS must be able to find a legal path for that freight footprint from a rear-door boundary position to its current position.
+### Temp Staging freight fidelity
 
-The path:
-- uses the current mutable Delivery trailer state,
-- uses the freight's current footprint and rotation,
-- moves through adjacent trailer anchor positions,
-- may not overlap other freight,
-- may not leave the usable trailer floor,
-- respects disabled/non-floor cells.
+Temp Staging remains exactly 3 pallet-equivalent positions.
 
-A freight unit with no rear handling path is not currently manipulable.
+The staging freight must use the same physical freight visual component as trailer freight.
 
-### Delivery unload access
+The staging layout must not stretch freight to arbitrary fractional row widths.
 
-Receiver SOP remains authoritative, but current-phase freight must also be rear-handling accessible before it can leave the trailer.
+Use a stable pallet-scale visual slot so staged freight preserves:
+- cargo family,
+- pallet/crate/skid/drum appearance,
+- handling markings,
+- label treatment,
+- relative footprint,
+- recognizable physical proportions.
 
-A valid receiver unload therefore requires:
-1. correct receiver phase,
-2. correct receiver zone,
-3. rear handling path from the trailer to the doors.
+A staged piece should look like the same physical object that was just removed from the trailer.
 
-The previous same-lane blocker model remains available for contextual blocker feedback, but the handling-path rule is the stronger physical manipulation gate.
+No staging-capacity or rehandle-rule changes are allowed.
 
-### Trailer → Trailer repositioning
+### Freshway Quality Check wording
 
-An empty destination is no longer sufficient.
+Freshway's first receiver phase currently matches:
+- FRAGILE,
+- UPRIGHT / KEEP UPRIGHT.
 
-For an internal reposition to be valid:
-- the source freight must itself be reachable from the rear doors,
-- the destination footprint must fit,
-- the destination must be collision-free,
-- the freight footprint must have a rear handling path to the destination through the current trailer layout.
+The gameplay rule is correct, but the label FRAGILE INSPECTION is misleading when the phase count includes keep-upright freight.
 
-If the destination is empty but unreachable, reject with **NO HANDLING PATH**.
+Freshway first phase is now:
 
-If the source itself is buried beyond handling reach, reject with **FORKLIFT CANNOT REACH**.
+**QUALITY CHECK**
 
-This rule should make open trailer space useful without allowing the player to teleport freight behind blockers.
+Cargo summary:
 
-### Temp Staging interaction
+**FRAGILE + KEEP UPRIGHT**
 
-Existing Temp Staging capacity remains exactly 3 pallet-equivalent positions.
+Destination:
 
-A trailer freight unit must itself be rear-handling accessible before it may move to Temp Staging.
+**QUALITY CHECK**
 
-Existing "unnecessary staging" protection remains, with one extension:
+The instruction should explicitly state that fragile and keep-upright freight clear quality check before controlled materials.
 
-If the active receiver phase has **no rear-handling-accessible freight**, a rear-accessible later-phase or later-stop freight unit may be staged to open a handling corridor even when it is not the old same-column immediate blocker.
+This is a wording/clarity correction only.
+Do not change which freight IDs belong to the phase.
 
-This lets Temp Staging become necessary when the receiver sequence is physically trapped.
+Harborline keeps its existing FRAGILE INSPECTION phase because Harborline's inspection phase matches FRAGILE only.
 
-Do not increase staging capacity in this packet.
+### Preserved mechanics
 
-### Challenge intent
-
-The intended decision becomes:
-
-1. What freight does the receiver require now?
-2. Can that freight physically reach the rear doors?
-3. If not, which freight can the dock equipment actually reach?
-4. Can a reachable blocker be repositioned to another rear-reachable trailer location?
-5. If no legal internal path exists, which blocker is worth spending scarce Temp Staging on?
-
-Do not add arbitrary time limits or additional receiver SOP rules to create difficulty.
-
-### Pointer-interaction hardening
-
-No Delivery drag may leave the workspace indefinitely stuck in FREIGHT IN MOTION.
-
-The active pointer session must safely terminate on:
-- normal pointer-up,
-- pointer-cancel,
-- lost pointer capture,
-- window blur,
-- page/tab visibility loss,
-- Escape.
-
-Normal valid release still commits the move.
-
-If the release cannot be resolved safely:
-- cancel the move,
-- animate freight back toward its last valid origin,
-- clear the active pointer state,
-- return control to the player,
-- show concise MOVE CANCELED / POINTER RELEASED feedback.
-
-The game must prefer safely returning freight over preserving an uncertain drag.
-
-### Pointer state rules
-
-Maintain an authoritative active pointer reference separate from transient React render state so late browser events cannot leave a ghost freight session active.
-
-Guard move completion so duplicate pointer-up/capture-loss events cannot double-commit or double-cancel a freight move.
-
-### Preserved systems
-
-Do not redesign:
-- V2.7.6.5 warehouse presentation,
-- shared Pickup/Delivery trailer,
-- receiver SOP panel,
-- receiving-zone visuals,
-- receiver-floor freight visuals,
-- staging visuals,
-- freight families,
+Do not alter:
+- rear handling-path rules,
+- source/destination reachability,
+- pointer recovery behavior,
+- trailer repositioning,
 - staging capacity,
+- staging footprint accounting,
 - receiver phase order,
-- rehandle time,
-- background unloading,
-- receiver verification,
-- routine auto-depart.
-
-### Visual feedback
-
-Reuse the existing Trailer → Trailer footprint preview.
-
-Preview should now represent both:
-- footprint/collision legality,
-- rear handling-path legality.
-
-Green means the move can actually be handled from the rear.
-Red means either the footprint does not fit, collides, or has no handling path.
-
-Do not add another permanent HUD card for this rule.
-
-Contextual feedback is enough.
-
-### Accuracy boundary
-
-Rear handling paths are a gameplay abstraction.
-
-Do not claim:
-- exact forklift turning-radius simulation,
-- OSHA-compliant warehouse access,
-- certified forklift maneuverability,
-- real dock-equipment clearance calculations.
-
-The model only represents whether the freight footprint can move through adjacent open trailer positions from the rear.
+- phase membership,
+- rehandle timing,
+- background unload / receiver verification / auto-depart,
+- Pickup trailer visual shell,
+- Delivery trailer visual shell.
 
 ### Acceptance requirements
 
-V2.7.6.6 is not accepted until gameplay confirms:
+V2.7.6.7 requires gameplay confirmation that:
 
-1. An accidental release cannot leave FREIGHT IN MOTION stuck.
-2. Escape safely cancels a held freight move.
-3. Losing pointer capture safely returns freight.
-4. Window/tab interruption safely clears the drag state.
-5. Empty but unreachable trailer positions are rejected.
-6. Reachable internal positions still work.
-7. Rear-accessible freight can be unloaded normally.
-8. Buried freight cannot be manipulated through other cargo.
-9. Temp Staging becomes useful when the active receiver phase has no reachable freight.
-10. The accepted trailer, warehouse, and right HUD remain visually unchanged.
+1. the receiver floor is noticeably easier to read at normal scale,
+2. the warehouse remains dark/industrial rather than bright,
+3. staging freight looks like the same physical cargo used in the trailer,
+4. staged freight no longer appears stretched or flattened by the staging layout,
+5. Freshway shows QUALITY CHECK instead of FRAGILE INSPECTION,
+6. Freshway's phase summary clearly says FRAGILE + KEEP UPRIGHT,
+7. the Freshway phase count still reflects the actual matching freight,
+8. Harborline wording remains unchanged,
+9. V2.7.6.6 handling-path difficulty remains unchanged,
+10. the accepted trailer and right HUD remain unchanged.
 
 ### Explicit non-goals
 
 Do not add:
-- exact forklift turning radii,
-- forklift/NPC animation,
-- vertical stacking,
-- new receiver phases,
-- new Pickup rules,
-- random damage,
-- refusal/claims,
-- HOS changes,
-- schedule-send UX changes,
-- next-event controls,
-- RPG scoring UI.
+- new receiver rules,
+- new staging rules,
+- new freight categories,
+- new difficulty systems,
+- forklifts/NPCs,
+- scoring/XP UI,
+- route/planning changes,
+- schedule-send changes,
+- next-event controls.
 
-V2.7.6.6 exists specifically to harden Delivery pointer interaction and make internal freight movement obey the trailer's physical access constraints.
+V2.7.6.7 is a focused warehouse readability, staging-fidelity, and SOP-wording correction packet.
 
 
 ## Verification
