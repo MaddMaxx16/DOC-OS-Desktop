@@ -3536,3 +3536,20 @@ V2.7.5.2 does not add:
 - HOS changes.
 
 The next planned trailer-rule layer after playtest acceptance is handling restrictions.
+
+
+---
+
+## V2.7.5.3 — Handling Restrictions: Fragile Protection
+
+This packet introduces the first active handling restriction without turning every freight label into a rule at once.
+
+**Rule:** FRAGILE freight may not share an edge with HEAVY or OVERSIZE freight.
+
+The rule is footprint-aware, diagonal contact is permitted, and it uses the same placed-cargo truth as fit, delivery access, and balance.
+
+While the current pickup is incomplete, Fragile Protection is monitored live. Once all booked freight is onboard, any unresolved conflict becomes enforceable and prevents READY TO CLOSE.
+
+The Trailer Rules panel adds a dedicated Fragile Protection card and conflicting freight receives visual emphasis so the player can identify what must move.
+
+HAZMAT, NO STACK, and KEEP UPRIGHT remain descriptive only in this packet.
