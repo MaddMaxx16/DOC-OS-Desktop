@@ -3565,3 +3565,57 @@
     transition: none !important;
   }
 }
+
+
+/* V2.7.5.3 — Handling Restrictions: Fragile Protection */
+.dock-load-fragile-rule.monitoring {
+  border-top-color: #66552f;
+  border-bottom-color: #66552f;
+  background:
+    linear-gradient(90deg, rgba(120, 91, 34, .08), transparent 72%),
+    #12140f;
+}
+
+.dock-load-fragile-rule-line {
+  padding: 7px 8px;
+  border: 1px solid #3d3430;
+  border-radius: 2px;
+  background: #120e0d;
+  color: #c5a38d;
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.loaded-freight-piece.fragile-at-risk .loaded-freight-shape {
+  box-shadow:
+    inset 0 0 0 2px rgba(228, 119, 87, .5),
+    0 0 0 1px rgba(228, 119, 87, .28),
+    0 0 12px rgba(228, 119, 87, .22);
+}
+
+.loaded-freight-piece.fragile-impact-risk .loaded-freight-shape {
+  box-shadow:
+    inset 0 0 0 2px rgba(222, 172, 77, .42),
+    0 0 0 1px rgba(222, 172, 77, .24),
+    0 0 10px rgba(222, 172, 77, .16);
+}
+
+.loaded-freight-piece.fragile-at-risk .loaded-freight-label {
+  border-color: rgba(229, 120, 88, .7);
+}
+
+.loaded-freight-piece.fragile-impact-risk .loaded-freight-label {
+  border-color: rgba(222, 172, 77, .6);
+}
+
+.dock-load-action-card.fragile {
+  border-color: #774a3c;
+  background:
+    linear-gradient(90deg, rgba(130, 67, 45, .14), transparent 80%),
+    #17110e;
+}
+
+.dock-load-action-card.fragile strong {
+  color: #e5a083;
+}
