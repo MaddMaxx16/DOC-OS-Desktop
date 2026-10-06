@@ -13,7 +13,9 @@ import {
   deliveryOperationPhase,
   evaluateDeliveryStaging,
   findDeliveryStagingPlacement,
+  evaluateDeliveryHandlingAccess,
   evaluateDeliveryReceivingProtocol,
+  evaluateDeliveryRepositionMove,
   evaluateDeliveryUnloadAccess,
   evaluateDeliveryUnloadPlan,
   expectedFreightForDelivery,
@@ -361,6 +363,108 @@ test('delivery can clear rear access by repositioning freight inside the trailer
 
   assert.equal(repositioned.clear, true)
   assert.equal(repositioned.currentlyBlockedFreightIds.length, 0)
+})
+
+test('rear handling path blocks freight behind a full-width cargo wall until a corridor opens', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const unit = (id) => ({
+    id,
+    label: id,
+    loadId: 'M-101',
+    loadRef: 'M-101',
+    cargoType: 'wrapped-pallet',
+    handlingCode: 'STANDARD',
+    handlingLabel: 'STANDARD',
+    weightLbs: 1000,
+    expected: true,
+    shapeId: 'standard',
+    shape: [[0, 0]],
+  })
+  const target = unit('target')
+  const walls = [0, 1, 2, 3].map((index) => unit(`wall-${index}`))
+  const freight = [target, ...walls]
+  const placements = {
+    [target.id]: { anchorCell: 0, rotation: 0 },
+    [walls[0].id]: { anchorCell: 20, rotation: 0 },
+    [walls[1].id]: { anchorCell: 21, rotation: 0 },
+    [walls[2].id]: { anchorCell: 22, rotation: 0 },
+    [walls[3].id]: { anchorCell: 23, rotation: 0 },
+  }
+
+  const blocked = evaluateDeliveryHandlingAccess({
+    board,
+    freight,
+    placements,
+  })
+
+  assert.ok(blocked.blockedFreightIds.includes(target.id))
+  assert.ok(!blocked.accessibleFreightIds.includes(target.id))
+
+  const openedPlacements = { ...placements }
+  delete openedPlacements[walls[1].id]
+  const opened = evaluateDeliveryHandlingAccess({
+    board,
+    freight,
+    placements: openedPlacements,
+  })
+
+  assert.ok(opened.accessibleFreightIds.includes(target.id))
+  assert.ok(opened.pathByFreightId[target.id].length > 1)
+})
+
+test('empty trailer space is not a legal reposition when no rear handling path reaches it', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const unit = (id) => ({
+    id,
+    label: id,
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    cargoType: 'wrapped-pallet',
+    handlingCode: 'STANDARD',
+    handlingLabel: 'STANDARD',
+    weightLbs: 1000,
+    expected: true,
+    shapeId: 'standard',
+    shape: [[0, 0]],
+  })
+  const mover = unit('mover')
+  const walls = [0, 1, 2, 3].map((index) => unit(`wall-${index}`))
+  const freight = [mover, ...walls]
+  const placements = {
+    [mover.id]: { anchorCell: 24, rotation: 0 },
+    [walls[0].id]: { anchorCell: 20, rotation: 0 },
+    [walls[1].id]: { anchorCell: 21, rotation: 0 },
+    [walls[2].id]: { anchorCell: 22, rotation: 0 },
+    [walls[3].id]: { anchorCell: 23, rotation: 0 },
+  }
+
+  const blockedMove = evaluateDeliveryRepositionMove({
+    board,
+    freight,
+    placements,
+    freightId: mover.id,
+    anchorCell: 0,
+    rotation: 0,
+    source: 'trailer',
+  })
+
+  assert.equal(blockedMove.valid, false)
+  assert.equal(blockedMove.reason, 'DESTINATION_NOT_REAR_ACCESSIBLE')
+
+  const openPlacements = { ...placements }
+  delete openPlacements[walls[1].id]
+  const allowedMove = evaluateDeliveryRepositionMove({
+    board,
+    freight,
+    placements: openPlacements,
+    freightId: mover.id,
+    anchorCell: 0,
+    rotation: 0,
+    source: 'trailer',
+  })
+
+  assert.equal(allowedMove.valid, true)
+  assert.ok(allowedMove.destinationPath.length > 1)
 })
 
 test('temporary staging has three pallet-equivalent positions and respects freight footprint', () => {
