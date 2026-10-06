@@ -580,6 +580,13 @@ export default function DockLoadWorkspace({
   )]
   const showDeliveryOrderBadges = deliveryOrder.length > 1
   const deliveryConflict = evaluation.deliveryAccess?.pairSummaries?.[0] ?? null
+  const remainingPickupUnits = Math.max(
+    0,
+    evaluation.expectedCount - evaluation.plannedExpectedCount,
+  )
+  const otherActionErrors = nonAccessErrors.filter(
+    (issue) => issue.code !== 'REQUIRED_FREIGHT_NOT_PLANNED',
+  )
 
   return (
     <div
@@ -923,46 +930,46 @@ export default function DockLoadWorkspace({
       </section>
 
       <aside className="dock-load-hud">
-        <section className="dock-load-booked">
+        <section className="dock-load-summary">
           <header>
-            <span>BOOKED LOAD</span>
+            <span>LOAD SUMMARY</span>
             <strong>{event.loadRef}</strong>
           </header>
-          <div>
-            <span>DRIVER</span>
-            <strong>{driver.name}</strong>
+
+          <div className="dock-load-summary-route">
+            <div>
+              <span>PICKUP</span>
+              <strong>{event.locationLabel}</strong>
+            </div>
+            <i aria-hidden="true">→</i>
+            <div>
+              <span>DESTINATION</span>
+              <strong>{event.deliveryLocationLabel ?? 'Booked destination'}</strong>
+            </div>
           </div>
-          <div>
-            <span>TRAILER</span>
-            <strong>{board.label} · {board.capacityPallets} pallet cap</strong>
-          </div>
-          {carriedCargo.freight.length > 0 && (
+
+          <div className="dock-load-summary-meta">
+            <div>
+              <span>EXPECTED</span>
+              <strong>
+                {event.freight?.pallets ?? 0} units · {pounds(event.freight?.weightLbs)} lb
+              </strong>
+            </div>
             <div>
               <span>ALREADY ONBOARD</span>
               <strong>
-                {carriedCargo.freight.length} units · {carriedLoadRefs.join(', ')}
+                {carriedCargo.freight.length > 0
+                  ? `${carriedCargo.freight.length} units · ${carriedLoadRefs.join(', ')}`
+                  : 'Trailer empty'}
               </strong>
             </div>
-          )}
-          <div>
-            <span>PICKUP</span>
-            <strong>{event.locationLabel}</strong>
-          </div>
-          <div>
-            <span>DESTINATION</span>
-            <strong>{event.deliveryLocationLabel ?? 'Booked destination'}</strong>
-          </div>
-          <div>
-            <span>EXPECTED</span>
-            <strong>{event.freight?.pallets ?? 0} units · {pounds(event.freight?.weightLbs)} lb</strong>
           </div>
         </section>
 
         <section
           className={[
-            'dock-load-readiness',
-            evaluation.ready ? 'ready' : '',
-            readyPulse ? 'pulse' : '',
+            'dock-load-completion',
+            remainingPickupUnits === 0 ? 'complete' : '',
           ].filter(Boolean).join(' ')}
         >
           <header>
@@ -971,10 +978,27 @@ export default function DockLoadWorkspace({
               {evaluation.plannedExpectedCount} / {evaluation.expectedCount} LOADED
             </strong>
           </header>
+          <div
+            className="dock-load-progress"
+            aria-label={`${evaluation.plannedExpectedCount} of ${evaluation.expectedCount} booked units loaded`}
+          >
+            <i
+              style={{
+                width: `${evaluation.expectedCount > 0
+                  ? Math.min(100, (evaluation.plannedExpectedCount / evaluation.expectedCount) * 100)
+                  : 0}%`,
+              }}
+            />
+          </div>
+        </section>
 
-          <div className="dock-load-hud-grid">
+        <section className="dock-load-status">
+          <header>
+            <span>TRAILER STATUS</span>
+          </header>
+          <div className="dock-load-status-grid">
             <div>
-              <span>FLOOR SLOTS</span>
+              <span>FLOOR POSITIONS</span>
               <strong>{evaluation.occupiedCells} / {board.usableCells}</strong>
             </div>
             <div>
@@ -982,14 +1006,19 @@ export default function DockLoadWorkspace({
               <strong>{pounds(evaluation.plannedWeightLbs)} / {pounds(board.maxWeightLbs)}</strong>
             </div>
             <div>
-              <span>ONBOARD UNITS</span>
-              <strong>{evaluation.onboardCount}</strong>
-            </div>
-            <div>
-              <span>THIS PICKUP</span>
-              <strong>{evaluation.plannedExpectedCount} / {evaluation.expectedCount}</strong>
+              <span>ONBOARD</span>
+              <strong>{evaluation.onboardCount} units</strong>
             </div>
           </div>
+        </section>
+
+        <section className="dock-load-rules">
+          <header>
+            <span>TRAILER RULES</span>
+            <strong>
+              {evaluation.deliveryAccess?.clear ? 'ALL CLEAR' : 'ACTION NEEDED'}
+            </strong>
+          </header>
 
           <div
             className={[
@@ -1001,6 +1030,7 @@ export default function DockLoadWorkspace({
               <span>DELIVERY ACCESS</span>
               <strong>{evaluation.deliveryAccess?.clear ? 'CLEAR' : 'BLOCKED'}</strong>
             </header>
+
             <div className="dock-load-rule-section">
               <span>UNLOAD ORDER</span>
               <div className="dock-load-delivery-order" aria-label="Trailer unload order">
@@ -1049,46 +1079,71 @@ export default function DockLoadWorkspace({
               </>
             )}
           </div>
+        </section>
 
-          <div className="dock-load-validation">
-            {nonAccessErrors.length === 0
-              && evaluation.warnings.length === 0
-              && evaluation.deliveryAccess?.clear ? (
-              <div className="ok">
-                <strong>LOAD PLAN READY</strong>
-                <small>Close the rear doors to send this plan to the warehouse.</small>
-              </div>
-            ) : (
-              <>
-                {nonAccessErrors.map((issue) => (
-                  <div className="error" key={issue.code}>
-                    <strong>{issue.code.replaceAll('_', ' ')}</strong>
-                    <small>{issue.message}</small>
-                  </div>
-                ))}
-                {evaluation.warnings.map((issue) => (
-                  <div className="warning" key={issue.code}>
-                    <strong>{issue.code.replaceAll('_', ' ')}</strong>
-                    <small>{issue.message}</small>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
+        <section
+          className={[
+            'dock-load-actions',
+            evaluation.ready ? 'ready' : 'attention',
+          ].filter(Boolean).join(' ')}
+        >
+          <header>
+            <span>{evaluation.ready ? 'READY TO CLOSE' : 'REQUIRED ACTION'}</span>
+            <strong>{evaluation.ready ? 'READY' : 'OPEN'}</strong>
+          </header>
 
+          {evaluation.ready ? (
+            <div className="dock-load-action-card ready">
+              <strong>TRAILER PLAN COMPLETE</strong>
+              <small>All booked freight is loaded and current trailer rules are satisfied.</small>
+            </div>
+          ) : (
+            <div className="dock-load-action-list">
+              {remainingPickupUnits > 0 && (
+                <div className="dock-load-action-card error">
+                  <strong>LOAD REMAINING FREIGHT</strong>
+                  <small>
+                    {remainingPickupUnits} {event.loadRef} unit{remainingPickupUnits === 1 ? '' : 's'} still need to be loaded.
+                  </small>
+                </div>
+              )}
+
+              {otherActionErrors.map((issue) => (
+                <div className="dock-load-action-card error" key={issue.code}>
+                  <strong>{issue.code.replaceAll('_', ' ')}</strong>
+                  <small>{issue.message}</small>
+                </div>
+              ))}
+
+              {!evaluation.deliveryAccess?.clear && (
+                <div className="dock-load-action-card rule">
+                  <strong>FIX DELIVERY ACCESS</strong>
+                  <small>
+                    {deliveryConflict
+                      ? `Move ${deliveryConflict.blockedLoadRef} rearward so it can unload before ${deliveryConflict.blockingLoadRef}.`
+                      : 'Clear the earlier delivery path to the rear doors.'}
+                  </small>
+                </div>
+              )}
+
+              {evaluation.warnings.map((issue) => (
+                <div className="dock-load-action-card warning" key={issue.code}>
+                  <strong>{issue.code.replaceAll('_', ' ')}</strong>
+                  <small>{issue.message}</small>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {(invalidDropReason || dragFreightId || hoverFreightId) && (
           <div className="dock-load-interaction-status" aria-live="polite">
             {invalidDropReason === 'OVERLAP' && 'That space is already occupied.'}
             {invalidDropReason === 'OUT_OF_BOUNDS' && 'That freight does not fit there.'}
             {dragFreightId && 'R rotates the freight in hand. Drag current-pickup cargo back to the manifest to stage it again.'}
             {!dragFreightId && hoverFreightId && 'Press R or use the rotate control to turn this freight before moving it.'}
           </div>
-        </section>
-
-        <footer className="dock-load-focus-note">
-          <span>FOCUSED MODE</span>
-          <strong>World simulation is paused while you build the trailer load plan.</strong>
-          <small>Load numbers and handling marks stay visible so placement decisions come from the freight itself.</small>
-        </footer>
+        )}
       </aside>
     </div>
   )
