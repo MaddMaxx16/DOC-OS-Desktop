@@ -24,6 +24,86 @@ export const RECEIVER_STATUS = Object.freeze({
   WRONG_DESTINATION: 'WRONG_DESTINATION',
 })
 
+const DEFAULT_RECEIVING_PHASES = Object.freeze([
+  Object.freeze({
+    id: 'controlled',
+    label: 'CONTROLLED FREIGHT',
+    zoneId: 'controlled',
+    zoneLabel: 'CONTROLLED RECEIVING',
+    handlingCodes: Object.freeze(['HAZMAT']),
+    instruction: 'Controlled materials are processed first.',
+  }),
+  Object.freeze({
+    id: 'forklift',
+    label: 'FORKLIFT HANDLING',
+    zoneId: 'forklift',
+    zoneLabel: 'FORKLIFT LANE',
+    handlingCodes: Object.freeze(['HEAVY', 'OVERSIZE']),
+    instruction: 'Heavy and oversize freight moves through the forklift lane.',
+  }),
+  Object.freeze({
+    id: 'inspection',
+    label: 'FRAGILE INSPECTION',
+    zoneId: 'inspection',
+    zoneLabel: 'INSPECTION',
+    handlingCodes: Object.freeze(['FRAGILE']),
+    instruction: 'Fragile freight is checked before general receiving opens.',
+  }),
+  Object.freeze({
+    id: 'general',
+    label: 'GENERAL RECEIVING',
+    zoneId: 'general',
+    zoneLabel: 'GENERAL RECEIVING',
+    handlingCodes: null,
+    instruction: 'Release the remaining delivery freight to general receiving.',
+  }),
+])
+
+const FACILITY_RECEIVING_PROFILES = Object.freeze({
+  'harborline-logistics': Object.freeze({
+    label: 'HARBORLINE RECEIVING SOP',
+    phases: DEFAULT_RECEIVING_PHASES,
+  }),
+  'freshway-grocery-dc': Object.freeze({
+    label: 'FRESHWAY RECEIVING SOP',
+    phases: Object.freeze([
+      Object.freeze({
+        id: 'inspection',
+        label: 'FRAGILE INSPECTION',
+        zoneId: 'inspection',
+        zoneLabel: 'QUALITY CHECK',
+        handlingCodes: Object.freeze(['FRAGILE', 'UPRIGHT']),
+        instruction: 'Inspection freight clears quality check before controlled materials.',
+      }),
+      Object.freeze({
+        id: 'controlled',
+        label: 'CONTROLLED FREIGHT',
+        zoneId: 'controlled',
+        zoneLabel: 'CONTROLLED RECEIVING',
+        handlingCodes: Object.freeze(['HAZMAT']),
+        instruction: 'Controlled materials move to the marked receiving area.',
+      }),
+      Object.freeze({
+        id: 'forklift',
+        label: 'FORKLIFT HANDLING',
+        zoneId: 'forklift',
+        zoneLabel: 'FORKLIFT LANE',
+        handlingCodes: Object.freeze(['HEAVY', 'OVERSIZE']),
+        instruction: 'Heavy freight moves through the forklift lane.',
+      }),
+      Object.freeze({
+        id: 'general',
+        label: 'GENERAL RECEIVING',
+        zoneId: 'general',
+        zoneLabel: 'GENERAL RECEIVING',
+        handlingCodes: null,
+        instruction: 'Release the remaining delivery freight.',
+      }),
+    ]),
+  }),
+})
+
+
 function finite(value, fallback = 0) {
   const number = Number(value)
   return Number.isFinite(number) ? number : fallback
@@ -37,6 +117,138 @@ function sameLoad(left = {}, right = {}) {
   const leftKey = loadKey(left)
   const rightKey = loadKey(right)
   return leftKey != null && rightKey != null && leftKey === rightKey
+}
+
+function receivingProfileForEvent(event = {}) {
+  return FACILITY_RECEIVING_PROFILES[event.locationId] ?? {
+    label: 'RECEIVING SOP',
+    phases: DEFAULT_RECEIVING_PHASES,
+  }
+}
+
+function phaseMatchesFreight(phase, freight) {
+  if (!Array.isArray(phase.handlingCodes)) return true
+  return phase.handlingCodes.includes(freight.handlingCode)
+}
+
+export function buildDeliveryReceivingProtocol({
+  event,
+  freight = [],
+} = {}) {
+  const profile = receivingProfileForEvent(event)
+  const deliveryFreight = freight.filter((item) => sameLoad(item, event))
+  const assigned = new Set()
+  const phases = []
+
+  for (const phase of profile.phases) {
+    const matching = deliveryFreight.filter((item) => (
+      !assigned.has(item.id) && phaseMatchesFreight(phase, item)
+    ))
+    if (matching.length === 0) continue
+
+    for (const item of matching) assigned.add(item.id)
+
+    phases.push({
+      id: phase.id,
+      label: phase.label,
+      zoneId: phase.zoneId,
+      zoneLabel: phase.zoneLabel,
+      instruction: phase.instruction,
+      handlingCodes: phase.handlingCodes ? [...phase.handlingCodes] : null,
+      freightIds: matching.map((item) => item.id),
+    })
+  }
+
+  return {
+    facilityId: event?.locationId ?? null,
+    label: profile.label,
+    phases,
+  }
+}
+
+export function evaluateDeliveryReceivingProtocol({
+  event,
+  freight = [],
+  unloadedFreightIds = [],
+  receivingZoneByFreightId = {},
+} = {}) {
+  const protocol = buildDeliveryReceivingProtocol({ event, freight })
+  const phaseIndexByFreightId = new Map()
+  const zoneByFreightId = new Map()
+
+  protocol.phases.forEach((phase, phaseIndex) => {
+    phase.freightIds.forEach((freightId) => {
+      phaseIndexByFreightId.set(freightId, phaseIndex)
+      zoneByFreightId.set(freightId, phase.zoneId)
+    })
+  })
+
+  const remainingByPhase = protocol.phases.map((phase) => phase.freightIds.length)
+  const sequenceViolations = []
+  const zoneViolations = []
+  let activePhaseIndex = 0
+
+  for (const freightId of unloadedFreightIds) {
+    while (
+      activePhaseIndex < remainingByPhase.length
+      && remainingByPhase[activePhaseIndex] === 0
+    ) {
+      activePhaseIndex += 1
+    }
+
+    const freightPhaseIndex = phaseIndexByFreightId.get(freightId)
+    if (freightPhaseIndex == null) continue
+
+    if (freightPhaseIndex !== activePhaseIndex) {
+      sequenceViolations.push({
+        freightId,
+        expectedPhaseId: protocol.phases[activePhaseIndex]?.id ?? null,
+        actualPhaseId: protocol.phases[freightPhaseIndex]?.id ?? null,
+      })
+    }
+
+    const expectedZoneId = zoneByFreightId.get(freightId)
+    const actualZoneId = receivingZoneByFreightId[freightId] ?? null
+    if (actualZoneId !== expectedZoneId) {
+      zoneViolations.push({
+        freightId,
+        expectedZoneId,
+        actualZoneId,
+      })
+    }
+
+    remainingByPhase[freightPhaseIndex] = Math.max(
+      0,
+      remainingByPhase[freightPhaseIndex] - 1,
+    )
+  }
+
+  const unloadedSet = new Set(unloadedFreightIds)
+  const phases = protocol.phases.map((phase, phaseIndex) => {
+    const receivedCount = phase.freightIds
+      .filter((freightId) => unloadedSet.has(freightId))
+      .length
+    const complete = receivedCount === phase.freightIds.length
+    return {
+      ...phase,
+      phaseIndex,
+      receivedCount,
+      totalCount: phase.freightIds.length,
+      complete,
+    }
+  })
+  const currentPhase = phases.find((phase) => !phase.complete) ?? null
+
+  return {
+    ...protocol,
+    phases,
+    currentPhase,
+    complete: phases.every((phase) => phase.complete),
+    sequenceViolations,
+    zoneViolations,
+    phaseIndexByFreightId: Object.fromEntries(phaseIndexByFreightId),
+    zoneByFreightId: Object.fromEntries(zoneByFreightId),
+  }
 }
 
 export function dockNumberForDelivery(event = {}) {
@@ -272,6 +484,7 @@ export function evaluateDeliveryUnloadPlan({
   unloadedFreightIds = null,
   selectedFreightIds = [],
   temporaryStagedFreightIds = [],
+  receivingZoneByFreightId = {},
 } = {}) {
   const expectedFreight = expectedFreightForDelivery({ driverDay, event })
   const expectedIds = new Set(expectedFreight.map((item) => item.id))
@@ -302,9 +515,14 @@ export function evaluateDeliveryUnloadPlan({
     unloadedFreightIds: [...unloadedIds],
   })
 
-  const illegalTemporaryStage = freight.filter((item) => (
-    temporaryIds.has(item.id) && sameLoad(item, event)
-  ))
+  const receivingProtocol = evaluateDeliveryReceivingProtocol({
+    event,
+    freight: actualForStop,
+    unloadedFreightIds: [
+      ...(unloadedFreightIds == null ? selectedFreightIds : unloadedFreightIds),
+    ],
+    receivingZoneByFreightId,
+  })
 
   const errors = []
   const warnings = []
@@ -337,10 +555,17 @@ export function evaluateDeliveryUnloadPlan({
     })
   }
 
-  if (illegalTemporaryStage.length > 0) {
+  if (receivingProtocol.sequenceViolations.length > 0) {
     errors.push({
-      code: 'DELIVERY_FREIGHT_TEMP_STAGED',
-      message: 'Current-stop freight cannot be marked as temporary staging.',
+      code: 'RECEIVING_SEQUENCE_VIOLATION',
+      message: 'Freight was sent to receiving before its facility phase opened.',
+    })
+  }
+
+  if (receivingProtocol.zoneViolations.length > 0) {
+    errors.push({
+      code: 'WRONG_RECEIVING_ZONE',
+      message: 'One or more freight units were sent to the wrong facility receiving area.',
     })
   }
 
@@ -360,6 +585,8 @@ export function evaluateDeliveryUnloadPlan({
     shortageFreight,
     unexpectedFreight,
     access,
+    receivingProtocol,
+    receivingZoneByFreightId: { ...receivingZoneByFreightId },
     rehandleUnits,
     rehandleMoves,
     temporaryStagedFreightIds: [...temporaryIds],
@@ -497,6 +724,22 @@ export function commitDeliveryOperation({
     unloadPlan: {
       unloadedFreightIds: [...unloaded],
       unloadSequence: [...(unloadPlan.unloadSequence ?? [...unloaded])],
+      receivingZoneByFreightId: {
+        ...(unloadPlan.receivingZoneByFreightId ?? {}),
+      },
+      receivingProtocol: unloadPlan.receivingProtocol
+        ? {
+            facilityId: unloadPlan.receivingProtocol.facilityId ?? null,
+            label: unloadPlan.receivingProtocol.label ?? null,
+            phases: (unloadPlan.receivingProtocol.phases ?? []).map((phase) => ({
+              id: phase.id,
+              label: phase.label,
+              zoneId: phase.zoneId,
+              zoneLabel: phase.zoneLabel,
+              freightIds: [...(phase.freightIds ?? [])],
+            })),
+          }
+        : null,
       temporaryStagedFreightIds: [...(unloadPlan.temporaryStagedFreightIds ?? [])],
       rehandleUnits: unloadPlan.rehandleUnits ?? 0,
       rehandleMoves: unloadPlan.rehandleMoves ?? 0,
