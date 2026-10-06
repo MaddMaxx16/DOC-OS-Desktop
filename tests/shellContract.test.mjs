@@ -393,13 +393,33 @@ test('V2.7.2 moves trucks from live execution state and phases the selected comm
   assert.match(execution, /routeExecutionPosition/)
 })
 
+test('V2.7.5.3 adds fragile protection as the first handling restriction', async () => {
+  const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
+  const facility = await readFile(new URL('../src/domain/facility/pickupOperation.js', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
+  const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
+
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
+  assert.match(facility, /export function evaluateTrailerFragileProtection/)
+  assert.match(facility, /FRAGILE_PROTECTION_CONFLICT/)
+  assert.match(facility, /\['HEAVY', 'OVERSIZE'\]/)
+  assert.match(puzzle, /FRAGILE PROTECTION/)
+  assert.match(puzzle, /PROTECT FRAGILE FREIGHT/)
+  assert.match(puzzle, /fragile-at-risk/)
+  assert.match(puzzle, /fragile-impact-risk/)
+  assert.match(css, /\.dock-load-fragile-rule/)
+  assert.match(css, /\.loaded-freight-piece\.fragile-at-risk/)
+  assert.match(css, /\.loaded-freight-piece\.fragile-impact-risk/)
+  assert.match(css, /\.dock-load-action-card\.fragile/)
+})
+
 test('V2.7.5.2 adds live trailer weight distribution as the second trailer rule', async () => {
   const puzzle = await readFile(new URL('../src/features/dock-load/DockLoadWorkspace.jsx', import.meta.url), 'utf8')
   const facility = await readFile(new URL('../src/domain/facility/pickupOperation.js', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.2 · WEIGHT BALANCE/)
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
   assert.match(facility, /export function evaluateTrailerWeightBalance/)
   assert.match(facility, /activationWeightLbs = Math\.round\(maxWeightLbs \* 0\.2\)/)
   assert.match(facility, /targetMinPercent = 35/)
@@ -428,7 +448,7 @@ test('V2.7.5.1.2 gives the right panel a stable operational hierarchy', async ()
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.2 · WEIGHT BALANCE/)
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
   assert.match(puzzle, /LOAD SUMMARY/)
   assert.match(puzzle, /dock-load-summary-route/)
   assert.match(puzzle, /LOAD COMPLETION/)
@@ -455,7 +475,7 @@ test('V2.7.5.1.1 makes onboard rotation reliable and enlarges trailer-rule guida
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.2 · WEIGHT BALANCE/)
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
   assert.match(puzzle, /function freightCanRotate/)
   assert.match(puzzle, /rotatePlacedFreight/)
   assert.match(puzzle, /hoverFreightId/)
@@ -480,7 +500,7 @@ test('V2.7.5.1 makes delivery accessibility a visible trailer-readiness rule', a
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.2 · WEIGHT BALANCE/)
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
   assert.match(facility, /export function buildDeliveryAccessOrder/)
   assert.match(facility, /export function evaluateTrailerDeliveryAccess/)
   assert.match(facility, /DELIVERY_ACCESS_BLOCKED/)
@@ -506,7 +526,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.7\.5\.2 · WEIGHT BALANCE/)
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /manifest-load-number/)
   assert.match(puzzle, /pallet-piece-marking/)
@@ -1273,7 +1293,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.7\.5\.2 · WEIGHT BALANCE/)
+  assert.match(top, /DESKTOP V2\.7\.5\.3 · FRAGILE PROTECTION/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
