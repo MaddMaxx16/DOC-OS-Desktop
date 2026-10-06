@@ -9,7 +9,10 @@ import {
   buildDeliveryReceivingProtocol,
   buildTrailerStateForDelivery,
   commitDeliveryOperation,
+  DELIVERY_STAGING_CAPACITY,
   deliveryOperationPhase,
+  evaluateDeliveryStaging,
+  findDeliveryStagingPlacement,
   evaluateDeliveryReceivingProtocol,
   evaluateDeliveryUnloadAccess,
   evaluateDeliveryUnloadPlan,
@@ -283,7 +286,8 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
     freight,
     placements,
     ...protocolPlan(delivery, freight),
-    temporaryStagedFreightIds: [later.id],
+    temporaryStagedFreightIds: [],
+    rehandledFreightIds: [later.id],
   })
 
   assert.equal(plan.ready, true)
@@ -309,6 +313,214 @@ test('temporary staging creates rehandle time and delivered freight leaves the t
   assert.deepEqual(
     operation.unloadPlan.unloadSequence,
     protocolPlan(delivery, freight).unloadedFreightIds,
+  )
+})
+
+test('delivery can clear rear access by repositioning freight inside the trailer', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const current = buildTutorialStagedFreight(pickup).filter((item) => item.expected)
+  const later = {
+    id: 'M-202:pickup:pallet-1',
+    label: 'Pallet 01',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    destination: 'Freshway Grocery DC',
+    cargoType: 'wrapped-pallet',
+    handlingCode: 'STANDARD',
+    handlingLabel: 'STANDARD',
+    weightLbs: 1200,
+    expected: true,
+    shapeId: 'standard',
+    shape: [[0, 0]],
+  }
+  const freight = [...current, later]
+  const blockedPlacements = {
+    [current[0].id]: { anchorCell: 0, rotation: 0 },
+    [current[1].id]: { anchorCell: 1, rotation: 0 },
+    [current[2].id]: { anchorCell: 2, rotation: 0 },
+    [later.id]: { anchorCell: 20, rotation: 0 },
+  }
+
+  const blocked = evaluateDeliveryUnloadAccess({
+    board,
+    freight,
+    placements: blockedPlacements,
+    deliveryEvent: delivery,
+  })
+  assert.equal(blocked.clear, false)
+
+  const repositioned = evaluateDeliveryUnloadAccess({
+    board,
+    freight,
+    placements: {
+      ...blockedPlacements,
+      [later.id]: { anchorCell: 3, rotation: 0 },
+    },
+    deliveryEvent: delivery,
+  })
+
+  assert.equal(repositioned.clear, true)
+  assert.equal(repositioned.currentlyBlockedFreightIds.length, 0)
+})
+
+test('temporary staging has three pallet-equivalent positions and respects freight footprint', () => {
+  const single = {
+    id: 'single',
+    shape: [[0, 0]],
+  }
+  const double = {
+    id: 'double',
+    shape: [[0, 0], [1, 0]],
+  }
+  const oversized = {
+    id: 'oversized',
+    shape: [[0, 0], [1, 0], [0, 1], [1, 1]],
+  }
+  const allFreight = [single, double, oversized]
+
+  const singlePlacement = findDeliveryStagingPlacement({
+    freight: single,
+    allFreight,
+    stagingPlacements: {},
+  })
+  assert.deepEqual(singlePlacement, { startSlot: 0, size: 1 })
+
+  const doublePlacement = findDeliveryStagingPlacement({
+    freight: double,
+    allFreight,
+    stagingPlacements: {
+      [single.id]: singlePlacement,
+    },
+  })
+  assert.deepEqual(doublePlacement, { startSlot: 1, size: 2 })
+
+  const staging = evaluateDeliveryStaging({
+    freight: allFreight,
+    stagingPlacements: {
+      [single.id]: singlePlacement,
+      [double.id]: doublePlacement,
+    },
+  })
+
+  assert.equal(staging.capacity, DELIVERY_STAGING_CAPACITY)
+  assert.equal(staging.used, 3)
+  assert.equal(staging.available, 0)
+  assert.equal(staging.clear, true)
+
+  const tooLarge = findDeliveryStagingPlacement({
+    freight: oversized,
+    allFreight,
+    stagingPlacements: {},
+  })
+  assert.equal(tooLarge, null)
+})
+
+test('later-stop freight cannot remain in Temp Staging when receiver handoff is complete', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const expected = buildTutorialStagedFreight(pickup).filter((item) => item.expected)
+  const later = {
+    id: 'M-202:pickup:pallet-1',
+    label: 'Pallet 01',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+    destination: 'Freshway Grocery DC',
+    cargoType: 'wrapped-pallet',
+    handlingCode: 'STANDARD',
+    handlingLabel: 'STANDARD',
+    weightLbs: 1200,
+    expected: true,
+    shapeId: 'standard',
+    shape: [[0, 0]],
+  }
+  const freight = [...expected, later]
+  const driverDay = {
+    driverId: driver.id,
+    timeline: [pickup, delivery],
+  }
+  const protocol = protocolPlan(delivery, freight)
+
+  const stagedPlan = evaluateDeliveryUnloadPlan({
+    board,
+    driverDay,
+    event: delivery,
+    freight,
+    placements: {
+      [later.id]: { anchorCell: 20, rotation: 0 },
+    },
+    ...protocol,
+    temporaryStagedFreightIds: [later.id],
+    rehandledFreightIds: [later.id],
+    stagingPlacements: {
+      [later.id]: { startSlot: 0, size: 1, rotation: 0 },
+    },
+  })
+
+  assert.equal(stagedPlan.ready, false)
+  assert.ok(stagedPlan.errors.some((issue) => (
+    issue.code === 'STAGED_FREIGHT_NOT_RELOADED'
+  )))
+
+  const returnedPlan = evaluateDeliveryUnloadPlan({
+    board,
+    driverDay,
+    event: delivery,
+    freight,
+    placements: {
+      [later.id]: { anchorCell: 20, rotation: 0 },
+    },
+    ...protocol,
+    temporaryStagedFreightIds: [],
+    rehandledFreightIds: [later.id],
+    stagingPlacements: {},
+  })
+
+  assert.equal(returnedPlan.ready, true)
+  assert.equal(returnedPlan.rehandleUnits, 1)
+})
+
+test('delivery commit persists internal reposition history separately from rehandles', () => {
+  const { board, facilityOperations } = committedPickupState()
+  const driverDay = {
+    driverId: driver.id,
+    timeline: [pickup, delivery],
+  }
+  const trailer = buildTrailerStateForDelivery({
+    driverId: driver.id,
+    eventId: delivery.id,
+    driverDay,
+    facilityOperations,
+  })
+  const movedFreightId = trailer.freight[0].id
+  const protocol = protocolPlan(delivery, trailer.freight)
+  const plan = evaluateDeliveryUnloadPlan({
+    board,
+    driverDay,
+    event: delivery,
+    freight: trailer.freight,
+    placements: trailer.placements,
+    ...protocol,
+    internalRepositionHistory: [{
+      freightId: movedFreightId,
+      from: { anchorCell: 16, rotation: 0 },
+      to: { anchorCell: 20, rotation: 0 },
+    }],
+  })
+
+  const operation = commitDeliveryOperation({
+    driverId: driver.id,
+    event: delivery,
+    trailerState: { ...trailer, board },
+    unloadPlan: plan,
+    currentAbsoluteMinutes: 700,
+  })
+
+  assert.equal(operation.unloadPlan.internalRepositionCount, 1)
+  assert.equal(operation.unloadPlan.rehandleUnits, 0)
+  assert.ok(
+    operation.deliveredFreight
+      .find((freight) => freight.id === movedFreightId)
+      .freightHistory
+      .some((entry) => entry.event === 'REPOSITIONED_IN_TRAILER'),
   )
 })
 
