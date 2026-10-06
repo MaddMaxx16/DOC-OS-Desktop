@@ -3553,3 +3553,106 @@ While the current pickup is incomplete, Fragile Protection is monitored live. On
 The Trailer Rules panel adds a dedicated Fragile Protection card and conflicting freight receives visual emphasis so the player can identify what must move.
 
 HAZMAT, NO STACK, and KEEP UPRIGHT remain descriptive only in this packet.
+
+
+---
+
+## V2.7.5.3.1 — Trailer HUD Simplification
+
+Gameplay review after Fragile Protection confirmed that the trailer puzzle itself is strong, but the right-side HUD had become over-instrumented. Every healthy rule was rendering its own status color, explanation, target, bars, and confirmation copy at once.
+
+The result was mechanically correct but visually noisy.
+
+### Progressive disclosure
+
+Trailer Rules now follow one presentation rule:
+
+> healthy rules collapse; only the rule that needs action expands.
+
+Normal rule rows show only the information needed to scan state quickly.
+
+**Delivery Access**
+- status,
+- unload order.
+
+**Weight Balance**
+- status,
+- F/R percentage split,
+- L/R percentage split,
+- one short contextual note.
+
+**Fragile Protection**
+- status,
+- one short spacing summary.
+
+When a rule becomes an actual blocker, that row expands to reveal PROBLEM and FIX detail.
+
+### Color hierarchy
+
+The HUD now treats color as meaning rather than decoration.
+
+- neutral/muted = healthy normal state,
+- cool neutral = live/incomplete monitoring,
+- red = completion blocker,
+- green = final READY TO CLOSE state only.
+
+A completed subsystem does not turn green simply because it is healthy.
+
+### Removed persistent detail
+
+The normal HUD no longer continuously renders:
+
+- weight-distribution split bars,
+- the 35–65 target banner,
+- healthy weight explanation cards,
+- the fragile rule-definition box,
+- healthy Fragile Protection explanation cards,
+- duplicate rule-fix cards in Required Action,
+- duplicate Trailer Plan Complete success messaging.
+
+Those mechanics remain fully active; only their always-on explanation is removed.
+
+### Compact trailer status
+
+Trailer Status becomes one readable line:
+
+- occupied / available positions,
+- current / maximum freight weight,
+- onboard units.
+
+This removes another stacked section without losing information.
+
+### Required Action
+
+Required Action now distinguishes normal workflow from actual failure.
+
+While freight is still missing:
+
+**LOAD REMAINING FREIGHT**
+
+is a neutral pending instruction.
+
+When the pickup is complete but trailer rules are blocked, Required Action summarizes that rule issues remain while the expanded rule rows above explain the actual fix.
+
+### Final readiness
+
+Final success is represented once:
+
+**READY TO CLOSE**
+
+with a short confirmation that freight is loaded and trailer rules are clear.
+
+Green is reserved for this final state.
+
+### Locked mechanics
+
+This packet does not change:
+- Delivery Access math,
+- Weight Balance thresholds or enforcement,
+- Fragile Protection logic,
+- freight geometry,
+- persistent cargo,
+- rotation,
+- loading time,
+- rear-door commitment,
+- route timing.
