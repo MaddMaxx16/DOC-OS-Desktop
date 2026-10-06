@@ -253,6 +253,79 @@ test('later pickups inherit committed cargo until that load has been delivered',
   assert.equal(Object.keys(afterDelivery.placements).length, 0)
 })
 
+test('later stops inherit an explicit delivery trailer snapshot when one exists', () => {
+  const firstPickup = {
+    ...event,
+    id: 'M-101:pickup',
+    loadId: 'M-101',
+    loadRef: 'M-101',
+  }
+  const firstDelivery = {
+    ...event,
+    id: 'M-101:delivery',
+    role: 'delivery',
+    loadId: 'M-101',
+    loadRef: 'M-101',
+  }
+  const laterPickup = {
+    ...event,
+    id: 'M-202:pickup',
+    loadId: 'M-202',
+    loadRef: 'M-202',
+  }
+  const firstFreight = buildTutorialStagedFreight(firstPickup)
+    .filter((item) => item.expected)
+  const refused = {
+    ...firstFreight[0],
+    id: 'M-101:pickup:refused',
+    status: 'REFUSED',
+    receiverStatus: 'REFUSED',
+  }
+  const pickupOperation = commitPickupOperation({
+    driverId: 'marcus-reed',
+    event: firstPickup,
+    currentAbsoluteMinutes: 500,
+    loadPlan: {
+      freightIds: firstFreight.map((item) => item.id),
+      freightManifest: firstFreight,
+      placements: {
+        [firstFreight[0].id]: { anchorCell: 0, rotation: 0 },
+        [firstFreight[1].id]: { anchorCell: 6, rotation: 0 },
+        [firstFreight[2].id]: { anchorCell: 12, rotation: 0 },
+      },
+      board: buildTrailerPuzzleBoard(equipment),
+    },
+  })
+  const deliveryKey = 'marcus-reed:M-101:delivery'
+  const facilityOperations = {
+    [pickupOperation.key]: pickupOperation,
+    [deliveryKey]: {
+      key: deliveryKey,
+      eventId: firstDelivery.id,
+      trailerAfter: {
+        freightManifest: [refused],
+        placements: {
+          [refused.id]: { anchorCell: 18, rotation: 0 },
+        },
+      },
+    },
+  }
+
+  const state = buildOnboardCargoForPickup({
+    driverId: 'marcus-reed',
+    eventId: laterPickup.id,
+    driverDay: {
+      timeline: [firstPickup, firstDelivery, laterPickup],
+    },
+    facilityOperations,
+  })
+
+  assert.equal(state.freight.length, 1)
+  assert.equal(state.freight[0].id, refused.id)
+  assert.equal(state.freight[0].receiverStatus, 'REFUSED')
+  assert.deepEqual(state.placements[refused.id], { anchorCell: 18, rotation: 0 })
+})
+
 test('delivery-access order follows the remaining Driver Day delivery sequence', () => {
   const firstPickup = {
     ...event,
