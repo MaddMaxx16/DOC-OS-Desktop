@@ -472,7 +472,7 @@ export default function App() {
       : null
 
     if (bookingRecord?.status === BOOKING_STATUS.RATE_CON_READY) {
-      setFocusedTask({ type: 'rate-confirmation', laneId: document.laneId })
+      openRateCon(document.laneId)
       return
     }
 
@@ -687,7 +687,6 @@ export default function App() {
       onSimulationModeChange={setSimulationClockMode}
       onRequestRateCon={requestRateCon}
       onOpenDocumentsForRateCon={openDocumentsForRateCon}
-      onOpenRateCon={openRateCon}
       onInspectDocument={inspectDocument}
       onSelectDocument={setSelectedDocumentId}
       onRequestRateConCorrection={requestRateConCorrection}
