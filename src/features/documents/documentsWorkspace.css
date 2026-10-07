@@ -842,12 +842,17 @@
 
 @media (max-width: 1450px) {
   .documents-desk-surface {
-    grid-template-columns: 96px minmax(330px, 1fr) 96px;
-    gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
     padding: 28px 22px;
   }
 
+  .documents-desk-tray {
+    display: none;
+  }
+
   .documents-paper-stage {
+    width: 100%;
     min-height: 540px;
   }
 
@@ -855,10 +860,5 @@
     width: min(92%, 500px);
     min-height: 505px;
     padding: 24px 26px 22px;
-  }
-
-  .documents-desk-tray {
-    min-height: 126px;
-    padding-inline: 10px;
   }
 }
