@@ -62,7 +62,7 @@ test('V2.5.1 shell is rail -> browser -> map -> inspector', async () => {
 test('V2.5.1 command rail exposes live workstation sections', async () => {
   const rail = await readFile(new URL('../src/shell/CommandRail.jsx', import.meta.url), 'utf8')
 
-  assert.match(rail, /\['drivers', 'freightlink', 'documents'\]\.includes\(section\.id\)/)
+  assert.match(rail, /\['drivers', 'freightlink', 'email', 'documents'\]\.includes\(section\.id\)/)
   assert.match(rail, /activeSection === section\.id/)
   assert.match(rail, /onToggleSection\(section\.id\)/)
   assert.match(rail, /command-rail-badge/)
