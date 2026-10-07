@@ -15,19 +15,19 @@ Update this file whenever the project changes direction materially.
 
 ## Current accepted checkpoint
 
-**V2.7.6.8 · Dock Continuity & Placement Stability**
+**V2.8.1.3 · Global Paper Desk & Filing Gameplay**
 
-Current `main` before the V2.8 transition:
+Accepted `main` checkpoint:
 
-`f3dd9b528c4ad974e25fd1c5ae166cafc55e6d53`
+`0c809eed4d59bbd28d84d659aaba62e51f77031c`
 
-V2.7.6.8 is visually accepted.
+V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.8.1.3 · Global Paper Desk & Filing Gameplay**
+**V2.9.1 · Email Inbox & Print-to-Documents**
 
-V2.8.1.1 fixed the map-owned Documents presentation and the Taylor T-110 Forklift Handling deadlock. V2.8.1.2 established load files and one authoritative paper rendering. The next playtest clarified the final filing-gameplay rule: load files stay in the cabinet while every unfiled paper from every load shares one persistent desk. V2.8.1.3 is the active acceptance correction. V2.7.6.8 remains the formal accepted checkpoint until this correction passes automated verification and manual playtest.
+The Documents filing model is now stable enough to connect to a real communication channel. External paperwork must arrive digitally before it can become a physical paper. V2.9.1 makes Email the intake layer and printing the deliberate bridge into Documents.
 
 ### What that means
 
@@ -197,7 +197,7 @@ This is intentionally deferred until Documents / Communications begin connecting
 
 # V2.8 · Documents
 
-## V2.8.1 · Documents Workspace & Rate Con Handoff — IMPLEMENTED / AUTOMATED VERIFY PASS / VISUAL ACCEPTANCE PENDING
+## V2.8.1 · Documents Workspace & Rate Con Handoff — ACCEPTED THROUGH V2.8.1.3
 
 Goal:
 
@@ -229,9 +229,9 @@ Delivered:
 - live POD state surfaced from Delivery records,
 - domain and shell regression coverage.
 
-Automated verification passed on the V2.8.1 closeout candidate.
+Automated verification passed across the V2.8.1 closeout and correction series.
 
-Acceptance still requires the critical visual/gameplay flow: request Rate Con → Documents → focused review/correction/acceptance → retained accepted paperwork → Delivery POD visibility/status advancement.
+V2.8.1.3 manual playtest accepted the global-paper-desk filing model.
 
 ### V2.8.1.1 · Acceptance correction
 
@@ -283,7 +283,7 @@ Locked architecture:
 
 This is intentionally organization gameplay: a busy desk may contain paperwork from many loads, and the player must read, inspect, arrange, and file it correctly.
 
-## V2.8.2 · Document Revisions & Rate Con Archive
+## V2.8.2 · Document Revisions & Rate Con Archive — DEFERRED UNTIL V2.9.1 INTAKE IS ACCEPTED
 
 Goal:
 
@@ -301,7 +301,7 @@ Acceptance:
 
 A confirmed load retains its Rate Confirmation history in Documents.
 
-## V2.8.3 · POD Focused Workflow
+## V2.8.3 · POD Focused Workflow — DEFERRED UNTIL V2.9.1 INTAKE IS ACCEPTED
 
 Goal:
 
@@ -321,7 +321,7 @@ Acceptance:
 
 Delivery produces a POD the player can actually receive, inspect, correct if necessary, and retain in the load packet.
 
-## V2.8.4 · Load Packet / Invoice Support Foundation
+## V2.8.4 · Load Packet / Invoice Support Foundation — AFTER EMAIL + DOCUMENT DEPTH
 
 Goal:
 
@@ -340,25 +340,39 @@ Do not build full owner-era receivables here.
 
 # V2.9 · Email + Messages
 
-## V2.9.1 · Email Inbox
+## V2.9.1 · Email Inbox & Print-to-Documents — ACTIVE
 
 Goal:
 
-Make business communication the arrival mechanism for external paperwork and operational notices.
+Make business communication the arrival mechanism for external paperwork and create a deliberate digital-to-physical handoff.
 
 Build:
 
+- enable Email on the command rail,
 - inbox,
 - read/unread,
 - message detail,
-- actionable document attachments / links,
+- document attachments,
 - Rate Con arrival email,
 - corrected Rate Con email,
-- POD-related email where appropriate.
+- POD arrival email after receiver verification,
+- unread Email badge,
+- explicit **PRINT ATTACHMENT** action,
+- printed-document state,
+- Documents desk contains only printed physical copies,
+- FreightLink routes Rate Con arrivals to **CHECK EMAIL** instead of Documents.
 
 Architecture rule:
 
-**Email delivers paperwork. Documents owns paperwork.**
+**FreightLink requests it → Email delivers the digital attachment → Player prints it → Documents owns the physical copy.**
+
+State rule:
+
+**Received digitally ≠ printed ≠ filed ≠ requirement satisfied.**
+
+Acceptance:
+
+A Rate Con and later a POD can arrive digitally without appearing on the physical Documents desk; printing each attachment deliberately creates the physical paper that enters the existing filing gameplay.
 
 ## V2.9.2 · Driver Messages
 
@@ -464,7 +478,7 @@ Expected work:
 
 # Current backlog that should not be forgotten
 
-These are real findings, but they should not derail V2.8.1.
+These are real findings, but they should not derail the active communication/document intake work.
 
 ### Operational UX
 
