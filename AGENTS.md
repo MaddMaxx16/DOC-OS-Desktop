@@ -94,35 +94,35 @@ For this packet:
 
 - FreightLink keeps lane evaluation and REQUEST RATE CON,
 - FreightLink may display document/booking status,
-- FreightLink may navigate the user toward Documents,
-- FreightLink must not directly display or launch the Rate Confirmation paper,
-- Documents becomes the implemented entry point to the existing Focused Rate Confirmation review,
-- Email is deferred to V2.9.
+- FreightLink routes RATE CON READY to **CHECK EMAIL**,
+- Email owns digital arrival/read state and attachment printing,
+- Documents receives only printed physical copies,
+- Documents remains the entry point to focused Rate Confirmation review after printing,
+- reading an email must not auto-print or auto-file its attachment.
 
-Future complete invariant:
+Locked invariant:
 
-**FreightLink requests it → Email delivers it → Documents owns it → Focused Document Mode reviews it.**
+**FreightLink requests it → Email delivers it → player prints it → Documents owns the physical copy → Focused Document Mode reviews it.**
 
 ### Build
 
-Implemented:
+Implement:
 
-- Documents command-rail enablement,
-- load-file cabinet with expandable filed contents,
-- global unfiled-paper desk across all loads,
-- document inspector,
-- unified operational document index over existing Rate Con and POD state,
-- derived load-file index grouping papers by load,
-- draggable/selectable loose papers on the global desk,
-- drag-to-file gameplay with wrong-folder rejection,
-- return-to-desk behavior for filed papers,
-- double-click paper inspection,
-- actionable Rate Con review from the paper itself,
-- POD arrival onto the loose-paper desk before filing,
-- current packet requirements and submission gate,
-- Rate Con focused-review launch from Documents,
-- direct FreightLink Rate Con review removal,
-- accepted Rate Con persistence in Documents.
+- Email command-rail enablement,
+- inbox + read/unread state,
+- unread Email badge,
+- message detail,
+- Rate Con arrival attachment,
+- corrected Rate Con attachment labeling,
+- POD email after receiver verification,
+- PRINT ATTACHMENT,
+- OPEN DOCUMENTS after print,
+- printed-document state,
+- Documents desk filtered to printed papers only,
+- Documents attention filtered to printed papers only,
+- FreightLink CHECK EMAIL handoff.
+
+Preserve the accepted V2.8.1.3 cabinet/desk/filing/submission gameplay unchanged.
 
 ### Preserve
 
@@ -144,7 +144,7 @@ Do not redesign:
 
 Do not create duplicate editable document truth.
 
-V2.8.1 may use a normalized/derived document index that references the existing booking/document sources.
+Email messages may derive from the existing operational document index. Printing is presentation/workflow state; it does not create a second booking or POD truth.
 
 A broader storage migration is not required unless implementation proves it necessary.
 
@@ -152,7 +152,6 @@ A broader storage migration is not required unless implementation proves it nece
 
 Do not add:
 
-- Email,
 - Messages,
 - focused POD review,
 - corrected POD workflow,
