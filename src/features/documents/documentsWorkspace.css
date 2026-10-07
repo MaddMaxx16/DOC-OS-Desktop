@@ -85,6 +85,21 @@
   box-shadow: inset 3px 0 #8d7599;
 }
 
+.load-file-entry.drop-target {
+  background: #13251f;
+  box-shadow:
+    inset 0 0 0 2px #78a28f,
+    inset 5px 0 #78a28f;
+}
+
+.load-file-entry.drop-target .load-file-folder-mark {
+  border-color: #9ab6a5;
+  background: #918660;
+  box-shadow:
+    0 0 0 3px rgba(120, 162, 143, .18),
+    0 6px 14px rgba(0, 0, 0, .3);
+}
+
 .load-file-entry.attention {
   box-shadow: inset 3px 0 #8d7040;
 }
