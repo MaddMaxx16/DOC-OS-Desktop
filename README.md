@@ -10,11 +10,11 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-**Current candidate:** `V2.9.1.1 · Email Reader Polish`
+**Current candidate:** `V2.9.1.2 · Email Sidebar Spacing`
 
 V2.8.1.3 is visually accepted and locks the Documents interaction model: load folders live in the filing cabinet, every unfiled physical paper shares one persistent desk, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1 established the digital arrival layer. V2.9.1.1 is the visual correction pass that makes Email read like an actual mailbox: real sender/recipient metadata, normal message body layout, and compact attachment cards instead of a document-workspace presentation.
+V2.9.1 established the digital arrival layer and V2.9.1.1 corrected the reader into a real mailbox. V2.9.1.2 is a narrow spacing correction that gives the inbox/browser safe inner gutters so sender, date, subject, preview, and metadata no longer hug or clip against the panel edge.
 
 The operational freight loop is now substantially playable:
 
@@ -43,7 +43,7 @@ The physical Documents workflow is accepted. The next missing layer is how exter
 
 Still pending:
 
-- **V2.9.1.1 Email Reader Polish** is the active acceptance correction,
+- **V2.9.1.2 Email Sidebar Spacing** is the active acceptance correction,
 - Messages / driver communication remains V2.9.2,
 - accepted Rate Con revision/archive viewing returns after Email intake is accepted,
 - focused POD review/correction returns after Email intake is accepted,
@@ -52,7 +52,7 @@ Still pending:
 
 ## Current acceptance gate
 
-### V2.9.1.1 · Email Reader Polish
+### V2.9.1.2 · Email Sidebar Spacing
 
 The critical flow is:
 
