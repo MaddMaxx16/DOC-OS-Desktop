@@ -32,120 +32,107 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.7.6.8 Dock Continuity & Placement Stability
+## Current packet — V2.8.1 Documents Workspace & Rate Con Handoff
 
-V2.1 through V2.7.5.4 are accepted and locked.
-V2.7.6 Delivery Operations architecture remains authoritative.
-V2.7.6.2 receiver-specific SOP logic remains authoritative.
-V2.7.6.3 pointer-owned freight movement remains authoritative.
-V2.7.6.4 Delivery Space Management remains authoritative.
-V2.7.6.5 warehouse physicalization remains authoritative.
-V2.7.6.6 rear handling paths and pointer recovery remain authoritative.
-V2.7.6.7 warehouse contrast, staging freight fidelity, and Freshway wording remain authoritative.
+V2.1 through V2.7.6.8 are accepted and locked.
 
-V2.7.6.8 is the active Delivery packet.
+The active implementation packet is:
+
+`docs/IMPLEMENTATION_V2.8.1.md`
+
+The durable build sequence lives in:
+
+`docs/ROADMAP.md`
 
 ### Purpose
 
-Gameplay review shows three remaining presentation/stability issues:
+Begin the V2.8 Documents phase by connecting paperwork that already exists underneath the Desktop build to a real Documents workstation app.
 
-1. staged freight can render beneath the painted Temp Staging bays instead of physically occupying them,
-2. already-received freight can visually shift because receiver-floor positions are recalculated as more freight arrives,
-3. the warehouse/trailer relationship still needs a stronger physical dock threshold.
+The current problem is workflow ownership:
 
-This packet fixes only those three issues.
+- FreightLink directly opens Rate Confirmation paper,
+- Documents is disabled,
+- Email is not built,
+- POD records exist but are invisible.
 
-### Temp Staging occupancy
+V2.8.1 corrects that without redesigning the existing Rate Con gameplay.
 
-Temp Staging remains exactly 3 pallet-equivalent positions.
+### Core workflow rule
 
-The painted staging bays and staged freight must occupy the same physical coordinate layer.
+**FreightLink requests paperwork. Documents owns paperwork.**
 
-Requirements:
-- each bay is fixed to an explicit staging slot,
-- staged freight is explicitly anchored to its occupied slot(s),
-- bay visuals remain underneath freight,
-- staged freight may not fall into an implicit extra grid row,
-- footprint-based capacity remains unchanged,
-- freight fidelity from V2.7.6.7 remains unchanged.
+For this packet:
 
-### Persistent receiver-floor placement
+- FreightLink keeps lane evaluation and REQUEST RATE CON,
+- FreightLink may display document/booking status,
+- FreightLink may navigate the user toward Documents,
+- FreightLink must not directly display or launch the Rate Confirmation paper,
+- Documents becomes the implemented entry point to the existing Focused Rate Confirmation review,
+- Email is deferred to V2.9.
 
-Receiver zones remain automatic placement areas, not a second packing puzzle.
+Future complete invariant:
 
-Once freight is accepted into a receiver zone:
-- assign its physical warehouse position once,
-- preserve that position for the remainder of the focused Delivery operation,
-- do not recompute settled cargo positions when later freight arrives,
-- new freight must choose from the remaining free zone positions,
-- settled freight may not visually shuffle/repack.
+**FreightLink requests it → Email delivers it → Documents owns it → Focused Document Mode reviews it.**
 
-Implementation should retain a persistent map keyed by freight ID rather than deriving every warehouse position from the current received-freight array on each render.
+### Build
 
-### Dock continuity
+Implement:
 
-Do not redesign the warehouse or trailer.
+- Documents command-rail enablement,
+- Documents browser,
+- document inspector,
+- unified operational document index over existing Rate Con and POD state,
+- actionable Rate Con rows,
+- POD visibility,
+- Rate Con focused-review launch from Documents,
+- direct FreightLink Rate Con review removal,
+- accepted Rate Con persistence in Documents.
 
-Strengthen only the physical connection at the dock:
-- warehouse-side dock door/jamb,
-- dock threshold,
-- dock plate / leveler,
-- dock bumpers,
-- apron termination at the door,
-- a localized rear connector between warehouse and trailer.
+### Preserve
 
-The previous full-height divider should visually recede.
-The physical connector should read near the trailer rear / receiving apron.
+Do not redesign:
 
-Temp Staging may shift modestly toward the dock threshold so it reads as dock-apron space, but:
-- staging capacity remains 3,
-- receiver zones remain in their current overall layout,
-- trailer proportions remain unchanged,
-- right HUD remains unchanged.
+- `RateConfirmationReview`,
+- `DocumentDesk`,
+- booking lifecycle states,
+- Rate Con correction behavior,
+- accept-with-mismatch behavior,
+- Delivery POD generation,
+- POD simulation-time advancement,
+- Driver Day / FreightLink fit logic,
+- V2.7 facility puzzles,
+- trailer state,
+- right-side operational HUDs.
 
-### Preserved mechanics
+### State rule
 
-Do not alter:
-- handling-path rules,
-- pointer recovery,
-- trailer repositioning,
-- staging capacity or footprint accounting,
-- receiver SOP order or membership,
-- Freshway QUALITY CHECK wording,
-- rehandle timing,
-- unload sequence,
-- background unload / receiver verification / auto-depart,
-- Pickup/Delivery shared TrailerShell,
-- right-side receiver/SOP hierarchy.
+Do not create duplicate editable document truth.
 
-### Acceptance requirements
+V2.8.1 may use a normalized/derived document index that references the existing booking/document sources.
 
-V2.7.6.8 requires gameplay confirmation that:
-
-1. staged freight sits directly inside the painted staging bays,
-2. multi-slot staged freight spans the correct physical bays,
-3. no staged freight renders beneath the target bays,
-4. receiver-floor freight stays in the position where it originally settled,
-5. adding new freight does not shuffle earlier received freight,
-6. the dock door/threshold/leveler reads more physically,
-7. the full-height separator no longer dominates the warehouse/trailer relationship,
-8. Temp Staging visually belongs near the dock apron,
-9. accepted trailer, warehouse freight visuals, handling-path gameplay, and right HUD remain unchanged.
+A broader storage migration is not required unless implementation proves it necessary.
 
 ### Explicit non-goals
 
 Do not add:
-- new receiver rules,
-- new staging rules,
-- new freight categories,
-- new difficulty systems,
-- forklifts/NPCs,
-- scoring/XP UI,
-- route/planning changes,
-- schedule-send changes,
-- next-event controls.
 
-V2.7.6.8 is a focused placement-stability and dock-continuity pass.
+- Email,
+- Messages,
+- focused POD review,
+- corrected POD workflow,
+- invoice gameplay,
+- Banking,
+- LedgerDesk,
+- RPG/XP,
+- Jordan tutorial,
+- Send Schedule UX changes,
+- Advance to Next Operational Moment.
+
+### Deployment policy
+
+Automatic Git-triggered Vercel deployments are disabled through `vercel.json`.
+
+Vercel remains available for deliberate manual/shareable checkpoints only.
 
 
 ## Verification
