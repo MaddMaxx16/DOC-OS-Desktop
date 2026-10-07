@@ -32,11 +32,11 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.8.1.2 Load Files & Unified Paper Workflow
+## Current packet — V2.8.1.3 Global Paper Desk & Filing Gameplay
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
-V2.8.1 is implemented. V2.8.1.1 fixed the recorded Delivery deadlock and moved Documents off the live map. The next playtest exposed the deeper Documents rule: the player manages load files, not loose papers. V2.8.1.2 is the active correction pass and must complete automated verification plus manual playtest before V2.8 is accepted.
+V2.8.1 is implemented. V2.8.1.1 fixed the recorded Delivery deadlock and moved Documents off the live map. V2.8.1.2 established load files and one authoritative paper rendering. The next playtest clarified the final interaction rule: load files live in the cabinet; all unfiled papers from all loads share one persistent desk. V2.8.1.3 is the active correction pass and must complete automated verification plus manual playtest before V2.8 is accepted.
 
 The active acceptance packet is:
 
@@ -58,11 +58,22 @@ V2.8.1 now corrects the prior workflow-ownership problem:
 - Documents launches the existing focused Rate Con review,
 - Email remains deferred to V2.9.
 
-V2.8.1.2 keeps the same underlying document truth but changes the presentation contract: one load file groups all paperwork for that load, the file opens on the physical desk, papers can be arranged and inspected, and the file remains open through later billing/payment closeout.
+V2.8.1.3 keeps the same underlying document truth but locks the gameplay contract: folders never leave the cabinet; the center desk is global unfiled paperwork; selecting a folder never filters the desk; filing removes a paper from the desk and adds it to that load file; packet completeness gates submission.
 
 ### Core workflow rule
 
 **FreightLink requests paperwork. Documents owns paperwork.**
+
+### Locked filing invariant
+
+**Cabinet owns files. Desk owns unfiled papers. Folder selection never filters the desk. Filing is player-driven. Packet completeness gates submission.**
+
+- paperwork may be filed at any time,
+- filing does not imply review/acceptance,
+- only filed paperwork in acceptable status satisfies requirements,
+- current implemented requirements are Rate Con + POD; BOL/invoice extend this same checklist later,
+- submitted packets are locked from unfiling,
+- do not auto-file documents when they arrive or when a folder is selected.
 
 For this packet:
 
@@ -82,15 +93,18 @@ Future complete invariant:
 Implemented:
 
 - Documents command-rail enablement,
-- load-file cabinet,
-- working load-folder desk,
+- load-file cabinet with expandable filed contents,
+- global unfiled-paper desk across all loads,
 - document inspector,
 - unified operational document index over existing Rate Con and POD state,
 - derived load-file index grouping papers by load,
-- draggable/selectable papers inside each load file,
+- draggable/selectable loose papers on the global desk,
+- drag-to-file gameplay with wrong-folder rejection,
+- return-to-desk behavior for filed papers,
 - double-click paper inspection,
 - actionable Rate Con review from the paper itself,
-- POD visibility inside the same load file,
+- POD arrival onto the loose-paper desk before filing,
+- current packet requirements and submission gate,
 - Rate Con focused-review launch from Documents,
 - direct FreightLink Rate Con review removal,
 - accepted Rate Con persistence in Documents.
@@ -151,6 +165,6 @@ Before merging meaningful changes:
 3. `npm run build`
 4. Manual browser screenshot review for visual work.
 
-The original V2.8.1 closeout and V2.8.1.1 correction both passed automated verification. V2.8.1.2 must pass the same gate after the load-file refactor.
+The original V2.8.1 closeout, V2.8.1.1 correction, and V2.8.1.2 load-file refactor passed automated verification. V2.8.1.3 must pass the same gate after the global-desk filing changes.
 
-A green build does not equal visual acceptance. Do not mark V2.8 accepted until the load-file cabinet/desk interaction, focused paper handoff, and Taylor T-110/Jersey City Delivery repro are manually playtested.
+A green build does not equal visual acceptance. Do not mark V2.8 accepted until multi-load desk clutter, drag-to-file, unfile, packet completeness/submission, focused paper handoff, and the Taylor T-110/Jersey City Delivery repro are manually playtested.
