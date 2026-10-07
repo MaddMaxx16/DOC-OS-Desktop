@@ -52,7 +52,7 @@ export default function CommandRail({
 
       <div className="command-rail-sections">
         {WORKSTATION_SECTIONS.map((section) => {
-          const enabled = ['drivers', 'freightlink', 'documents'].includes(section.id)
+          const enabled = ['drivers', 'freightlink', 'email', 'documents'].includes(section.id)
           const active = activeSection === section.id
           const attentionCount = Number(attentionCounts[section.id] ?? 0)
           return (
