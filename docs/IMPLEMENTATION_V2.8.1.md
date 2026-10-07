@@ -2,11 +2,24 @@
 
 ## Status
 
-**IMPLEMENTED · AUTOMATED VERIFY PASSED · VISUAL ACCEPTANCE PENDING**
+**IMPLEMENTED · V2.8.1.1 CORRECTION IN VERIFY · VISUAL ACCEPTANCE PENDING**
 
 V2.7.6.8 remains the accepted and locked checkpoint until this packet passes its manual visual/gameplay acceptance flow.
 
 V2.8.1 implementation is complete. The closeout audit verified the required document index, Documents workspace, Rate Con handoff, accepted-document retention, POD visibility, attention logic, and regression coverage. The technical verification gate (install, lint, tests, production build) is green.
+
+---
+
+## V2.8.1.1 playtest correction
+
+The first V2.8.1 acceptance playtest produced two blocking findings that are corrected before this packet can be accepted:
+
+1. **Documents presentation ownership** — the center workspace must be a paperwork desk, not the live operational map. The left browser acts as a filing cabinet, the selected paper occupies the center desk, and the right inspector remains metadata/workflow context.
+2. **Delivery receiving deadlock** — Taylor Brooks / T-110 at Jersey City Crossdock can enter Forklift Handling with two 1×2 heavy skids and one 2×2 oversize crate. The old 3×2 receiver floor only exposed six cells for eight required cells, so the final oversize piece could never be received. The correction expands the Forklift Handling floor and forbids receiver placement from silently shrinking freight footprints.
+
+The correction also standardizes the left workstation-browser width across Fleet, FreightLink, and Documents and removes clipped command-rail labels.
+
+This correction does not advance the roadmap to V2.8.2. It is part of the V2.8.1 acceptance gate.
 
 ---
 
