@@ -176,6 +176,7 @@
 
 /* V2.5.1 workstation: rail -> browser -> map -> inspector */
 .operations-canvas {
+  --workstation-browser-column: minmax(350px, 385px);
   position: relative;
   display: grid;
   grid-template-columns: 76px 0 minmax(0, 1fr) 0;
@@ -187,20 +188,13 @@
   transition: grid-template-columns .2s ease;
 }
 .operations-canvas.browser-open {
-  grid-template-columns: 76px minmax(300px, 340px) minmax(0, 1fr) 0;
+  grid-template-columns: 76px var(--workstation-browser-column) minmax(0, 1fr) 0;
 }
 .operations-canvas.inspector-open {
   grid-template-columns: 76px 0 minmax(0, 1fr) minmax(390px, 430px);
 }
 .operations-canvas.browser-open.inspector-open {
-  grid-template-columns: 76px minmax(300px, 340px) minmax(0, 1fr) minmax(390px, 430px);
-}
-
-.operations-canvas.browser-open.fleet-browser-open {
-  grid-template-columns: 76px minmax(350px, 385px) minmax(0, 1fr) 0;
-}
-.operations-canvas.browser-open.fleet-browser-open.inspector-open {
-  grid-template-columns: 76px minmax(350px, 385px) minmax(0, 1fr) minmax(390px, 430px);
+  grid-template-columns: 76px var(--workstation-browser-column) minmax(0, 1fr) minmax(390px, 430px);
 }
 
 .command-rail {
@@ -829,11 +823,14 @@
 }
 
 @media (max-width: 1320px) {
+  .operations-canvas {
+    --workstation-browser-column: 320px;
+  }
   .operations-canvas.browser-open.inspector-open {
-    grid-template-columns: 72px 300px minmax(0, 1fr) 380px;
+    grid-template-columns: 72px var(--workstation-browser-column) minmax(0, 1fr) 380px;
   }
   .operations-canvas.browser-open {
-    grid-template-columns: 72px 300px minmax(0, 1fr) 0;
+    grid-template-columns: 72px var(--workstation-browser-column) minmax(0, 1fr) 0;
   }
   .operations-canvas.inspector-open {
     grid-template-columns: 72px 0 minmax(0, 1fr) 380px;
