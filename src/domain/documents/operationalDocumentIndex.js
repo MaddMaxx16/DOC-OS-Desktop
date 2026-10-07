@@ -10,8 +10,22 @@ export const OPERATIONAL_LOAD_FILE_STATUS = Object.freeze({
   NEEDS_ACTION: 'NEEDS_ACTION',
   OPEN: 'OPEN',
   RECEIVER_PROCESSING: 'RECEIVER_PROCESSING',
-  DELIVERY_COMPLETE: 'DELIVERY_COMPLETE',
+  SUBMIT_READY: 'SUBMIT_READY',
+  SUBMITTED: 'SUBMITTED',
 })
+
+export const OPERATIONAL_LOAD_FILE_REQUIREMENTS = Object.freeze([
+  Object.freeze({
+    type: OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION,
+    label: 'Rate Confirmation',
+    acceptedStatuses: Object.freeze(['ACCEPTED']),
+  }),
+  Object.freeze({
+    type: OPERATIONAL_DOCUMENT_TYPE.POD,
+    label: 'Proof of Delivery',
+    acceptedStatuses: Object.freeze(['RECEIVED']),
+  }),
+])
 
 function rateConfirmationStatus(record = {}) {
   switch (record.status) {
@@ -157,46 +171,6 @@ export function operationalDocumentAttentionCount(documents = []) {
   return documents.filter((document) => document?.attention).length
 }
 
-
-function loadFileStatus(documents = []) {
-  if (documents.some((document) => document?.attention)) {
-    return {
-      status: OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION,
-      statusLabel: 'NEEDS ACTION',
-      attention: true,
-    }
-  }
-
-  const rateConfirmation = documents.find((document) => (
-    document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
-  ))
-  const pod = documents.find((document) => (
-    document.type === OPERATIONAL_DOCUMENT_TYPE.POD
-  ))
-
-  if (pod?.status === 'PENDING_RECEIVER') {
-    return {
-      status: OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING,
-      statusLabel: 'RECEIVER PROCESSING',
-      attention: false,
-    }
-  }
-
-  if (rateConfirmation?.status === 'ACCEPTED' && pod?.status === 'RECEIVED') {
-    return {
-      status: OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE,
-      statusLabel: 'DELIVERY COMPLETE',
-      attention: false,
-    }
-  }
-
-  return {
-    status: OPERATIONAL_LOAD_FILE_STATUS.OPEN,
-    statusLabel: 'ACTIVE FILE',
-    attention: false,
-  }
-}
-
 function sortFileDocuments(documents = []) {
   return [...documents].sort((left, right) => {
     if (left.attention !== right.attention) return left.attention ? -1 : 1
@@ -212,7 +186,76 @@ function sortFileDocuments(documents = []) {
   })
 }
 
-export function buildOperationalLoadFiles(documents = []) {
+function buildRequirementState(filedDocuments = []) {
+  return OPERATIONAL_LOAD_FILE_REQUIREMENTS.map((requirement) => {
+    const matchingDocuments = filedDocuments.filter((document) => document.type === requirement.type)
+    const qualifyingDocument = matchingDocuments.find((document) => (
+      requirement.acceptedStatuses.includes(document.status)
+    )) ?? null
+
+    return {
+      ...requirement,
+      filed: matchingDocuments.length > 0,
+      satisfied: Boolean(qualifyingDocument),
+      documentId: qualifyingDocument?.id ?? matchingDocuments[0]?.id ?? null,
+      status: qualifyingDocument?.status ?? matchingDocuments[0]?.status ?? null,
+    }
+  })
+}
+
+function loadFileStatus({
+  documents = [],
+  filedDocuments = [],
+  requirements = [],
+  submitted = false,
+} = {}) {
+  if (submitted) {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.SUBMITTED,
+      statusLabel: 'PACKET SUBMITTED',
+      attention: false,
+    }
+  }
+
+  if (documents.some((document) => document?.attention)) {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION,
+      statusLabel: 'NEEDS ACTION',
+      attention: true,
+    }
+  }
+
+  const pod = documents.find((document) => document.type === OPERATIONAL_DOCUMENT_TYPE.POD)
+  if (pod?.status === 'PENDING_RECEIVER') {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING,
+      statusLabel: 'RECEIVER PROCESSING',
+      attention: false,
+    }
+  }
+
+  if (requirements.length > 0 && requirements.every((requirement) => requirement.satisfied)) {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.SUBMIT_READY,
+      statusLabel: 'READY TO SUBMIT',
+      attention: false,
+    }
+  }
+
+  return {
+    status: OPERATIONAL_LOAD_FILE_STATUS.OPEN,
+    statusLabel: filedDocuments.length > 0 ? 'FILE IN PROGRESS' : 'ACTIVE FILE',
+    attention: false,
+  }
+}
+
+export function buildOperationalLoadFiles(
+  documents = [],
+  {
+    fileAssignments = {},
+    submittedLoadFiles = {},
+  } = {},
+) {
   const grouped = new Map()
 
   for (const document of documents) {
@@ -226,14 +269,21 @@ export function buildOperationalLoadFiles(documents = []) {
   return [...grouped.entries()]
     .map(([loadRef, fileDocuments]) => {
       const documentsForFile = sortFileDocuments(fileDocuments)
-      const status = loadFileStatus(documentsForFile)
+      const filedDocuments = documentsForFile.filter((document) => (
+        fileAssignments[document.id] === loadRef
+      ))
+      const deskDocuments = documentsForFile.filter((document) => (
+        !fileAssignments[document.id]
+      ))
+      const requirements = buildRequirementState(filedDocuments)
       const primary = documentsForFile[0] ?? null
-      const rateConfirmation = documentsForFile.find((document) => (
-        document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
-      )) ?? null
-      const pod = documentsForFile.find((document) => (
-        document.type === OPERATIONAL_DOCUMENT_TYPE.POD
-      )) ?? null
+      const submitted = Boolean(submittedLoadFiles[loadRef])
+      const status = loadFileStatus({
+        documents: documentsForFile,
+        filedDocuments,
+        requirements,
+        submitted,
+      })
 
       return {
         id: `load-file:${loadRef}`,
@@ -241,20 +291,25 @@ export function buildOperationalLoadFiles(documents = []) {
         loadRef,
         driverId: primary?.driverId ?? null,
         documents: documentsForFile,
+        filedDocuments,
+        deskDocuments,
         documentCount: documentsForFile.length,
+        filedCount: filedDocuments.length,
+        deskCount: deskDocuments.length,
         attentionCount: documentsForFile.filter((document) => document.attention).length,
-        hasRateConfirmation: Boolean(rateConfirmation),
-        hasPod: Boolean(pod),
-        rateConfirmationStatus: rateConfirmation?.status ?? null,
-        podStatus: pod?.status ?? null,
+        requirements,
+        requiredCount: requirements.length,
+        satisfiedRequirementCount: requirements.filter((requirement) => requirement.satisfied).length,
+        canSubmit: requirements.length > 0 && requirements.every((requirement) => requirement.satisfied),
+        submitted,
         ...status,
       }
     })
     .sort((left, right) => {
       if (left.attention !== right.attention) return left.attention ? -1 : 1
 
-      const leftReady = left.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE
-      const rightReady = right.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE
+      const leftReady = left.status === OPERATIONAL_LOAD_FILE_STATUS.SUBMIT_READY
+      const rightReady = right.status === OPERATIONAL_LOAD_FILE_STATUS.SUBMIT_READY
       if (leftReady !== rightReady) return leftReady ? -1 : 1
 
       return String(left.loadRef).localeCompare(String(right.loadRef))
@@ -263,4 +318,22 @@ export function buildOperationalLoadFiles(documents = []) {
 
 export function operationalLoadFileAttentionCount(loadFiles = []) {
   return loadFiles.filter((loadFile) => loadFile?.attention).length
+}
+
+export function buildOperationalDeskDocuments(loadFiles = []) {
+  const seen = new Set()
+  const deskDocuments = []
+
+  for (const loadFile of loadFiles) {
+    for (const document of loadFile?.deskDocuments ?? []) {
+      if (seen.has(document.id)) continue
+      seen.add(document.id)
+      deskDocuments.push(document)
+    }
+  }
+
+  return deskDocuments.sort((left, right) => {
+    if (left.attention !== right.attention) return left.attention ? -1 : 1
+    return String(left.id).localeCompare(String(right.id))
+  })
 }
