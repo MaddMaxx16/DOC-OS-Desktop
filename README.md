@@ -10,9 +10,9 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.7.6.8 · Dock Continuity & Placement Stability`
 
-**Current candidate:** `V2.8.1 · Documents Workspace & Rate Con Handoff`
+**Current candidate:** `V2.8.1.1 · Documents Desk Polish & Delivery Fix`
 
-V2.8.1 is implemented and has passed the automated verification gate (install, lint, tests, and production build). Visual/gameplay acceptance is still required before it becomes the accepted checkpoint.
+V2.8.1.1 is the active correction candidate after the first V2.8.1 playtest. It replaces the map-centered Documents view with a dedicated paperwork desk, standardizes workstation browser width, and fixes the recorded Jersey City Delivery receiving-floor deadlock. Automated verification is required again before merge, followed by visual/gameplay acceptance.
 
 The operational freight loop is now substantially playable:
 
@@ -37,7 +37,7 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The V2.8.1 implementation is technically complete, but the checkpoint is not formally accepted until the visual/gameplay flow is playtested.
+The V2.8.1 feature set is implemented, but the first visual playtest produced a Documents-layout correction and a real Delivery deadlock. V2.8.1.1 addresses those findings before checkpoint acceptance.
 
 Still pending after that gate:
 
@@ -50,17 +50,18 @@ Still pending after that gate:
 
 ## Current acceptance gate
 
-### V2.8.1 · Documents Workspace & Rate Con Handoff
+### V2.8.1.1 · Documents Desk Polish & Delivery Fix
 
-Implemented and automated-verified. The remaining acceptance flow is:
+Correction pass in verification. The acceptance flow is:
 
 1. request a Rate Con in FreightLink,
 2. confirm FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
-3. open the matching Rate Con in Documents,
-4. launch the existing Focused Document Mode,
+3. open the matching Rate Con in Documents and verify the center workspace is the document desk rather than the live map,
+4. confirm Fleet, FreightLink, and Documents use the same browser width, then launch the existing Focused Document Mode,
 5. exercise mismatch/correction/acceptance behavior,
 6. confirm the accepted Rate Con remains filed,
-7. complete a Delivery and confirm the POD appears and advances status correctly.
+7. reproduce Taylor Brooks / T-110 at Jersey City Crossdock and confirm all three Forklift Handling units can clear the receiving floor,
+8. complete a Delivery and confirm the POD appears and advances status correctly.
 
 See the implementation packet:
 
