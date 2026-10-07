@@ -7,6 +7,7 @@ import PlanningPlaceFlyout from '../features/driver-day/PlanningPlaceFlyout.jsx'
 import DockLoadWorkspace from '../features/dock-load/DockLoadWorkspace.jsx'
 import DeliveryWorkspace from '../features/dock-delivery/DeliveryWorkspace.jsx'
 import DocumentsWorkspace from '../features/documents/DocumentsWorkspace.jsx'
+import OperationalDocumentInspection from '../features/documents/OperationalDocumentInspection.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -26,6 +27,7 @@ export default function DesktopShell({
   bookingRecords,
   facilityOperations,
   operationalDocuments = [],
+  operationalLoadFiles = [],
   documentAttentionCount = 0,
   selectedDocumentId,
   selection,
@@ -48,7 +50,7 @@ export default function DesktopShell({
   onSimulationModeChange,
   onRequestRateCon,
   onOpenDocumentsForRateCon,
-  onOpenRateCon,
+  onInspectDocument,
   onSelectDocument,
   onRequestRateConCorrection,
   onConfirmBooking,
@@ -158,6 +160,13 @@ export default function DesktopShell({
     ? drivers.find((driver) => driver.id === focusedRecord.driverId) ?? null
     : null
 
+  const focusedInspectionDocument = focusedTask?.type === 'document-inspect'
+    ? operationalDocuments.find((document) => document.id === focusedTask.documentId) ?? null
+    : null
+  const focusedInspectionDriver = focusedInspectionDocument?.driverId
+    ? drivers.find((driver) => driver.id === focusedInspectionDocument.driverId) ?? null
+    : null
+
   const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
   const selectedLiveState = selectedDriver
     ? liveDriverStates[selectedDriver.id] ?? null
@@ -221,6 +230,18 @@ export default function DesktopShell({
             onConfirm={(options) => onConfirmBooking(focusedLane.id, options)}
           />
         </FocusedWorkspace>
+      ) : focusedTask?.type === 'document-inspect' && focusedInspectionDocument ? (
+        <FocusedWorkspace
+          eyebrow="DOCUMENT INSPECTION"
+          title={`${focusedInspectionDocument.title} · ${focusedInspectionDocument.loadRef}`}
+          subtitle="FOCUSED · GAMEPLAY PAUSED"
+          onClose={onCloseFocusedTask}
+        >
+          <OperationalDocumentInspection
+            document={focusedInspectionDocument}
+            driver={focusedInspectionDriver}
+          />
+        </FocusedWorkspace>
       ) : (
         <section
           className={[
@@ -255,10 +276,11 @@ export default function DesktopShell({
           {documentsOpen && (
             <DocumentsWorkspace
               documents={operationalDocuments}
+              loadFiles={operationalLoadFiles}
               drivers={drivers}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={onSelectDocument}
-              onOpenRateCon={onOpenRateCon}
+              onInspectDocument={onInspectDocument}
               onClose={onCloseActiveApp}
             />
           )}

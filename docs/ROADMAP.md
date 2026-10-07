@@ -25,9 +25,9 @@ V2.7.6.8 is visually accepted.
 
 ### Current candidate
 
-**V2.8.1.1 · Documents Desk Polish & Delivery Fix**
+**V2.8.1.2 · Load Files & Unified Paper Workflow**
 
-The first V2.8.1 visual playtest found two acceptance blockers: Documents still felt map-owned instead of paperwork-owned, and Taylor's T-110 Delivery could deadlock the Forklift Handling receiving floor. V2.8.1.1 is the active correction candidate. V2.7.6.8 remains the formal accepted checkpoint until this correction passes automated verification and manual playtest.
+V2.8.1.1 fixed the map-owned Documents presentation and the Taylor T-110 Forklift Handling deadlock. The following Documents playtest exposed the stronger organizing rule: paperwork is managed as one working file per load. V2.8.1.2 is the active acceptance correction. V2.7.6.8 remains the formal accepted checkpoint until this correction passes automated verification and manual playtest.
 
 ### What that means
 
@@ -246,6 +246,23 @@ Playtest findings being corrected before V2.8.1 acceptance:
 
 The correction does not change the V2.8 architecture or advance to V2.8.2.
 
+### V2.8.1.2 · Load-file acceptance correction
+
+Documents now organizes operational paperwork around the **load file**:
+
+- one cabinet row per load rather than one row per document,
+- Rate Con and POD papers grouped in the same derived file,
+- command-rail attention counts load files needing action,
+- physical load folder on the center desk,
+- papers can be dragged/arranged on the desk,
+- single click selects a paper and updates the right inspector,
+- double click inspects that exact paper,
+- the same authoritative Rate Confirmation paper component is used on the desk and in focused review,
+- non-actionable Rate Cons and PODs can open as read-only focused paper inspections,
+- delivered files remain open for billing/payment rather than being prematurely marked closed.
+
+BOL, invoice creation, sent-for-payment, payment receipt, and final file closeout remain later document/finance work.
+
 ## V2.8.2 · Document Revisions & Rate Con Archive
 
 Goal:
@@ -257,8 +274,7 @@ Build:
 - accepted Rate Con remains retrievable,
 - corrected Rate Con revisions remain traceable,
 - superseded/current revision status,
-- load packet grouping,
-- confirmed-document read-only viewing,
+- revision history inside the existing load file,
 - no disappearing paperwork after booking confirmation.
 
 Acceptance:
@@ -293,10 +309,10 @@ Prepare paperwork for downstream payment without prematurely building the full f
 
 Build:
 
-- grouped load packet,
-- Rate Con + POD packet relationship,
+- extend the existing load file with BOL/invoice-support requirements,
+- document completeness rules for billing,
 - invoice-support readiness state,
-- document completeness indicator.
+- package/closeout handoff toward payment.
 
 Do not build full owner-era receivables here.
 

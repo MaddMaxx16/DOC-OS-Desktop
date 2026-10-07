@@ -4,8 +4,11 @@ import { BOOKING_STATUS } from '../src/domain/booking/bookingLifecycle.js'
 import { DELIVERY_DOCUMENT_STATUS } from '../src/domain/documents/deliveryPod.js'
 import {
   buildOperationalDocumentIndex,
+  buildOperationalLoadFiles,
   operationalDocumentAttentionCount,
+  operationalLoadFileAttentionCount,
   OPERATIONAL_DOCUMENT_TYPE,
+  OPERATIONAL_LOAD_FILE_STATUS,
 } from '../src/domain/documents/operationalDocumentIndex.js'
 
 const lane = {
@@ -184,4 +187,87 @@ test('waiting and accepted documents do not count as attention', () => {
   })
 
   assert.equal(operationalDocumentAttentionCount(documents), 0)
+})
+
+
+test('operational documents are grouped into one load file per load reference', () => {
+  const podRecord = {
+    ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
+    id: 'POD:M-403:delivery',
+    loadId: 'M-403',
+    loadRef: 'FL-403',
+  }
+  const documents = buildOperationalDocumentIndex({
+    bookingRecords: {
+      'FL-403': {
+        laneId: 'FL-403',
+        driverId: 'marcus-reed',
+        bookedLoadId: 'M-403',
+        status: BOOKING_STATUS.CONFIRMED,
+        correctionCount: 0,
+        rateConfirmation: rateCon(),
+      },
+    },
+    documentRecords: { [podRecord.id]: podRecord },
+    lanes: [lane],
+  })
+  const loadFiles = buildOperationalLoadFiles(documents)
+
+  assert.equal(loadFiles.length, 1)
+  assert.equal(loadFiles[0].loadRef, 'FL-403')
+  assert.equal(loadFiles[0].documentCount, 2)
+  assert.equal(loadFiles[0].hasRateConfirmation, true)
+  assert.equal(loadFiles[0].hasPod, true)
+  assert.equal(loadFiles[0].status, OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE)
+  assert.equal(loadFiles[0].statusLabel, 'DELIVERY COMPLETE')
+})
+
+test('load-file attention counts files rather than individual papers', () => {
+  const podRecord = {
+    ...pod(DELIVERY_DOCUMENT_STATUS.REVIEW_REQUIRED),
+    id: 'POD:FL-403:delivery',
+    loadId: 'FL-403',
+    loadRef: 'FL-403',
+  }
+  const documents = buildOperationalDocumentIndex({
+    bookingRecords: {
+      'FL-403': {
+        laneId: 'FL-403',
+        driverId: 'marcus-reed',
+        status: BOOKING_STATUS.RATE_CON_READY,
+        correctionCount: 0,
+        rateConfirmation: rateCon(),
+      },
+    },
+    documentRecords: { [podRecord.id]: podRecord },
+    lanes: [lane],
+  })
+  const loadFiles = buildOperationalLoadFiles(documents)
+
+  assert.equal(documents.filter((document) => document.attention).length, 2)
+  assert.equal(loadFiles.length, 1)
+  assert.equal(loadFiles[0].attentionCount, 2)
+  assert.equal(loadFiles[0].status, OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION)
+  assert.equal(operationalLoadFileAttentionCount(loadFiles), 1)
+})
+
+test('accepted Rate Con without a POD remains an active open load file', () => {
+  const documents = buildOperationalDocumentIndex({
+    bookingRecords: {
+      'FL-403': {
+        laneId: 'FL-403',
+        driverId: 'marcus-reed',
+        bookedLoadId: 'M-403',
+        status: BOOKING_STATUS.CONFIRMED,
+        correctionCount: 0,
+        rateConfirmation: rateCon(),
+      },
+    },
+    lanes: [lane],
+  })
+  const [loadFile] = buildOperationalLoadFiles(documents)
+
+  assert.equal(loadFile.status, OPERATIONAL_LOAD_FILE_STATUS.OPEN)
+  assert.equal(loadFile.statusLabel, 'ACTIVE FILE')
+  assert.equal(loadFile.documentCount, 1)
 })

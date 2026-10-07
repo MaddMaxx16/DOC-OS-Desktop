@@ -26,7 +26,9 @@ import {
 } from '../domain/documents/deliveryPod.js'
 import {
   buildOperationalDocumentIndex,
-  operationalDocumentAttentionCount,
+  buildOperationalLoadFiles,
+  operationalLoadFileAttentionCount,
+  OPERATIONAL_DOCUMENT_TYPE,
 } from '../domain/documents/operationalDocumentIndex.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
@@ -139,9 +141,14 @@ export default function App() {
     lanes: freightMarket,
   }), [bookingRecords, documentRecords])
 
-  const documentAttentionCount = useMemo(
-    () => operationalDocumentAttentionCount(operationalDocuments),
+  const operationalLoadFiles = useMemo(
+    () => buildOperationalLoadFiles(operationalDocuments),
     [operationalDocuments],
+  )
+
+  const documentAttentionCount = useMemo(
+    () => operationalLoadFileAttentionCount(operationalLoadFiles),
+    [operationalLoadFiles],
   )
 
   const selectSubject = (type, id) => {
@@ -453,6 +460,25 @@ export default function App() {
     setFocusedTask({ type: 'rate-confirmation', laneId })
   }
 
+  const inspectDocument = (documentId) => {
+    const document = operationalDocuments.find((item) => item.id === documentId)
+    if (!document) return
+
+    setSelectedDocumentId(document.id)
+    setActiveApp('documents')
+
+    const bookingRecord = document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
+      ? bookingRecords[document.laneId]
+      : null
+
+    if (bookingRecord?.status === BOOKING_STATUS.RATE_CON_READY) {
+      openRateCon(document.laneId)
+      return
+    }
+
+    setFocusedTask({ type: 'document-inspect', documentId: document.id })
+  }
+
   const requestRateConCorrection = (laneId, reason) => {
     const lane = freightMarket.find((item) => item.id === laneId)
     if (!lane) return
@@ -638,6 +664,7 @@ export default function App() {
       facilityOperations={facilityOperations}
       documentRecords={documentRecords}
       operationalDocuments={operationalDocuments}
+      operationalLoadFiles={operationalLoadFiles}
       documentAttentionCount={documentAttentionCount}
       selectedDocumentId={selectedDocumentId}
       selection={selection}
@@ -660,7 +687,7 @@ export default function App() {
       onSimulationModeChange={setSimulationClockMode}
       onRequestRateCon={requestRateCon}
       onOpenDocumentsForRateCon={openDocumentsForRateCon}
-      onOpenRateCon={openRateCon}
+      onInspectDocument={inspectDocument}
       onSelectDocument={setSelectedDocumentId}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}

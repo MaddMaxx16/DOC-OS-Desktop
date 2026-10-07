@@ -1,0 +1,140 @@
+.pod-paper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 34px 26px;
+  border: 1px solid #c8c2b3;
+  background:
+    linear-gradient(rgba(255,255,255,.3), rgba(255,255,255,.05)),
+    #f2efe5;
+  color: #17191a;
+  box-shadow:
+    0 2px 3px rgba(0, 0, 0, .2),
+    0 18px 45px rgba(0, 0, 0, .38);
+}
+
+.pod-paper-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 22px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid #1f2325;
+}
+
+.pod-paper-header > div:first-child,
+.pod-paper-status,
+.pod-paper-parties > div,
+.pod-paper-signature > div {
+  display: grid;
+  gap: 3px;
+}
+
+.pod-paper-header span,
+.pod-paper-parties span,
+.pod-paper-summary span,
+.pod-paper-receipt > span,
+.pod-paper-signature span {
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.pod-paper-header > div:first-child > strong {
+  font-size: 25px;
+  line-height: 1.05;
+}
+
+.pod-paper-header small {
+  font-size: 12px;
+}
+
+.pod-paper-status {
+  min-width: 126px;
+  align-content: center;
+  text-align: right;
+}
+
+.pod-paper-status strong {
+  font-size: 14px;
+}
+
+.pod-paper-parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  padding: 16px 4px;
+  border-bottom: 1px solid #aaa69b;
+}
+
+.pod-paper-parties strong {
+  font-size: 15px;
+}
+
+.pod-paper-parties small {
+  font-size: 11px;
+}
+
+.pod-paper-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid #8f8d86;
+}
+
+.pod-paper-summary > div {
+  min-height: 76px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 10px 12px;
+  border-right: 1px solid #b3afa4;
+}
+
+.pod-paper-summary > div:last-child {
+  border-right: 0;
+}
+
+.pod-paper-summary strong {
+  font-size: 20px;
+}
+
+.pod-paper-summary small {
+  font-size: 10px;
+}
+
+.pod-paper-receipt {
+  padding: 22px 4px;
+  border-bottom: 1px solid #9e9a90;
+}
+
+.pod-paper-receipt p {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.pod-paper-signature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  margin-top: 26px;
+}
+
+.pod-paper-signature > div {
+  min-height: 72px;
+  padding-top: 9px;
+  border-top: 1px solid #373a3b;
+}
+
+.pod-paper-signature strong {
+  font-size: 12px;
+}
+
+.pod-paper footer {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #aaa69b;
+  font-size: 9px;
+  font-weight: 750;
+}

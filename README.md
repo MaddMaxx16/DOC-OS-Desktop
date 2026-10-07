@@ -10,9 +10,9 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.7.6.8 · Dock Continuity & Placement Stability`
 
-**Current candidate:** `V2.8.1.1 · Documents Desk Polish & Delivery Fix`
+**Current candidate:** `V2.8.1.2 · Load Files & Unified Paper Workflow`
 
-V2.8.1.1 is the active correction candidate after the first V2.8.1 playtest. It replaces the map-centered Documents view with a dedicated paperwork desk, standardizes workstation browser width, and fixes the recorded Jersey City Delivery receiving-floor deadlock. Automated verification is required again before merge, followed by visual/gameplay acceptance.
+V2.8.1.2 is the active acceptance correction after the Documents desk playtest exposed the missing organizing principle: paperwork belongs to a load file, not to a flat document list. Each load now owns one working folder that collects its Rate Con and POD records, keeps those papers together on the desk, and remains open through future billing/payment closeout.
 
 The operational freight loop is now substantially playable:
 
@@ -37,7 +37,7 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The V2.8.1 feature set is implemented, but the first visual playtest produced a Documents-layout correction and a real Delivery deadlock. V2.8.1.1 addresses those findings before checkpoint acceptance.
+The V2.8.1 feature set is implemented, but acceptance remains open while the Documents interaction is corrected around load files. The V2.8.1.1 Delivery deadlock fix is retained inside this candidate.
 
 Still pending after that gate:
 
@@ -50,18 +50,19 @@ Still pending after that gate:
 
 ## Current acceptance gate
 
-### V2.8.1.1 · Documents Desk Polish & Delivery Fix
+### V2.8.1.2 · Load Files & Unified Paper Workflow
 
 Correction pass in verification. The acceptance flow is:
 
 1. request a Rate Con in FreightLink,
 2. confirm FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
-3. open the matching Rate Con in Documents and verify the center workspace is the document desk rather than the live map,
-4. confirm Fleet, FreightLink, and Documents use the same browser width, then launch the existing Focused Document Mode,
-5. exercise mismatch/correction/acceptance behavior,
-6. confirm the accepted Rate Con remains filed,
+3. open Documents and verify the left cabinet lists one load file per load rather than one row per paper,
+4. open the matching load file and confirm its papers share one physical working folder on the desk,
+5. drag a paper, single-click to select it, and double-click the Rate Con to enter the existing focused MATCH / ISSUE review,
+6. exercise mismatch/correction/acceptance behavior and confirm the accepted paper remains inside the same load file,
 7. reproduce Taylor Brooks / T-110 at Jersey City Crossdock and confirm all three Forklift Handling units can clear the receiving floor,
-8. complete a Delivery and confirm the POD appears and advances status correctly.
+8. complete a Delivery and confirm the POD is added to the same load file and advances status correctly,
+9. confirm a delivered file stays open for billing rather than being prematurely treated as closed.
 
 See the implementation packet:
 

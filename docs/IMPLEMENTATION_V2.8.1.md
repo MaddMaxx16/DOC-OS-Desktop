@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.8.1.1 CORRECTION IN VERIFY · VISUAL ACCEPTANCE PENDING**
+**IMPLEMENTED · V2.8.1.2 LOAD-FILE CORRECTION IN VERIFY · VISUAL ACCEPTANCE PENDING**
 
 V2.7.6.8 remains the accepted and locked checkpoint until this packet passes its manual visual/gameplay acceptance flow.
 
@@ -20,6 +20,29 @@ The first V2.8.1 acceptance playtest produced two blocking findings that are cor
 The correction also standardizes the left workstation-browser width across Fleet, FreightLink, and Documents and removes clipped command-rail labels.
 
 This correction does not advance the roadmap to V2.8.2. It is part of the V2.8.1 acceptance gate.
+
+---
+
+## V2.8.1.2 load-file correction
+
+The next Documents playtest clarified that the primary object is not an individual paper. It is the **load file**.
+
+Required acceptance behavior:
+
+- one derived load file per load reference,
+- Rate Con, POD, and later BOL/invoice records belong to that file,
+- the left cabinet lists load files rather than loose documents,
+- opening a load file places its physical folder on the desk,
+- papers inside the folder are individually selectable and draggable,
+- double-clicking a paper inspects that same paper,
+- an actionable Rate Con transitions into the existing MATCH / ISSUE focused gameplay,
+- accepted/non-actionable papers can still be inspected read-only,
+- closing focused inspection returns the player to the same working load file,
+- the file remains open through operational completion and future billing/payment closeout.
+
+The load-file index remains derived presentation state over existing document truth. Do not duplicate booking/POD state just to create folders.
+
+The delivered state is not equivalent to a closed file. A clean POD may mark the operational delivery portion complete, but BOL/invoice/payment rules will decide later billing and final closeout.
 
 ---
 
@@ -236,32 +259,31 @@ Do not enable Email or Messages yet.
 
 Documents follows the accepted Desktop shell model:
 
-**Command Rail → Documents Browser → Live Map → Document Inspector**
+**Command Rail → Load-File Cabinet → Working Folder Desk → Document Inspector**
 
-Do not replace the map for ordinary browsing.
+Documents owns the center desk while the app is open; the live map is not the primary Documents workspace.
 
-Use Focused Workspace only when a deep document task begins.
+Use Focused Workspace when a paper is enlarged for review/inspection.
 
 ### Documents browser
 
-The left browser should support scanning documents.
+The left browser is a filing cabinet of load files.
 
-At minimum show:
+At minimum each file row shows:
 
-- document type,
 - load ref,
-- status,
-- attention indicator,
-- revision for Rate Con when relevant.
+- driver where known,
+- file status,
+- paper count,
+- paper-type chips,
+- attention state.
 
-Useful filters may include:
+Useful filters include:
 
-- ALL,
+- ALL FILES,
 - NEEDS ACTION,
-- RATE CON,
-- POD.
-
-Keep filtering simple in this packet.
+- ACTIVE,
+- DELIVERY COMPLETE.
 
 ### Document selection
 
@@ -269,7 +291,7 @@ Selecting a document should use a coherent document selection state local to the
 
 Do not overload freight-stop selection IDs.
 
-The browser and inspector must agree on one selected document.
+The selected load file owns the working desk. Within that file, the selected paper and right inspector must agree on one selected document.
 
 ---
 
