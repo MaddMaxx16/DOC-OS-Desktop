@@ -204,7 +204,7 @@ function buildRequirementState(filedDocuments = []) {
 }
 
 function loadFileStatus({
-  documents = [],
+  printedDocuments = [],
   filedDocuments = [],
   requirements = [],
   submitted = false,
@@ -217,7 +217,7 @@ function loadFileStatus({
     }
   }
 
-  if (documents.some((document) => document?.attention)) {
+  if (printedDocuments.some((document) => document?.attention)) {
     return {
       status: OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION,
       statusLabel: 'NEEDS ACTION',
@@ -225,7 +225,7 @@ function loadFileStatus({
     }
   }
 
-  const pod = documents.find((document) => document.type === OPERATIONAL_DOCUMENT_TYPE.POD)
+  const pod = printedDocuments.find((document) => document.type === OPERATIONAL_DOCUMENT_TYPE.POD)
   if (pod?.status === 'PENDING_RECEIVER') {
     return {
       status: OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING,
@@ -254,6 +254,7 @@ export function buildOperationalLoadFiles(
   {
     fileAssignments = {},
     submittedLoadFiles = {},
+    printedDocumentIds = {},
   } = {},
 ) {
   const grouped = new Map()
@@ -269,17 +270,20 @@ export function buildOperationalLoadFiles(
   return [...grouped.entries()]
     .map(([loadRef, fileDocuments]) => {
       const documentsForFile = sortFileDocuments(fileDocuments)
-      const filedDocuments = documentsForFile.filter((document) => (
+      const printedDocuments = documentsForFile.filter((document) => (
+        Boolean(printedDocumentIds[document.id])
+      ))
+      const filedDocuments = printedDocuments.filter((document) => (
         fileAssignments[document.id] === loadRef
       ))
-      const deskDocuments = documentsForFile.filter((document) => (
+      const deskDocuments = printedDocuments.filter((document) => (
         fileAssignments[document.id] !== loadRef
       ))
       const requirements = buildRequirementState(filedDocuments)
       const primary = documentsForFile[0] ?? null
       const submitted = Boolean(submittedLoadFiles[loadRef])
       const status = loadFileStatus({
-        documents: documentsForFile,
+        printedDocuments,
         filedDocuments,
         requirements,
         submitted,
@@ -291,12 +295,14 @@ export function buildOperationalLoadFiles(
         loadRef,
         driverId: primary?.driverId ?? null,
         documents: documentsForFile,
+        printedDocuments,
         filedDocuments,
         deskDocuments,
         documentCount: documentsForFile.length,
+        printedCount: printedDocuments.length,
         filedCount: filedDocuments.length,
         deskCount: deskDocuments.length,
-        attentionCount: documentsForFile.filter((document) => document.attention).length,
+        attentionCount: printedDocuments.filter((document) => document.attention).length,
         requirements,
         requiredCount: requirements.length,
         satisfiedRequirementCount: requirements.filter((requirement) => requirement.satisfied).length,

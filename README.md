@@ -8,11 +8,13 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 ## Current status
 
-**Accepted checkpoint:** `V2.7.6.8 · Dock Continuity & Placement Stability`
+**Accepted checkpoint:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-**Current candidate:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
+**Current candidate:** `V2.9.1 · Email Inbox & Print-to-Documents`
 
-V2.8.1.3 locks the Documents interaction model: load folders live in the filing cabinet, while every unfiled paper from every load lives together on one persistent desk. Selecting a folder never filters the desk. Filing is a deliberate player action, and a load packet cannot be submitted until its current required documents are filed in acceptable status.
+V2.8.1.3 is visually accepted and locks the Documents interaction model: load folders live in the filing cabinet, every unfiled physical paper shares one persistent desk, filing is player-driven, and packet completeness gates submission.
+
+V2.9.1 adds the missing digital arrival layer: external paperwork arrives in Email first and only becomes a physical Documents paper when the player prints the attachment.
 
 The operational freight loop is now substantially playable:
 
@@ -37,41 +39,38 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The V2.8.1 feature set is implemented, but acceptance remains open while the filing gameplay is proven. The V2.8.1.1 Delivery deadlock fix and V2.8.1.2 unified-paper work are retained inside this candidate.
+The physical Documents workflow is accepted. The next missing layer is how external paperwork reaches the player.
 
-Still pending after that gate:
+Still pending:
 
-- **Email** is not yet implemented.
-- **Messages** is not yet implemented.
-- accepted Rate Con revision/archive viewing is deferred to V2.8.2,
-- focused POD review/correction is deferred to V2.8.3,
+- **V2.9.1 Email Inbox & Print-to-Documents** is the active build,
+- Messages / driver communication remains V2.9.2,
+- accepted Rate Con revision/archive viewing returns after Email intake is accepted,
+- focused POD review/correction returns after Email intake is accepted,
 - Send Schedule is still too tightly coupled to Planning mode,
 - Live Operations has Play/Fast Forward but no **Advance to Next Operational Moment** control yet.
 
 ## Current acceptance gate
 
-### V2.8.1.3 · Global Paper Desk & Filing Gameplay
+### V2.9.1 · Email Inbox & Print-to-Documents
 
-Correction pass in verification. The acceptance flow is:
+The critical flow is:
 
 1. request a Rate Con in FreightLink,
-2. confirm FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
-3. open Documents and verify the left cabinet lists one load file per load while the center desk shows every unfiled paper across all loads,
-4. expand different folders and confirm the desk does not change or filter,
-5. drag a paper onto its matching folder and confirm it leaves the desk and appears under that file,
-6. attempt a wrong-file drop and confirm the paper is rejected rather than silently misfiled,
-7. return a filed paper to the desk and confirm it becomes loose paperwork again,
-8. double-click the Rate Con and complete the existing MATCH / ISSUE review; accepted Rate Cons show a visible paper stamp,
-9. complete a Delivery and confirm the POD lands on the global desk rather than auto-filing,
-10. file all current required papers and confirm **SUBMIT LOAD FILE** remains disabled until every requirement is satisfied,
-11. submit the complete packet and confirm filing is locked for that submitted load,
-12. reproduce Taylor Brooks / T-110 at Jersey City Crossdock and confirm all three Forklift Handling units can clear the receiving floor.
+2. FreightLink reports **RATE CON RECEIVED** and routes to **CHECK EMAIL**,
+3. Email shows an unread Rate Confirmation message with attachment,
+4. opening the email marks it read but does not create a physical paper,
+5. click **PRINT ATTACHMENT**,
+6. open Documents and confirm the Rate Con now appears as loose paper on the global desk,
+7. review/accept/file it through the existing Documents workflow,
+8. complete a Delivery and wait for receiver verification,
+9. confirm the POD arrives as Email rather than automatically appearing on the Documents desk,
+10. print the POD and confirm it enters the same global filing gameplay.
 
-See the implementation packet:
+See the implementation packets:
 
-- [V2.8.1 Implementation Packet](docs/IMPLEMENTATION_V2.8.1.md)
-
-After V2.8.1 is visually accepted, the next packet is **V2.8.2 · Document Revisions & Rate Con Archive**.
+- [V2.8.1 Accepted Documents Packet](docs/IMPLEMENTATION_V2.8.1.md)
+- [V2.9.1 Email Intake Packet](docs/IMPLEMENTATION_V2.9.1.md)
 
 ## Roadmap
 
@@ -83,7 +82,7 @@ Use that file as the default answer to **"what are we building next?"** rather t
 
 High-level direction:
 
-**V2.8 Documents → V2.9 Email + Messages → V2.10 Banking + Career Progression → V2.11 Onboarding → V2.12 Packaging**
+**V2.8 Documents foundation → V2.9.1 Email intake → remaining document depth → V2.9 Messages → V2.10 Banking + Career Progression → V2.11 Onboarding → V2.12 Packaging**
 
 ## Architecture / development contract
 

@@ -7,6 +7,7 @@ import PlanningPlaceFlyout from '../features/driver-day/PlanningPlaceFlyout.jsx'
 import DockLoadWorkspace from '../features/dock-load/DockLoadWorkspace.jsx'
 import DeliveryWorkspace from '../features/dock-delivery/DeliveryWorkspace.jsx'
 import DocumentsWorkspace from '../features/documents/DocumentsWorkspace.jsx'
+import EmailWorkspace from '../features/email/EmailWorkspace.jsx'
 import OperationalDocumentInspection from '../features/documents/OperationalDocumentInspection.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
@@ -29,6 +30,9 @@ export default function DesktopShell({
   operationalDocuments = [],
   operationalLoadFiles = [],
   documentAttentionCount = 0,
+  emailMessages = [],
+  emailUnreadCount = 0,
+  selectedEmailId,
   selectedDocumentId,
   selection,
   activeApp,
@@ -49,7 +53,10 @@ export default function DesktopShell({
   onFreightCandidateDriverChange,
   onSimulationModeChange,
   onRequestRateCon,
-  onOpenDocumentsForRateCon,
+  onOpenEmailForRateCon,
+  onSelectEmail,
+  onPrintDocument,
+  onOpenDocuments,
   onInspectDocument,
   onSelectDocument,
   onFileDocument,
@@ -85,6 +92,7 @@ export default function DesktopShell({
   ) ? freightRoutePreview : null
 
   const freightlinkOpen = activeApp === 'freightlink'
+  const emailOpen = activeApp === 'email'
   const documentsOpen = activeApp === 'documents'
   const freightDriver = activeFreightRoutePreview?.driver ?? null
   const freightCandidateDriver = freightlinkOpen
@@ -129,7 +137,7 @@ export default function DesktopShell({
     if (activeApp !== 'drivers') onToggleApp('drivers')
   }
 
-  const hasBrowser = activeApp === 'drivers' || freightlinkOpen || documentsOpen
+  const hasBrowser = activeApp === 'drivers' || freightlinkOpen || emailOpen || documentsOpen
   const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)
   const selectedDocument = documentsOpen
     ? operationalDocuments.find((document) => document.id === selectedDocumentId) ?? null
@@ -137,6 +145,7 @@ export default function DesktopShell({
   const hasDocumentInspector = documentsOpen && Boolean(selectedDocument)
   const hasOperationsInspector = (
     !freightlinkOpen
+    && !emailOpen
     && !documentsOpen
     && Boolean(selection)
     && !operationsInspectorHidden
@@ -252,6 +261,7 @@ export default function DesktopShell({
             hasBrowser ? 'browser-open' : '',
             hasInspector ? 'inspector-open' : '',
             freightlinkOpen ? 'freightlink-open' : '',
+            emailOpen ? 'email-open' : '',
             documentsOpen ? 'documents-open' : '',
             activeApp === 'drivers' ? 'fleet-browser-open' : '',
           ].filter(Boolean).join(' ')}
@@ -260,7 +270,10 @@ export default function DesktopShell({
         >
           <CommandRail
             activeSection={activeApp}
-            attentionCounts={{ documents: documentAttentionCount }}
+            attentionCounts={{
+              email: emailUnreadCount,
+              documents: documentAttentionCount,
+            }}
             onToggleSection={toggleShellApp}
           />
 
@@ -273,6 +286,17 @@ export default function DesktopShell({
               filter={driverBrowserFilter}
               onClearFilter={() => setDriverBrowserFilter('all')}
               onSelectSubject={onSelectSubject}
+            />
+          )}
+
+          {emailOpen && (
+            <EmailWorkspace
+              messages={emailMessages}
+              selectedEmailId={selectedEmailId}
+              onSelectEmail={onSelectEmail}
+              onPrintDocument={onPrintDocument}
+              onOpenDocuments={onOpenDocuments}
+              onClose={onCloseActiveApp}
             />
           )}
 
@@ -302,14 +326,14 @@ export default function DesktopShell({
               candidateDriverId={freightCandidateDriverId}
               onCandidateDriverChange={onFreightCandidateDriverChange}
               onRequestRateCon={onRequestRateCon}
-              onOpenDocumentsForRateCon={onOpenDocumentsForRateCon}
+              onOpenEmailForRateCon={onOpenEmailForRateCon}
               onSelectSubject={onSelectSubject}
               onClose={onCloseActiveApp}
               onRoutePreviewChange={onRoutePreviewChange}
             />
           )}
 
-          {!documentsOpen && (
+          {!emailOpen && !documentsOpen && (
             <div className="map-workspace">
               <OperationsMap
                 drivers={drivers}
@@ -333,7 +357,7 @@ export default function DesktopShell({
             </div>
           )}
 
-          {!documentsOpen && planningActive && selectedStop && ['lunch', 'staging'].includes(selectedStop.kind) && (
+          {!emailOpen && !documentsOpen && planningActive && selectedStop && ['lunch', 'staging'].includes(selectedStop.kind) && (
             <PlanningPlaceFlyout
               driver={selectedDriver}
               event={selectedStop}
