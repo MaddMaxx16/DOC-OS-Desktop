@@ -151,7 +151,13 @@ function PodInspector({ document }) {
       <footer className="documents-inspector-footer static">
         <div>
           <span>{document.statusLabel}</span>
-          <strong>{document.status === 'REVIEW_REQUIRED' ? 'Document needs attention.' : 'No document action is available in this packet.'}</strong>
+          <strong>{
+            document.status === 'REVIEW_REQUIRED'
+              ? 'Document needs attention.'
+              : document.status === 'PENDING_RECEIVER'
+                ? 'Waiting for receiver verification.'
+                : 'POD is filed with this load.'
+          }</strong>
         </div>
       </footer>
     </>
