@@ -14,7 +14,7 @@ const FILE_FILTERS = Object.freeze([
   { id: 'ALL', label: 'ALL FILES' },
   { id: 'ACTION', label: 'NEEDS ACTION' },
   { id: 'ACTIVE', label: 'ACTIVE' },
-  { id: 'READY', label: 'READY TO BILL' },
+  { id: 'DELIVERED', label: 'DELIVERY COMPLETE' },
 ])
 
 function loadFileMatchesFilter(loadFile, filter) {
@@ -25,7 +25,7 @@ function loadFileMatchesFilter(loadFile, filter) {
       OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING,
     ].includes(loadFile.status)
   }
-  if (filter === 'READY') return loadFile.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL
+  if (filter === 'DELIVERED') return loadFile.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE
   return true
 }
 
@@ -38,7 +38,7 @@ function documentTone(document) {
 
 function fileTone(loadFile) {
   if (loadFile?.attention) return 'attention'
-  if (loadFile?.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL) return 'complete'
+  if (loadFile?.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE) return 'complete'
   if (loadFile?.status === OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING) return 'waiting'
   return 'neutral'
 }
@@ -301,8 +301,8 @@ function LoadFileDesk({
           <span>LOAD PACKET</span>
           <strong>{loadFile.documentCount} paper{loadFile.documentCount === 1 ? '' : 's'} collected</strong>
           <small>
-            {loadFile.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL
-              ? 'Operational paperwork is ready for the billing step.'
+            {loadFile.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE
+              ? 'Delivery paperwork is collected. Keep the file open through billing and payment.'
               : 'This file stays open while the load is active and paperwork is still arriving.'}
           </small>
         </div>
