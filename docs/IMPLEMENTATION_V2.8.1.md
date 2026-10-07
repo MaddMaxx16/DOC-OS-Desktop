@@ -2,11 +2,11 @@
 
 ## Status
 
-**IMPLEMENTED · V2.8.1.3 GLOBAL-DESK CORRECTION IN VERIFY · VISUAL ACCEPTANCE PENDING**
+**ACCEPTED · V2.8.1.3 GLOBAL PAPER DESK & FILING GAMEPLAY**
 
-V2.7.6.8 remains the accepted and locked checkpoint until this packet passes its manual visual/gameplay acceptance flow.
+V2.8.1.3 is the accepted and locked Documents-foundation checkpoint.
 
-V2.8.1 implementation is complete. The closeout audit verified the required document index, Documents workspace, Rate Con handoff, accepted-document retention, POD visibility, attention logic, and regression coverage. The technical verification gate (install, lint, tests, production build) is green.
+V2.8.1 implementation is complete and manually accepted through V2.8.1.3. The global desk, cabinet filing, wrong-folder rejection, return-to-desk behavior, packet completeness, submission gate, Delivery deadlock correction, and shared paper rendering are locked.
 
 ---
 
@@ -107,7 +107,7 @@ V2.8.1 now provides the first real Documents workspace and moves Rate Confirmati
 
 ## 2. Core architecture rule
 
-**FreightLink requests paperwork. Documents owns paperwork.**
+**For the accepted V2.8.1 checkpoint, Documents owns physical paperwork. V2.9.1 adds the digital arrival path before that physical ownership begins.**
 
 For V2.8.1:
 
@@ -118,11 +118,12 @@ For V2.8.1:
 - Documents is the only implemented place that can open the Rate Confirmation document in this packet.
 - Email becomes an additional arrival path in V2.9, not a prerequisite for V2.8.1.
 
-This creates the eventual invariant:
+The next-phase invariant is now locked:
 
 > FreightLink requests it  
-> Email delivers it  
-> Documents owns it  
+> Email delivers the digital attachment  
+> Player prints it  
+> Documents owns the physical copy  
 > Focused Document Mode reviews it
 
 ---
