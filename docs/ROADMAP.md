@@ -25,9 +25,9 @@ V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.9.1.3 · Shared Left-Panel Gutters**
+**V2.9.1.4 · Documents Panel Gutter Fix**
 
-V2.9.1 implemented Email intake, V2.9.1.1 corrected the reader, and V2.9.1.2 exposed a broader workstation-spacing issue. V2.9.1.3 standardizes safe browser gutters across every left workstation panel without changing gameplay.
+V2.9.1.3 standardized browser gutters across the workstation. The next visual check showed Documents still reading too tight on the right edge, so V2.9.1.4 gives the filing cabinet a stronger effective right safe area without changing gameplay.
 
 ### What that means
 

@@ -32,13 +32,13 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.9.1.3 Shared Left-Panel Gutters
+## Current packet — V2.9.1.4 Documents Panel Gutter Fix
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
 V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1 through V2.9.1.2 are implemented. V2.9.1.3 turns the sidebar spacing fix into a shared workstation contract: every left browser panel uses the same safe left/right gutters and width-safe rows.
+V2.9.1.3 is implemented. V2.9.1.4 is a narrow Documents-specific visual correction because the filing cabinet still appeared too tight against the right panel edge despite consuming the shared gutter token.
 
 The active acceptance packet is:
 
