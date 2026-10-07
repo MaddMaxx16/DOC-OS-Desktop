@@ -255,6 +255,7 @@ export default function DesktopShell({
           {documentsOpen && (
             <DocumentsWorkspace
               documents={operationalDocuments}
+              drivers={drivers}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={onSelectDocument}
               onOpenRateCon={onOpenRateCon}
