@@ -24,6 +24,10 @@ import {
   createDeliveryPodRecord,
   deliveryPodId,
 } from '../domain/documents/deliveryPod.js'
+import {
+  buildOperationalDocumentIndex,
+  operationalDocumentAttentionCount,
+} from '../domain/documents/operationalDocumentIndex.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
   advanceSimulationClock,
@@ -57,6 +61,7 @@ export default function App() {
   const [bookingRecords, setBookingRecords] = useState({})
   const [facilityOperations, setFacilityOperations] = useState({})
   const [documentRecords, setDocumentRecords] = useState({})
+  const [selectedDocumentId, setSelectedDocumentId] = useState(null)
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
   const [planningFeedback, setPlanningFeedback] = useState(null)
@@ -127,6 +132,17 @@ export default function App() {
     )
     return freightMarket.filter((lane) => !confirmedLaneIds.has(lane.id))
   }, [bookingRecords])
+
+  const operationalDocuments = useMemo(() => buildOperationalDocumentIndex({
+    bookingRecords,
+    documentRecords,
+    lanes: freightMarket,
+  }), [bookingRecords, documentRecords])
+
+  const documentAttentionCount = useMemo(
+    () => operationalDocumentAttentionCount(operationalDocuments),
+    [operationalDocuments],
+  )
 
   const selectSubject = (type, id) => {
     setPendingPlanningPlace(null)
@@ -340,14 +356,14 @@ export default function App() {
   }
 
   const toggleApp = (appId) => {
-    if (!['drivers', 'freightlink'].includes(appId)) return
+    if (!['drivers', 'freightlink', 'documents'].includes(appId)) return
 
     const opening = activeApp !== appId
     if (appId === 'freightlink' && opening && selection?.type === SELECTION_TYPES.DRIVER) {
       setFreightCandidateDriverId(selection.id)
     }
 
-    if (appId === 'freightlink' && opening) {
+    if (['freightlink', 'documents'].includes(appId) && opening) {
       setOperationsInspectorHidden(false)
       setPlanningDriverId(null)
       setPlanningFeedback(null)
@@ -355,6 +371,11 @@ export default function App() {
     }
 
     if (activeApp === 'freightlink' && appId !== 'freightlink') {
+      setFreightRoutePreview(null)
+      if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
+    }
+
+    if (appId === 'documents' && opening) {
       setFreightRoutePreview(null)
       if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
     }
@@ -413,9 +434,22 @@ export default function App() {
     }, 650)
   }
 
+  const openDocumentsForRateCon = (laneId) => {
+    const record = bookingRecords[laneId]
+    const documentId = record?.rateConfirmation?.id
+    if (!documentId) return
+
+    setFreightRoutePreview(null)
+    if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
+    setSelectedDocumentId(documentId)
+    setActiveApp('documents')
+  }
+
   const openRateCon = (laneId) => {
     const record = bookingRecords[laneId]
     if (record?.status !== BOOKING_STATUS.RATE_CON_READY) return
+    setSelectedDocumentId(record.rateConfirmation?.id ?? null)
+    setActiveApp('documents')
     setFocusedTask({ type: 'rate-confirmation', laneId })
   }
 
@@ -603,6 +637,9 @@ export default function App() {
       bookingRecords={bookingRecords}
       facilityOperations={facilityOperations}
       documentRecords={documentRecords}
+      operationalDocuments={operationalDocuments}
+      documentAttentionCount={documentAttentionCount}
+      selectedDocumentId={selectedDocumentId}
       selection={selection}
       activeApp={activeApp}
       focusedTask={focusedTask}
@@ -622,7 +659,9 @@ export default function App() {
       onFreightCandidateDriverChange={setFreightCandidateDriverId}
       onSimulationModeChange={setSimulationClockMode}
       onRequestRateCon={requestRateCon}
+      onOpenDocumentsForRateCon={openDocumentsForRateCon}
       onOpenRateCon={openRateCon}
+      onSelectDocument={setSelectedDocumentId}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}
       onOpenDockLoad={openDockLoad}
