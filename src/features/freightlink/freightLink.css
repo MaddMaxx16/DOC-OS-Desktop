@@ -12,7 +12,7 @@
 .freightlink-driver-select {
   display: grid;
   gap: 6px;
-  padding: 12px 14px;
+  padding: 12px var(--workstation-browser-gutter-right) 12px var(--workstation-browser-gutter-left);
   border-bottom: 1px solid #1f303b;
 }
 .freightlink-driver-select > span {
@@ -55,7 +55,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 5px;
-  padding: 9px 10px;
+  padding: 9px var(--workstation-browser-gutter-right) 9px var(--workstation-browser-gutter-left);
   border-bottom: 1px solid #1f303b;
 }
 .freightlink-filters button {
@@ -89,10 +89,15 @@
   overflow: auto;
   display: grid;
   align-content: start;
+  gap: 6px;
+  padding: 8px var(--workstation-browser-gutter-right) 12px var(--workstation-browser-gutter-left);
 }
 .lane-row {
   position: relative;
+  width: 100%;
+  min-width: 0;
   min-height: 116px;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -100,9 +105,9 @@
     "meta fit"
     "state state";
   gap: 7px 10px;
-  padding: 12px 13px;
-  border: 0;
-  border-bottom: 1px solid #192a34;
+  padding: 12px 11px;
+  border: 1px solid #192a34;
+  border-radius: 3px;
   background: #08131b;
   color: #d9e4eb;
   text-align: left;
