@@ -33,6 +33,9 @@ export function DraggableDocument({
   documentId,
   initialPosition = { x: 24, y: 20 },
   className = '',
+  onClick,
+  onDoubleClick,
+  ariaLabel,
   children,
 }) {
   const context = useContext(DocumentDeskContext)
@@ -99,6 +102,9 @@ export function DraggableDocument({
       onPointerMove={handlePointerMove}
       onPointerUp={finishDrag}
       onPointerCancel={finishDrag}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      aria-label={ariaLabel}
     >
       {children}
     </div>
