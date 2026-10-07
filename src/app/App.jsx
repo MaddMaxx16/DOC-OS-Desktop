@@ -26,7 +26,8 @@ import {
 } from '../domain/documents/deliveryPod.js'
 import {
   buildOperationalDocumentIndex,
-  operationalDocumentAttentionCount,
+  buildOperationalLoadFiles,
+  operationalLoadFileAttentionCount,
 } from '../domain/documents/operationalDocumentIndex.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
@@ -139,9 +140,14 @@ export default function App() {
     lanes: freightMarket,
   }), [bookingRecords, documentRecords])
 
-  const documentAttentionCount = useMemo(
-    () => operationalDocumentAttentionCount(operationalDocuments),
+  const operationalLoadFiles = useMemo(
+    () => buildOperationalLoadFiles(operationalDocuments),
     [operationalDocuments],
+  )
+
+  const documentAttentionCount = useMemo(
+    () => operationalLoadFileAttentionCount(operationalLoadFiles),
+    [operationalLoadFiles],
   )
 
   const selectSubject = (type, id) => {
@@ -638,6 +644,7 @@ export default function App() {
       facilityOperations={facilityOperations}
       documentRecords={documentRecords}
       operationalDocuments={operationalDocuments}
+      operationalLoadFiles={operationalLoadFiles}
       documentAttentionCount={documentAttentionCount}
       selectedDocumentId={selectedDocumentId}
       selection={selection}
