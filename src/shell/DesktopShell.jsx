@@ -281,29 +281,31 @@ export default function DesktopShell({
             />
           )}
 
-          <div className="map-workspace">
-            <OperationsMap
-              drivers={drivers}
-              driverDays={driverDays}
-              driverDay={mapDriverDay}
-              selectedDriver={mapDriver}
-              selectedStop={selectedStop}
-              selection={selection}
-              liveDriverStates={liveDriverStates}
-              liveState={mapLiveState}
-              freightRoutePreview={activeFreightRoutePreview}
-              planningPlaceOptions={planningPlaceOptions}
-              pendingPlanningPlace={pendingPlanningPlace}
-              workspaceOpen={freightlinkOpen}
-              marketLanes={marketLanes}
-              locations={locations}
-              onPreviewPlanningPlace={onPreviewDriverPlanningPlace}
-              onSelectSubject={onSelectSubject}
-              onOpenDrivers={openDriversBrowser}
-            />
-          </div>
+          {!documentsOpen && (
+            <div className="map-workspace">
+              <OperationsMap
+                drivers={drivers}
+                driverDays={driverDays}
+                driverDay={mapDriverDay}
+                selectedDriver={mapDriver}
+                selectedStop={selectedStop}
+                selection={selection}
+                liveDriverStates={liveDriverStates}
+                liveState={mapLiveState}
+                freightRoutePreview={activeFreightRoutePreview}
+                planningPlaceOptions={planningPlaceOptions}
+                pendingPlanningPlace={pendingPlanningPlace}
+                workspaceOpen={freightlinkOpen}
+                marketLanes={marketLanes}
+                locations={locations}
+                onPreviewPlanningPlace={onPreviewDriverPlanningPlace}
+                onSelectSubject={onSelectSubject}
+                onOpenDrivers={openDriversBrowser}
+              />
+            </div>
+          )}
 
-          {planningActive && selectedStop && ['lunch', 'staging'].includes(selectedStop.kind) && (
+          {!documentsOpen && planningActive && selectedStop && ['lunch', 'staging'].includes(selectedStop.kind) && (
             <PlanningPlaceFlyout
               driver={selectedDriver}
               event={selectedStop}
