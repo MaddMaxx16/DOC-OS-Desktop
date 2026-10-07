@@ -254,7 +254,7 @@ function LoadFileContents({
     <div className="load-file-expanded">
       <div className="load-file-requirements">
         <header>
-          <span>REQUIRED PACKET</span>
+          <span>CURRENT REQUIRED PACKET</span>
           <strong>{loadFile.satisfiedRequirementCount}/{loadFile.requiredCount}</strong>
         </header>
         {loadFile.requirements.map((requirement) => (
@@ -318,14 +318,13 @@ function LoadFileContents({
             : 'PACKET INCOMPLETE'}
       </button>
       <small className="load-file-submit-note">
-        Submission requires every current required document to be filed in acceptable status.
+        Submission requires every currently implemented required document to be filed in acceptable status. Future BOL/invoice requirements plug into this same checklist.
       </small>
     </div>
   )
 }
 
 function GlobalPaperDesk({
-  documents,
   loadFiles,
   drivers,
   selectedDocumentId,
@@ -530,7 +529,7 @@ export default function DocumentsWorkspace({
                       <strong className={fileTone(loadFile)}>{loadFile.statusLabel}</strong>
                     </div>
                     <b>{loadFile.loadRef}</b>
-                    <small>{driver?.name ?? 'Unassigned'} · {loadFile.filedCount}/{loadFile.requiredCount} required filed</small>
+                    <small>{driver?.name ?? 'Unassigned'} · {loadFile.satisfiedRequirementCount}/{loadFile.requiredCount} required complete</small>
                     <div className="load-file-progress">
                       <i style={{ '--file-progress': `${loadFile.requiredCount ? (loadFile.satisfiedRequirementCount / loadFile.requiredCount) * 100 : 0}%` }} />
                     </div>
@@ -555,7 +554,6 @@ export default function DocumentsWorkspace({
       </aside>
 
       <GlobalPaperDesk
-        documents={documents}
         loadFiles={loadFiles}
         drivers={drivers}
         selectedDocumentId={selectedDocumentId}
