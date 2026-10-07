@@ -1793,14 +1793,16 @@ test('V2.5.2 Rate Con uses the reusable draggable stacking Document Desk', async
 
 test('V2.5.2 ISSUE highlights the paper field without revealing correctness', async () => {
   const review = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationReview.jsx', import.meta.url), 'utf8')
+  const paper = await readFile(new URL('../src/features/rate-confirmation/RateConfirmationPaper.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/features/rate-confirmation/rateConfirmation.css', import.meta.url), 'utf8')
 
   assert.match(review, /pulsePaperField/)
   assert.match(review, /choice === 'issue'\) pulsePaperField\(checkId\)/)
-  assert.match(review, /data-ratecon-field="rate"/)
-  assert.match(review, /data-ratecon-field="equipment"/)
-  assert.match(review, /data-ratecon-field="pickup"/)
-  assert.match(review, /data-ratecon-field="delivery"/)
+  assert.match(review, /paperFieldClass=\{paperFieldClass\}/)
+  assert.match(paper, /data-ratecon-field="rate"/)
+  assert.match(paper, /data-ratecon-field="equipment"/)
+  assert.match(paper, /data-ratecon-field="pickup"/)
+  assert.match(paper, /data-ratecon-field="delivery"/)
   assert.match(css, /\.ratecon-field-highlight/)
   assert.match(css, /@keyframes rateconIssueFlash/)
 })
