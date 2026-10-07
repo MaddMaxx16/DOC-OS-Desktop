@@ -490,6 +490,11 @@ export default function App() {
       return { ok: false, message: 'That paper is no longer available on the desk.' }
     }
 
+    const targetLoadFile = operationalLoadFiles.find((item) => item.loadRef === targetLoadRef)
+    if (targetLoadFile?.submitted) {
+      return { ok: false, message: `${targetLoadRef} has already been submitted.` }
+    }
+
     if (document.loadRef !== targetLoadRef) {
       return {
         ok: false,
