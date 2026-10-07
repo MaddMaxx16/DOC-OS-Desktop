@@ -52,7 +52,7 @@ function bookingActionLabel(record) {
     case BOOKING_STATUS.REQUESTED:
       return 'WAITING FOR RATE CON'
     case BOOKING_STATUS.RATE_CON_READY:
-      return record.correctionCount ? 'REVIEW CORRECTED RATE CON' : 'REVIEW RATE CON'
+      return 'CHECK DOCUMENTS'
     case BOOKING_STATUS.CORRECTION_REQUESTED:
       return 'WAITING FOR CORRECTION'
     case BOOKING_STATUS.CONFIRMED:
@@ -68,7 +68,9 @@ function bookingHelper(record, evaluation) {
     case BOOKING_STATUS.REQUESTED:
       return 'Request sent. The broker is returning the Rate Confirmation.'
     case BOOKING_STATUS.RATE_CON_READY:
-      return 'Rate Confirmation received. Review the document before committing the freight.'
+      return record.correctionCount
+        ? 'Corrected Rate Confirmation received. Open Documents to review the revised paperwork.'
+        : 'Rate Confirmation received. Open Documents to review the paperwork before committing the freight.'
     case BOOKING_STATUS.CORRECTION_REQUESTED:
       return 'Correction requested. Wait for the revised Rate Confirmation before confirming.'
     case BOOKING_STATUS.CONFIRMED:
@@ -90,7 +92,7 @@ export default function FreightLinkWorkspace({
   candidateDriverId,
   onCandidateDriverChange,
   onRequestRateCon,
-  onOpenRateCon,
+  onOpenDocumentsForRateCon,
   onSelectSubject,
   onClose,
   onRoutePreviewChange,
@@ -215,7 +217,7 @@ export default function FreightLinkWorkspace({
     if (!selectedLane || !selectedEvaluation || !candidateDriver) return
 
     if (selectedBooking?.status === BOOKING_STATUS.RATE_CON_READY) {
-      onOpenRateCon(selectedLane.id)
+      onOpenDocumentsForRateCon(selectedLane.id)
       return
     }
 
