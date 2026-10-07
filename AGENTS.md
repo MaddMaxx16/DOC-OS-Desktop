@@ -32,13 +32,13 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.9.1.2 Email Sidebar Spacing
+## Current packet — V2.9.1.3 Shared Left-Panel Gutters
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
 V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1 and the V2.9.1.1 reader correction are implemented. V2.9.1.2 is a narrow visual correction: preserve the mailbox presentation and all Email behavior while adding safe inner gutters and preventing inbox-row clipping.
+V2.9.1 through V2.9.1.2 are implemented. V2.9.1.3 turns the sidebar spacing fix into a shared workstation contract: every left browser panel uses the same safe left/right gutters and width-safe rows.
 
 The active acceptance packet is:
 
@@ -106,13 +106,13 @@ Locked invariant:
 
 ### Build
 
-V2.9.1 behavior is already implemented. V2.9.1.1 changed the reader presentation. V2.9.1.2 changes browser spacing only:
+V2.9.1 behavior is already implemented. V2.9.1.3 changes workstation browser spacing only:
 
-- add safe left/right gutters to the Email browser,
-- keep row content inside the panel with border-box sizing,
-- keep sender/date layout resilient with a shrinking sender column,
-- truncate long timestamps safely instead of clipping outside the panel,
-- allow metadata chips to wrap when needed,
+- define one shared workstation browser gutter token,
+- use 12px left / 16px right browser gutters,
+- apply the same gutter to Fleet, FreightLink, Email, and Documents,
+- keep browser rows width-safe with border-box sizing,
+- retain app-specific layouts inside the shared safe area,
 - preserve the V2.9.1.1 mailbox reader exactly,
 - preserve unread/read/print behavior exactly,
 - preserve the accepted V2.8.1.3 cabinet/desk/filing/submission gameplay unchanged.
@@ -174,6 +174,6 @@ Before merging meaningful changes:
 
 V2.8.1.3 passed automated verification and manual acceptance.
 
-V2.9.1.2 must pass install, lint, tests, build, and manual visual playtest of the Email browser gutters while preserving Rate Con/POD arrival, unread state, printing, and Documents handoff.
+V2.9.1.3 must pass install, lint, tests, build, and manual visual playtest of Fleet, FreightLink, Email, and Documents left-panel gutters while preserving all gameplay behavior.
 
 A green build does not equal visual acceptance.

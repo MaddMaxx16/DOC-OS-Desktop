@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.9.1.2 SIDEBAR SPACING CORRECTION IN VERIFY**
+**IMPLEMENTED · V2.9.1.3 SHARED LEFT-PANEL GUTTERS IN VERIFY**
 
 Accepted base checkpoint:
 
@@ -284,6 +284,27 @@ Locked correction:
 Acceptance:
 
 No sender/date/subject/preview/metadata content should visually touch or clip against the left browser panel edge.
+
+---
+
+## V2.9.1.3 · Shared Left-Panel Gutters
+
+The Email spacing fix is promoted into a shared workstation rule.
+
+Locked correction:
+
+- shared browser gutter token lives in the shell,
+- left gutter = 12px,
+- right gutter = 16px,
+- right side intentionally gets more breathing room for timestamps, badges, counts, and status pills,
+- Fleet, FreightLink, Email, and Documents all consume the same gutter token,
+- browser rows remain width-safe with `box-sizing: border-box`,
+- app-specific content may differ, but no left browser content should ride directly against the panel boundary,
+- right inspectors are not part of this correction.
+
+Acceptance:
+
+Switch through Fleet, FreightLink, Email, and Documents. Their left browser content should feel aligned and consistently inset, with noticeably safer spacing on the right edge.
 
 ---
 
