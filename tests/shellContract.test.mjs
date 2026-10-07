@@ -1731,7 +1731,7 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(app, /inspectDocument/)
   assert.match(app, /type: 'document-inspect'/)
   assert.match(shell, /OperationalDocumentInspection/)
-  assert.match(inspection, /same paper from the working load file/)
+  assert.match(inspection, /same paper you selected in Documents/)
   assert.match(paper, /RateConfirmationPaper/)
   assert.match(review, /RateConfirmationPaper/)
   assert.match(ratePaper, /RATE \/ LOAD CONFIRMATION/)
