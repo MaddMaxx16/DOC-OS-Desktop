@@ -1675,6 +1675,7 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(index, /RATE_CONFIRMATION/)
   assert.match(index, /POD/)
 
+  assert.match(freight, /RATE CON RECEIVED/)
   assert.match(freight, /CHECK DOCUMENTS/)
   assert.match(freight, /onOpenDocumentsForRateCon/)
   assert.doesNotMatch(freight, /onOpenRateCon/)
