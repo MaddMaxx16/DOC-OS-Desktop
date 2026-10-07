@@ -1139,7 +1139,7 @@ test('V2.7.4.1.3 removes Driver Day duplication from Fleet rows', async () => {
 
   assert.match(css, /grid-template-columns: minmax\(0, 1fr\) 52px 78px/)
   assert.match(css, /grid-template-areas: "driver loads risk"/)
-  assert.match(css, /padding: 6px 10px 8px 6px/)
+  assert.match(css, /\.fleet-roster-list[\s\S]*padding: 6px var\(--workstation-browser-gutter-right\) 10px var\(--workstation-browser-gutter-left\)/)
   assert.match(css, /minmax\(350px, 385px\)/)
   assert.doesNotMatch(css, /fleet-roster-metric\.hos/)
   assert.doesNotMatch(css, /fleet-roster-detail/)
