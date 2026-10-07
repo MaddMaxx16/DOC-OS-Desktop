@@ -10,11 +10,11 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-**Current candidate:** `V2.9.1.3 · Shared Left-Panel Gutters`
+**Current candidate:** `V2.9.1.4 · Documents Panel Gutter Fix`
 
 V2.8.1.3 is visually accepted and locks the Documents interaction model: load folders live in the filing cabinet, every unfiled physical paper shares one persistent desk, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1 established the digital arrival layer, V2.9.1.1 corrected the reader into a real mailbox, and V2.9.1.2 proved the need for safer browser spacing. V2.9.1.3 promotes that fix into a shared workstation rule so Fleet, FreightLink, Email, and Documents all use the same left/right content gutters.
+V2.9.1.3 standardized left-panel gutters, but Documents still visually stretched its cabinet controls too close to the right boundary. V2.9.1.4 is a Documents-specific correction that makes the safe area visibly match the rest of the workstation.
 
 The operational freight loop is now substantially playable:
 
