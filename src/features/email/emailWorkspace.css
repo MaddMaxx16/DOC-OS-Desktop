@@ -509,9 +509,14 @@
   letter-spacing: .04em;
 }
 
-.email-attachment-row.printed .email-attachment-status > span {
+.email-attachment-status.complete > span {
   border-color: #3c655b;
   color: #8bb8ac;
+}
+
+.email-attachment-status.waiting > span {
+  border-color: #4a545b;
+  color: #a7b1b7;
 }
 
 .email-attachment-status > small {
