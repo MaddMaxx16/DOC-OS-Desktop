@@ -11,6 +11,9 @@
 
 .documents-browser-header {
   min-height: 92px;
+}
+
+.workstation-browser.documents-browser .documents-browser-header {
   padding-left: var(--documents-browser-gutter-left);
   padding-right: var(--documents-browser-gutter-right);
 }
