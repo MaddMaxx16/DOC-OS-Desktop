@@ -63,6 +63,8 @@ export default function App() {
   const [bookingRecords, setBookingRecords] = useState({})
   const [facilityOperations, setFacilityOperations] = useState({})
   const [documentRecords, setDocumentRecords] = useState({})
+  const [documentFileAssignments, setDocumentFileAssignments] = useState({})
+  const [submittedLoadFiles, setSubmittedLoadFiles] = useState({})
   const [selectedDocumentId, setSelectedDocumentId] = useState(null)
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
@@ -142,8 +144,11 @@ export default function App() {
   }), [bookingRecords, documentRecords])
 
   const operationalLoadFiles = useMemo(
-    () => buildOperationalLoadFiles(operationalDocuments),
-    [operationalDocuments],
+    () => buildOperationalLoadFiles(operationalDocuments, {
+      fileAssignments: documentFileAssignments,
+      submittedLoadFiles,
+    }),
+    [documentFileAssignments, operationalDocuments, submittedLoadFiles],
   )
 
   const documentAttentionCount = useMemo(
@@ -479,6 +484,70 @@ export default function App() {
     setFocusedTask({ type: 'document-inspect', documentId: document.id })
   }
 
+  const fileDocument = (documentId, targetLoadRef) => {
+    const document = operationalDocuments.find((item) => item.id === documentId)
+    if (!document) {
+      return { ok: false, message: 'That paper is no longer available on the desk.' }
+    }
+
+    if (document.loadRef !== targetLoadRef) {
+      return {
+        ok: false,
+        message: `${document.shortTypeLabel} belongs to ${document.loadRef}, not ${targetLoadRef}.`,
+      }
+    }
+
+    setDocumentFileAssignments((current) => ({
+      ...current,
+      [document.id]: targetLoadRef,
+    }))
+
+    return {
+      ok: true,
+      message: `${document.shortTypeLabel} filed in ${targetLoadRef}.`,
+    }
+  }
+
+  const unfileDocument = (documentId) => {
+    const document = operationalDocuments.find((item) => item.id === documentId)
+    if (!document) {
+      return { ok: false, message: 'That paper is no longer available.' }
+    }
+
+    setDocumentFileAssignments((current) => {
+      if (!current[documentId]) return current
+      const next = { ...current }
+      delete next[documentId]
+      return next
+    })
+
+    setSelectedDocumentId(document.id)
+    return {
+      ok: true,
+      message: `${document.shortTypeLabel} returned to the desk.`,
+    }
+  }
+
+  const submitLoadFile = (loadRef) => {
+    const loadFile = operationalLoadFiles.find((item) => item.loadRef === loadRef)
+    if (!loadFile) {
+      return { ok: false, message: 'That load file is no longer available.' }
+    }
+    if (!loadFile.canSubmit) {
+      return { ok: false, message: 'This load file is still missing required paperwork.' }
+    }
+
+    setSubmittedLoadFiles((current) => ({
+      ...current,
+      [loadRef]: true,
+    }))
+
+    return {
+      ok: true,
+      message: `${loadRef} packet submitted.`,
+    }
+  }
+
   const requestRateConCorrection = (laneId, reason) => {
     const lane = freightMarket.find((item) => item.id === laneId)
     if (!lane) return
@@ -689,6 +758,9 @@ export default function App() {
       onOpenDocumentsForRateCon={openDocumentsForRateCon}
       onInspectDocument={inspectDocument}
       onSelectDocument={setSelectedDocumentId}
+      onFileDocument={fileDocument}
+      onUnfileDocument={unfileDocument}
+      onSubmitLoadFile={submitLoadFile}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}
       onOpenDockLoad={openDockLoad}
