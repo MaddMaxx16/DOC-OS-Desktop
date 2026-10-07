@@ -1,0 +1,110 @@
+.operational-document-inspection {
+  width: min(1500px, 100%);
+  height: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+}
+
+.operational-document-inspection-desk {
+  min-width: 0;
+  min-height: 0;
+}
+
+.operational-document-inspection-sheet {
+  height: calc(100% - 36px);
+  max-height: 820px;
+  aspect-ratio: 8.5 / 11;
+}
+
+.operational-document-inspection-context {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+  border: 1px solid #2a3d4a;
+  background: #081119;
+}
+
+.operational-document-inspection-context > header {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #20313d;
+}
+
+.operational-document-inspection-context > header span,
+.operational-document-inspection-details span,
+.operational-document-inspection-note span {
+  color: #8598a7;
+  font-size: var(--type-micro);
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+
+.operational-document-inspection-context > header strong {
+  font-size: 22px;
+}
+
+.operational-document-inspection-context > header small {
+  color: #8294a3;
+  font-size: var(--type-secondary);
+  line-height: 1.45;
+}
+
+.operational-document-inspection-details {
+  margin-top: 14px;
+  display: grid;
+  border: 1px solid #263844;
+  background: #0b171f;
+}
+
+.operational-document-inspection-details p {
+  min-height: 48px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 11px;
+  border-bottom: 1px solid #20313d;
+}
+
+.operational-document-inspection-details p:last-child {
+  border-bottom: 0;
+}
+
+.operational-document-inspection-details strong {
+  max-width: 210px;
+  color: #dce6eb;
+  font-size: var(--type-secondary);
+  text-align: right;
+}
+
+.operational-document-inspection-note {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  border: 1px solid #4d4a3e;
+  background: #15150f;
+}
+
+.operational-document-inspection-note strong {
+  color: #d1c8ad;
+  font-size: var(--type-body);
+  line-height: 1.35;
+}
+
+.operational-document-inspection-note small {
+  color: #8f8d80;
+  font-size: var(--type-secondary);
+  line-height: 1.4;
+}
+
+@media (max-width: 1180px) {
+  .operational-document-inspection {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
