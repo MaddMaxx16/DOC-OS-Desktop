@@ -33,7 +33,7 @@ function rateConMessage(document, { readEmailIds, printedDocumentIds }) {
       : `The Rate Confirmation for ${document.loadRef} is attached. Print the paper to your Documents desk, then review the terms before confirming the freight.`,
     attachmentLabel: corrected ? 'Corrected Rate Confirmation' : 'Rate Confirmation',
     attachmentFileName: corrected
-      ? `${document.loadRef}_Rate_Confirmation_R${document.revision}.pdf`
+      ? `${document.loadRef}_Rate_Confirmation_R${document.revision ?? 1}.pdf`
       : `${document.loadRef}_Rate_Confirmation.pdf`,
     attachmentTypeLabel: 'PDF',
     sourceLabel: 'FreightLink',
