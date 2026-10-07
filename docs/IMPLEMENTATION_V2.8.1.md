@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.8.1.2 LOAD-FILE CORRECTION IN VERIFY · VISUAL ACCEPTANCE PENDING**
+**IMPLEMENTED · V2.8.1.3 GLOBAL-DESK CORRECTION IN VERIFY · VISUAL ACCEPTANCE PENDING**
 
 V2.7.6.8 remains the accepted and locked checkpoint until this packet passes its manual visual/gameplay acceptance flow.
 
@@ -43,6 +43,41 @@ Required acceptance behavior:
 The load-file index remains derived presentation state over existing document truth. Do not duplicate booking/POD state just to create folders.
 
 The delivered state is not equivalent to a closed file. A clean POD may mark the operational delivery portion complete, but BOL/invoice/payment rules will decide later billing and final closeout.
+
+---
+
+## V2.8.1.3 locked filing model
+
+The physical folder-on-desk model is superseded.
+
+The accepted architecture target is:
+
+> **Cabinet owns files. Desk owns all unfiled papers. Folder selection never filters the desk. Filing is player-driven. Packet completeness gates submission.**
+
+Required behavior:
+
+- all load folders remain in the left filing cabinet,
+- clicking a folder expands its filed contents and packet requirements in the cabinet,
+- selecting/expanding any folder must not alter the papers visible on the desk,
+- every unfiled Rate Con, POD, and future paper from every load appears on the same global center desk,
+- loose papers may overlap and be rearranged,
+- single click selects a paper; double click inspects/reviews that same paper,
+- dragging a loose paper onto its matching folder files it,
+- dragging onto the wrong folder is rejected,
+- filing may happen before or after review,
+- filing does not make an unacceptable document satisfy the packet,
+- a filed paper may be returned to the desk until the packet is submitted,
+- packet submission is disabled until every current requirement is both filed and in an acceptable status,
+- submitted packets lock further filing/unfiling,
+- accepted Rate Cons show a physical **ACCEPTED** stamp,
+- new documents never auto-file.
+
+Current requirement model:
+
+- Rate Confirmation — must be filed and ACCEPTED,
+- POD — must be filed and RECEIVED.
+
+These are only the currently implemented document types. BOL, invoice, supporting receipts, and accessorial approvals must extend this same requirements framework later rather than creating a second closeout system.
 
 ---
 
@@ -259,9 +294,14 @@ Do not enable Email or Messages yet.
 
 Documents follows the accepted Desktop shell model:
 
-**Command Rail → Load-File Cabinet → Working Folder Desk → Document Inspector**
+**Command Rail → Load-File Cabinet + Global Unfiled Paper Desk → Document Inspector**
 
-Documents owns the center desk while the app is open; the live map is not the primary Documents workspace.
+The left cabinet and center desk are independent surfaces:
+
+- cabinet = load files + filed contents + completeness,
+- desk = every loose/unfiled paper across all loads.
+
+Selecting a folder does not own or filter the desk.
 
 Use Focused Workspace when a paper is enlarged for review/inspection.
 
@@ -291,7 +331,7 @@ Selecting a document should use a coherent document selection state local to the
 
 Do not overload freight-stop selection IDs.
 
-The selected load file owns the working desk. Within that file, the selected paper and right inspector must agree on one selected document.
+Folder expansion is independent from desk selection. The selected paper and right inspector must agree on one selected document whether that paper is loose on the desk or already filed.
 
 ---
 
