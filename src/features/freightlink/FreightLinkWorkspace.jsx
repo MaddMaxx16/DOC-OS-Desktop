@@ -47,6 +47,13 @@ function SignalCard({ label, ok, primary, secondary }) {
   )
 }
 
+function bookingWorkspaceStatusLabel(record) {
+  if (record?.status === BOOKING_STATUS.RATE_CON_READY) {
+    return record.correctionCount ? 'CORRECTED RATE CON RECEIVED' : 'RATE CON RECEIVED'
+  }
+  return bookingStatusLabel(record)
+}
+
 function bookingActionLabel(record) {
   switch (record?.status) {
     case BOOKING_STATUS.REQUESTED:
@@ -390,7 +397,7 @@ export default function FreightLinkWorkspace({
 
           <footer className="freightlink-footer booking-footer">
             <div>
-              <span>{bookingStatusLabel(selectedBooking)}</span>
+              <span>{bookingWorkspaceStatusLabel(selectedBooking)}</span>
               <strong>{bookingHelper(selectedBooking, selectedEvaluation)}</strong>
             </div>
             <button
