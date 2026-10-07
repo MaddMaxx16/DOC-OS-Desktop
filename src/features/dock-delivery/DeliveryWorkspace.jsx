@@ -75,7 +75,7 @@ function visibleFootprintCells(board, freight, anchorCell, rotation) {
 
 const WAREHOUSE_ZONE_LAYOUTS = Object.freeze({
   controlled: Object.freeze({ columns: 3, rows: 2 }),
-  forklift: Object.freeze({ columns: 3, rows: 2 }),
+  forklift: Object.freeze({ columns: 4, rows: 2 }),
   inspection: Object.freeze({ columns: 2, rows: 2 }),
   general: Object.freeze({ columns: 4, rows: 2 }),
 })
@@ -122,8 +122,10 @@ function findWarehouseFreightPlacement({
   }
 
   const bounds = shapeBounds(rotateFreightShape(freight.shape, rotation))
-  const width = Math.min(bounds.width, layout.columns)
-  const height = Math.min(bounds.height, layout.rows)
+  const width = bounds.width
+  const height = bounds.height
+
+  if (width > layout.columns || height > layout.rows) return null
 
   for (let row = layout.rows - height; row >= 0; row -= 1) {
     for (let column = 0; column <= layout.columns - width; column += 1) {
@@ -807,7 +809,7 @@ export default function DeliveryWorkspace({
       setNotice({
         tone: 'blocked',
         title: 'RECEIVING FLOOR OCCUPIED',
-        detail: 'The receiver floor could not assign a stable freight position. Try the move again.',
+        detail: 'The active receiving area has no open footprint large enough for this freight.',
       })
       return false
     }
