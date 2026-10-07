@@ -18,11 +18,17 @@ export default function RateConfirmationPaper({
   driver,
   paperFieldClass = () => '',
   acceptanceLabel = 'Pending acceptance',
+  stampLabel = null,
 }) {
   if (!rateCon || !lane || !driver) return null
 
   return (
     <article className="ratecon-paper">
+      {stampLabel && (
+        <div className="ratecon-status-stamp" aria-label={stampLabel}>
+          {stampLabel}
+        </div>
+      )}
       <header className="ratecon-paper-header">
         <div>
           <span>FREIGHTLINK BROKERAGE</span>
