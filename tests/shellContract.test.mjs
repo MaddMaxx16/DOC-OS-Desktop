@@ -1653,6 +1653,7 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(shell, /documentsOpen/)
   assert.match(shell, /<DocumentsWorkspace/)
   assert.match(shell, /documents=\{operationalDocuments\}/)
+  assert.match(shell, /drivers=\{drivers\}/)
   assert.match(shell, /onOpenRateCon=\{onOpenRateCon\}/)
 
   assert.match(documents, /OPERATIONS FILES/)
@@ -1661,6 +1662,9 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(documents, /Proof of Delivery/)
   assert.match(documents, /PENDING RECEIVER/)
   assert.match(documents, /REVIEW REQUIRED/)
+  assert.match(documents, /<span>DRIVER<\/span>/)
+  assert.doesNotMatch(documents, /dedicated POD packet/)
+  assert.doesNotMatch(documents, /next Documents packet/)
   assert.match(documentsCss, /\.documents-workspace/)
   assert.match(documentsCss, /\.documents-browser/)
   assert.match(documentsCss, /\.documents-inspector/)
