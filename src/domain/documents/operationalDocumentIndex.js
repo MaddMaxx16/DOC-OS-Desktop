@@ -6,6 +6,13 @@ export const OPERATIONAL_DOCUMENT_TYPE = Object.freeze({
   POD: 'POD',
 })
 
+export const OPERATIONAL_LOAD_FILE_STATUS = Object.freeze({
+  NEEDS_ACTION: 'NEEDS_ACTION',
+  OPEN: 'OPEN',
+  RECEIVER_PROCESSING: 'RECEIVER_PROCESSING',
+  READY_TO_BILL: 'READY_TO_BILL',
+})
+
 function rateConfirmationStatus(record = {}) {
   switch (record.status) {
     case BOOKING_STATUS.RATE_CON_READY:
@@ -148,4 +155,112 @@ export function buildOperationalDocumentIndex({
 
 export function operationalDocumentAttentionCount(documents = []) {
   return documents.filter((document) => document?.attention).length
+}
+
+
+function loadFileStatus(documents = []) {
+  if (documents.some((document) => document?.attention)) {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION,
+      statusLabel: 'NEEDS ACTION',
+      attention: true,
+    }
+  }
+
+  const rateConfirmation = documents.find((document) => (
+    document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
+  ))
+  const pod = documents.find((document) => (
+    document.type === OPERATIONAL_DOCUMENT_TYPE.POD
+  ))
+
+  if (pod?.status === 'PENDING_RECEIVER') {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING,
+      statusLabel: 'RECEIVER PROCESSING',
+      attention: false,
+    }
+  }
+
+  if (rateConfirmation?.status === 'ACCEPTED' && pod?.status === 'RECEIVED') {
+    return {
+      status: OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL,
+      statusLabel: 'READY TO BILL',
+      attention: false,
+    }
+  }
+
+  return {
+    status: OPERATIONAL_LOAD_FILE_STATUS.OPEN,
+    statusLabel: 'ACTIVE FILE',
+    attention: false,
+  }
+}
+
+function sortFileDocuments(documents = []) {
+  return [...documents].sort((left, right) => {
+    if (left.attention !== right.attention) return left.attention ? -1 : 1
+
+    const leftTypeOrder = left.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION ? 0 : 1
+    const rightTypeOrder = right.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION ? 0 : 1
+    if (leftTypeOrder !== rightTypeOrder) return leftTypeOrder - rightTypeOrder
+
+    const revisionCompare = Number(right.revision ?? 0) - Number(left.revision ?? 0)
+    if (revisionCompare !== 0) return revisionCompare
+
+    return String(left.id).localeCompare(String(right.id))
+  })
+}
+
+export function buildOperationalLoadFiles(documents = []) {
+  const grouped = new Map()
+
+  for (const document of documents) {
+    const loadKey = document?.loadRef ?? document?.loadId
+    if (!loadKey) continue
+
+    if (!grouped.has(loadKey)) grouped.set(loadKey, [])
+    grouped.get(loadKey).push(document)
+  }
+
+  return [...grouped.entries()]
+    .map(([loadRef, fileDocuments]) => {
+      const documentsForFile = sortFileDocuments(fileDocuments)
+      const status = loadFileStatus(documentsForFile)
+      const primary = documentsForFile[0] ?? null
+      const rateConfirmation = documentsForFile.find((document) => (
+        document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
+      )) ?? null
+      const pod = documentsForFile.find((document) => (
+        document.type === OPERATIONAL_DOCUMENT_TYPE.POD
+      )) ?? null
+
+      return {
+        id: `load-file:${loadRef}`,
+        loadId: primary?.loadId ?? null,
+        loadRef,
+        driverId: primary?.driverId ?? null,
+        documents: documentsForFile,
+        documentCount: documentsForFile.length,
+        attentionCount: documentsForFile.filter((document) => document.attention).length,
+        hasRateConfirmation: Boolean(rateConfirmation),
+        hasPod: Boolean(pod),
+        rateConfirmationStatus: rateConfirmation?.status ?? null,
+        podStatus: pod?.status ?? null,
+        ...status,
+      }
+    })
+    .sort((left, right) => {
+      if (left.attention !== right.attention) return left.attention ? -1 : 1
+
+      const leftReady = left.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL
+      const rightReady = right.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL
+      if (leftReady !== rightReady) return leftReady ? -1 : 1
+
+      return String(left.loadRef).localeCompare(String(right.loadRef))
+    })
+}
+
+export function operationalLoadFileAttentionCount(loadFiles = []) {
+  return loadFiles.filter((loadFile) => loadFile?.attention).length
 }
