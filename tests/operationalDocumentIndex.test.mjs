@@ -218,8 +218,8 @@ test('operational documents are grouped into one load file per load reference', 
   assert.equal(loadFiles[0].documentCount, 2)
   assert.equal(loadFiles[0].hasRateConfirmation, true)
   assert.equal(loadFiles[0].hasPod, true)
-  assert.equal(loadFiles[0].status, OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL)
-  assert.equal(loadFiles[0].statusLabel, 'READY TO BILL')
+  assert.equal(loadFiles[0].status, OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE)
+  assert.equal(loadFiles[0].statusLabel, 'DELIVERY COMPLETE')
 })
 
 test('load-file attention counts files rather than individual papers', () => {
