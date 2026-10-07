@@ -328,9 +328,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px var(--workstation-browser-gutter-right, 16px) 14px var(--workstation-browser-gutter-left, 12px);
+  padding: 14px;
   border-bottom: 1px solid #20313d;
   background: #09131b;
+}
+.workstation-browser .workstation-panel-header {
+  padding: 14px var(--workstation-browser-gutter-right) 14px var(--workstation-browser-gutter-left);
 }
 .workstation-panel-header > div:first-child {
   min-width: 0;
