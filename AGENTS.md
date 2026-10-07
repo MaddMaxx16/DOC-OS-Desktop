@@ -36,7 +36,9 @@ V2.1 Shell Reset
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
-The active implementation packet is:
+V2.8.1 is implemented and has passed the automated verification gate. It remains the active acceptance packet until visual/gameplay acceptance is complete.
+
+The active acceptance packet is:
 
 `docs/IMPLEMENTATION_V2.8.1.md`
 
@@ -46,16 +48,17 @@ The durable build sequence lives in:
 
 ### Purpose
 
-Begin the V2.8 Documents phase by connecting paperwork that already exists underneath the Desktop build to a real Documents workstation app.
+Connect paperwork that already exists underneath the Desktop build to a real Documents workstation app.
 
-The current problem is workflow ownership:
+V2.8.1 now corrects the prior workflow-ownership problem:
 
-- FreightLink directly opens Rate Confirmation paper,
-- Documents is disabled,
-- Email is not built,
-- POD records exist but are invisible.
+- FreightLink requests paperwork and hands the player to Documents,
+- Documents is live on the command rail,
+- Rate Con and POD state share a derived operational document index,
+- Documents launches the existing focused Rate Con review,
+- Email remains deferred to V2.9.
 
-V2.8.1 corrects that without redesigning the existing Rate Con gameplay.
+The remaining V2.8.1 gate is visual/gameplay acceptance, not another architecture rewrite.
 
 ### Core workflow rule
 
@@ -76,7 +79,7 @@ Future complete invariant:
 
 ### Build
 
-Implement:
+Implemented:
 
 - Documents command-rail enablement,
 - Documents browser,
@@ -144,4 +147,6 @@ Before merging meaningful changes:
 3. `npm run build`
 4. Manual browser screenshot review for visual work.
 
-A green build does not equal visual acceptance.
+The V2.8.1 closeout candidate has passed install, lint, tests, and production build in GitHub Actions.
+
+A green build does not equal visual acceptance. Do not mark V2.8.1 accepted until the critical Documents/Rate Con/POD flow is manually playtested.
