@@ -52,7 +52,9 @@ test('V2.5.1 shell is rail -> browser -> map -> inspector', async () => {
   assert.match(shell, /<OperationsInspector/)
   assert.match(css, /grid-template-columns: 76px 0 minmax\(0, 1fr\) 0/)
   assert.match(css, /browser-open\.inspector-open/)
-  assert.match(css, /76px minmax\(300px, 340px\) minmax\(0, 1fr\) minmax\(390px, 430px\)/)
+  assert.match(css, /--workstation-browser-column: minmax\(350px, 385px\)/)
+  assert.match(css, /76px var\(--workstation-browser-column\) minmax\(0, 1fr\) minmax\(390px, 430px\)/)
+  assert.doesNotMatch(css, /browser-open\.fleet-browser-open\s*\{/)
 })
 
 test('V2.5.1 command rail exposes live workstation sections', async () => {
@@ -1656,7 +1658,9 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(shell, /drivers=\{drivers\}/)
   assert.match(shell, /onOpenRateCon=\{onOpenRateCon\}/)
 
-  assert.match(documents, /OPERATIONS FILES/)
+  assert.match(documents, /FILING CABINET/)
+  assert.match(documents, /DOCUMENT DESK/)
+  assert.match(documents, /documents-desk-workspace/)
   assert.match(documents, /NEEDS ACTION/)
   assert.match(documents, /REVIEW DOCUMENT/)
   assert.match(documents, /Proof of Delivery/)
@@ -1667,7 +1671,11 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.doesNotMatch(documents, /next Documents packet/)
   assert.match(documentsCss, /\.documents-workspace/)
   assert.match(documentsCss, /\.documents-browser/)
+  assert.match(documentsCss, /\.documents-desk-workspace/)
+  assert.match(documentsCss, /grid-column:\s*3/)
+  assert.match(documentsCss, /\.documents-paper-preview/)
   assert.match(documentsCss, /\.documents-inspector/)
+  assert.match(shell, /\{!documentsOpen && \(\s*<div className="map-workspace">/)
 
   assert.match(index, /OPERATIONAL_DOCUMENT_TYPE/)
   assert.match(index, /buildOperationalDocumentIndex/)
@@ -1681,6 +1689,16 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.doesNotMatch(freight, /onOpenRateCon/)
 })
 
+test('V2.8.1.1 fixes receiver-floor capacity for heavy and oversize delivery phases', async () => {
+  const delivery = await readFile(new URL('../src/features/dock-delivery/DeliveryWorkspace.jsx', import.meta.url), 'utf8')
+
+  assert.match(delivery, /forklift: Object\.freeze\(\{ columns: 4, rows: 2 \}\)/)
+  assert.match(delivery, /const width = bounds\.width/)
+  assert.match(delivery, /const height = bounds\.height/)
+  assert.match(delivery, /if \(width > layout\.columns \|\| height > layout\.rows\) return null/)
+  assert.doesNotMatch(delivery, /Math\.min\(bounds\.width, layout\.columns\)/)
+  assert.match(delivery, /no open footprint large enough for this freight/)
+})
 test('V2.5 booking lifecycle remains explicit and Rate Con request does not commit freight', async () => {
   const freight = await readFile(new URL('../src/features/freightlink/FreightLinkWorkspace.jsx', import.meta.url), 'utf8')
   const app = await readFile(new URL('../src/app/App.jsx', import.meta.url), 'utf8')
