@@ -10,7 +10,7 @@ export const OPERATIONAL_LOAD_FILE_STATUS = Object.freeze({
   NEEDS_ACTION: 'NEEDS_ACTION',
   OPEN: 'OPEN',
   RECEIVER_PROCESSING: 'RECEIVER_PROCESSING',
-  READY_TO_BILL: 'READY_TO_BILL',
+  DELIVERY_COMPLETE: 'DELIVERY_COMPLETE',
 })
 
 function rateConfirmationStatus(record = {}) {
@@ -184,8 +184,8 @@ function loadFileStatus(documents = []) {
 
   if (rateConfirmation?.status === 'ACCEPTED' && pod?.status === 'RECEIVED') {
     return {
-      status: OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL,
-      statusLabel: 'READY TO BILL',
+      status: OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE,
+      statusLabel: 'DELIVERY COMPLETE',
       attention: false,
     }
   }
@@ -253,8 +253,8 @@ export function buildOperationalLoadFiles(documents = []) {
     .sort((left, right) => {
       if (left.attention !== right.attention) return left.attention ? -1 : 1
 
-      const leftReady = left.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL
-      const rightReady = right.status === OPERATIONAL_LOAD_FILE_STATUS.READY_TO_BILL
+      const leftReady = left.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE
+      const rightReady = right.status === OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE
       if (leftReady !== rightReady) return leftReady ? -1 : 1
 
       return String(left.loadRef).localeCompare(String(right.loadRef))
