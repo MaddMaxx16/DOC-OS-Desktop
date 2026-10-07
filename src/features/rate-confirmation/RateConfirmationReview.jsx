@@ -121,6 +121,7 @@ export default function RateConfirmationReview({
             lane={lane}
             driver={driver}
             paperFieldClass={paperFieldClass}
+            stampLabel={rateCon.corrected ? 'CORRECTED' : 'REVIEW REQUIRED'}
           />
         </DraggableDocument>
       </DocumentDesk>
