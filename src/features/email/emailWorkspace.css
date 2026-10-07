@@ -9,6 +9,8 @@
 
 .email-browser-header {
   min-height: 92px;
+  padding-left: 18px;
+  padding-right: 16px;
 }
 
 .email-browser-header small {
@@ -20,7 +22,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  padding: 10px;
+  padding: 10px 12px 11px 14px;
   border-bottom: 1px solid #1f303b;
 }
 
@@ -73,15 +75,20 @@
   overflow: auto;
   display: grid;
   align-content: start;
+  gap: 6px;
+  padding: 8px 10px 14px 12px;
 }
 
 .email-row {
+  width: 100%;
+  min-width: 0;
   min-height: 112px;
+  box-sizing: border-box;
   display: grid;
   gap: 5px;
-  padding: 12px 14px 11px;
-  border: 0;
-  border-bottom: 1px solid #192a34;
+  padding: 12px 11px 11px;
+  border: 1px solid #192a34;
+  border-radius: 3px;
   background: #08131b;
   color: #d8e3e8;
   text-align: left;
@@ -110,7 +117,10 @@
 }
 
 .email-row-topline {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: stretch;
+  gap: 10px;
 }
 
 .email-row-sender {
@@ -141,12 +151,17 @@
 }
 
 .email-row-topline small {
-  flex: 0 0 auto;
+  max-width: 112px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: #657a87;
   font-size: 8px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .email-row > strong {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #c9d4da;
@@ -159,6 +174,7 @@
 }
 
 .email-row > p {
+  min-width: 0;
   margin: 0;
   display: -webkit-box;
   overflow: hidden;
@@ -171,6 +187,7 @@
 
 .email-row-meta {
   justify-content: flex-start;
+  flex-wrap: wrap;
   margin-top: 2px;
 }
 
