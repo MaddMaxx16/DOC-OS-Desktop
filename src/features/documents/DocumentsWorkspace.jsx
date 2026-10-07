@@ -440,12 +440,6 @@ export default function DocumentsWorkspace({
     onSelectDocument(null)
   }, [documents, onSelectDocument, selectedDocumentId])
 
-  useEffect(() => {
-    if (!selectedDocument) return
-    const file = loadFiles.find((loadFile) => loadFile.loadRef === selectedDocument.loadRef)
-    if (file) setExpandedFileId(file.id)
-  }, [loadFiles, selectedDocument])
-
   const handleNotice = (result) => {
     if (!result?.message) return
     setNotice({
