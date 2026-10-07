@@ -1670,7 +1670,7 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(documents, /load-file-document-desk/)
   assert.match(documents, /Drag papers to arrange · double-click to inspect/)
   assert.match(documents, /NEEDS ACTION/)
-  assert.match(documents, /READY TO BILL/)
+  assert.match(documents, /DELIVERY COMPLETE/)
   assert.match(documents, /REVIEW DOCUMENT/)
   assert.match(documents, /onDoubleClick=\{\(\) => onInspectDocument\(document\.id\)\}/)
   assert.match(documents, /Proof of Delivery/)
