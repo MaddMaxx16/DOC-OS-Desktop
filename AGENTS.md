@@ -32,11 +32,13 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.8.1.3 Global Paper Desk & Filing Gameplay
+## Current packet — V2.9.1 Email Inbox & Print-to-Documents
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
-V2.8.1 is implemented. V2.8.1.1 fixed the recorded Delivery deadlock and moved Documents off the live map. V2.8.1.2 established load files and one authoritative paper rendering. The next playtest clarified the final interaction rule: load files live in the cabinet; all unfiled papers from all loads share one persistent desk. V2.8.1.3 is the active correction pass and must complete automated verification plus manual playtest before V2.8 is accepted.
+V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
+
+V2.9.1 is the active build. It introduces the digital intake layer that feeds Documents.
 
 The active acceptance packet is:
 
@@ -67,6 +69,19 @@ V2.8.1.3 keeps the same underlying document truth but locks the gameplay contrac
 ### Locked filing invariant
 
 **Cabinet owns files. Desk owns unfiled papers. Folder selection never filters the desk. Filing is player-driven. Packet completeness gates submission.**
+
+### Locked communication/document invariant
+
+**FreightLink requests it → Email delivers it → player prints it → Documents owns the physical copy.**
+
+- digital receipt does not create a Documents paper,
+- reading an email does not print it,
+- printing does not file it,
+- filing does not satisfy a requirement unless document status is acceptable,
+- Email owns digital arrival/read state,
+- Documents owns physical paper/filing state,
+- do not auto-print external paperwork,
+- POD email appears only after receiver verification has completed.
 
 - paperwork may be filed at any time,
 - filing does not imply review/acceptance,
@@ -165,6 +180,8 @@ Before merging meaningful changes:
 3. `npm run build`
 4. Manual browser screenshot review for visual work.
 
-The original V2.8.1 closeout, V2.8.1.1 correction, and V2.8.1.2 load-file refactor passed automated verification. V2.8.1.3 must pass the same gate after the global-desk filing changes.
+V2.8.1.3 passed automated verification and manual acceptance.
 
-A green build does not equal visual acceptance. Do not mark V2.8 accepted until multi-load desk clutter, drag-to-file, unfile, packet completeness/submission, focused paper handoff, and the Taylor T-110/Jersey City Delivery repro are manually playtested.
+V2.9.1 must pass install, lint, tests, build, and manual playtest of Rate Con/POD Email arrival, unread state, printing, and Documents handoff.
+
+A green build does not equal visual acceptance.
