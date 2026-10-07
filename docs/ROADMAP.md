@@ -25,9 +25,9 @@ V2.7.6.8 is visually accepted.
 
 ### Current candidate
 
-**V2.8.1.2 · Load Files & Unified Paper Workflow**
+**V2.8.1.3 · Global Paper Desk & Filing Gameplay**
 
-V2.8.1.1 fixed the map-owned Documents presentation and the Taylor T-110 Forklift Handling deadlock. The following Documents playtest exposed the stronger organizing rule: paperwork is managed as one working file per load. V2.8.1.2 is the active acceptance correction. V2.7.6.8 remains the formal accepted checkpoint until this correction passes automated verification and manual playtest.
+V2.8.1.1 fixed the map-owned Documents presentation and the Taylor T-110 Forklift Handling deadlock. V2.8.1.2 established load files and one authoritative paper rendering. The next playtest clarified the final filing-gameplay rule: load files stay in the cabinet while every unfiled paper from every load shares one persistent desk. V2.8.1.3 is the active acceptance correction. V2.7.6.8 remains the formal accepted checkpoint until this correction passes automated verification and manual playtest.
 
 ### What that means
 
@@ -262,6 +262,26 @@ Documents now organizes operational paperwork around the **load file**:
 - delivered files remain open for billing/payment rather than being prematurely marked closed.
 
 BOL, invoice creation, sent-for-payment, payment receipt, and final file closeout remain later document/finance work.
+
+### V2.8.1.3 · Global desk / filing acceptance correction
+
+Locked architecture:
+
+- **cabinet owns files,**
+- **desk owns all unfiled papers,**
+- opening/selecting a file never filters the desk,
+- papers from every load may overlap and accumulate together,
+- filing is a deliberate drag/drop action from desk to matching load file,
+- wrong-folder drops are rejected,
+- filed paperwork may be returned to the desk until the packet is submitted,
+- filing and document approval are separate states,
+- a filed document only satisfies a packet requirement when its document status is acceptable,
+- current implemented requirements are Rate Con + POD; BOL/invoice extend the same requirement model when those document systems exist,
+- packet submission is disabled until every current requirement is satisfied,
+- submitted packets lock filing changes,
+- accepted Rate Cons carry a visible physical status stamp on the paper.
+
+This is intentionally organization gameplay: a busy desk may contain paperwork from many loads, and the player must read, inspect, arrange, and file it correctly.
 
 ## V2.8.2 · Document Revisions & Rate Con Archive
 

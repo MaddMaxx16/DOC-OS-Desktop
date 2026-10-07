@@ -52,6 +52,9 @@ export default function DesktopShell({
   onOpenDocumentsForRateCon,
   onInspectDocument,
   onSelectDocument,
+  onFileDocument,
+  onUnfileDocument,
+  onSubmitLoadFile,
   onRequestRateConCorrection,
   onConfirmBooking,
   onOpenDockLoad,
@@ -281,6 +284,9 @@ export default function DesktopShell({
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={onSelectDocument}
               onInspectDocument={onInspectDocument}
+              onFileDocument={onFileDocument}
+              onUnfileDocument={onUnfileDocument}
+              onSubmitLoadFile={onSubmitLoadFile}
               onClose={onCloseActiveApp}
             />
           )}

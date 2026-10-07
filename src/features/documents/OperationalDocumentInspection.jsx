@@ -28,7 +28,7 @@ export default function OperationalDocumentInspection({
         <header>
           <span>LOAD FILE · {document.loadRef}</span>
           <strong>{document.title}</strong>
-          <small>This is the same paper from the working load file.</small>
+          <small>This is the same paper you selected in Documents.</small>
         </header>
 
         <div className="operational-document-inspection-details">
@@ -40,8 +40,8 @@ export default function OperationalDocumentInspection({
 
         <div className="operational-document-inspection-note">
           <span>LOAD PACKET</span>
-          <strong>Close this view to return the paper to its working file.</strong>
-          <small>The document remains attached to the load; inspecting it does not file or close the load.</small>
+          <strong>Close this view to return to the Documents workspace.</strong>
+          <small>Inspecting a paper never files it, unfiles it, or submits the load packet.</small>
         </div>
       </aside>
     </div>

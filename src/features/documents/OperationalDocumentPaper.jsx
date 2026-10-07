@@ -77,6 +77,17 @@ export default function OperationalDocumentPaper({
         lane={{ laneRef: document.loadRef }}
         driver={driver ?? { name: document.driverId ?? 'Unassigned' }}
         acceptanceLabel={document.status === 'ACCEPTED' ? 'Accepted' : 'Pending acceptance'}
+        stampLabel={
+          document.status === 'ACCEPTED'
+            ? 'ACCEPTED'
+            : document.status === 'CORRECTED_RATE_CON_READY'
+              ? 'CORRECTED'
+              : document.status === 'CORRECTION_REQUESTED'
+                ? 'CORRECTION REQUESTED'
+                : document.status === 'REVIEW_REQUIRED'
+                  ? 'REVIEW REQUIRED'
+                  : null
+        }
       />
     )
   }

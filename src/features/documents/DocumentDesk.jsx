@@ -35,6 +35,8 @@ export function DraggableDocument({
   className = '',
   onClick,
   onDoubleClick,
+  onDragMove,
+  onDragEnd,
   ariaLabel,
   children,
 }) {
@@ -82,12 +84,26 @@ export function DraggableDocument({
     const y = Math.min(maxY, Math.max(0, event.clientY - drag.deskRect.top - drag.offsetY))
 
     setPosition({ x, y })
+    onDragMove?.({
+      documentId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+    })
   }
 
-  const finishDrag = (event) => {
-    if (dragRef.current?.pointerId !== event.pointerId) return
+  const finishDrag = (event, cancelled = false) => {
+    const drag = dragRef.current
+    if (drag?.pointerId !== event.pointerId) return
+
     dragRef.current = null
     event.currentTarget.releasePointerCapture?.(event.pointerId)
+
+    onDragEnd?.({
+      documentId,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      cancelled,
+    })
   }
 
   return (
@@ -100,8 +116,8 @@ export function DraggableDocument({
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={finishDrag}
-      onPointerCancel={finishDrag}
+      onPointerUp={(event) => finishDrag(event, false)}
+      onPointerCancel={(event) => finishDrag(event, true)}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       aria-label={ariaLabel}

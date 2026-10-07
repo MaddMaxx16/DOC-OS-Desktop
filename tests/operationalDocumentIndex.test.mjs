@@ -5,6 +5,7 @@ import { DELIVERY_DOCUMENT_STATUS } from '../src/domain/documents/deliveryPod.js
 import {
   buildOperationalDocumentIndex,
   buildOperationalLoadFiles,
+  buildOperationalDeskDocuments,
   operationalDocumentAttentionCount,
   operationalLoadFileAttentionCount,
   OPERATIONAL_DOCUMENT_TYPE,
@@ -190,7 +191,7 @@ test('waiting and accepted documents do not count as attention', () => {
 })
 
 
-test('operational documents are grouped into one load file per load reference', () => {
+test('operational documents group by load but remain on the global desk until filed', () => {
   const podRecord = {
     ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
     id: 'POD:M-403:delivery',
@@ -211,15 +212,112 @@ test('operational documents are grouped into one load file per load reference', 
     documentRecords: { [podRecord.id]: podRecord },
     lanes: [lane],
   })
-  const loadFiles = buildOperationalLoadFiles(documents)
+  const [loadFile] = buildOperationalLoadFiles(documents)
 
-  assert.equal(loadFiles.length, 1)
-  assert.equal(loadFiles[0].loadRef, 'FL-403')
-  assert.equal(loadFiles[0].documentCount, 2)
-  assert.equal(loadFiles[0].hasRateConfirmation, true)
-  assert.equal(loadFiles[0].hasPod, true)
-  assert.equal(loadFiles[0].status, OPERATIONAL_LOAD_FILE_STATUS.DELIVERY_COMPLETE)
-  assert.equal(loadFiles[0].statusLabel, 'DELIVERY COMPLETE')
+  assert.equal(loadFile.loadRef, 'FL-403')
+  assert.equal(loadFile.documentCount, 2)
+  assert.equal(loadFile.filedCount, 0)
+  assert.equal(loadFile.deskCount, 2)
+  assert.equal(loadFile.satisfiedRequirementCount, 0)
+  assert.equal(loadFile.canSubmit, false)
+  assert.equal(loadFile.status, OPERATIONAL_LOAD_FILE_STATUS.OPEN)
+  assert.equal(buildOperationalDeskDocuments([loadFile]).length, 2)
+})
+
+test('filing accepted paperwork advances packet completeness but does not submit automatically', () => {
+  const podRecord = {
+    ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
+    id: 'POD:M-403:delivery',
+    loadId: 'M-403',
+    loadRef: 'FL-403',
+  }
+  const documents = buildOperationalDocumentIndex({
+    bookingRecords: {
+      'FL-403': {
+        laneId: 'FL-403',
+        driverId: 'marcus-reed',
+        bookedLoadId: 'M-403',
+        status: BOOKING_STATUS.CONFIRMED,
+        correctionCount: 0,
+        rateConfirmation: rateCon(),
+      },
+    },
+    documentRecords: { [podRecord.id]: podRecord },
+    lanes: [lane],
+  })
+
+  const fileAssignments = Object.fromEntries(
+    documents.map((document) => [document.id, 'FL-403']),
+  )
+  const [loadFile] = buildOperationalLoadFiles(documents, { fileAssignments })
+
+  assert.equal(loadFile.filedCount, 2)
+  assert.equal(loadFile.deskCount, 0)
+  assert.equal(loadFile.satisfiedRequirementCount, 2)
+  assert.equal(loadFile.requiredCount, 2)
+  assert.equal(loadFile.canSubmit, true)
+  assert.equal(loadFile.submitted, false)
+  assert.equal(loadFile.status, OPERATIONAL_LOAD_FILE_STATUS.SUBMIT_READY)
+  assert.equal(loadFile.statusLabel, 'READY TO SUBMIT')
+})
+
+test('a filed paper can exist without satisfying the packet requirement', () => {
+  const documents = buildOperationalDocumentIndex({
+    bookingRecords: {
+      'FL-403': {
+        laneId: 'FL-403',
+        driverId: 'marcus-reed',
+        status: BOOKING_STATUS.RATE_CON_READY,
+        correctionCount: 0,
+        rateConfirmation: rateCon(),
+      },
+    },
+    lanes: [lane],
+  })
+  const [loadFile] = buildOperationalLoadFiles(documents, {
+    fileAssignments: { [documents[0].id]: 'FL-403' },
+  })
+
+  assert.equal(loadFile.filedCount, 1)
+  assert.equal(loadFile.requirements[0].filed, true)
+  assert.equal(loadFile.requirements[0].satisfied, false)
+  assert.equal(loadFile.canSubmit, false)
+  assert.equal(loadFile.status, OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION)
+})
+
+test('submitted load file is a separate state after completeness is satisfied', () => {
+  const podRecord = {
+    ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
+    id: 'POD:M-403:delivery',
+    loadId: 'M-403',
+    loadRef: 'FL-403',
+  }
+  const documents = buildOperationalDocumentIndex({
+    bookingRecords: {
+      'FL-403': {
+        laneId: 'FL-403',
+        driverId: 'marcus-reed',
+        bookedLoadId: 'M-403',
+        status: BOOKING_STATUS.CONFIRMED,
+        correctionCount: 0,
+        rateConfirmation: rateCon(),
+      },
+    },
+    documentRecords: { [podRecord.id]: podRecord },
+    lanes: [lane],
+  })
+  const fileAssignments = Object.fromEntries(
+    documents.map((document) => [document.id, 'FL-403']),
+  )
+  const [loadFile] = buildOperationalLoadFiles(documents, {
+    fileAssignments,
+    submittedLoadFiles: { 'FL-403': true },
+  })
+
+  assert.equal(loadFile.canSubmit, true)
+  assert.equal(loadFile.submitted, true)
+  assert.equal(loadFile.status, OPERATIONAL_LOAD_FILE_STATUS.SUBMITTED)
+  assert.equal(loadFile.statusLabel, 'PACKET SUBMITTED')
 })
 
 test('load-file attention counts files rather than individual papers', () => {
@@ -251,23 +349,37 @@ test('load-file attention counts files rather than individual papers', () => {
   assert.equal(operationalLoadFileAttentionCount(loadFiles), 1)
 })
 
-test('accepted Rate Con without a POD remains an active open load file', () => {
+test('global desk combines unfiled papers across load files instead of following selection', () => {
   const documents = buildOperationalDocumentIndex({
     bookingRecords: {
       'FL-403': {
         laneId: 'FL-403',
         driverId: 'marcus-reed',
-        bookedLoadId: 'M-403',
         status: BOOKING_STATUS.CONFIRMED,
         correctionCount: 0,
         rateConfirmation: rateCon(),
       },
+      'FL-404': {
+        laneId: 'FL-404',
+        driverId: 'marcus-reed',
+        status: BOOKING_STATUS.CONFIRMED,
+        correctionCount: 0,
+        rateConfirmation: {
+          ...rateCon(),
+          id: 'RC-FL-404-R1',
+          laneId: 'FL-404',
+          laneRef: 'FL-404',
+        },
+      },
     },
-    lanes: [lane],
+    lanes: [lane, { id: 'FL-404', laneRef: 'FL-404' }],
   })
-  const [loadFile] = buildOperationalLoadFiles(documents)
+  const loadFiles = buildOperationalLoadFiles(documents, {
+    fileAssignments: { 'RC-FL-403-R1': 'FL-403' },
+  })
+  const deskDocuments = buildOperationalDeskDocuments(loadFiles)
 
-  assert.equal(loadFile.status, OPERATIONAL_LOAD_FILE_STATUS.OPEN)
-  assert.equal(loadFile.statusLabel, 'ACTIVE FILE')
-  assert.equal(loadFile.documentCount, 1)
+  assert.equal(loadFiles.length, 2)
+  assert.equal(deskDocuments.length, 1)
+  assert.equal(deskDocuments[0].loadRef, 'FL-404')
 })
