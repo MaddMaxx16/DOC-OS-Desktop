@@ -403,7 +403,7 @@ test('V2.7.6.8 locks staging bays, persists receiver placements, and strengthens
   const deliveryCss = await readFile(new URL('../src/features/dock-delivery/deliveryWorkspace.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
 
   assert.match(delivery, /findWarehouseFreightPlacement/)
   assert.match(delivery, /warehousePlacementByFreightId/)
@@ -439,7 +439,7 @@ test('V2.7.6.7 raises warehouse contrast, preserves staging freight fidelity, an
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
 
   assert.match(domain, /label: 'QUALITY CHECK'/)
   assert.match(domain, /cargoLabel: 'FRAGILE \+ KEEP UPRIGHT'/)
@@ -461,7 +461,7 @@ test('V2.7.6.6 hardens pointer recovery and constrains Delivery moves by rear ha
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
 
   assert.match(domain, /findDeliveryRearHandlingPath/)
   assert.match(domain, /evaluateDeliveryHandlingAccess/)
@@ -496,7 +496,7 @@ test('V2.7.6.5 physicalizes the warehouse floor without changing Delivery mechan
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
 
   assert.match(delivery, /WAREHOUSE_ZONE_LAYOUTS/)
   assert.match(delivery, /findWarehouseFreightPlacement/)
@@ -540,7 +540,7 @@ test('V2.7.6.4 adds Delivery space management on the exact shared Pickup trailer
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(pickup, /import TrailerShell/)
   assert.match(delivery, /import TrailerShell/)
   assert.match(pickup, /<TrailerShell/)
@@ -582,7 +582,7 @@ test('V2.7.6.3 uses pointer freight handling on a continuous warehouse floor', a
   const deliveryCss = await readFile(new URL('../src/features/dock-delivery/deliveryWorkspace.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(delivery, /startPointerMove/)
   assert.match(delivery, /onPointerMove/)
   assert.match(delivery, /onPointerUp/)
@@ -616,7 +616,7 @@ test('V2.7.6.2 adds facility receiving phases around the physical trailer', asyn
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(domain, /HARBORLINE RECEIVING SOP/)
   assert.match(domain, /FRESHWAY RECEIVING SOP/)
   assert.match(domain, /buildDeliveryReceivingProtocol/)
@@ -646,7 +646,7 @@ test('V2.7.6.1 makes the physical trailer the delivery interaction surface', asy
   const domain = await readFile(new URL('../src/domain/facility/deliveryOperation.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(delivery, /onPointerDown/)
   assert.match(delivery, /sendToReceivingZone/)
   assert.match(delivery, /stageTemporarily/)
@@ -678,7 +678,7 @@ test('V2.7.6 adds focused delivery planning from the persistent pickup trailer s
   const documents = await readFile(new URL('../src/domain/documents/deliveryPod.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(app, /deliveryFacilityMode: true/)
   assert.match(app, /commitDockDelivery/)
   assert.match(app, /createDeliveryPodRecord/)
@@ -710,7 +710,7 @@ test('V2.7.5.4 adds compact class-based hazmat segregation without re-expanding 
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(facility, /HAZMAT_TUTORIAL_PROFILES/)
   assert.match(facility, /classCode: '3'/)
   assert.match(facility, /classCode: '5\.1'/)
@@ -734,7 +734,7 @@ test('V2.7.5.3.1 simplifies the trailer HUD with progressive rule disclosure', a
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(puzzle, /dock-load-rules-compact/)
   assert.match(puzzle, /dock-load-rule-row/)
   assert.match(puzzle, /trailerRuleSummary/)
@@ -767,7 +767,7 @@ test('V2.7.5.3 adds fragile protection as the first handling restriction', async
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(facility, /export function evaluateTrailerFragileProtection/)
   assert.match(facility, /FRAGILE_PROTECTION_CONFLICT/)
   assert.match(facility, /\['HEAVY', 'OVERSIZE'\]/)
@@ -789,7 +789,7 @@ test('V2.7.5.2 adds live trailer weight distribution as the second trailer rule'
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(facility, /export function evaluateTrailerWeightBalance/)
   assert.match(facility, /activationWeightLbs = Math\.round\(maxWeightLbs \* 0\.2\)/)
   assert.match(facility, /targetMinPercent = 35/)
@@ -817,7 +817,7 @@ test('V2.7.5.1.2 gives the right panel a stable operational hierarchy', async ()
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(puzzle, /LOAD SUMMARY/)
   assert.match(puzzle, /dock-load-summary-route/)
   assert.match(puzzle, /LOAD COMPLETION/)
@@ -844,7 +844,7 @@ test('V2.7.5.1.1 makes onboard rotation reliable and enlarges trailer-rule guida
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(puzzle, /function freightCanRotate/)
   assert.match(puzzle, /rotatePlacedFreight/)
   assert.match(puzzle, /hoverFreightId/)
@@ -869,7 +869,7 @@ test('V2.7.5.1 makes delivery accessibility a visible trailer-readiness rule', a
   const css = await readFile(new URL('../src/features/dock-load/dockLoad.css', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(facility, /export function buildDeliveryAccessOrder/)
   assert.match(facility, /export function evaluateTrailerDeliveryAccess/)
   assert.match(facility, /DELIVERY_ACCESS_BLOCKED/)
@@ -895,7 +895,7 @@ test('V2.7.5.0.6 makes freight identity readable and keeps the physical drag pre
   const shell = await readFile(new URL('../src/shell/DesktopShell.jsx', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(puzzle, /STAGED FREIGHT MANIFEST/)
   assert.match(puzzle, /manifest-load-number/)
   assert.match(puzzle, /pallet-piece-marking/)
@@ -1641,13 +1641,18 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   const index = await readFile(new URL('../src/domain/documents/operationalDocumentIndex.js', import.meta.url), 'utf8')
   const top = await readFile(new URL('../src/shell/TopBar.jsx', import.meta.url), 'utf8')
 
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
 
   assert.match(app, /buildOperationalDocumentIndex/)
   assert.match(app, /buildOperationalLoadFiles/)
   assert.match(app, /operationalLoadFileAttentionCount/)
   assert.match(app, /operationalDocuments/)
   assert.match(app, /operationalLoadFiles/)
+  assert.match(app, /documentFileAssignments/)
+  assert.match(app, /submittedLoadFiles/)
+  assert.match(app, /fileDocument/)
+  assert.match(app, /unfileDocument/)
+  assert.match(app, /submitLoadFile/)
   assert.match(app, /selectedDocumentId/)
   assert.match(app, /openDocumentsForRateCon/)
   assert.match(app, /setActiveApp\('documents'\)/)
@@ -1663,14 +1668,24 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(shell, /loadFiles=\{operationalLoadFiles\}/)
   assert.match(shell, /drivers=\{drivers\}/)
   assert.match(shell, /onInspectDocument=\{onInspectDocument\}/)
+  assert.match(shell, /onFileDocument=\{onFileDocument\}/)
+  assert.match(shell, /onUnfileDocument=\{onUnfileDocument\}/)
+  assert.match(shell, /onSubmitLoadFile=\{onSubmitLoadFile\}/)
 
   assert.match(documents, /FILING CABINET/)
   assert.match(documents, /Load Files/)
-  assert.match(documents, /LOAD FILE/)
-  assert.match(documents, /load-file-document-desk/)
-  assert.match(documents, /Drag papers to arrange · double-click to inspect/)
+  assert.match(documents, /UNFILED PAPER DESK/)
+  assert.match(documents, /Every unfiled document stays here regardless of which load file is open/)
+  assert.match(documents, /Drag paper → matching load file/)
+  assert.match(documents, /data-load-file-ref=\{loadFile\.loadRef\}/)
+  assert.match(documents, /buildOperationalDeskDocuments/)
+  assert.match(documents, /elementsFromPoint/)
+  assert.match(documents, /onFileDocument/)
+  assert.match(documents, /RETURN TO DESK/)
+  assert.match(documents, /SUBMIT LOAD FILE/)
+  assert.match(documents, /PACKET INCOMPLETE/)
   assert.match(documents, /NEEDS ACTION/)
-  assert.match(documents, /DELIVERY COMPLETE/)
+  assert.match(documents, /SUBMIT READY/)
   assert.match(documents, /REVIEW DOCUMENT/)
   assert.match(documents, /onDoubleClick=\{\(\) => onInspectDocument\(document\.id\)\}/)
   assert.match(documents, /Proof of Delivery/)
@@ -1684,8 +1699,10 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(documentsCss, /\.documents-browser/)
   assert.match(documentsCss, /\.documents-desk-workspace/)
   assert.match(documentsCss, /grid-column:\s*3/)
-  assert.match(documentsCss, /\.load-file-folder/)
-  assert.match(documentsCss, /\.load-file-document-sheet/)
+  assert.match(documentsCss, /\.global-paper-desk/)
+  assert.match(documentsCss, /\.global-desk-paper/)
+  assert.match(documentsCss, /\.load-file-expanded/)
+  assert.doesNotMatch(documentsCss, /\.load-file-folder\s*\{/)
   assert.match(documentsCss, /\.documents-inspector/)
   assert.match(shell, /\{!documentsOpen && \(\s*<div className="map-workspace">/)
 
@@ -1693,6 +1710,10 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(index, /OPERATIONAL_LOAD_FILE_STATUS/)
   assert.match(index, /buildOperationalDocumentIndex/)
   assert.match(index, /buildOperationalLoadFiles/)
+  assert.match(index, /buildOperationalDeskDocuments/)
+  assert.match(index, /OPERATIONAL_LOAD_FILE_REQUIREMENTS/)
+  assert.match(index, /SUBMIT_READY/)
+  assert.match(index, /SUBMITTED/)
   assert.match(index, /operationalLoadFileAttentionCount/)
   assert.match(index, /RATE_CONFIRMATION/)
   assert.match(index, /POD/)
@@ -1714,6 +1735,8 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(paper, /RateConfirmationPaper/)
   assert.match(review, /RateConfirmationPaper/)
   assert.match(ratePaper, /RATE \/ LOAD CONFIRMATION/)
+  assert.match(ratePaper, /ratecon-status-stamp/)
+  assert.match(paper, /stampLabel=/)
 })
 
 test('V2.8.1.1 fixes receiver-floor capacity for heavy and oversize delivery phases', async () => {
@@ -1760,7 +1783,7 @@ test('Rate Confirmation remains a focused full-workspace task', async () => {
   assert.match(shell, /focusedTask\?\.type === 'rate-confirmation'/)
   assert.match(shell, /<FocusedWorkspace/)
   assert.match(focused, /focused-workspace/)
-  assert.match(top, /DESKTOP V2\.8\.1\.2 · LOAD FILES/)
+  assert.match(top, /DESKTOP V2\.8\.1\.3 · GLOBAL PAPER DESK/)
   assert.match(top, /FOCUSED MODE · GAMEPLAY PAUSED/)
 })
 
@@ -1787,6 +1810,9 @@ test('V2.5.2 Rate Con uses the reusable draggable stacking Document Desk', async
   assert.match(desk, /bringToFront/)
   assert.match(desk, /onPointerDown/)
   assert.match(desk, /onPointerMove/)
+  assert.match(desk, /onDragEnd/)
+  assert.match(desk, /clientX/)
+  assert.match(desk, /clientY/)
   assert.match(deskCss, /\.draggable-document/)
   assert.match(deskCss, /cursor: grab/)
 })
