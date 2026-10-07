@@ -32,11 +32,11 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.8.1.1 Documents Desk Polish & Delivery Fix
+## Current packet — V2.8.1.2 Load Files & Unified Paper Workflow
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
-V2.8.1 is implemented. The first visual/gameplay acceptance pass found a Documents presentation issue and a Delivery receiving-floor deadlock. V2.8.1.1 is the active correction pass and must complete automated verification plus manual playtest before V2.8 is accepted.
+V2.8.1 is implemented. V2.8.1.1 fixed the recorded Delivery deadlock and moved Documents off the live map. The next playtest exposed the deeper Documents rule: the player manages load files, not loose papers. V2.8.1.2 is the active correction pass and must complete automated verification plus manual playtest before V2.8 is accepted.
 
 The active acceptance packet is:
 
@@ -58,7 +58,7 @@ V2.8.1 now corrects the prior workflow-ownership problem:
 - Documents launches the existing focused Rate Con review,
 - Email remains deferred to V2.9.
 
-V2.8.1.1 is a correction pass, not an architecture rewrite: Documents owns its center workspace as a physical paperwork desk, workstation browser width is consistent across apps, and the recorded Delivery deadlock is fixed without changing the receiving protocol.
+V2.8.1.2 keeps the same underlying document truth but changes the presentation contract: one load file groups all paperwork for that load, the file opens on the physical desk, papers can be arranged and inspected, and the file remains open through later billing/payment closeout.
 
 ### Core workflow rule
 
@@ -82,11 +82,15 @@ Future complete invariant:
 Implemented:
 
 - Documents command-rail enablement,
-- Documents browser,
+- load-file cabinet,
+- working load-folder desk,
 - document inspector,
 - unified operational document index over existing Rate Con and POD state,
-- actionable Rate Con rows,
-- POD visibility,
+- derived load-file index grouping papers by load,
+- draggable/selectable papers inside each load file,
+- double-click paper inspection,
+- actionable Rate Con review from the paper itself,
+- POD visibility inside the same load file,
 - Rate Con focused-review launch from Documents,
 - direct FreightLink Rate Con review removal,
 - accepted Rate Con persistence in Documents.
@@ -147,6 +151,6 @@ Before merging meaningful changes:
 3. `npm run build`
 4. Manual browser screenshot review for visual work.
 
-The original V2.8.1 closeout candidate passed install, lint, tests, and production build in GitHub Actions. V2.8.1.1 must pass the same gate after its correction changes.
+The original V2.8.1 closeout and V2.8.1.1 correction both passed automated verification. V2.8.1.2 must pass the same gate after the load-file refactor.
 
-A green build does not equal visual acceptance. Do not mark V2.8 accepted until the corrected Documents desk and the Taylor T-110/Jersey City Delivery repro are manually playtested.
+A green build does not equal visual acceptance. Do not mark V2.8 accepted until the load-file cabinet/desk interaction, focused paper handoff, and Taylor T-110/Jersey City Delivery repro are manually playtested.
