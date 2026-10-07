@@ -1170,8 +1170,9 @@ test('V2.7.4.1.2 turns the Drivers browser into a searchable operational Fleet r
   assert.match(browser, />RISK</)
   assert.match(browser, /filteredRows\.map/)
 
-  assert.match(css, /browser-open\.fleet-browser-open/)
-  assert.match(css, /minmax\(350px, 385px\)/)
+  assert.doesNotMatch(css, /browser-open\.fleet-browser-open\s*\{/)
+  assert.match(css, /--workstation-browser-column: minmax\(350px, 385px\)/)
+  assert.match(css, /var\(--workstation-browser-column\)/)
   assert.match(css, /\.fleet-roster-columns/)
   assert.match(css, /\.fleet-roster-row/)
   assert.match(css, /\.fleet-roster-risk\.alert/)
