@@ -17,6 +17,11 @@ import {
 import { commitBookedFreight } from '../domain/booking/commitBookedFreight.js'
 import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
+import {
+  buildOperationalEmailInbox,
+  emailIdForDocument,
+  operationalEmailUnreadCount,
+} from '../domain/communications/operationalEmail.js'
 import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
 import { commitDeliveryOperation } from '../domain/facility/deliveryOperation.js'
 import {
@@ -65,6 +70,9 @@ export default function App() {
   const [documentRecords, setDocumentRecords] = useState({})
   const [documentFileAssignments, setDocumentFileAssignments] = useState({})
   const [submittedLoadFiles, setSubmittedLoadFiles] = useState({})
+  const [printedDocumentIds, setPrintedDocumentIds] = useState({})
+  const [readEmailIds, setReadEmailIds] = useState({})
+  const [selectedEmailId, setSelectedEmailId] = useState(null)
   const [selectedDocumentId, setSelectedDocumentId] = useState(null)
   const [focusedTask, setFocusedTask] = useState(null)
   const [planningDriverId, setPlanningDriverId] = useState(null)
@@ -147,13 +155,28 @@ export default function App() {
     () => buildOperationalLoadFiles(operationalDocuments, {
       fileAssignments: documentFileAssignments,
       submittedLoadFiles,
+      printedDocumentIds,
     }),
-    [documentFileAssignments, operationalDocuments, submittedLoadFiles],
+    [documentFileAssignments, operationalDocuments, printedDocumentIds, submittedLoadFiles],
   )
 
   const documentAttentionCount = useMemo(
     () => operationalLoadFileAttentionCount(operationalLoadFiles),
     [operationalLoadFiles],
+  )
+
+  const operationalEmails = useMemo(
+    () => buildOperationalEmailInbox({
+      documents: operationalDocuments,
+      readEmailIds,
+      printedDocumentIds,
+    }),
+    [operationalDocuments, printedDocumentIds, readEmailIds],
+  )
+
+  const emailUnreadCount = useMemo(
+    () => operationalEmailUnreadCount(operationalEmails),
+    [operationalEmails],
   )
 
   const selectSubject = (type, id) => {
@@ -368,14 +391,14 @@ export default function App() {
   }
 
   const toggleApp = (appId) => {
-    if (!['drivers', 'freightlink', 'documents'].includes(appId)) return
+    if (!['drivers', 'freightlink', 'email', 'documents'].includes(appId)) return
 
     const opening = activeApp !== appId
     if (appId === 'freightlink' && opening && selection?.type === SELECTION_TYPES.DRIVER) {
       setFreightCandidateDriverId(selection.id)
     }
 
-    if (['freightlink', 'documents'].includes(appId) && opening) {
+    if (['freightlink', 'email', 'documents'].includes(appId) && opening) {
       setOperationsInspectorHidden(false)
       setPlanningDriverId(null)
       setPlanningFeedback(null)
@@ -387,7 +410,7 @@ export default function App() {
       if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
     }
 
-    if (appId === 'documents' && opening) {
+    if (['email', 'documents'].includes(appId) && opening) {
       setFreightRoutePreview(null)
       if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
     }
@@ -446,21 +469,52 @@ export default function App() {
     }, 650)
   }
 
-  const openDocumentsForRateCon = (laneId) => {
+  const openEmailForRateCon = (laneId) => {
     const record = bookingRecords[laneId]
     const documentId = record?.rateConfirmation?.id
     if (!documentId) return
 
+    const emailId = emailIdForDocument(documentId)
     setFreightRoutePreview(null)
     if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
-    setSelectedDocumentId(documentId)
+    setSelectedEmailId(emailId)
+    setReadEmailIds((current) => ({ ...current, [emailId]: true }))
+    setActiveApp('email')
+  }
+
+  const selectEmail = (emailId) => {
+    setSelectedEmailId(emailId)
+    setReadEmailIds((current) => ({ ...current, [emailId]: true }))
+  }
+
+  const printDocument = (documentId) => {
+    const document = operationalDocuments.find((item) => item.id === documentId)
+    if (!document) return { ok: false, message: 'That attachment is no longer available.' }
+    if (printedDocumentIds[documentId]) {
+      return { ok: true, message: `${document.shortTypeLabel} is already printed.` }
+    }
+
+    setPrintedDocumentIds((current) => ({ ...current, [documentId]: true }))
+    return {
+      ok: true,
+      message: `${document.shortTypeLabel} printed to the Documents desk.`,
+    }
+  }
+
+  const openDocuments = () => {
+    setSelectedDocumentId(null)
     setActiveApp('documents')
   }
 
   const openRateCon = (laneId) => {
     const record = bookingRecords[laneId]
-    if (record?.status !== BOOKING_STATUS.RATE_CON_READY) return
-    setSelectedDocumentId(record.rateConfirmation?.id ?? null)
+    const documentId = record?.rateConfirmation?.id
+    if (
+      record?.status !== BOOKING_STATUS.RATE_CON_READY
+      || !documentId
+      || !printedDocumentIds[documentId]
+    ) return
+    setSelectedDocumentId(documentId)
     setActiveApp('documents')
     setFocusedTask({ type: 'rate-confirmation', laneId })
   }
@@ -488,6 +542,10 @@ export default function App() {
     const document = operationalDocuments.find((item) => item.id === documentId)
     if (!document) {
       return { ok: false, message: 'That paper is no longer available on the desk.' }
+    }
+
+    if (!printedDocumentIds[documentId]) {
+      return { ok: false, message: 'Print this attachment before filing it.' }
     }
 
     const targetLoadFile = operationalLoadFiles.find((item) => item.loadRef === targetLoadRef)
@@ -740,6 +798,9 @@ export default function App() {
       operationalDocuments={operationalDocuments}
       operationalLoadFiles={operationalLoadFiles}
       documentAttentionCount={documentAttentionCount}
+      emailMessages={operationalEmails}
+      emailUnreadCount={emailUnreadCount}
+      selectedEmailId={selectedEmailId}
       selectedDocumentId={selectedDocumentId}
       selection={selection}
       activeApp={activeApp}
@@ -760,7 +821,10 @@ export default function App() {
       onFreightCandidateDriverChange={setFreightCandidateDriverId}
       onSimulationModeChange={setSimulationClockMode}
       onRequestRateCon={requestRateCon}
-      onOpenDocumentsForRateCon={openDocumentsForRateCon}
+      onOpenEmailForRateCon={openEmailForRateCon}
+      onSelectEmail={selectEmail}
+      onPrintDocument={printDocument}
+      onOpenDocuments={openDocuments}
       onInspectDocument={inspectDocument}
       onSelectDocument={setSelectedDocumentId}
       onFileDocument={fileDocument}
