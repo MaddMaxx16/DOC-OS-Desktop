@@ -4989,3 +4989,102 @@ This remains a stylized top-down DOC OS representation rather than an exact arch
 No Delivery mechanics change in V2.7.6.8.
 
 V2.7.6.6 handling paths, V2.7.6.7 freight fidelity/contrast, receiver SOPs, staging capacity, shared trailer shell, and right HUD remain authoritative.
+
+
+---
+
+## V2.8 transition checkpoint — Documents becomes the active phase
+
+V2.7.6.8 Dock Continuity & Placement Stability is visually accepted and locked.
+
+The facility gameplay loop has reached the point where additional Pickup/Delivery visual iteration is no longer the highest-value work.
+
+The active phase is now:
+
+# V2.8 · Documents
+
+The durable project sequencing source of truth lives in:
+
+`docs/ROADMAP.md`
+
+The active implementation packet lives in:
+
+`docs/IMPLEMENTATION_V2.8.1.md`
+
+### Audit finding
+
+The current Desktop build contains document logic that is not yet connected to the workstation:
+
+- Rate Confirmation generation/revision/review already exists,
+- Focused Rate Confirmation gameplay already exists,
+- shared physical Document Desk already exists,
+- Delivery already creates POD records,
+- POD state already advances from simulation time,
+- the Documents command-rail section is still disabled,
+- FreightLink currently opens Rate Confirmation review directly,
+- Email and Messages are not yet implemented.
+
+The next architecture objective is therefore **connection and ownership**, not a Rate Confirmation rebuild.
+
+### Document ownership rule
+
+The target workstation relationship is:
+
+**FreightLink requests it → Email delivers it → Documents owns it → Focused Document Mode reviews it.**
+
+V2.8.1 implements the portions possible before Email exists:
+
+**FreightLink requests it → Documents owns/opens it → Focused Document Mode reviews it.**
+
+Email becomes the second arrival/navigation path during V2.9.
+
+### FreightLink boundary
+
+FreightLink owns:
+
+- lane discovery,
+- driver fit,
+- booking request,
+- request/correction/confirmed booking status.
+
+FreightLink does not own physical document viewing.
+
+When a Rate Confirmation is ready, FreightLink may communicate that status or navigate the player to Documents, but the paper itself is opened through Documents.
+
+### Documents workspace
+
+Documents follows the standard desktop grammar:
+
+**Command Rail → Context Browser → Live Map → Context Inspector**
+
+Focused Workspace remains reserved for deep document work.
+
+V2.8.1 must index both:
+
+- Rate Confirmations represented by booking state,
+- PODs represented by document state.
+
+The unified index is a presentation/interaction contract and must not create duplicate editable simulation truth.
+
+### POD transition
+
+Delivery already creates POD records after committed receiver handoff.
+
+V2.8.1 surfaces those records in Documents.
+
+V2.8.3 later adds the full focused POD review/correction gameplay.
+
+### Operational UX backlog
+
+Two validated Live Operations usability issues remain:
+
+- Send Schedule is too tightly coupled to active Planning-edit mode,
+- Fast Forward lacks an Advance to Next Operational Moment action.
+
+These are preserved in `docs/ROADMAP.md` and intentionally do not block V2.8.1.
+
+### Deployment policy
+
+Automatic Git-triggered Vercel deployments are disabled through repository project configuration.
+
+Vercel remains an intentional manual/shareable-checkpoint tool rather than a per-push deployment target.
