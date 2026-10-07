@@ -81,6 +81,15 @@ function paperStartPosition(index) {
   }
 }
 
+function loadFileDropTarget(clientX, clientY) {
+  const target = globalThis.document
+    ?.elementsFromPoint?.(clientX, clientY)
+    ?.map((element) => element.closest?.('[data-load-file-ref]'))
+    ?.find(Boolean)
+
+  return target?.dataset?.loadFileRef ?? null
+}
+
 function RateConInspector({
   document,
   driverLabel,
@@ -332,19 +341,20 @@ function GlobalPaperDesk({
   onInspectDocument,
   onFileDocument,
   onNotice,
+  onDropTargetChange,
 }) {
   const deskDocuments = useMemo(
     () => buildOperationalDeskDocuments(loadFiles),
     [loadFiles],
   )
 
-  const handlePaperDrop = (documentId, clientX, clientY) => {
-    const target = globalThis.document
-      ?.elementsFromPoint?.(clientX, clientY)
-      ?.map((element) => element.closest?.('[data-load-file-ref]'))
-      ?.find(Boolean)
+  const handlePaperDragMove = (clientX, clientY) => {
+    onDropTargetChange(loadFileDropTarget(clientX, clientY))
+  }
 
-    const targetLoadRef = target?.dataset?.loadFileRef
+  const handlePaperDrop = (documentId, clientX, clientY, cancelled) => {
+    const targetLoadRef = cancelled ? null : loadFileDropTarget(clientX, clientY)
+    onDropTargetChange(null)
     if (!targetLoadRef) return
 
     const result = onFileDocument(documentId, targetLoadRef)
@@ -384,7 +394,8 @@ function GlobalPaperDesk({
                 className={'global-desk-paper ' + (selected ? 'selected ' : '') + documentTone(document)}
                 onClick={() => onSelectDocument(document.id)}
                 onDoubleClick={() => onInspectDocument(document.id)}
-                onDragEnd={({ documentId, clientX, clientY }) => handlePaperDrop(documentId, clientX, clientY)}
+                onDragMove={({ clientX, clientY }) => handlePaperDragMove(clientX, clientY)}
+                onDragEnd={({ documentId, clientX, clientY, cancelled }) => handlePaperDrop(documentId, clientX, clientY, cancelled)}
                 ariaLabel={documentLabel(document) + ' ' + document.loadRef + '. Drag to its load file or double-click to inspect.'}
               >
                 <div className="global-desk-paper-scale">
@@ -421,6 +432,7 @@ export default function DocumentsWorkspace({
   const [filter, setFilter] = useState('ALL')
   const [expandedFileId, setExpandedFileId] = useState(null)
   const [notice, setNotice] = useState(null)
+  const [dropTargetLoadRef, setDropTargetLoadRef] = useState(null)
 
   const filteredLoadFiles = useMemo(
     () => loadFiles.filter((loadFile) => loadFileMatchesFilter(loadFile, filter)),
@@ -505,7 +517,12 @@ export default function DocumentsWorkspace({
             return (
               <div
                 key={loadFile.id}
-                className={'load-file-entry ' + (expanded ? 'expanded ' : '') + fileTone(loadFile)}
+                className={
+                  'load-file-entry '
+                  + (expanded ? 'expanded ' : '')
+                  + (dropTargetLoadRef === loadFile.loadRef ? 'drop-target ' : '')
+                  + fileTone(loadFile)
+                }
                 data-load-file-ref={loadFile.loadRef}
               >
                 <button
@@ -555,6 +572,7 @@ export default function DocumentsWorkspace({
         onInspectDocument={onInspectDocument}
         onFileDocument={onFileDocument}
         onNotice={handleNotice}
+        onDropTargetChange={setDropTargetLoadRef}
       />
 
       {selectedDocument && (
