@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.9.1.1 VISUAL CORRECTION IN VERIFY**
+**IMPLEMENTED · V2.9.1.2 SIDEBAR SPACING CORRECTION IN VERIFY**
 
 Accepted base checkpoint:
 
@@ -264,6 +264,26 @@ Locked visual correction:
 Acceptance:
 
 A player looking at the screen should immediately read it as **an email client with an attachment**, not as **a document viewer with an email note above it**.
+
+---
+
+## V2.9.1.2 · Email Sidebar Spacing
+
+The V2.9.1.1 reader layout is retained. This pass fixes the left inbox/browser panel only.
+
+Locked correction:
+
+- add visible inner gutters around inbox rows,
+- give the Email panel header slightly more breathing room,
+- keep inbox rows width-safe with `box-sizing: border-box`,
+- use a shrinking sender column plus fixed date column,
+- truncate long date labels safely,
+- allow metadata chips to wrap instead of clipping,
+- do not change Email intake, printing, unread state, or Documents handoff.
+
+Acceptance:
+
+No sender/date/subject/preview/metadata content should visually touch or clip against the left browser panel edge.
 
 ---
 
