@@ -10,7 +10,7 @@ test('desktop reference remains 1920x1080', () => {
 
 test('V2.5.1 workstation uses rail, browser, and inspector widths', () => {
   assert.equal(SHELL_CONFIG.commandRailWidth, 76)
-  assert.equal(SHELL_CONFIG.browserWidth, 340)
+  assert.equal(SHELL_CONFIG.browserWidth, 385)
   assert.equal(SHELL_CONFIG.inspectorWidth, 430)
   assert.equal(WORKSTATION_SECTIONS[0].id, 'drivers')
   assert.equal(WORKSTATION_SECTIONS[0].label, 'Fleet')
@@ -55,6 +55,8 @@ test('V2.5.1 shell is rail -> browser -> map -> inspector', async () => {
   assert.match(css, /--workstation-browser-column: minmax\(350px, 385px\)/)
   assert.match(css, /76px var\(--workstation-browser-column\) minmax\(0, 1fr\) minmax\(390px, 430px\)/)
   assert.doesNotMatch(css, /browser-open\.fleet-browser-open\s*\{/)
+  assert.match(css, /\.command-rail-sections strong \{[\s\S]*white-space: normal/)
+  assert.match(css, /overflow-wrap: anywhere/)
 })
 
 test('V2.5.1 command rail exposes live workstation sections', async () => {
