@@ -6,6 +6,7 @@ import { buildPlanningPlaceOptions } from '../domain/planning/planningPlaces.js'
 import PlanningPlaceFlyout from '../features/driver-day/PlanningPlaceFlyout.jsx'
 import DockLoadWorkspace from '../features/dock-load/DockLoadWorkspace.jsx'
 import DeliveryWorkspace from '../features/dock-delivery/DeliveryWorkspace.jsx'
+import DocumentsWorkspace from '../features/documents/DocumentsWorkspace.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -24,6 +25,9 @@ export default function DesktopShell({
   locations,
   bookingRecords,
   facilityOperations,
+  operationalDocuments = [],
+  documentAttentionCount = 0,
+  selectedDocumentId,
   selection,
   activeApp,
   focusedTask,
@@ -43,7 +47,9 @@ export default function DesktopShell({
   onFreightCandidateDriverChange,
   onSimulationModeChange,
   onRequestRateCon,
+  onOpenDocumentsForRateCon,
   onOpenRateCon,
+  onSelectDocument,
   onRequestRateConCorrection,
   onConfirmBooking,
   onOpenDockLoad,
@@ -74,6 +80,7 @@ export default function DesktopShell({
   ) ? freightRoutePreview : null
 
   const freightlinkOpen = activeApp === 'freightlink'
+  const documentsOpen = activeApp === 'documents'
   const freightDriver = activeFreightRoutePreview?.driver ?? null
   const freightCandidateDriver = freightlinkOpen
     ? drivers.find((driver) => driver.id === freightCandidateDriverId) ?? null
@@ -117,14 +124,19 @@ export default function DesktopShell({
     if (activeApp !== 'drivers') onToggleApp('drivers')
   }
 
-  const hasBrowser = activeApp === 'drivers' || freightlinkOpen
+  const hasBrowser = activeApp === 'drivers' || freightlinkOpen || documentsOpen
   const hasFreightInspector = freightlinkOpen && isSelection(selection, SELECTION_TYPES.LOAD)
+  const selectedDocument = documentsOpen
+    ? operationalDocuments.find((document) => document.id === selectedDocumentId) ?? null
+    : null
+  const hasDocumentInspector = documentsOpen && Boolean(selectedDocument)
   const hasOperationsInspector = (
     !freightlinkOpen
+    && !documentsOpen
     && Boolean(selection)
     && !operationsInspectorHidden
   )
-  const hasInspector = hasFreightInspector || hasOperationsInspector
+  const hasInspector = hasFreightInspector || hasDocumentInspector || hasOperationsInspector
 
   const focusedDockDriver = ['dock-load', 'dock-delivery'].includes(focusedTask?.type)
     ? drivers.find((driver) => driver.id === focusedTask.driverId) ?? null
@@ -216,12 +228,17 @@ export default function DesktopShell({
             hasBrowser ? 'browser-open' : '',
             hasInspector ? 'inspector-open' : '',
             freightlinkOpen ? 'freightlink-open' : '',
+            documentsOpen ? 'documents-open' : '',
             activeApp === 'drivers' ? 'fleet-browser-open' : '',
           ].filter(Boolean).join(' ')}
           style={selectedDriverIdentity ? { '--selected-driver-color': selectedDriverIdentity.color } : undefined}
           aria-label="DOC OS operations workstation"
         >
-          <CommandRail activeSection={activeApp} onToggleSection={toggleShellApp} />
+          <CommandRail
+            activeSection={activeApp}
+            attentionCounts={{ documents: documentAttentionCount }}
+            onToggleSection={toggleShellApp}
+          />
 
           {activeApp === 'drivers' && (
             <DriverBrowser
@@ -232,6 +249,16 @@ export default function DesktopShell({
               filter={driverBrowserFilter}
               onClearFilter={() => setDriverBrowserFilter('all')}
               onSelectSubject={onSelectSubject}
+            />
+          )}
+
+          {documentsOpen && (
+            <DocumentsWorkspace
+              documents={operationalDocuments}
+              selectedDocumentId={selectedDocumentId}
+              onSelectDocument={onSelectDocument}
+              onOpenRateCon={onOpenRateCon}
+              onClose={onCloseActiveApp}
             />
           )}
 
@@ -246,7 +273,7 @@ export default function DesktopShell({
               candidateDriverId={freightCandidateDriverId}
               onCandidateDriverChange={onFreightCandidateDriverChange}
               onRequestRateCon={onRequestRateCon}
-              onOpenRateCon={onOpenRateCon}
+              onOpenDocumentsForRateCon={onOpenDocumentsForRateCon}
               onSelectSubject={onSelectSubject}
               onClose={onCloseActiveApp}
               onRoutePreviewChange={onRoutePreviewChange}
