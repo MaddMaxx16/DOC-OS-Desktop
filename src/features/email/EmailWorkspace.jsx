@@ -22,6 +22,12 @@ function senderInitials(name = '') {
     .join('') || 'EM'
 }
 
+function attachmentTone(message) {
+  if (['ACCEPTED', 'RECEIVED'].includes(message?.statusLabel)) return 'complete'
+  if (String(message?.statusLabel ?? '').includes('CORRECTION')) return 'waiting'
+  return 'attention'
+}
+
 export default function EmailWorkspace({
   messages = [],
   selectedEmailId,
@@ -198,7 +204,7 @@ export default function EmailWorkspace({
                     </small>
                   </div>
 
-                  <div className="email-attachment-status">
+                  <div className={'email-attachment-status ' + attachmentTone(selectedMessage)}>
                     <span>{selectedMessage.statusLabel}</span>
                     <small>{selectedMessage.printed ? 'Physical copy created' : 'Digital attachment'}</small>
                   </div>
