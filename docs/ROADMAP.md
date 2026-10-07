@@ -25,9 +25,9 @@ V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.9.1.2 · Email Sidebar Spacing**
+**V2.9.1.3 · Shared Left-Panel Gutters**
 
-V2.9.1 implemented Email intake and V2.9.1.1 corrected the reader into a real email client. The next visual pass found the inbox/browser content too close to panel edges. V2.9.1.2 adds safe gutters and resilient row layout without changing Email behavior.
+V2.9.1 implemented Email intake, V2.9.1.1 corrected the reader, and V2.9.1.2 exposed a broader workstation-spacing issue. V2.9.1.3 standardizes safe browser gutters across every left workstation panel without changing gameplay.
 
 ### What that means
 
@@ -376,7 +376,9 @@ A Rate Con and later a POD can arrive digitally without appearing on the physica
 
 ### V2.9.1.1 · Email Reader Polish — IMPLEMENTED
 
-### V2.9.1.2 · Email Sidebar Spacing — ACTIVE
+### V2.9.1.2 · Email Sidebar Spacing — IMPLEMENTED
+
+### V2.9.1.3 · Shared Left-Panel Gutters — ACTIVE
 
 Visual correction goals:
 
