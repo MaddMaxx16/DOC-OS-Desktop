@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.9.1.3 SHARED LEFT-PANEL GUTTERS IN VERIFY**
+**IMPLEMENTED · V2.9.1.4 DOCUMENTS PANEL GUTTER FIX IN VERIFY**
 
 Accepted base checkpoint:
 
@@ -305,6 +305,22 @@ Locked correction:
 Acceptance:
 
 Switch through Fleet, FreightLink, Email, and Documents. Their left browser content should feel aligned and consistently inset, with noticeably safer spacing on the right edge.
+
+---
+
+## V2.9.1.4 · Documents Panel Gutter Fix
+
+The shared gutter rule remains intact. Documents gets a larger effective right safe area because its filing-cabinet layout contains wider status chips and denser nested content than the other browsers.
+
+Locked correction:
+
+- Documents right gutter = 24px,
+- header, filters, notices, and load-file list all consume that gutter,
+- cabinet scrollbar reserves stable space,
+- file header status uses a shrink-safe two-column layout,
+- expanded folder content remains width-safe,
+- empty state sits inside the cabinet gutter instead of adding conflicting outer margins,
+- no Documents gameplay or filing behavior changes.
 
 ---
 
