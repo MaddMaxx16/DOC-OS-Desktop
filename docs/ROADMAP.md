@@ -25,9 +25,9 @@ V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.9.1.1 · Email Reader Polish**
+**V2.9.1.2 · Email Sidebar Spacing**
 
-V2.9.1 implemented Email as the digital intake layer. The first visual playtest confirmed the workflow but showed that the reader still looked too much like Documents. V2.9.1.1 keeps the intake/print behavior intact and corrects the presentation into a real email client.
+V2.9.1 implemented Email intake and V2.9.1.1 corrected the reader into a real email client. The next visual pass found the inbox/browser content too close to panel edges. V2.9.1.2 adds safe gutters and resilient row layout without changing Email behavior.
 
 ### What that means
 
@@ -374,7 +374,9 @@ Acceptance:
 
 A Rate Con and later a POD can arrive digitally without appearing on the physical Documents desk; printing each attachment deliberately creates the physical paper that enters the existing filing gameplay.
 
-### V2.9.1.1 · Email Reader Polish — ACTIVE
+### V2.9.1.1 · Email Reader Polish — IMPLEMENTED
+
+### V2.9.1.2 · Email Sidebar Spacing — ACTIVE
 
 Visual correction goals:
 
