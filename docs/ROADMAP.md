@@ -23,6 +23,12 @@ Current `main` before the V2.8 transition:
 
 V2.7.6.8 is visually accepted.
 
+### Current candidate
+
+**V2.8.1 · Documents Workspace & Rate Con Handoff**
+
+Implementation is complete and the automated verification gate has passed. Visual/gameplay acceptance is still pending, so V2.7.6.8 remains the formal accepted checkpoint until that flow is proven.
+
 ### What that means
 
 The current Desktop build has a coherent operational freight loop:
@@ -93,7 +99,7 @@ Delivered:
 - trailer-capacity signals,
 - manifest insertion evaluation.
 
-## V2.5 · Booking + Rate Confirmation — FUNCTIONALLY COMPLETE / WORKFLOW RELOCATION PENDING
+## V2.5 · Booking + Rate Confirmation — FUNCTIONALLY COMPLETE / WORKFLOW RELOCATION IMPLEMENTED
 
 Delivered:
 
@@ -107,11 +113,12 @@ Delivered:
 - deliberate accept-with-mismatch path,
 - accepted Rate Con terms become booking authority.
 
-Still required:
+V2.8.1 now moves Rate Confirmation viewing into Documents and preserves the accepted current Rate Con as retrievable paperwork.
 
-- move Rate Confirmation ownership out of FreightLink viewing,
-- surface Rate Con through Documents and later Email,
-- preserve accepted/superseded paperwork as retrievable operational documents.
+Still later:
+
+- Email becomes an additional delivery path in V2.9,
+- full accepted/superseded revision history is completed in V2.8.2.
 
 ## V2.6 · Daily Planning — COMPLETE
 
@@ -190,7 +197,7 @@ This is intentionally deferred until Documents / Communications begin connecting
 
 # V2.8 · Documents
 
-## V2.8.1 · Documents Workspace & Rate Con Handoff — NEXT
+## V2.8.1 · Documents Workspace & Rate Con Handoff — IMPLEMENTED / AUTOMATED VERIFY PASS / VISUAL ACCEPTANCE PENDING
 
 Goal:
 
@@ -209,9 +216,22 @@ Build:
 - FreightLink may show document status but may not directly display the Rate Con,
 - expose POD records in Documents even before full POD paper review lands.
 
-Acceptance:
+Delivered:
 
-A player requests a Rate Con in FreightLink, waits for it, opens Documents, finds the correct Rate Con, and launches the existing focused review from there.
+- Documents enabled on the command rail,
+- unified Rate Con + POD operational document index,
+- left document browser and filters,
+- selected-document inspector,
+- document attention badge,
+- Rate Con review entry owned by Documents,
+- FreightLink handoff copy and CHECK DOCUMENTS navigation,
+- accepted current Rate Con retained after booking,
+- live POD state surfaced from Delivery records,
+- domain and shell regression coverage.
+
+Automated verification passed on the V2.8.1 closeout candidate.
+
+Acceptance still requires the critical visual/gameplay flow: request Rate Con → Documents → focused review/correction/acceptance → retained accepted paperwork → Delivery POD visibility/status advancement.
 
 ## V2.8.2 · Document Revisions & Rate Con Archive
 
@@ -436,7 +456,7 @@ Use:
 - `README.md` — public/current project snapshot,
 - `docs/ROADMAP.md` — durable build order and future plan,
 - `AGENTS.md` — active implementation contract,
-- `docs/IMPLEMENTATION_V2.8.1.md` — next-build packet,
+- `docs/IMPLEMENTATION_V2.8.1.md` — current acceptance packet,
 - `docs/DESKTOP_EXPERIENCE_ARCHITECTURE_V2.md` — long-term desktop architecture decisions.
 
 When a major sequencing decision changes, update **this roadmap** in the same change.

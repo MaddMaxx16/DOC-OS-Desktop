@@ -10,6 +10,10 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.7.6.8 · Dock Continuity & Placement Stability`
 
+**Current candidate:** `V2.8.1 · Documents Workspace & Rate Con Handoff`
+
+V2.8.1 is implemented and has passed the automated verification gate (install, lint, tests, and production build). Visual/gameplay acceptance is still required before it becomes the accepted checkpoint.
+
 The operational freight loop is now substantially playable:
 
 - desktop workstation shell and shared selection,
@@ -24,38 +28,45 @@ The operational freight loop is now substantially playable:
 - physical Delivery unloading / space-management puzzle,
 - rear handling-path constraints and Temp Staging,
 - receiver SOP sequencing,
-- POD records created after Delivery and advanced by simulation time.
+- POD records created after Delivery and advanced by simulation time,
+- Documents as a live workstation app,
+- unified Rate Con + POD document indexing,
+- Documents attention badges and document selection,
+- Rate Con handoff from FreightLink into Documents,
+- existing Focused Document Mode launched from Documents.
 
 ### Important current gaps
 
-The operations engine is ahead of the workstation communication layer.
+The V2.8.1 implementation is technically complete, but the checkpoint is not formally accepted until the visual/gameplay flow is playtested.
 
-- **Documents** is not yet a first-class command-rail app.
+Still pending after that gate:
+
 - **Email** is not yet implemented.
 - **Messages** is not yet implemented.
-- Rate Confirmation review currently opens directly from FreightLink and must move into the Documents/Email workflow.
-- POD records exist in game state but are not yet exposed through the workstation.
-- Send Schedule is still too tightly coupled to Planning mode.
+- accepted Rate Con revision/archive viewing is deferred to V2.8.2,
+- focused POD review/correction is deferred to V2.8.3,
+- Send Schedule is still too tightly coupled to Planning mode,
 - Live Operations has Play/Fast Forward but no **Advance to Next Operational Moment** control yet.
 
-## Next build
+## Current acceptance gate
 
 ### V2.8.1 · Documents Workspace & Rate Con Handoff
 
-The next build will:
+Implemented and automated-verified. The remaining acceptance flow is:
 
-- enable Documents as a real workstation app,
-- create a unified document index over existing Rate Con and POD state,
-- surface document status and load association,
-- open Rate Confirmations from Documents into the existing Focused Document Mode,
-- remove direct Rate Con document viewing from FreightLink,
-- keep FreightLink responsible for requesting paperwork and showing booking status,
-- preserve the existing Rate Con comparison/correction/acceptance gameplay,
-- expose existing POD records in Documents as groundwork for focused POD review.
+1. request a Rate Con in FreightLink,
+2. confirm FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
+3. open the matching Rate Con in Documents,
+4. launch the existing Focused Document Mode,
+5. exercise mismatch/correction/acceptance behavior,
+6. confirm the accepted Rate Con remains filed,
+7. complete a Delivery and confirm the POD appears and advances status correctly.
 
-See the full implementation packet:
+See the implementation packet:
 
 - [V2.8.1 Implementation Packet](docs/IMPLEMENTATION_V2.8.1.md)
+
+After V2.8.1 is visually accepted, the next packet is **V2.8.2 · Document Revisions & Rate Con Archive**.
 
 ## Roadmap
 

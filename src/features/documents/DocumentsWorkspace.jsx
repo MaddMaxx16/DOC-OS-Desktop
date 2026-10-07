@@ -31,7 +31,7 @@ function DocumentTypeMark({ type }) {
   )
 }
 
-function RateConInspector({ document, onOpenRateCon }) {
+function RateConInspector({ document, driverLabel, onOpenRateCon }) {
   const canReview = (
     document.status === 'REVIEW_REQUIRED'
     || document.status === 'CORRECTED_RATE_CON_READY'
@@ -43,6 +43,7 @@ function RateConInspector({ document, onOpenRateCon }) {
         <div><span>DOCUMENT</span><strong>Rate Confirmation</strong></div>
         <div><span>LOAD</span><strong>{document.loadRef}</strong></div>
         <div><span>REVISION</span><strong>R{document.revision}</strong></div>
+        <div><span>DRIVER</span><strong>{driverLabel}</strong></div>
         <div><span>SOURCE</span><strong>{document.brokerName}</strong></div>
         <div className="wide"><span>STATUS</span><strong className={documentTone(document)}>{document.statusLabel}</strong></div>
       </div>
@@ -65,7 +66,7 @@ function RateConInspector({ document, onOpenRateCon }) {
           <div className="document-next-action complete">
             <span>FILED</span>
             <strong>This Rate Confirmation was accepted for the booked load.</strong>
-            <small>Full revision/archive viewing is scheduled for the next Documents packet.</small>
+            <small>The accepted paperwork stays filed with the booked load.</small>
           </div>
         )}
       </section>
@@ -136,7 +137,7 @@ function PodInspector({ document }) {
           <div className="document-next-action attention">
             <span>REVIEW REQUIRED</span>
             <strong>{exceptionCount} delivery exception signal{exceptionCount === 1 ? '' : 's'} require document review.</strong>
-            <small>The focused POD review workflow arrives in the dedicated POD packet.</small>
+            <small>Delivery exceptions are recorded on this POD and require follow-up.</small>
           </div>
         ) : (
           <div className="document-next-action complete">
@@ -159,6 +160,7 @@ function PodInspector({ document }) {
 
 export default function DocumentsWorkspace({
   documents = [],
+  drivers = [],
   selectedDocumentId,
   onSelectDocument,
   onOpenRateCon,
@@ -172,6 +174,9 @@ export default function DocumentsWorkspace({
   )
 
   const selectedDocument = documents.find((document) => document.id === selectedDocumentId) ?? null
+  const selectedDriver = selectedDocument?.driverId
+    ? drivers.find((driver) => driver.id === selectedDocument.driverId) ?? null
+    : null
 
   useEffect(() => {
     if (selectedDocumentId && documents.some((document) => document.id === selectedDocumentId)) return
@@ -262,7 +267,11 @@ export default function DocumentsWorkspace({
 
           <div className="documents-inspector-scroll">
             {selectedDocument.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION ? (
-              <RateConInspector document={selectedDocument} onOpenRateCon={onOpenRateCon} />
+              <RateConInspector
+                document={selectedDocument}
+                driverLabel={selectedDriver?.name ?? selectedDocument.driverId ?? '—'}
+                onOpenRateCon={onOpenRateCon}
+              />
             ) : (
               <PodInspector document={selectedDocument} />
             )}

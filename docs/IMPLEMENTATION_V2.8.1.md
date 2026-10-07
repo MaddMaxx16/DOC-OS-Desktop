@@ -2,11 +2,11 @@
 
 ## Status
 
-**NEXT BUILD**
+**IMPLEMENTED · AUTOMATED VERIFY PASSED · VISUAL ACCEPTANCE PENDING**
 
-V2.7.6.8 is accepted and locked.
+V2.7.6.8 remains the accepted and locked checkpoint until this packet passes its manual visual/gameplay acceptance flow.
 
-This packet begins the V2.8 Documents phase.
+V2.8.1 implementation is complete. The closeout audit verified the required document index, Documents workspace, Rate Con handoff, accepted-document retention, POD visibility, attention logic, and regression coverage. The technical verification gate (install, lint, tests, production build) is green.
 
 ---
 
@@ -23,14 +23,14 @@ The current Desktop build already has real document-related gameplay underneath 
 
 The problem is that the workstation does not yet expose those systems coherently.
 
-Today:
+Before this packet:
 
-- FreightLink directly opens the Rate Confirmation,
-- Documents is disabled,
-- Email is not built,
-- POD records are created but invisible to the player.
+- FreightLink directly opened the Rate Confirmation,
+- Documents was disabled,
+- Email was not built,
+- POD records were created but invisible to the player.
 
-V2.8.1 creates the first real Documents workspace and moves Rate Confirmation access to the correct operational home.
+V2.8.1 now provides the first real Documents workspace and moves Rate Confirmation access to the correct operational home. Email remains intentionally deferred.
 
 ---
 
@@ -502,6 +502,20 @@ Manual playtest should confirm:
 - closing review returns cleanly,
 - Rate Con no longer feels like a FreightLink-owned screen,
 - POD appearing in Documents feels naturally connected to the completed Delivery operation.
+
+---
+
+## Closeout audit result
+
+The implementation audit found and corrected three final contract gaps before verification:
+
+- Rate Con inspector now includes driver context,
+- FreightLink explicitly communicates **RATE CON RECEIVED** before **CHECK DOCUMENTS**,
+- player-facing Documents copy no longer exposes internal future-packet roadmap language.
+
+Automated verification passed after these corrections.
+
+The only remaining gate is the manual visual/gameplay acceptance flow below.
 
 ---
 
