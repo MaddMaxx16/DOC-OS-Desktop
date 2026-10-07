@@ -10,9 +10,9 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.7.6.8 · Dock Continuity & Placement Stability`
 
-**Current candidate:** `V2.8.1.2 · Load Files & Unified Paper Workflow`
+**Current candidate:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-V2.8.1.2 is the active acceptance correction after the Documents desk playtest exposed the missing organizing principle: paperwork belongs to a load file, not to a flat document list. Each load now owns one working folder that collects its Rate Con and POD records, keeps those papers together on the desk, and remains open through future billing/payment closeout.
+V2.8.1.3 locks the Documents interaction model: load folders live in the filing cabinet, while every unfiled paper from every load lives together on one persistent desk. Selecting a folder never filters the desk. Filing is a deliberate player action, and a load packet cannot be submitted until its current required documents are filed in acceptable status.
 
 The operational freight loop is now substantially playable:
 
@@ -37,7 +37,7 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The V2.8.1 feature set is implemented, but acceptance remains open while the Documents interaction is corrected around load files. The V2.8.1.1 Delivery deadlock fix is retained inside this candidate.
+The V2.8.1 feature set is implemented, but acceptance remains open while the filing gameplay is proven. The V2.8.1.1 Delivery deadlock fix and V2.8.1.2 unified-paper work are retained inside this candidate.
 
 Still pending after that gate:
 
@@ -50,19 +50,22 @@ Still pending after that gate:
 
 ## Current acceptance gate
 
-### V2.8.1.2 · Load Files & Unified Paper Workflow
+### V2.8.1.3 · Global Paper Desk & Filing Gameplay
 
 Correction pass in verification. The acceptance flow is:
 
 1. request a Rate Con in FreightLink,
 2. confirm FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
-3. open Documents and verify the left cabinet lists one load file per load rather than one row per paper,
-4. open the matching load file and confirm its papers share one physical working folder on the desk,
-5. drag a paper, single-click to select it, and double-click the Rate Con to enter the existing focused MATCH / ISSUE review,
-6. exercise mismatch/correction/acceptance behavior and confirm the accepted paper remains inside the same load file,
-7. reproduce Taylor Brooks / T-110 at Jersey City Crossdock and confirm all three Forklift Handling units can clear the receiving floor,
-8. complete a Delivery and confirm the POD is added to the same load file and advances status correctly,
-9. confirm a delivered file stays open for billing rather than being prematurely treated as closed.
+3. open Documents and verify the left cabinet lists one load file per load while the center desk shows every unfiled paper across all loads,
+4. expand different folders and confirm the desk does not change or filter,
+5. drag a paper onto its matching folder and confirm it leaves the desk and appears under that file,
+6. attempt a wrong-file drop and confirm the paper is rejected rather than silently misfiled,
+7. return a filed paper to the desk and confirm it becomes loose paperwork again,
+8. double-click the Rate Con and complete the existing MATCH / ISSUE review; accepted Rate Cons show a visible paper stamp,
+9. complete a Delivery and confirm the POD lands on the global desk rather than auto-filing,
+10. file all current required papers and confirm **SUBMIT LOAD FILE** remains disabled until every requirement is satisfied,
+11. submit the complete packet and confirm filing is locked for that submitted load,
+12. reproduce Taylor Brooks / T-110 at Jersey City Crossdock and confirm all three Forklift Handling units can clear the receiving floor.
 
 See the implementation packet:
 
