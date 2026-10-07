@@ -2,7 +2,7 @@ export const SHELL_CONFIG = Object.freeze({
   referenceWidth: 1920,
   referenceHeight: 1080,
   commandRailWidth: 76,
-  browserWidth: 340,
+  browserWidth: 385,
   inspectorWidth: 430,
 })
 

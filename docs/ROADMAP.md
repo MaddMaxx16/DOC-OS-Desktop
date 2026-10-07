@@ -25,9 +25,9 @@ V2.7.6.8 is visually accepted.
 
 ### Current candidate
 
-**V2.8.1 · Documents Workspace & Rate Con Handoff**
+**V2.8.1.1 · Documents Desk Polish & Delivery Fix**
 
-Implementation is complete and the automated verification gate has passed. Visual/gameplay acceptance is still pending, so V2.7.6.8 remains the formal accepted checkpoint until that flow is proven.
+The first V2.8.1 visual playtest found two acceptance blockers: Documents still felt map-owned instead of paperwork-owned, and Taylor's T-110 Delivery could deadlock the Forklift Handling receiving floor. V2.8.1.1 is the active correction candidate. V2.7.6.8 remains the formal accepted checkpoint until this correction passes automated verification and manual playtest.
 
 ### What that means
 
@@ -232,6 +232,19 @@ Delivered:
 Automated verification passed on the V2.8.1 closeout candidate.
 
 Acceptance still requires the critical visual/gameplay flow: request Rate Con → Documents → focused review/correction/acceptance → retained accepted paperwork → Delivery POD visibility/status advancement.
+
+### V2.8.1.1 · Acceptance correction
+
+Playtest findings being corrected before V2.8.1 acceptance:
+
+- Documents center workspace becomes a dedicated paper desk instead of the live map,
+- the left Documents browser is treated as a filing cabinet,
+- Fleet, FreightLink, and Documents share one browser-width rule,
+- command-rail labels stop clipping,
+- Jersey City Forklift Handling receives enough physical floor capacity for T-110's two heavy skids plus oversize crate,
+- receiver placement never silently shrinks a freight footprint.
+
+The correction does not change the V2.8 architecture or advance to V2.8.2.
 
 ## V2.8.2 · Document Revisions & Rate Con Archive
 

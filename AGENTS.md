@@ -32,11 +32,11 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.8.1 Documents Workspace & Rate Con Handoff
+## Current packet — V2.8.1.1 Documents Desk Polish & Delivery Fix
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
-V2.8.1 is implemented and has passed the automated verification gate. It remains the active acceptance packet until visual/gameplay acceptance is complete.
+V2.8.1 is implemented. The first visual/gameplay acceptance pass found a Documents presentation issue and a Delivery receiving-floor deadlock. V2.8.1.1 is the active correction pass and must complete automated verification plus manual playtest before V2.8 is accepted.
 
 The active acceptance packet is:
 
@@ -58,7 +58,7 @@ V2.8.1 now corrects the prior workflow-ownership problem:
 - Documents launches the existing focused Rate Con review,
 - Email remains deferred to V2.9.
 
-The remaining V2.8.1 gate is visual/gameplay acceptance, not another architecture rewrite.
+V2.8.1.1 is a correction pass, not an architecture rewrite: Documents owns its center workspace as a physical paperwork desk, workstation browser width is consistent across apps, and the recorded Delivery deadlock is fixed without changing the receiving protocol.
 
 ### Core workflow rule
 
@@ -147,6 +147,6 @@ Before merging meaningful changes:
 3. `npm run build`
 4. Manual browser screenshot review for visual work.
 
-The V2.8.1 closeout candidate has passed install, lint, tests, and production build in GitHub Actions.
+The original V2.8.1 closeout candidate passed install, lint, tests, and production build in GitHub Actions. V2.8.1.1 must pass the same gate after its correction changes.
 
-A green build does not equal visual acceptance. Do not mark V2.8.1 accepted until the critical Documents/Rate Con/POD flow is manually playtested.
+A green build does not equal visual acceptance. Do not mark V2.8 accepted until the corrected Documents desk and the Taylor T-110/Jersey City Delivery repro are manually playtested.

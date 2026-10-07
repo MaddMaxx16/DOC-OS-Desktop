@@ -151,13 +151,135 @@ function PodInspector({ document }) {
       <footer className="documents-inspector-footer static">
         <div>
           <span>{document.statusLabel}</span>
-          <strong>{document.status === 'REVIEW_REQUIRED' ? 'Document needs attention.' : 'No document action is available in this packet.'}</strong>
+          <strong>{
+            document.status === 'REVIEW_REQUIRED'
+              ? 'Document needs attention.'
+              : document.status === 'PENDING_RECEIVER'
+                ? 'Waiting for receiver verification.'
+                : 'POD is filed with this load.'
+          }</strong>
         </div>
       </footer>
     </>
   )
 }
 
+function documentCanReview(document) {
+  return Boolean(
+    document?.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
+    && (
+      document.status === 'REVIEW_REQUIRED'
+      || document.status === 'CORRECTED_RATE_CON_READY'
+    )
+  )
+}
+
+function DocumentsDesk({
+  documents,
+  selectedDocument,
+  selectedDriver,
+  onOpenRateCon,
+}) {
+  const actionCount = documents.filter((document) => document.attention).length
+  const filedCount = documents.filter((document) => (
+    ['ACCEPTED', 'RECEIVED'].includes(document.status)
+  )).length
+  const canReview = documentCanReview(selectedDocument)
+
+  return (
+    <section className="documents-desk-workspace" aria-label="Document desk">
+      <header className="documents-desk-header">
+        <div>
+          <span>DOCUMENT DESK</span>
+          <strong>{selectedDocument ? [selectedDocument.shortTypeLabel, selectedDocument.loadRef].join(' · ') : 'No file selected'}</strong>
+        </div>
+        <small>{actionCount} need action · {filedCount} filed</small>
+      </header>
+
+      <div className="documents-desk-surface">
+        <div className="documents-desk-tray incoming" aria-hidden="true">
+          <span>INBOX</span>
+          <strong>{actionCount}</strong>
+          <small>Needs action</small>
+          <i /><i /><i />
+        </div>
+
+        <div className="documents-paper-stage">
+          <i className="documents-paper-shadow sheet-three" aria-hidden="true" />
+          <i className="documents-paper-shadow sheet-two" aria-hidden="true" />
+
+          {selectedDocument ? (
+            <article className={'documents-paper-preview ' + documentTone(selectedDocument)}>
+              <header>
+                <div>
+                  <span>{selectedDocument.type === OPERATIONAL_DOCUMENT_TYPE.POD ? 'RECEIVER COPY' : 'FREIGHTLINK BROKERAGE'}</span>
+                  <strong>{selectedDocument.type === OPERATIONAL_DOCUMENT_TYPE.POD ? 'PROOF OF DELIVERY' : 'RATE CONFIRMATION'}</strong>
+                </div>
+                <b>{selectedDocument.statusLabel}</b>
+              </header>
+
+              <div className="documents-paper-rule" />
+
+              {selectedDocument.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION ? (
+                <>
+                  <div className="documents-paper-grid">
+                    <p><span>LOAD</span><strong>{selectedDocument.loadRef}</strong></p>
+                    <p><span>REVISION</span><strong>R{selectedDocument.revision}</strong></p>
+                    <p><span>DRIVER</span><strong>{selectedDriver?.name ?? selectedDocument.driverId ?? '—'}</strong></p>
+                    <p><span>CONFIRMATION</span><strong>{selectedDocument.documentRecord?.confirmationNumber ?? '—'}</strong></p>
+                  </div>
+                  <section className="documents-paper-summary">
+                    <p><span>RATE</span><strong>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(selectedDocument.documentRecord?.terms?.rate ?? 0)}</strong></p>
+                    <p><span>EQUIPMENT</span><strong>{selectedDocument.documentRecord?.terms?.equipment ?? '—'}</strong></p>
+                    <p><span>PAYMENT</span><strong>{selectedDocument.documentRecord?.paymentTerms ?? '—'}</strong></p>
+                  </section>
+                </>
+              ) : (
+                <>
+                  <div className="documents-paper-grid">
+                    <p><span>LOAD</span><strong>{selectedDocument.loadRef}</strong></p>
+                    <p><span>RECEIVER</span><strong>{selectedDocument.facilityLabel}</strong></p>
+                    <p><span>SIGNATURE</span><strong>{selectedDocument.signaturePresent ? 'PRESENT' : 'PENDING'}</strong></p>
+                    <p><span>DELIVERED</span><strong>{selectedDocument.deliveredPieces} units</strong></p>
+                  </div>
+                  <section className="documents-paper-summary">
+                    <p><span>REFUSED</span><strong>{selectedDocument.refusedPieces}</strong></p>
+                    <p><span>SHORTAGE</span><strong>{selectedDocument.shortagePieces}</strong></p>
+                    <p><span>DAMAGE</span><strong>{selectedDocument.damageNoted ? 'NOTED' : 'NONE'}</strong></p>
+                  </section>
+                </>
+              )}
+
+              <footer>
+                <span>{selectedDocument.source}</span>
+                {canReview ? (
+                  <button type="button" onClick={() => onOpenRateCon(selectedDocument.laneId)}>
+                    OPEN PAPER DESK
+                  </button>
+                ) : (
+                  <strong>{selectedDocument.statusLabel}</strong>
+                )}
+              </footer>
+            </article>
+          ) : (
+            <div className="documents-paper-empty">
+              <span>EMPTY DESK</span>
+              <strong>Select a file from the cabinet.</strong>
+              <small>The selected document will open here without replacing your inspector.</small>
+            </div>
+          )}
+        </div>
+
+        <div className="documents-desk-tray filed" aria-hidden="true">
+          <span>FILED</span>
+          <strong>{filedCount}</strong>
+          <small>Completed records</small>
+          <i /><i /><i />
+        </div>
+      </div>
+    </section>
+  )
+}
 export default function DocumentsWorkspace({
   documents = [],
   drivers = [],
@@ -189,9 +311,9 @@ export default function DocumentsWorkspace({
       <aside className="workstation-browser documents-browser" aria-label="Documents">
         <header className="workstation-panel-header documents-browser-header">
           <div>
-            <span>OPERATIONS FILES</span>
+            <span>FILING CABINET</span>
             <strong>Documents</strong>
-            <small>Rate Cons and delivery paperwork tied to active work.</small>
+            <small>Browse Rate Cons and delivery files by status.</small>
           </div>
           <button type="button" onClick={onClose} aria-label="Close Documents">×</button>
         </header>
@@ -233,23 +355,31 @@ export default function DocumentsWorkspace({
               >
                 <DocumentTypeMark type={document.type} />
                 <div className="document-row-copy">
-                  <span>{document.shortTypeLabel} · {document.loadRef}</span>
-                  <strong>{document.title}</strong>
+                  <div className="document-row-meta">
+                    <span>{document.shortTypeLabel} · {document.loadRef}</span>
+                    <strong className={documentTone(document)}>
+                      {document.attention && <i>!</i>}
+                      {document.statusLabel}
+                    </strong>
+                  </div>
+                  <strong className="document-row-title">{document.title}</strong>
                   <small>
                     {document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
                       ? `Revision R${document.revision} · ${document.source}`
                       : document.facilityLabel}
                   </small>
-                </div>
-                <div className="document-row-status">
-                  {document.attention && <i>!</i>}
-                  <strong>{document.statusLabel}</strong>
-                </div>
-              </button>
+                </div>              </button>
             )
           })}
         </div>
       </aside>
+
+      <DocumentsDesk
+        documents={documents}
+        selectedDocument={selectedDocument}
+        selectedDriver={selectedDriver}
+        onOpenRateCon={onOpenRateCon}
+      />
 
       {selectedDocument && (
         <aside className="workstation-inspector documents-inspector" aria-label={`${selectedDocument.title} details`}>
