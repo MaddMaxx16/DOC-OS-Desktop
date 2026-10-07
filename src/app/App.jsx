@@ -28,6 +28,7 @@ import {
   buildOperationalDocumentIndex,
   buildOperationalLoadFiles,
   operationalLoadFileAttentionCount,
+  OPERATIONAL_DOCUMENT_TYPE,
 } from '../domain/documents/operationalDocumentIndex.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
 import {
@@ -459,6 +460,25 @@ export default function App() {
     setFocusedTask({ type: 'rate-confirmation', laneId })
   }
 
+  const inspectDocument = (documentId) => {
+    const document = operationalDocuments.find((item) => item.id === documentId)
+    if (!document) return
+
+    setSelectedDocumentId(document.id)
+    setActiveApp('documents')
+
+    const bookingRecord = document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION
+      ? bookingRecords[document.laneId]
+      : null
+
+    if (bookingRecord?.status === BOOKING_STATUS.RATE_CON_READY) {
+      setFocusedTask({ type: 'rate-confirmation', laneId: document.laneId })
+      return
+    }
+
+    setFocusedTask({ type: 'document-inspect', documentId: document.id })
+  }
+
   const requestRateConCorrection = (laneId, reason) => {
     const lane = freightMarket.find((item) => item.id === laneId)
     if (!lane) return
@@ -668,6 +688,7 @@ export default function App() {
       onRequestRateCon={requestRateCon}
       onOpenDocumentsForRateCon={openDocumentsForRateCon}
       onOpenRateCon={openRateCon}
+      onInspectDocument={inspectDocument}
       onSelectDocument={setSelectedDocumentId}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}
