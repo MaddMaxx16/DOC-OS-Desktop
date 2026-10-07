@@ -38,7 +38,11 @@ function RailIcon({ id, label }) {
   return <span aria-hidden="true">{label.slice(0, 2).toUpperCase()}</span>
 }
 
-export default function CommandRail({ activeSection, onToggleSection }) {
+export default function CommandRail({
+  activeSection,
+  attentionCounts = {},
+  onToggleSection,
+}) {
   return (
     <nav className="command-rail" aria-label="DOC OS workstation">
       <div className="command-rail-brand">
@@ -48,8 +52,9 @@ export default function CommandRail({ activeSection, onToggleSection }) {
 
       <div className="command-rail-sections">
         {WORKSTATION_SECTIONS.map((section) => {
-          const enabled = section.id === 'drivers' || section.id === 'freightlink'
+          const enabled = ['drivers', 'freightlink', 'documents'].includes(section.id)
           const active = activeSection === section.id
+          const attentionCount = Number(attentionCounts[section.id] ?? 0)
           return (
             <button
               type="button"
@@ -62,6 +67,11 @@ export default function CommandRail({ activeSection, onToggleSection }) {
             >
               <i><RailIcon id={section.id} label={section.label} /></i>
               <strong>{section.label}</strong>
+              {enabled && attentionCount > 0 && (
+                <em className="command-rail-badge" aria-label={`${attentionCount} items need attention`}>
+                  {attentionCount > 9 ? '9+' : attentionCount}
+                </em>
+              )}
               {!enabled && <small>{section.phase}</small>}
             </button>
           )
