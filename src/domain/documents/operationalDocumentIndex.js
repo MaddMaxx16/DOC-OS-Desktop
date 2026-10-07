@@ -273,7 +273,7 @@ export function buildOperationalLoadFiles(
         fileAssignments[document.id] === loadRef
       ))
       const deskDocuments = documentsForFile.filter((document) => (
-        !fileAssignments[document.id]
+        fileAssignments[document.id] !== loadRef
       ))
       const requirements = buildRequirementState(filedDocuments)
       const primary = documentsForFile[0] ?? null
