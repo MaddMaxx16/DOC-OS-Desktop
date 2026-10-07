@@ -32,13 +32,13 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.9.1.1 Email Reader Polish
+## Current packet — V2.9.1.2 Email Sidebar Spacing
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
 V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1 is implemented. V2.9.1.1 is the active visual correction: preserve the Email → print → Documents workflow, but make the reader present as a real email client instead of a document workspace.
+V2.9.1 and the V2.9.1.1 reader correction are implemented. V2.9.1.2 is a narrow visual correction: preserve the mailbox presentation and all Email behavior while adding safe inner gutters and preventing inbox-row clipping.
 
 The active acceptance packet is:
 
@@ -106,14 +106,14 @@ Locked invariant:
 
 ### Build
 
-V2.9.1 behavior is already implemented. V2.9.1.1 changes presentation only:
+V2.9.1 behavior is already implemented. V2.9.1.1 changed the reader presentation. V2.9.1.2 changes browser spacing only:
 
-- inbox rows should feel like mailbox rows,
-- opened message shows subject, From, To, date/time, message body, and signature,
-- attachment is compact and secondary to the message,
-- remove giant document-preview treatment from Email,
-- PRINT ATTACHMENT / OPEN DOCUMENTS remain attached to the attachment row,
-- printed state is an attachment state,
+- add safe left/right gutters to the Email browser,
+- keep row content inside the panel with border-box sizing,
+- keep sender/date layout resilient with a shrinking sender column,
+- truncate long timestamps safely instead of clipping outside the panel,
+- allow metadata chips to wrap when needed,
+- preserve the V2.9.1.1 mailbox reader exactly,
 - preserve unread/read/print behavior exactly,
 - preserve the accepted V2.8.1.3 cabinet/desk/filing/submission gameplay unchanged.
 
@@ -174,6 +174,6 @@ Before merging meaningful changes:
 
 V2.8.1.3 passed automated verification and manual acceptance.
 
-V2.9.1.1 must pass install, lint, tests, build, and manual visual playtest of the Email reader while preserving Rate Con/POD arrival, unread state, printing, and Documents handoff.
+V2.9.1.2 must pass install, lint, tests, build, and manual visual playtest of the Email browser gutters while preserving Rate Con/POD arrival, unread state, printing, and Documents handoff.
 
 A green build does not equal visual acceptance.
