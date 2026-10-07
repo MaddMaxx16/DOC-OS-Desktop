@@ -9,8 +9,6 @@
 
 .email-browser-header {
   min-height: 92px;
-  padding-left: 18px;
-  padding-right: 16px;
 }
 
 .email-browser-header small {
@@ -22,7 +20,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  padding: 10px 12px 11px 14px;
+  padding: 10px var(--workstation-browser-gutter-right) 11px var(--workstation-browser-gutter-left);
   border-bottom: 1px solid #1f303b;
 }
 
@@ -53,7 +51,7 @@
 }
 
 .email-notice {
-  margin: 9px 10px 0;
+  margin: 9px var(--workstation-browser-gutter-right) 0 var(--workstation-browser-gutter-left);
   padding: 8px 10px;
   border: 1px solid #315448;
   background: #0e1d18;
@@ -76,7 +74,7 @@
   display: grid;
   align-content: start;
   gap: 6px;
-  padding: 8px 10px 14px 12px;
+  padding: 8px var(--workstation-browser-gutter-right) 14px var(--workstation-browser-gutter-left);
 }
 
 .email-row {
