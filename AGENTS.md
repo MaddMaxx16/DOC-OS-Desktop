@@ -32,17 +32,17 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.9.1 Email Inbox & Print-to-Documents
+## Current packet — V2.9.1.1 Email Reader Polish
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
 V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1 is the active build. It introduces the digital intake layer that feeds Documents.
+V2.9.1 is implemented. V2.9.1.1 is the active visual correction: preserve the Email → print → Documents workflow, but make the reader present as a real email client instead of a document workspace.
 
 The active acceptance packet is:
 
-`docs/IMPLEMENTATION_V2.8.1.md`
+`docs/IMPLEMENTATION_V2.9.1.md`
 
 The durable build sequence lives in:
 
@@ -50,7 +50,7 @@ The durable build sequence lives in:
 
 ### Purpose
 
-Connect paperwork that already exists underneath the Desktop build to a real Documents workstation app.
+Make the implemented Email intake flow visually read as Email while preserving all V2.9.1 behavior.
 
 V2.8.1 now corrects the prior workflow-ownership problem:
 
@@ -106,23 +106,16 @@ Locked invariant:
 
 ### Build
 
-Implement:
+V2.9.1 behavior is already implemented. V2.9.1.1 changes presentation only:
 
-- Email command-rail enablement,
-- inbox + read/unread state,
-- unread Email badge,
-- message detail,
-- Rate Con arrival attachment,
-- corrected Rate Con attachment labeling,
-- POD email after receiver verification,
-- PRINT ATTACHMENT,
-- OPEN DOCUMENTS after print,
-- printed-document state,
-- Documents desk filtered to printed papers only,
-- Documents attention filtered to printed papers only,
-- FreightLink CHECK EMAIL handoff.
-
-Preserve the accepted V2.8.1.3 cabinet/desk/filing/submission gameplay unchanged.
+- inbox rows should feel like mailbox rows,
+- opened message shows subject, From, To, date/time, message body, and signature,
+- attachment is compact and secondary to the message,
+- remove giant document-preview treatment from Email,
+- PRINT ATTACHMENT / OPEN DOCUMENTS remain attached to the attachment row,
+- printed state is an attachment state,
+- preserve unread/read/print behavior exactly,
+- preserve the accepted V2.8.1.3 cabinet/desk/filing/submission gameplay unchanged.
 
 ### Preserve
 
@@ -181,6 +174,6 @@ Before merging meaningful changes:
 
 V2.8.1.3 passed automated verification and manual acceptance.
 
-V2.9.1 must pass install, lint, tests, build, and manual playtest of Rate Con/POD Email arrival, unread state, printing, and Documents handoff.
+V2.9.1.1 must pass install, lint, tests, build, and manual visual playtest of the Email reader while preserving Rate Con/POD arrival, unread state, printing, and Documents handoff.
 
 A green build does not equal visual acceptance.

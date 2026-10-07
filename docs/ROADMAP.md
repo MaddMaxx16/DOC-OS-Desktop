@@ -25,9 +25,9 @@ V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.9.1 · Email Inbox & Print-to-Documents**
+**V2.9.1.1 · Email Reader Polish**
 
-The Documents filing model is now stable enough to connect to a real communication channel. External paperwork must arrive digitally before it can become a physical paper. V2.9.1 makes Email the intake layer and printing the deliberate bridge into Documents.
+V2.9.1 implemented Email as the digital intake layer. The first visual playtest confirmed the workflow but showed that the reader still looked too much like Documents. V2.9.1.1 keeps the intake/print behavior intact and corrects the presentation into a real email client.
 
 ### What that means
 
@@ -340,7 +340,7 @@ Do not build full owner-era receivables here.
 
 # V2.9 · Email + Messages
 
-## V2.9.1 · Email Inbox & Print-to-Documents — ACTIVE
+## V2.9.1 · Email Inbox & Print-to-Documents — IMPLEMENTED / VISUAL CORRECTION ACTIVE
 
 Goal:
 
@@ -373,6 +373,17 @@ State rule:
 Acceptance:
 
 A Rate Con and later a POD can arrive digitally without appearing on the physical Documents desk; printing each attachment deliberately creates the physical paper that enters the existing filing gameplay.
+
+### V2.9.1.1 · Email Reader Polish — ACTIVE
+
+Visual correction goals:
+
+- opened messages use real email structure: subject, From, To, date/time, body, signature,
+- inbox rows read like mailbox rows rather than document cards,
+- attachment is a compact email attachment card, not a giant hero document preview,
+- PRINT ATTACHMENT and OPEN DOCUMENTS stay attached to the file row,
+- printed state lives with the attachment rather than taking over the message header,
+- no workflow/state changes from V2.9.1.
 
 ## V2.9.2 · Driver Messages
 

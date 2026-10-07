@@ -22,6 +22,8 @@ function rateConMessage(document, { readEmailIds, printedDocumentIds }) {
     loadRef: document.loadRef,
     senderName: document.brokerName ?? 'FreightLink Brokerage',
     senderAddress: 'operations@freightlink.example',
+    recipientName: 'Metroline Operations',
+    recipientAddress: 'dispatch@metroline.example',
     subject,
     preview: corrected
       ? 'The corrected Rate Confirmation is attached for review.'
@@ -30,12 +32,16 @@ function rateConMessage(document, { readEmailIds, printedDocumentIds }) {
       ? `The corrected Rate Confirmation for ${document.loadRef} is attached. Review the revised terms before confirming the freight.`
       : `The Rate Confirmation for ${document.loadRef} is attached. Print the paper to your Documents desk, then review the terms before confirming the freight.`,
     attachmentLabel: corrected ? 'Corrected Rate Confirmation' : 'Rate Confirmation',
+    attachmentFileName: corrected
+      ? `${document.loadRef}_Rate_Confirmation_R${document.revision ?? 1}.pdf`
+      : `${document.loadRef}_Rate_Confirmation.pdf`,
     attachmentTypeLabel: 'PDF',
     sourceLabel: 'FreightLink',
     statusLabel: document.statusLabel,
     unread: !readEmailIds[emailIdForDocument(document.id)],
     printed: Boolean(printedDocumentIds[document.id]),
     issuedAtLabel: document.issuedAtLabel ?? 'Today',
+    closingName: 'FreightLink Operations Desk',
   }
 }
 
@@ -51,6 +57,8 @@ function podMessage(document, { readEmailIds, printedDocumentIds }) {
     loadRef: document.loadRef,
     senderName,
     senderAddress: 'receiving@operations.example',
+    recipientName: 'Metroline Operations',
+    recipientAddress: 'dispatch@metroline.example',
     subject: `Proof of Delivery · ${document.loadRef}`,
     preview: hasException
       ? 'The POD is attached and requires review.'
@@ -59,12 +67,14 @@ function podMessage(document, { readEmailIds, printedDocumentIds }) {
       ? `The Proof of Delivery for ${document.loadRef} is attached with an exception that requires your attention. Print the paper to Documents before working the load file.`
       : `The signed Proof of Delivery for ${document.loadRef} is attached. Print the paper to Documents when you are ready to file the load packet.`,
     attachmentLabel: 'Proof of Delivery',
+    attachmentFileName: `${document.loadRef}_Proof_of_Delivery.pdf`,
     attachmentTypeLabel: 'PDF',
     sourceLabel: senderName,
     statusLabel: document.statusLabel,
     unread: !readEmailIds[emailIdForDocument(document.id)],
     printed: Boolean(printedDocumentIds[document.id]),
     issuedAtLabel: 'Receiver completed',
+    closingName: `${senderName} Receiving`,
   }
 }
 

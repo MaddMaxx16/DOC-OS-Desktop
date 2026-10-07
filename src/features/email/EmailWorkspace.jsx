@@ -13,10 +13,19 @@ function matchesFilter(message, filter) {
   return true
 }
 
-function emailTone(message) {
-  if (message.unread) return 'unread'
-  if (message.printed) return 'printed'
-  return 'read'
+function senderInitials(name = '') {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'EM'
+}
+
+function attachmentTone(message) {
+  if (['ACCEPTED', 'RECEIVED'].includes(message?.statusLabel)) return 'complete'
+  if (String(message?.statusLabel ?? '').includes('CORRECTION')) return 'waiting'
+  return 'attention'
 }
 
 export default function EmailWorkspace({
@@ -99,19 +108,23 @@ export default function EmailWorkspace({
               <button
                 type="button"
                 key={message.id}
-                className={'email-row ' + emailTone(message) + (selected ? ' selected' : '')}
+                className={'email-row' + (message.unread ? ' unread' : '') + (selected ? ' selected' : '')}
                 onClick={() => onSelectEmail(message.id)}
                 aria-pressed={selected}
               >
                 <div className="email-row-topline">
-                  <span>{message.senderName}</span>
+                  <span className="email-row-sender">
+                    {message.unread && <i aria-hidden="true" />}
+                    {message.senderName}
+                  </span>
                   <small>{message.issuedAtLabel}</small>
                 </div>
                 <strong>{message.subject}</strong>
                 <p>{message.preview}</p>
                 <div className="email-row-meta">
+                  <span>{message.documentId ? 'ATTACHMENT' : 'MESSAGE'}</span>
                   <i>{message.loadRef}</i>
-                  <em>{message.printed ? 'PRINTED' : message.unread ? 'NEW' : 'READ'}</em>
+                  {message.printed && <em>PRINTED</em>}
                 </div>
               </button>
             )
@@ -121,61 +134,103 @@ export default function EmailWorkspace({
 
       <section className="email-reading-pane" aria-label="Email message">
         {selectedMessage ? (
-          <>
-            <header className="email-message-header">
+          <article className="email-message">
+            <header className="email-subject-bar">
               <div>
-                <span>MESSAGE</span>
+                <span>INBOX</span>
                 <strong>{selectedMessage.subject}</strong>
-                <small>From: {selectedMessage.senderName} · {selectedMessage.senderAddress}</small>
               </div>
-              <div className={'email-message-state ' + emailTone(selectedMessage)}>
-                <span>{selectedMessage.printed ? 'PRINTED' : selectedMessage.unread ? 'NEW' : 'OPENED'}</span>
-              </div>
+              <small>{selectedMessage.issuedAtLabel}</small>
             </header>
 
-            <div className="email-message-body">
-              <div className="email-message-copy">
-                <p>{selectedMessage.body}</p>
-              </div>
-
-              <section className={'email-attachment-card ' + (selectedMessage.printed ? 'printed' : '')}>
-                <header>
-                  <div>
-                    <span>ATTACHMENT</span>
-                    <strong>{selectedMessage.attachmentLabel}</strong>
-                    <small>{selectedMessage.attachmentTypeLabel} · Load {selectedMessage.loadRef}</small>
+            <div className="email-message-scroll">
+              <div className="email-envelope">
+                <div className="email-sender-avatar" aria-hidden="true">
+                  {senderInitials(selectedMessage.senderName)}
+                </div>
+                <div className="email-envelope-main">
+                  <div className="email-from-line">
+                    <strong>{selectedMessage.senderName}</strong>
+                    <span>&lt;{selectedMessage.senderAddress}&gt;</span>
                   </div>
-                  <b>{selectedMessage.statusLabel}</b>
-                </header>
-
-                <div className="email-attachment-preview">
-                  <div className="email-attachment-sheet">
-                    <span>{selectedMessage.attachmentLabel}</span>
-                    <strong>{selectedMessage.loadRef}</strong>
-                    <small>{selectedMessage.sourceLabel}</small>
+                  <div className="email-to-line">
+                    <span>To:</span>
+                    <strong>{selectedMessage.recipientName}</strong>
+                    <small>&lt;{selectedMessage.recipientAddress}&gt;</small>
                   </div>
                 </div>
+                <div className="email-envelope-date">
+                  <span>{selectedMessage.issuedAtLabel}</span>
+                  <small>1 attachment</small>
+                </div>
+              </div>
 
-                <footer>
+              <div className="email-message-copy">
+                <p>{selectedMessage.recipientName},</p>
+                <p>{selectedMessage.body}</p>
+                <div className="email-signature">
+                  <span>Regards,</span>
+                  <strong>{selectedMessage.closingName}</strong>
+                  <small>{selectedMessage.senderName}</small>
+                </div>
+              </div>
+
+              <section className="email-attachments">
+                <header className="email-attachments-header">
                   <div>
-                    <span>{selectedMessage.printed ? 'PHYSICAL COPY CREATED' : 'DIGITAL ATTACHMENT'}</span>
-                    <strong>
-                      {selectedMessage.printed
-                        ? 'This paper is now available in Documents.'
-                        : 'Print this attachment to place a physical copy on the Documents desk.'}
-                    </strong>
+                    <span>ATTACHMENTS</span>
+                    <strong>1 file</strong>
                   </div>
-                  {selectedMessage.printed ? (
-                    <button type="button" onClick={onOpenDocuments}>OPEN DOCUMENTS</button>
-                  ) : (
-                    <button type="button" className="primary" onClick={printAttachment}>
-                      PRINT ATTACHMENT
-                    </button>
-                  )}
+                  {selectedMessage.printed && <b>PRINTED TO DOCUMENTS</b>}
+                </header>
+
+                <article className={'email-attachment-row' + (selectedMessage.printed ? ' printed' : '')}>
+                  <div className="email-attachment-thumbnail" aria-hidden="true">
+                    <div>
+                      <span>PDF</span>
+                      <strong>{selectedMessage.loadRef}</strong>
+                    </div>
+                  </div>
+
+                  <div className="email-attachment-info">
+                    <strong>{selectedMessage.attachmentFileName}</strong>
+                    <span>{selectedMessage.attachmentLabel}</span>
+                    <small>
+                      {selectedMessage.attachmentTypeLabel}
+                      {' · '}
+                      Load {selectedMessage.loadRef}
+                      {' · '}
+                      {selectedMessage.sourceLabel}
+                    </small>
+                  </div>
+
+                  <div className={'email-attachment-status ' + attachmentTone(selectedMessage)}>
+                    <span>{selectedMessage.statusLabel}</span>
+                    <small>{selectedMessage.printed ? 'Physical copy created' : 'Digital attachment'}</small>
+                  </div>
+
+                  <div className="email-attachment-actions">
+                    {selectedMessage.printed ? (
+                      <button type="button" onClick={onOpenDocuments}>OPEN DOCUMENTS</button>
+                    ) : (
+                      <button type="button" className="primary" onClick={printAttachment}>
+                        PRINT ATTACHMENT
+                      </button>
+                    )}
+                  </div>
+                </article>
+
+                <footer className="email-print-note">
+                  <span>{selectedMessage.printed ? 'PRINTED' : 'PRINT REQUIRED FOR PHYSICAL WORKFLOW'}</span>
+                  <strong>
+                    {selectedMessage.printed
+                      ? 'The physical copy is now available on the Documents desk.'
+                      : 'This attachment stays digital until you print it. Reading the email does not create a paper copy.'}
+                  </strong>
                 </footer>
               </section>
             </div>
-          </>
+          </article>
         ) : (
           <div className="email-empty-reading">
             <span>INBOX</span>

@@ -33,6 +33,10 @@ test('Rate Con appears as an unread email with printable attachment', () => {
   assert.equal(messages.length, 1)
   assert.equal(messages[0].id, emailIdForDocument(rateCon.id))
   assert.equal(messages[0].subject, 'Rate Confirmation · FL-402')
+  assert.equal(messages[0].recipientName, 'Metroline Operations')
+  assert.equal(messages[0].recipientAddress, 'dispatch@metroline.example')
+  assert.equal(messages[0].attachmentFileName, 'FL-402_Rate_Confirmation.pdf')
+  assert.equal(messages[0].closingName, 'FreightLink Operations Desk')
   assert.equal(messages[0].unread, true)
   assert.equal(messages[0].printed, false)
   assert.equal(operationalEmailUnreadCount(messages), 1)
@@ -50,6 +54,7 @@ test('corrected Rate Con email is clearly labeled corrected', () => {
   })
 
   assert.match(messages[0].subject, /Corrected Rate Confirmation/)
+  assert.match(messages[0].attachmentFileName, /_R1\.pdf$/)
   assert.match(messages[0].body, /corrected Rate Confirmation/)
 })
 
@@ -70,6 +75,8 @@ test('received POD appears in Email and printing state follows attachment state'
   })
 
   assert.equal(messages[0].subject, 'Proof of Delivery · T-110')
+  assert.equal(messages[0].attachmentFileName, 'T-110_Proof_of_Delivery.pdf')
+  assert.equal(messages[0].recipientName, 'Metroline Operations')
   assert.equal(messages[0].unread, false)
   assert.equal(messages[0].printed, true)
   assert.equal(operationalEmailUnreadCount(messages), 0)
