@@ -1671,6 +1671,7 @@ test('V2.8.1 makes Documents the operational home for Rate Con and POD records',
   assert.match(documents, /<span>DRIVER<\/span>/)
   assert.doesNotMatch(documents, /dedicated POD packet/)
   assert.doesNotMatch(documents, /next Documents packet/)
+  assert.doesNotMatch(documents, /available in this packet/)
   assert.match(documentsCss, /\.documents-workspace/)
   assert.match(documentsCss, /\.documents-browser/)
   assert.match(documentsCss, /\.documents-desk-workspace/)
