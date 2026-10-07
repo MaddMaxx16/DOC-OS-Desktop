@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE IMPLEMENTATION CANDIDATE**
+**IMPLEMENTED · V2.9.1.1 VISUAL CORRECTION IN VERIFY**
 
 Accepted base checkpoint:
 
@@ -237,6 +237,33 @@ Required shell/static contracts:
 14. verify POD still is not on Documents desk,
 15. print POD,
 16. verify POD enters global desk and existing filing gameplay.
+
+---
+
+## V2.9.1.1 · Email Reader Polish
+
+The first V2.9.1 playtest accepted the workflow but rejected the reader presentation as too document-centric.
+
+Locked visual correction:
+
+- preserve the inbox/read/unread/print state model,
+- preserve Email → PRINT → Documents ownership,
+- opened email must use normal message structure:
+  - subject,
+  - From,
+  - To,
+  - date/time,
+  - body copy,
+  - signature,
+- attachment becomes a compact row/card beneath the message,
+- attachment shows filename, type, load reference, source, document status, and print state,
+- PRINT ATTACHMENT / OPEN DOCUMENTS remain file actions,
+- remove the giant hero-paper preview from Email,
+- Email must not visually compete with Documents as the paper workspace.
+
+Acceptance:
+
+A player looking at the screen should immediately read it as **an email client with an attachment**, not as **a document viewer with an email note above it**.
 
 ---
 
