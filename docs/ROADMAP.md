@@ -344,50 +344,58 @@ Do not build full owner-era receivables here.
 
 Goal:
 
-Make business communication the arrival mechanism for external paperwork and create a deliberate digital-to-physical handoff.
+Keep paperwork organization as gameplay without forcing repetitive fake office plumbing.
+
+Locked architecture:
+
+**Operational system → Documents Incoming → Working Desk → Load File → Submit**
 
 Build:
 
-- enable Email on the command rail,
-- inbox,
-- read/unread,
-- message detail,
-- document attachments,
-- Rate Con arrival email,
-- corrected Rate Con email,
-- POD arrival email after receiver verification,
-- unread Email badge,
-- explicit **PRINT ATTACHMENT** action,
-- printed-document state,
-- Documents desk contains only printed physical copies,
-- FreightLink routes Rate Con arrivals to **CHECK EMAIL** instead of Documents.
+- Documents Incoming tray,
+- routine Rate Con arrival directly into Incoming,
+- finalized POD arrival directly into Incoming,
+- PENDING_RECEIVER POD withheld until receiver processing finishes,
+- player-controlled **PULL TO DESK** step,
+- global working desk remains independent of selected load file,
+- drag-to-file gameplay remains unchanged,
+- packet completeness/submission remains unchanged,
+- Documents badge counts Incoming papers waiting to be worked,
+- Email remains enabled for corrections, exceptions, and human communication,
+- corrected Rate Con email may point to related paperwork in Documents,
+- POD exception email may point to related paperwork in Documents.
 
-Architecture rule:
-
-**FreightLink requests it → Email delivers the digital attachment → Player prints it → Documents owns the physical copy.**
-
-State rule:
-
-**Received digitally ≠ printed ≠ filed ≠ requirement satisfied.**
-
-Acceptance:
-
-A Rate Con and later a POD can arrive digitally without appearing on the physical Documents desk; printing each attachment deliberately creates the physical paper that enters the existing filing gameplay.
+Do not reintroduce mandatory printing for routine documents.
 
 ### V2.9.1.1 · Email Reader Polish — IMPLEMENTED
 
+Mailbox presentation corrected to real sender/recipient/date/body structure.
+
 ### V2.9.1.2 · Email Sidebar Spacing — IMPLEMENTED
 
-### V2.9.1.3 · Shared Left-Panel Gutters — ACTIVE
+Email browser spacing corrected.
 
-Visual correction goals:
+### V2.9.1.3 · Shared Left-Panel Gutters — IMPLEMENTED
 
-- opened messages use real email structure: subject, From, To, date/time, body, signature,
-- inbox rows read like mailbox rows rather than document cards,
-- attachment is a compact email attachment card, not a giant hero document preview,
-- PRINT ATTACHMENT and OPEN DOCUMENTS stay attached to the file row,
-- printed state lives with the attachment rather than taking over the message header,
-- no workflow/state changes from V2.9.1.
+Fleet, FreightLink, Email, and Documents share safe browser gutter rules.
+
+### V2.9.1.4 · Documents Panel Gutter Fix — IMPLEMENTED
+
+Documents received a stronger right safe area.
+
+### V2.9.1.5 · Documents Browser Containment — IMPLEMENTED
+
+Documents direct browser children are width-contained.
+
+### V2.9.1.6 · Documents Incoming Tray — ACTIVE
+
+Acceptance target:
+
+- routine paperwork lands in Incoming,
+- Incoming does not automatically clutter the working desk,
+- player pulls papers onto the desk,
+- routine paperwork does not require Email or printing,
+- Email appears when communication itself matters.
 
 ## V2.9.2 · Driver Messages
 
