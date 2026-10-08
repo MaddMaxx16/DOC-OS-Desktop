@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.9.1.5 DOCUMENTS BROWSER CONTAINMENT IN VERIFY**
+**IMPLEMENTED · V2.9.1.6 DOCUMENTS INCOMING TRAY IN VERIFY**
 
 Accepted base checkpoint:
 
@@ -337,6 +337,35 @@ Locked correction:
 - header description wraps instead of ellipsizing off-panel,
 - close button remains fixed inside the header,
 - no filing or document gameplay changes.
+
+---
+
+## V2.9.1.6 · Documents Incoming Tray
+
+The mandatory print step is removed from routine paperwork.
+
+Locked workflow:
+
+> **Operational system → Documents Incoming → Working Desk → Load File → Submit**
+
+Rules:
+
+- routine Rate Cons arrive in Documents Incoming when FreightLink returns them,
+- finalized PODs arrive in Documents Incoming after receiver processing,
+- PENDING_RECEIVER PODs do not appear in Incoming yet,
+- Incoming papers do not automatically clutter the working desk,
+- player action **PULL TO DESK** moves a paper into the global desk,
+- only desk papers can be drag-filed into load folders,
+- unfiling returns a paper to the desk,
+- Documents badge counts papers waiting in Incoming,
+- routine Rate Con / clean POD arrival does not generate Email,
+- corrected Rate Con and POD exception may generate Email communication,
+- Email messages link the player back to Documents rather than printing attachments,
+- no packet-completeness or filing rules change.
+
+Acceptance:
+
+Create multiple loads and let paperwork accumulate in Incoming. Pull only selected papers onto the desk, leave others waiting, then review/file/submit normally. The loop should feel like desk organization gameplay without repetitive printer clicks.
 
 ---
 
