@@ -7,9 +7,10 @@ import {
 } from 'react'
 import {
   buildDeliveryAccessOrder,
+  buildExpectedPickupFreight,
   buildOnboardCargoForPickup,
+  buildPickupFacilityFreight,
   buildTrailerPuzzleBoard,
-  buildTutorialStagedFreight,
   canPlaceFreight,
   dockNumberForPickup,
   evaluatePickupLoadPlan,
@@ -96,6 +97,8 @@ function FreightManifestRow({
   planned,
   dragging,
   rotating,
+  damageNoted,
+  onNoteDamage,
   onRotate,
   onDragStart,
   onDragEnd,
@@ -114,6 +117,7 @@ function FreightManifestRow({
         planned ? 'planned' : '',
         dragging ? 'dragging' : '',
         rotating ? 'rotating' : '',
+        freight.condition === 'DAMAGED' ? 'pickup-damaged' : '',
       ].filter(Boolean).join(' ')}
       draggable={!planned}
       onDragStart={(event) => onDragStart(event, freight.id)}
@@ -161,9 +165,24 @@ function FreightManifestRow({
           {' · '}{pounds(freight.weightLbs)} lb
         </small>
         <small>{freight.destination}</small>
+        {freight.condition === 'DAMAGED' && (
+          <small className="pickup-damage-copy">
+            {freight.damageSeverity ?? 'DAMAGE'} · {freight.damageDescription ?? 'Visible damage at pickup'}
+          </small>
+        )}
       </div>
 
       <div className="pallet-piece-actions">
+        {freight.condition === 'DAMAGED' && (
+          <button
+            type="button"
+            className={damageNoted ? 'damage-noted' : 'note-damage'}
+            onClick={onNoteDamage}
+            title="Record that this damage was present before loading."
+          >
+            {damageNoted ? 'DAMAGE NOTED' : 'NOTE DAMAGE'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onRotate}
@@ -191,8 +210,12 @@ export default function DockLoadWorkspace({
     () => buildTrailerPuzzleBoard(driver.equipment),
     [driver.equipment],
   )
+  const expectedFreight = useMemo(
+    () => buildExpectedPickupFreight(event),
+    [event],
+  )
   const stagedFreight = useMemo(
-    () => buildTutorialStagedFreight(event),
+    () => buildPickupFacilityFreight(event),
     [event],
   )
   const carriedCargo = useMemo(
@@ -235,8 +258,8 @@ export default function DockLoadWorkspace({
   }, [deliveryOrder])
 
   const requiredFreightIds = useMemo(
-    () => stagedFreight.filter((freight) => freight.expected).map((freight) => freight.id),
-    [stagedFreight],
+    () => expectedFreight.map((freight) => freight.id),
+    [expectedFreight],
   )
   const currentStagedIds = useMemo(
     () => new Set(stagedFreight.map((freight) => freight.id)),
@@ -257,6 +280,8 @@ export default function DockLoadWorkspace({
   const [invalidDropReason, setInvalidDropReason] = useState(null)
   const [readyPulse, setReadyPulse] = useState(false)
   const [doorsClosing, setDoorsClosing] = useState(false)
+  const [discrepancyArmed, setDiscrepancyArmed] = useState(false)
+  const [pickupDamageNotes, setPickupDamageNotes] = useState({})
   const closeTimerRef = useRef(null)
   const rotateTimerRef = useRef(null)
   const settleTimerRef = useRef(null)
@@ -312,6 +337,7 @@ export default function DockLoadWorkspace({
         rotation: nextRotation,
       },
     }))
+    setDiscrepancyArmed(false)
     pulseRotation(freightId)
   }, [allFreight, board, placements, pulseRotation, rotations])
 
@@ -352,11 +378,13 @@ export default function DockLoadWorkspace({
       event,
       board,
       stagedFreight: allFreight,
+      expectedFreight,
       placements,
       requiredFreightIds,
+      documentedDamageIds: Object.keys(pickupDamageNotes).filter((id) => pickupDamageNotes[id]),
       deliveryOrder,
     }),
-    [allFreight, board, deliveryOrder, event, placements, requiredFreightIds],
+    [allFreight, board, deliveryOrder, event, expectedFreight, pickupDamageNotes, placements, requiredFreightIds],
   )
 
   useEffect(() => {
@@ -545,6 +573,7 @@ export default function DockLoadWorkspace({
         rotation,
       },
     }))
+    setDiscrepancyArmed(false)
     setSettlingFreightId(freightId)
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
     settleTimerRef.current = setTimeout(() => setSettlingFreightId(null), 260)
@@ -562,13 +591,19 @@ export default function DockLoadWorkspace({
       delete next[freightId]
       return next
     })
+    setDiscrepancyArmed(false)
     endDrag()
   }
 
   const occupantForCell = (cellIndex) => mapped.occupied.get(cellIndex) ?? null
 
   const commit = () => {
-    if (!evaluation.ready || doorsClosing) return
+    if (!evaluation.canCommit || doorsClosing) return
+    if (evaluation.discrepancies.length > 0 && !discrepancyArmed) {
+      setDiscrepancyArmed(true)
+      return
+    }
+
     setDoorsClosing(true)
 
     closeTimerRef.current = setTimeout(() => {
@@ -579,10 +614,17 @@ export default function DockLoadWorkspace({
         eventId: event.id,
         loadPlan: {
           freightIds: Object.keys(placements),
-          freightManifest: placedFreight.map((freight) => ({ ...freight })),
+          expectedFreightManifest: expectedFreight.map((freight) => ({ ...freight })),
+          freightManifest: placedFreight.map((freight) => ({
+            ...freight,
+            pickupDamageDocumented: Boolean(
+              freight.pickupDamageDocumented || pickupDamageNotes[freight.id],
+            ),
+          })),
           placements: { ...placements },
           board: { ...board },
           validation: evaluation,
+          pickupDiscrepancies: evaluation.discrepancies.map((issue) => ({ ...issue })),
           doorsState: 'closed',
         },
       })
@@ -594,10 +636,10 @@ export default function DockLoadWorkspace({
   )]
   const showDeliveryOrderBadges = deliveryOrder.length > 1
   const deliveryConflict = evaluation.deliveryAccess?.pairSummaries?.[0] ?? null
-  const remainingPickupUnits = Math.max(
-    0,
-    evaluation.expectedCount - evaluation.plannedExpectedCount,
-  )
+  const remainingPickupUnits = evaluation.notLoadedFreight.length
+  const facilityMissingUnits = evaluation.notTenderedFreight.length
+  const wrongLoadUnits = evaluation.wrongPlaced.length
+  const undocumentedDamageUnits = evaluation.undocumentedDamagedFreight.length
   const otherActionErrors = nonRuleErrors.filter(
     (issue) => issue.code !== 'REQUIRED_FREIGHT_NOT_PLANNED',
   )
@@ -677,7 +719,7 @@ export default function DockLoadWorkspace({
       className={[
         'dock-load-workspace',
         'puzzle-mode',
-        evaluation.ready ? 'load-ready' : '',
+        evaluation.ready ? 'load-ready' : evaluation.canCommit ? 'load-discrepancy' : '',
         readyPulse ? 'ready-pulse' : '',
         invalidDropReason ? 'invalid-drop' : '',
         doorsClosing ? 'committing' : '',
@@ -713,6 +755,14 @@ export default function DockLoadWorkspace({
               planned={plannedIds.has(freight.id)}
               dragging={dragFreightId === freight.id}
               rotating={rotatingFreightId === freight.id}
+              damageNoted={Boolean(pickupDamageNotes[freight.id])}
+              onNoteDamage={() => {
+                setPickupDamageNotes((current) => ({
+                  ...current,
+                  [freight.id]: true,
+                }))
+                setDiscrepancyArmed(false)
+              }}
               onRotate={() => rotate(freight.id)}
               onDragStart={startDrag}
               onDragEnd={endDrag}
@@ -975,16 +1025,30 @@ export default function DockLoadWorkspace({
               type="button"
               className={[
                 'dock-load-doors',
-                evaluation.ready ? 'ready' : '',
+                evaluation.ready ? 'ready' : evaluation.canCommit ? 'discrepancy' : '',
                 doorsClosing ? 'closing' : '',
               ].filter(Boolean).join(' ')}
               onClick={commit}
-              disabled={!evaluation.ready || doorsClosing}
-              aria-label={evaluation.ready ? 'Close trailer doors and commit load plan' : 'Load plan is not ready'}
+              disabled={!evaluation.canCommit || doorsClosing}
+              aria-label={evaluation.ready
+                ? 'Close trailer doors and commit load plan'
+                : evaluation.canCommit
+                  ? 'Close trailer doors with pickup discrepancies'
+                  : 'Load plan is not safe to commit'}
             >
               <i />
               <i />
-              <b>{doorsClosing ? 'SENDING PLAN…' : evaluation.ready ? 'CLOSE DOORS' : 'PLAN NOT READY'}</b>
+              <b>
+                {doorsClosing
+                  ? 'SENDING PLAN…'
+                  : evaluation.ready
+                    ? 'CLOSE DOORS'
+                    : evaluation.canCommit
+                      ? discrepancyArmed
+                        ? 'CONFIRM DEPARTURE'
+                        : 'CLOSE WITH DISCREPANCY'
+                      : 'PLAN NOT READY'}
+              </b>
             </button>
           </div>
         </div>
@@ -1279,7 +1343,30 @@ export default function DockLoadWorkspace({
         {evaluation.ready ? (
           <section className="dock-load-actions ready dock-load-ready-strip">
             <strong>READY TO CLOSE</strong>
-            <span>All freight loaded · trailer rules clear</span>
+            <span>Booked freight accounted for · trailer rules clear</span>
+          </section>
+        ) : evaluation.canCommit && evaluation.discrepancies.length > 0 ? (
+          <section className="dock-load-actions discrepancy">
+            <header>
+              <span>PICKUP DISCREPANCIES</span>
+              <strong>{evaluation.discrepancies.length} OPEN</strong>
+            </header>
+            <div className="dock-load-action-list">
+              {evaluation.discrepancies.map((issue) => (
+                <div className="dock-load-action-card warning" key={issue.code}>
+                  <strong>{issue.code.replaceAll('_', ' ')}</strong>
+                  <small>{issue.message}</small>
+                </div>
+              ))}
+            </div>
+            <footer>
+              <strong>{discrepancyArmed ? 'DEPARTURE CONFIRMATION ARMED' : 'YOU CAN DEPART, BUT THE DISCREPANCY WILL FOLLOW THE LOAD'}</strong>
+              <small>
+                {discrepancyArmed
+                  ? 'Click CONFIRM DEPARTURE to leave with the current freight reality.'
+                  : 'Close the doors once to review the exception, then confirm if you intentionally want to depart.'}
+              </small>
+            </footer>
           </section>
         ) : (
           <section className="dock-load-actions attention">
@@ -1288,6 +1375,15 @@ export default function DockLoadWorkspace({
             </header>
 
             <div className="dock-load-action-list">
+              {facilityMissingUnits > 0 && (
+                <div className="dock-load-action-card warning">
+                  <strong>FACILITY SHORT TENDER</strong>
+                  <small>
+                    {facilityMissingUnits} booked unit{facilityMissingUnits === 1 ? ' is' : 's are'} not physically staged at this pickup.
+                  </small>
+                </div>
+              )}
+
               {remainingPickupUnits > 0 && (
                 <div className="dock-load-action-card pending">
                   <strong>LOAD REMAINING FREIGHT</strong>
@@ -1310,6 +1406,20 @@ export default function DockLoadWorkspace({
                   <small>
                     {blockingRuleCount} trailer rule{blockingRuleCount === 1 ? '' : 's'} need attention above before you can close the doors.
                   </small>
+                </div>
+              )}
+
+              {wrongLoadUnits > 0 && (
+                <div className="dock-load-action-card warning">
+                  <strong>WRONG LOAD ONBOARD</strong>
+                  <small>{wrongLoadUnits} mismatched unit{wrongLoadUnits === 1 ? ' is' : 's are'} currently on the trailer.</small>
+                </div>
+              )}
+
+              {undocumentedDamageUnits > 0 && (
+                <div className="dock-load-action-card warning">
+                  <strong>DAMAGE NOT DOCUMENTED</strong>
+                  <small>{undocumentedDamageUnits} visibly damaged unit{undocumentedDamageUnits === 1 ? ' is' : 's are'} loaded without a pickup damage note.</small>
                 </div>
               )}
 

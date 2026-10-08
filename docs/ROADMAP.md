@@ -183,6 +183,46 @@ Delivery includes:
 - stable receiver-floor placement,
 - accepted dock continuity visuals.
 
+### V2.7.7 · Freight Integrity & Exception Foundation — ACTIVE PREREQUISITE
+
+Reason:
+
+V2.8.3 exposed that downstream POD exception gameplay had no reliable gameplay source because Pickup and Delivery were still mostly perfect-by-construction.
+
+Locked freight truth:
+
+**Booked expectation → Pickup reality → actual trailer cargo → freight condition/history → receiver reconciliation → POD**
+
+Build:
+
+- booked loads may carry authored pickup-reality scenarios,
+- expected manifest remains separate from what the pickup facility actually presents,
+- facility may short-tender booked freight,
+- facility may present freight already damaged,
+- staged wrong-load freight remains a real identification trap,
+- Pickup distinguishes physical safety blockers from operational discrepancies,
+- player may deliberately depart with a shortage, left-behind freight, wrong-load cargo, or undocumented visible damage after confirmation,
+- visible damage may be noted before loading,
+- committed trailer snapshot preserves actual cargo, load identity, damage state, and freight history,
+- Delivery shortage becomes a receiver exception instead of a hard simulation deadlock,
+- minor damaged freight produces ACCEPTED_WITH_DAMAGE,
+- major damaged freight may be REFUSED,
+- refused freight returns to / remains on the trailer after receiver handoff,
+- downstream POD state consumes real receiver results.
+
+Authored initial market scenarios:
+
+- FL-401 remains clean baseline,
+- FL-402 presents minor pickup damage,
+- FL-403 is short-tendered one booked unit,
+- FL-404 presents major pickup damage.
+
+Do not add random hidden failure rolls in this packet. Exceptions are deterministic consequences of authored freight reality and player decisions.
+
+Acceptance:
+
+A normal playthrough can create SHORT, ACCEPTED_WITH_DAMAGE, and REFUSED receiver results without dev tools or injected test state, and those results flow into the existing POD system.
+
 ### Known Live Operations UX follow-up
 
 Add:
@@ -301,7 +341,7 @@ Acceptance:
 
 A confirmed load retains its Rate Confirmation history in Documents.
 
-## V2.8.3 · POD Focused Workflow — ACTIVE
+## V2.8.3 · POD Focused Workflow — IMPLEMENTED / ACCEPTANCE PAUSED FOR V2.7.7
 
 Goal:
 

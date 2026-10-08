@@ -236,6 +236,7 @@ function TrailerFreightPiece({
         focusedBlocker ? 'delivery-focus-blocker' : '',
         lifting ? 'delivery-lifting' : '',
         active ? 'delivery-active-piece' : '',
+        freight.condition === 'DAMAGED' ? 'delivery-damaged-freight' : '',
       ].filter(Boolean).join(' ')}
       style={{
         gridColumn: `${anchor.column} / span ${bounds.width}`,
@@ -290,6 +291,7 @@ function ReceiverFreightPiece({
         cargoClass(freight),
         handlingClass(freight),
         shape.length > 1 ? 'oversize' : 'standard',
+        freight.condition === 'DAMAGED' ? 'delivery-damaged-freight' : '',
       ].filter(Boolean).join(' ')}
       style={{
         gridColumn: `${placement.column} / span ${placement.width}`,
@@ -400,6 +402,7 @@ function StagedFreightPiece({
         shape.length > 1 ? 'oversize' : 'standard',
         active ? 'active' : '',
         lifting ? 'lifting' : '',
+        freight.condition === 'DAMAGED' ? 'delivery-damaged-freight' : '',
       ].filter(Boolean).join(' ')}
       style={{
         gridColumn: `${placement.startSlot + 1} / span ${placement.size}`,
@@ -666,6 +669,8 @@ export default function DeliveryWorkspace({
     0,
     evaluation.actualCount - evaluation.unloadedCount,
   )
+  const shortageCount = evaluation.shortageFreight.length
+  const damagedAtReceiverCount = currentStopFreight.filter((freight) => freight.condition === 'DAMAGED').length
   const trailerMap = useMemo(
     () => placementMap({
       board,
@@ -1691,6 +1696,8 @@ export default function DeliveryWorkspace({
           <div className="delivery-stop-stats physical">
             <p><span>EXPECTED</span><strong>{expectedFreight.length}</strong></p>
             <p><span>RECEIVED</span><strong>{evaluation.unloadedCount}</strong></p>
+            <p className={shortageCount > 0 ? 'issue' : ''}><span>SHORT</span><strong>{shortageCount}</strong></p>
+            <p className={damagedAtReceiverCount > 0 ? 'issue' : ''}><span>DAMAGED</span><strong>{damagedAtReceiverCount}</strong></p>
             <p><span>REHANDLES</span><strong>{evaluation.rehandleUnits}</strong></p>
           </div>
           <div className="delivery-space-stats">
@@ -1772,7 +1779,11 @@ export default function DeliveryWorkspace({
                     ? 'FREIGHT SELECTED'
                     : currentPhase
                       ? 'MANAGE THE SPACE'
-                      : 'RECEIVER READY'}
+                      : shortageCount > 0
+                        ? 'RECEIVER SHORT'
+                        : damagedAtReceiverCount > 0
+                          ? 'RECEIVER INSPECTION'
+                          : 'RECEIVER READY'}
               </strong>
               <span>
                 {pointerDrag
@@ -1785,7 +1796,11 @@ export default function DeliveryWorkspace({
                     ? `${describeFreight(activeFreightId)} · move it physically or click a valid destination.`
                     : currentPhase
                       ? `${currentPhase.label}: unload it if accessible, rearrange the trailer if possible, or spend scarce staging space.`
-                      : 'Return any later-stop staged freight to the trailer, then confirm handoff.'}
+                      : shortageCount > 0
+                        ? `${shortageCount} expected unit${shortageCount === 1 ? ' is' : 's are'} missing from the truck. Confirming handoff will create a shortage exception on the POD.`
+                        : damagedAtReceiverCount > 0
+                          ? `${damagedAtReceiverCount} damaged unit${damagedAtReceiverCount === 1 ? ' is' : 's are'} at receiver inspection. Receiver disposition will feed the POD.`
+                          : 'Return any later-stop staged freight to the trailer, then confirm handoff.'}
               </span>
             </>
           )}
@@ -1806,14 +1821,22 @@ export default function DeliveryWorkspace({
             {committing
               ? 'CONFIRMING…'
               : evaluation.ready
-                ? 'CONFIRM HANDOFF'
+                ? shortageCount > 0
+                  ? 'CONFIRM SHORT HANDOFF'
+                  : damagedAtReceiverCount > 0
+                    ? 'CONFIRM INSPECTION'
+                    : 'CONFIRM HANDOFF'
                 : remainingCount > 0
                   ? `${remainingCount} UNIT${remainingCount === 1 ? '' : 'S'} REMAIN`
                   : 'CLEAR TEMP STAGING'}
           </strong>
           <small>
             {evaluation.ready
-              ? `Protocol complete · ${evaluation.internalRepositionCount} internal move${evaluation.internalRepositionCount === 1 ? '' : 's'} · ${evaluation.rehandleUnits} external rehandle${evaluation.rehandleUnits === 1 ? '' : 's'}`
+              ? shortageCount > 0
+                ? `Receiver will record SHORT ${shortageCount} · POD exception expected`
+                : damagedAtReceiverCount > 0
+                  ? `Receiver will inspect ${damagedAtReceiverCount} damaged unit${damagedAtReceiverCount === 1 ? '' : 's'} · disposition may create a POD exception`
+                  : `Protocol complete · ${evaluation.internalRepositionCount} internal move${evaluation.internalRepositionCount === 1 ? '' : 's'} · ${evaluation.rehandleUnits} external rehandle${evaluation.rehandleUnits === 1 ? '' : 's'}`
               : 'Complete the receiver sequence and return later-stop staged freight before handoff'}
           </small>
         </button>

@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE IMPLEMENTATION CANDIDATE**
+**IMPLEMENTED · MANUAL ACCEPTANCE PAUSED FOR V2.7.7 FREIGHT INTEGRITY**
 
 Accepted base checkpoint:
 
@@ -17,6 +17,8 @@ Make Proof of Delivery paperwork something the player must actually review and r
 A POD should not become packet-complete simply because the receiver finished it.
 
 The player must inspect the receiver copy, understand whether the delivery was clean or had an exception, then either accept it or request corrected paperwork.
+
+Implementation is complete. Manual acceptance is paused because V2.7.7 must first make shortage, damage, and refusal states reachable through normal Pickup/Delivery gameplay rather than injected test data.
 
 ---
 

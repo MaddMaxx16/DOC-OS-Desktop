@@ -301,6 +301,58 @@ export function buildTutorialStagedFreight(event = {}) {
   return [...expected, noise]
 }
 
+export function buildExpectedPickupFreight(event = {}) {
+  return buildTutorialStagedFreight(event)
+    .filter((freight) => freight.expected)
+    .map((freight) => ({ ...freight }))
+}
+
+export function buildPickupFacilityFreight(event = {}) {
+  const full = buildTutorialStagedFreight(event)
+  const missing = new Set(
+    (event.pickupReality?.missingUnitNumbers ?? [])
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0),
+  )
+  const damageByUnit = new Map(
+    (event.pickupReality?.damagedUnits ?? [])
+      .map((item) => [Number(item.unitNumber), item]),
+  )
+
+  return full
+    .filter((freight) => {
+      if (!freight.expected) return true
+      const unitNumber = Number.parseInt(String(freight.unitCode ?? '').replace(/\D/g, ''), 10)
+      return !missing.has(unitNumber)
+    })
+    .map((freight) => {
+      if (!freight.expected) return { ...freight }
+
+      const unitNumber = Number.parseInt(String(freight.unitCode ?? '').replace(/\D/g, ''), 10)
+      const damage = damageByUnit.get(unitNumber)
+      if (!damage) return { ...freight }
+
+      return {
+        ...freight,
+        condition: 'DAMAGED',
+        conditionKnown: true,
+        damageSeverity: String(damage.severity ?? 'MINOR').toUpperCase(),
+        damageDescription: damage.description ?? 'Visible damage noted before loading.',
+        damageOrigin: 'PICKUP_FACILITY',
+        pickupDamageDocumented: false,
+        freightHistory: [
+          ...(freight.freightHistory ?? []),
+          {
+            event: 'DAMAGE_PRESENTED_AT_PICKUP',
+            facilityId: event.locationId ?? null,
+            severity: String(damage.severity ?? 'MINOR').toUpperCase(),
+            description: damage.description ?? 'Visible damage noted before loading.',
+          },
+        ],
+      }
+    })
+}
+
 function normalizeShape(cells = []) {
   const minX = Math.min(...cells.map(([x]) => x))
   const minY = Math.min(...cells.map(([, y]) => y))
@@ -902,35 +954,79 @@ export function evaluatePickupLoadPlan({
   event,
   board,
   stagedFreight = [],
+  expectedFreight = null,
   placements = {},
   requiredFreightIds = null,
+  documentedDamageIds = [],
   deliveryOrder = [],
 } = {}) {
   const placed = new Set(Object.keys(placements))
-  const required = requiredFreightIds == null
+  const stagedById = new Map(stagedFreight.map((item) => [item.id, item]))
+  const expectedManifest = expectedFreight == null
     ? stagedFreight.filter((item) => item.expected)
-    : stagedFreight.filter((item) => requiredFreightIds.includes(item.id))
+    : expectedFreight
+  const required = requiredFreightIds == null
+    ? expectedManifest
+    : expectedManifest.filter((item) => requiredFreightIds.includes(item.id))
   const requiredIds = new Set(required.map((item) => item.id))
+  const documentedDamage = new Set(documentedDamageIds)
+
+  const notTenderedFreight = required.filter((item) => !stagedById.has(item.id))
+  const notLoadedFreight = required.filter((item) => (
+    stagedById.has(item.id) && !placed.has(item.id)
+  ))
   const wrongPlaced = stagedFreight.filter((item) => (
     item.expected === false && placed.has(item.id)
   ))
-  const missingPlaced = required.filter((item) => !placed.has(item.id))
+  const undocumentedDamagedFreight = stagedFreight.filter((item) => (
+    placed.has(item.id)
+    && item.condition === 'DAMAGED'
+    && !item.pickupDamageDocumented
+    && !documentedDamage.has(item.id)
+  ))
   const map = placementMap({ board, stagedFreight, placements })
 
   const errors = []
   const warnings = []
+  const discrepancies = []
 
-  if (missingPlaced.length > 0) {
-    errors.push({
-      code: 'REQUIRED_FREIGHT_NOT_PLANNED',
-      message: `${missingPlaced.length} booked freight unit${missingPlaced.length === 1 ? '' : 's'} not placed.`,
+  if (notTenderedFreight.length > 0) {
+    discrepancies.push({
+      code: 'PICKUP_SHORT_TENDER',
+      severity: 'exception',
+      count: notTenderedFreight.length,
+      freightIds: notTenderedFreight.map((item) => item.id),
+      message: `${notTenderedFreight.length} booked freight unit${notTenderedFreight.length === 1 ? ' was' : 's were'} not tendered by the pickup facility.`,
+    })
+  }
+
+  if (notLoadedFreight.length > 0) {
+    discrepancies.push({
+      code: 'PICKUP_FREIGHT_LEFT_BEHIND',
+      severity: 'exception',
+      count: notLoadedFreight.length,
+      freightIds: notLoadedFreight.map((item) => item.id),
+      message: `${notLoadedFreight.length} available booked freight unit${notLoadedFreight.length === 1 ? ' is' : 's are'} still off the trailer.`,
     })
   }
 
   if (wrongPlaced.length > 0) {
-    errors.push({
-      code: 'WRONG_LOAD',
-      message: `${wrongPlaced.length} staged unit${wrongPlaced.length === 1 ? '' : 's'} has a load-number mismatch.`,
+    discrepancies.push({
+      code: 'WRONG_LOAD_ONBOARD',
+      severity: 'exception',
+      count: wrongPlaced.length,
+      freightIds: wrongPlaced.map((item) => item.id),
+      message: `${wrongPlaced.length} onboard unit${wrongPlaced.length === 1 ? ' has' : 's have'} a load-number mismatch.`,
+    })
+  }
+
+  if (undocumentedDamagedFreight.length > 0) {
+    discrepancies.push({
+      code: 'PICKUP_DAMAGE_UNDOCUMENTED',
+      severity: 'risk',
+      count: undocumentedDamagedFreight.length,
+      freightIds: undocumentedDamagedFreight.map((item) => item.id),
+      message: `${undocumentedDamagedFreight.length} damaged freight unit${undocumentedDamagedFreight.length === 1 ? ' is' : 's are'} loaded without a pickup damage note.`,
     })
   }
 
@@ -977,6 +1073,8 @@ export function evaluatePickupLoadPlan({
     })
   }
 
+  const availableBookedComplete = notLoadedFreight.length === 0
+
   const weightBalanceRaw = evaluateTrailerWeightBalance({
     board,
     stagedFreight,
@@ -984,7 +1082,7 @@ export function evaluatePickupLoadPlan({
   })
   const weightBalance = {
     ...weightBalanceRaw,
-    enforced: missingPlaced.length === 0 && weightBalanceRaw.active,
+    enforced: availableBookedComplete && weightBalanceRaw.active,
   }
 
   if (weightBalance.enforced && !weightBalance.clear) {
@@ -1003,7 +1101,7 @@ export function evaluatePickupLoadPlan({
   })
   const fragileProtection = {
     ...fragileProtectionRaw,
-    enforced: missingPlaced.length === 0 && fragileProtectionRaw.active,
+    enforced: availableBookedComplete && fragileProtectionRaw.active,
   }
 
   if (fragileProtection.enforced && !fragileProtection.clear) {
@@ -1023,7 +1121,7 @@ export function evaluatePickupLoadPlan({
   })
   const hazmatSegregation = {
     ...hazmatSegregationRaw,
-    enforced: missingPlaced.length === 0 && hazmatSegregationRaw.active,
+    enforced: availableBookedComplete && hazmatSegregationRaw.active,
   }
 
   if (hazmatSegregation.enforced && !hazmatSegregation.clear) {
@@ -1036,14 +1134,24 @@ export function evaluatePickupLoadPlan({
     })
   }
 
+  const canCommit = errors.length === 0
+  const ready = canCommit && discrepancies.length === 0
+
   return {
-    ready: errors.length === 0,
+    ready,
+    canCommit,
     errors,
     warnings,
+    discrepancies,
     expectedCount: requiredIds.size,
+    tenderedExpectedCount: required.filter((item) => stagedById.has(item.id)).length,
     plannedExpectedCount: required.filter((item) => placed.has(item.id)).length,
     plannedCount: placed.size,
-    onboardCount: stagedFreight.filter((item) => placed.has(item.id) && item.expected !== false).length,
+    onboardCount: stagedFreight.filter((item) => placed.has(item.id)).length,
+    notTenderedFreight,
+    notLoadedFreight,
+    wrongPlaced,
+    undocumentedDamagedFreight,
     occupiedCells: map.occupied.size,
     plannedWeightLbs,
     deliveryAccess,
@@ -1175,16 +1283,25 @@ export function commitPickupOperation({
 
   const freightManifest = Array.isArray(loadPlan?.freightManifest)
     ? loadPlan.freightManifest.map((freight) => {
-        if (!sameLoad(freight, event)) return { ...freight }
-
+        const damageDocumented = Boolean(freight.pickupDamageDocumented)
         return {
           ...freight,
+          carried: true,
           currentLocation: 'TRAILER',
           status: 'IN_TRANSIT',
           condition: freight.condition ?? 'GOOD',
           conditionKnown: freight.conditionKnown ?? true,
           freightHistory: [
             ...(freight.freightHistory ?? []),
+            ...(damageDocumented
+              ? [{
+                  event: 'PICKUP_DAMAGE_NOTED',
+                  facilityId: event.locationId ?? null,
+                  time: Number(currentAbsoluteMinutes ?? 0),
+                  description: freight.damageDescription ?? null,
+                  severity: freight.damageSeverity ?? null,
+                }]
+              : []),
             {
               event: 'LOADED',
               facilityId: event.locationId ?? null,

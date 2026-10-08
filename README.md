@@ -10,11 +10,11 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.9.1.6 · Incoming Tray & Communication Split`
 
-**Current candidate:** `V2.8.3 · POD Focused Workflow`
+**Current candidate:** `V2.7.7 · Freight Integrity & Exception Foundation`
 
-V2.9.1.6 is visually accepted and locks the paperwork intake model: routine operational paperwork enters Documents **Incoming**, the player deliberately pulls it to the working desk, and Email is reserved for meaningful communication such as corrections and exceptions.
+V2.8.3 POD Focused Workflow is implemented, but its acceptance exposed an upstream simulation gap: Pickup and Delivery were still protecting the player from most operational failures, so shortage/damage/refusal states were largely unreachable through normal play.
 
-V2.8.3 builds document-depth gameplay on that accepted foundation: every usable POD must now be reviewed before it can satisfy a load packet, delivery exceptions can be accepted explicitly or sent back for correction, and corrected POD revisions return through Incoming.
+V2.7.7 fixes that prerequisite. Pickup now has authored freight reality instead of guaranteed-perfect tender, the player may knowingly depart with operational discrepancies, freight condition/history persists through the trailer, Delivery reconciles what actually arrived, and POD exceptions are generated from that real freight state.
 
 The operational freight loop is now substantially playable:
 
@@ -39,11 +39,12 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The Documents + Incoming architecture is accepted. V2.8.3 is now adding deeper POD gameplay.
+The Documents + Incoming architecture is accepted. V2.8.3 is implemented, but manual acceptance is paused until V2.7.7 proves that its POD exceptions can be produced by normal freight gameplay.
 
 Still pending:
 
-- **V2.8.3 POD Focused Workflow** is the active acceptance candidate,
+- **V2.7.7 Freight Integrity & Exception Foundation** is the active acceptance candidate,
+- V2.8.3 POD Focused Workflow returns to acceptance immediately after V2.7.7 passes,
 - Messages / driver communication remains V2.9.2,
 - accepted Rate Con revision/archive viewing remains a later document-depth pass,
 - Send Schedule is still too tightly coupled to Planning mode,
@@ -51,27 +52,30 @@ Still pending:
 
 ## Current acceptance gate
 
-### V2.8.3 · POD Focused Workflow
+### V2.7.7 · Freight Integrity & Exception Foundation
 
 The critical flow is:
 
-1. complete a clean Delivery and wait for receiver verification,
-2. confirm the POD appears in Documents Incoming as **REVIEW POD** rather than counting as complete immediately,
-3. pull the POD to the desk and open **REVIEW POD**,
-4. verify receiver signature, delivered quantity, refused quantity, shortage, damage, and revision are visible,
-5. accept the clean POD and confirm its paper becomes **ACCEPTED**,
-6. file it and confirm only then does the POD requirement become complete,
-7. produce a Delivery with a refusal, shortage, or damage exception,
-8. open focused POD review and confirm the exception is visibly called out,
-9. test **ACCEPT WITH EXCEPTION** and its confirmation step,
-10. separately test **REQUEST CORRECTED POD**,
-11. confirm the original copy becomes superseded and revision R2 returns through Documents Incoming,
-12. confirm Email reports the corrected POD as communication while the paper itself remains Documents work,
-13. accept/file the corrected POD and complete the packet.
+1. book a clean lane and verify Pickup can still complete normally,
+2. book a short-tender lane and confirm the booked manifest expects more freight than the facility physically presents,
+3. load every available booked unit and verify Pickup shows **FACILITY SHORT TENDER**,
+4. close once to arm discrepancy departure, then **CONFIRM DEPARTURE**,
+5. arrive at Delivery and confirm the receiver naturally detects the missing expected unit,
+6. complete the receiver sequence and use **CONFIRM SHORT HANDOFF**,
+7. verify the POD is created with a shortage exception,
+8. book a lane with visible pickup damage,
+9. verify the damaged unit is visibly marked and can be **NOTE DAMAGE** before loading,
+10. carry minor damaged freight to Delivery and confirm receiver result becomes **ACCEPTED_WITH_DAMAGE**,
+11. carry major damaged freight to Delivery and confirm receiver result becomes **REFUSED**,
+12. verify refused freight remains on the trailer after handoff,
+13. deliberately load the staged wrong-load pallet and depart with the mismatch,
+14. verify that wrong freight persists as real trailer cargo and the intended load is short downstream.
+
+Then return to V2.8.3 acceptance and prove that those real shortage/damage/refusal results flow into focused POD review.
 
 See the implementation packets:
 
-- [V2.8.1 Accepted Documents Packet](docs/IMPLEMENTATION_V2.8.1.md)
+- [V2.7.7 Freight Integrity Foundation](docs/IMPLEMENTATION_V2.7.7.md)
 - [V2.8.3 POD Focused Workflow](docs/IMPLEMENTATION_V2.8.3.md)
 - [V2.9.1 Accepted Incoming + Communication Packet](docs/IMPLEMENTATION_V2.9.1.md)
 
@@ -85,7 +89,7 @@ Use that file as the default answer to **"what are we building next?"** rather t
 
 High-level direction:
 
-**V2.8 Documents foundation → V2.9.1 Incoming + communication split → remaining document depth → V2.9 Messages → V2.10 Banking + Career Progression → V2.11 Onboarding → V2.12 Packaging**
+**V2.7.7 Freight Integrity prerequisite → finish V2.8.3 POD acceptance → remaining document depth → V2.9 Messages → V2.10 Banking + Career Progression → V2.11 Onboarding → V2.12 Packaging**
 
 ## Architecture / development contract
 

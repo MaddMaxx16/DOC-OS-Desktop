@@ -2,7 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   buildDeliveryAccessOrder,
+  buildExpectedPickupFreight,
   buildOnboardCargoForPickup,
+  buildPickupFacilityFreight,
   buildTrailerPuzzleBoard,
   buildTutorialStagedFreight,
   canPlaceFreight,
@@ -130,7 +132,7 @@ test('freight shapes rotate and reject overlap or out-of-bounds placement', () =
   assert.equal(out.reason, 'OUT_OF_BOUNDS')
 })
 
-test('placing the booked freight is verification; no separate verify state is required', () => {
+test('pickup can depart with documented operational discrepancies while physical safety rules remain enforced', () => {
   const board = buildTrailerPuzzleBoard(equipment)
   const staged = buildTutorialStagedFreight(event)
   const expected = staged.filter((item) => item.expected)
@@ -147,7 +149,8 @@ test('placing the booked freight is verification; no separate verify state is re
     },
   })
   assert.equal(incomplete.ready, false)
-  assert.ok(incomplete.errors.some((issue) => issue.code === 'REQUIRED_FREIGHT_NOT_PLANNED'))
+  assert.equal(incomplete.canCommit, true)
+  assert.ok(incomplete.discrepancies.some((issue) => issue.code === 'PICKUP_FREIGHT_LEFT_BEHIND'))
 
   const ready = evaluatePickupLoadPlan({
     event,
@@ -178,7 +181,129 @@ test('placing the booked freight is verification; no separate verify state is re
     },
   })
   assert.equal(wrong.ready, false)
-  assert.ok(wrong.errors.some((issue) => issue.code === 'WRONG_LOAD'))
+  assert.equal(wrong.canCommit, true)
+  assert.ok(wrong.discrepancies.some((issue) => issue.code === 'WRONG_LOAD_ONBOARD'))
+})
+
+test('pickup facility reality can present a short tender without fabricating the expected manifest', () => {
+  const shortEvent = {
+    ...event,
+    pickupReality: {
+      missingUnitNumbers: [3],
+    },
+  }
+  const expected = buildExpectedPickupFreight(shortEvent)
+  const staged = buildPickupFacilityFreight(shortEvent)
+  const board = buildTrailerPuzzleBoard(equipment)
+  const stagedExpected = staged.filter((item) => item.expected)
+
+  assert.equal(expected.length, 3)
+  assert.equal(stagedExpected.length, 2)
+  assert.ok(!staged.some((item) => item.unitCode === 'P03'))
+
+  const plan = evaluatePickupLoadPlan({
+    event: shortEvent,
+    board,
+    stagedFreight: staged,
+    expectedFreight: expected,
+    placements: {
+      [stagedExpected[0].id]: { anchorCell: 0, rotation: 0 },
+      [stagedExpected[1].id]: { anchorCell: 6, rotation: 0 },
+    },
+  })
+
+  assert.equal(plan.notTenderedFreight.length, 1)
+  assert.equal(plan.notTenderedFreight[0].unitCode, 'P03')
+  assert.equal(plan.ready, false)
+  assert.equal(plan.canCommit, true)
+  assert.ok(plan.discrepancies.some((issue) => issue.code === 'PICKUP_SHORT_TENDER'))
+})
+
+test('visible pickup damage can be documented before departure', () => {
+  const damageEvent = {
+    ...event,
+    pickupReality: {
+      damagedUnits: [{
+        unitNumber: 2,
+        severity: 'MAJOR',
+        description: 'Fork impact at lower corner.',
+      }],
+    },
+  }
+  const expected = buildExpectedPickupFreight(damageEvent)
+  const staged = buildPickupFacilityFreight(damageEvent)
+  const damaged = staged.find((item) => item.unitCode === 'P02')
+  const board = buildTrailerPuzzleBoard(equipment)
+  const placements = Object.fromEntries(
+    staged
+      .filter((item) => item.expected)
+      .map((item, index) => [item.id, { anchorCell: [0, 6, 12][index], rotation: 0 }]),
+  )
+
+  assert.equal(damaged.condition, 'DAMAGED')
+  assert.equal(damaged.damageSeverity, 'MAJOR')
+  assert.equal(damaged.damageOrigin, 'PICKUP_FACILITY')
+
+  const undocumented = evaluatePickupLoadPlan({
+    event: damageEvent,
+    board,
+    stagedFreight: staged,
+    expectedFreight: expected,
+    placements,
+  })
+  assert.ok(undocumented.discrepancies.some((issue) => issue.code === 'PICKUP_DAMAGE_UNDOCUMENTED'))
+
+  const documented = evaluatePickupLoadPlan({
+    event: damageEvent,
+    board,
+    stagedFreight: staged,
+    expectedFreight: expected,
+    placements,
+    documentedDamageIds: [damaged.id],
+  })
+  assert.ok(!documented.discrepancies.some((issue) => issue.code === 'PICKUP_DAMAGE_UNDOCUMENTED'))
+})
+
+test('pickup commit preserves wrong-load cargo and pickup damage documentation in trailer truth', () => {
+  const staged = buildTutorialStagedFreight(event)
+  const expected = staged.filter((item) => item.expected)
+  const wrong = staged.find((item) => !item.expected)
+  const damaged = {
+    ...expected[0],
+    condition: 'DAMAGED',
+    damageSeverity: 'MINOR',
+    damageDescription: 'Torn wrap.',
+    pickupDamageDocumented: true,
+  }
+  const manifest = [damaged, expected[1], expected[2], wrong]
+  const placements = {
+    [damaged.id]: { anchorCell: 0, rotation: 0 },
+    [expected[1].id]: { anchorCell: 6, rotation: 0 },
+    [expected[2].id]: { anchorCell: 12, rotation: 0 },
+    [wrong.id]: { anchorCell: 20, rotation: 0 },
+  }
+
+  const operation = commitPickupOperation({
+    driverId: 'marcus-reed',
+    event,
+    currentAbsoluteMinutes: 503,
+    loadPlan: {
+      freightIds: Object.keys(placements),
+      freightManifest: manifest,
+      placements,
+      board: buildTrailerPuzzleBoard(equipment),
+    },
+  })
+
+  assert.equal(operation.loadPlan.freightManifest.length, 4)
+  assert.ok(operation.loadPlan.freightManifest.every((item) => item.currentLocation === 'TRAILER'))
+  assert.equal(
+    operation.loadPlan.freightManifest.find((item) => item.id === wrong.id).status,
+    'IN_TRANSIT',
+  )
+  const committedDamage = operation.loadPlan.freightManifest.find((item) => item.id === damaged.id)
+  assert.equal(committedDamage.condition, 'DAMAGED')
+  assert.ok(committedDamage.freightHistory.some((entry) => entry.event === 'PICKUP_DAMAGE_NOTED'))
 })
 
 test('later pickups inherit committed cargo until that load has been delivered', () => {

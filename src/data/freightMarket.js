@@ -18,6 +18,15 @@ export const freightMarket = Object.freeze([
     pickupWindow: Object.freeze({ startMinutes: 715, endMinutes: 730 }),
     deliveryWindow: Object.freeze({ startMinutes: 735, endMinutes: 755 }),
     freight: Object.freeze({ pallets: 6, weightLbs: 8000 }),
+    pickupReality: Object.freeze({
+      damagedUnits: Object.freeze([
+        Object.freeze({
+          unitNumber: 2,
+          severity: 'MINOR',
+          description: 'Wrap torn and one crate corner crushed before loading.',
+        }),
+      ]),
+    }),
     rate: 410,
     equipment: "53' Dry Van",
   }),
@@ -29,6 +38,9 @@ export const freightMarket = Object.freeze([
     pickupWindow: Object.freeze({ startMinutes: 780, endMinutes: 795 }),
     deliveryWindow: Object.freeze({ startMinutes: 815, endMinutes: 835 }),
     freight: Object.freeze({ pallets: 5, weightLbs: 7200 }),
+    pickupReality: Object.freeze({
+      missingUnitNumbers: Object.freeze([5]),
+    }),
     rate: 680,
     equipment: "53' Dry Van",
   }),
@@ -40,6 +52,15 @@ export const freightMarket = Object.freeze([
     pickupWindow: Object.freeze({ startMinutes: 850, endMinutes: 900 }),
     deliveryWindow: Object.freeze({ startMinutes: 880, endMinutes: 920 }),
     freight: Object.freeze({ pallets: 4, weightLbs: 5400 }),
+    pickupReality: Object.freeze({
+      damagedUnits: Object.freeze([
+        Object.freeze({
+          unitNumber: 3,
+          severity: 'MAJOR',
+          description: 'Visible fork impact and crushed lower corner before loading.',
+        }),
+      ]),
+    }),
     rate: 465,
     equipment: "53' Dry Van",
   }),
