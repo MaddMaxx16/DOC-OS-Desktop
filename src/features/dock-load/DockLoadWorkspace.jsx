@@ -337,6 +337,7 @@ export default function DockLoadWorkspace({
         rotation: nextRotation,
       },
     }))
+    setDiscrepancyArmed(false)
     pulseRotation(freightId)
   }, [allFreight, board, placements, pulseRotation, rotations])
 
@@ -385,10 +386,6 @@ export default function DockLoadWorkspace({
     }),
     [allFreight, board, deliveryOrder, event, expectedFreight, pickupDamageNotes, placements, requiredFreightIds],
   )
-
-  useEffect(() => {
-    setDiscrepancyArmed(false)
-  }, [placements, pickupDamageNotes])
 
   useEffect(() => {
     if (evaluation.ready && !wasReadyRef.current) {
@@ -576,6 +573,7 @@ export default function DockLoadWorkspace({
         rotation,
       },
     }))
+    setDiscrepancyArmed(false)
     setSettlingFreightId(freightId)
     if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
     settleTimerRef.current = setTimeout(() => setSettlingFreightId(null), 260)
@@ -593,6 +591,7 @@ export default function DockLoadWorkspace({
       delete next[freightId]
       return next
     })
+    setDiscrepancyArmed(false)
     endDrag()
   }
 
@@ -757,10 +756,13 @@ export default function DockLoadWorkspace({
               dragging={dragFreightId === freight.id}
               rotating={rotatingFreightId === freight.id}
               damageNoted={Boolean(pickupDamageNotes[freight.id])}
-              onNoteDamage={() => setPickupDamageNotes((current) => ({
-                ...current,
-                [freight.id]: true,
-              }))}
+              onNoteDamage={() => {
+                setPickupDamageNotes((current) => ({
+                  ...current,
+                  [freight.id]: true,
+                }))
+                setDiscrepancyArmed(false)
+              }}
               onRotate={() => rotate(freight.id)}
               onDragStart={startDrag}
               onDragEnd={endDrag}
