@@ -981,6 +981,7 @@ export function evaluatePickupLoadPlan({
   const undocumentedDamagedFreight = stagedFreight.filter((item) => (
     placed.has(item.id)
     && item.condition === 'DAMAGED'
+    && !item.pickupDamageDocumented
     && !documentedDamage.has(item.id)
   ))
   const map = placementMap({ board, stagedFreight, placements })
