@@ -136,6 +136,12 @@ export function commitBookedFreight({
       pallets: Number(terms.freight.pallets),
       weightLbs: Number(terms.freight.weightLbs),
     },
+    pickupReality: lane.pickupReality
+      ? {
+          missingUnitNumbers: [...(lane.pickupReality.missingUnitNumbers ?? [])],
+          damagedUnits: (lane.pickupReality.damagedUnits ?? []).map((item) => ({ ...item })),
+        }
+      : null,
     pickup: {
       locationId: terms.pickupLocationId,
       appointmentStartMinutes: Number(terms.pickupWindow.startMinutes),
