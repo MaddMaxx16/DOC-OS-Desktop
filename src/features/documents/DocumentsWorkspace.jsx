@@ -58,6 +58,17 @@ function documentCanReview(document) {
   )
 }
 
+function podCanReview(document) {
+  return Boolean(
+    document?.type === OPERATIONAL_DOCUMENT_TYPE.POD
+    && [
+      'POD_REVIEW_REQUIRED',
+      'POD_EXCEPTION_REVIEW',
+      'CORRECTED_POD_REVIEW',
+    ].includes(document.status)
+  )
+}
+
 function fileDriver(loadFile, drivers) {
   if (!loadFile?.driverId) return null
   return drivers.find((driver) => driver.id === loadFile.driverId) ?? null
@@ -193,6 +204,10 @@ function PodInspector({
     + (document.damageNoted ? 1 : 0)
   )
   const filed = Boolean(filedLoadRef)
+  const canReview = podCanReview(document)
+  const accepted = document.status === 'ACCEPTED'
+  const waitingCorrection = document.status === 'CORRECTION_REQUESTED'
+  const superseded = document.status === 'SUPERSEDED'
 
   return (
     <>
@@ -201,6 +216,7 @@ function PodInspector({
         <div><span>LOAD</span><strong>{document.loadRef}</strong></div>
         <div><span>RECEIVER</span><strong>{document.facilityLabel}</strong></div>
         <div><span>SIGNATURE</span><strong>{document.signaturePresent ? 'PRESENT' : 'PENDING'}</strong></div>
+        <div><span>REVISION</span><strong>R{document.revision ?? 1}</strong></div>
         <div><span>LOCATION</span><strong>{incoming ? 'INCOMING TRAY' : filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
         <div className="wide"><span>STATUS</span><strong className={documentTone(document)}>{document.statusLabel}</strong></div>
       </div>
@@ -220,8 +236,40 @@ function PodInspector({
         {incoming ? (
           <div className="document-next-action waiting">
             <span>INCOMING</span>
-            <strong>Move this Proof of Delivery onto the working desk before filing it.</strong>
-            <small>Use the desk to inspect, compare, and organize incoming paperwork.</small>
+            <strong>Move this Proof of Delivery onto the working desk before reviewing or filing it.</strong>
+            <small>Incoming is the intake queue. Pull the paper when you are ready to work it.</small>
+          </div>
+        ) : canReview ? (
+          <div className={'document-next-action ' + (document.hasException ? 'attention' : 'waiting')}>
+            <span>{document.hasException ? 'EXCEPTION REVIEW' : document.corrected ? 'CORRECTED POD' : 'POD REVIEW'}</span>
+            <strong>
+              {document.hasException
+                ? `${exceptionCount} delivery exception signal${exceptionCount === 1 ? '' : 's'} must be reviewed before this POD can satisfy the packet.`
+                : 'Review the receiver signature and delivery outcome before accepting this POD.'}
+            </strong>
+            <small>{filed ? 'You can review it from inside the load file.' : 'Review it now or file it first; filing alone does not complete the requirement.'}</small>
+          </div>
+        ) : waitingCorrection ? (
+          <div className="document-next-action waiting">
+            <span>CORRECTION REQUESTED</span>
+            <strong>The receiver is reissuing this POD.</strong>
+            <small>The corrected revision will return through Documents Incoming.</small>
+          </div>
+        ) : superseded ? (
+          <div className="document-next-action waiting">
+            <span>SUPERSEDED</span>
+            <strong>A newer POD revision replaced this receiver copy.</strong>
+            <small>Keep it for history, but it cannot satisfy the packet.</small>
+          </div>
+        ) : accepted ? (
+          <div className="document-next-action complete">
+            <span>{filed ? 'FILED + ACCEPTED' : 'ACCEPTED'}</span>
+            <strong>
+              {document.acceptedWithException
+                ? 'POD accepted with the recorded delivery exception.'
+                : 'POD review is complete and the receiver copy is accepted.'}
+            </strong>
+            <small>{filed ? 'It counts toward packet completeness.' : `Drag it onto load file ${document.loadRef} to count it toward packet completeness.`}</small>
           </div>
         ) : document.status === 'PENDING_RECEIVER' ? (
           <div className="document-next-action waiting">
@@ -229,23 +277,10 @@ function PodInspector({
             <strong>The receiver is finalizing the Proof of Delivery.</strong>
             <small>The POD will enter Incoming after receiver verification is complete.</small>
           </div>
-        ) : document.status === 'REVIEW_REQUIRED' ? (
-          <div className="document-next-action attention">
-            <span>REVIEW REQUIRED</span>
-            <strong>{exceptionCount} delivery exception signal{exceptionCount === 1 ? '' : 's'} require document review.</strong>
-            <small>Filing does not resolve the exception or make the packet complete.</small>
-          </div>
-        ) : filed ? (
-          <div className="document-next-action complete">
-            <span>FILED</span>
-            <strong>Clean POD is inside load file {filedLoadRef}.</strong>
-            <small>It now counts toward packet completeness.</small>
-          </div>
         ) : (
-          <div className="document-next-action complete">
-            <span>READY TO FILE</span>
-            <strong>Clean POD is still loose on the desk.</strong>
-            <small>Drag it onto load file {document.loadRef} to include it in the packet.</small>
+          <div className="document-next-action waiting">
+            <span>DOCUMENT HOLD</span>
+            <strong>This POD is not ready to satisfy the packet yet.</strong>
           </div>
         )}
       </section>
@@ -253,7 +288,15 @@ function PodInspector({
       <footer className="documents-inspector-footer">
         <div>
           <span>{incoming ? 'INCOMING PAPER' : filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
-          <strong>{incoming ? 'Pull this paper onto the desk to work it.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
+          <strong>
+            {incoming
+              ? 'Pull this paper onto the desk to work it.'
+              : canReview
+                ? 'Open focused review before treating this POD as complete.'
+                : filed
+                  ? 'Paper is stored in the load file.'
+                  : 'Paper remains loose until you file it.'}
+          </strong>
         </div>
         {incoming ? (
           <button type="button" onClick={() => onMoveDocumentToDesk(document.id)}>
@@ -261,7 +304,7 @@ function PodInspector({
           </button>
         ) : (
           <button type="button" onClick={() => onInspectDocument(document.id)}>
-            INSPECT DOCUMENT
+            {canReview ? 'REVIEW POD' : 'INSPECT DOCUMENT'}
           </button>
         )}
       </footer>
