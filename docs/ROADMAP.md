@@ -25,9 +25,9 @@ V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.9.1.4 · Documents Panel Gutter Fix**
+**V2.9.1.5 · Documents Browser Containment**
 
-V2.9.1.3 standardized browser gutters across the workstation. The next visual check showed Documents still reading too tight on the right edge, so V2.9.1.4 gives the filing cabinet a stronger effective right safe area without changing gameplay.
+V2.9.1.4 increased the Documents safe area, but visual testing showed the browser blocks themselves could still overflow their grid column. V2.9.1.5 fixes width containment and header wrapping without changing gameplay.
 
 ### What that means
 
