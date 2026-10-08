@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   buildOperationalDeskDocuments,
+  buildOperationalIncomingDocuments,
   OPERATIONAL_DOCUMENT_TYPE,
   OPERATIONAL_LOAD_FILE_STATUS,
 } from '../../domain/documents/operationalDocumentIndex.js'
@@ -123,7 +124,7 @@ function RateConInspector({
           <div className="document-next-action waiting">
             <span>WAITING</span>
             <strong>Correction requested from FreightLink Brokerage.</strong>
-            <small>The revised paper will arrive on the global desk when it is available.</small>
+            <small>The revised paper will arrive in the Incoming tray when it is available.</small>
           </div>
         ) : filed ? (
           <div className="document-next-action complete">
@@ -340,9 +341,14 @@ function GlobalPaperDesk({
   onSelectDocument,
   onInspectDocument,
   onFileDocument,
+  onMoveDocumentToDesk,
   onNotice,
   onDropTargetChange,
 }) {
+  const incomingDocuments = useMemo(
+    () => buildOperationalIncomingDocuments(loadFiles),
+    [loadFiles],
+  )
   const deskDocuments = useMemo(
     () => buildOperationalDeskDocuments(loadFiles),
     [loadFiles],
@@ -361,26 +367,64 @@ function GlobalPaperDesk({
     onNotice(result)
   }
 
+  const moveToDesk = (documentId) => {
+    const result = onMoveDocumentToDesk(documentId)
+    onNotice(result)
+  }
+
   return (
-    <section className="documents-desk-workspace" aria-label="Unfiled paperwork desk">
+    <section className="documents-desk-workspace" aria-label="Documents incoming tray and working desk">
       <header className="documents-desk-header">
         <div>
-          <span>UNFILED PAPER DESK</span>
-          <strong>{deskDocuments.length} loose paper{deskDocuments.length === 1 ? '' : 's'}</strong>
-          <small>Every unfiled document stays here regardless of which load file is open.</small>
+          <span>WORKING PAPER DESK</span>
+          <strong>{deskDocuments.length} on desk · {incomingDocuments.length} incoming</strong>
+          <small>New paperwork enters Incoming first. Pull out only what you want to work.</small>
         </div>
         <div className="desk-rule-card">
-          <span>FILING RULE</span>
-          <strong>Drag paper → matching load file</strong>
+          <span>WORKFLOW</span>
+          <strong>Incoming → Desk → File</strong>
         </div>
       </header>
 
       <DocumentDesk className="global-paper-desk">
+        <aside className={'incoming-paper-tray ' + (incomingDocuments.length ? 'has-paper' : 'empty')} aria-label="Incoming paperwork tray">
+          <header>
+            <div>
+              <span>INCOMING</span>
+              <strong>{incomingDocuments.length}</strong>
+            </div>
+            <small>New paperwork</small>
+          </header>
+
+          <div className="incoming-paper-stack">
+            {incomingDocuments.length === 0 ? (
+              <div className="incoming-tray-empty">
+                <strong>Tray empty</strong>
+                <small>New operational paperwork will arrive here.</small>
+              </div>
+            ) : incomingDocuments.map((document) => (
+              <button
+                type="button"
+                key={document.id}
+                className={'incoming-paper-card ' + documentTone(document)}
+                onClick={() => moveToDesk(document.id)}
+              >
+                <div>
+                  <span>{documentLabel(document)}</span>
+                  <strong>{document.loadRef}</strong>
+                </div>
+                <small>{document.statusLabel}</small>
+                <em>PULL TO DESK</em>
+              </button>
+            ))}
+          </div>
+        </aside>
+
         {deskDocuments.length === 0 ? (
           <div className="global-desk-empty">
             <span>DESK CLEAR</span>
-            <strong>All current paperwork is filed.</strong>
-            <small>New Rate Cons, PODs, and future paperwork will land here when they arrive.</small>
+            <strong>No paperwork is being worked.</strong>
+            <small>{incomingDocuments.length ? 'Pull a paper from Incoming when you are ready to work it.' : 'Incoming paperwork will collect in the tray when it arrives.'}</small>
           </div>
         ) : (
           deskDocuments.map((document, index) => {
@@ -425,6 +469,7 @@ export default function DocumentsWorkspace({
   onSelectDocument,
   onInspectDocument,
   onFileDocument,
+  onMoveDocumentToDesk,
   onUnfileDocument,
   onSubmitLoadFile,
   onClose,
@@ -471,7 +516,7 @@ export default function DocumentsWorkspace({
           <div>
             <span>FILING CABINET</span>
             <strong>Load Files</strong>
-            <small>Folders stay here. Loose paperwork stays on the desk until you file it.</small>
+            <small>Folders stay here. Incoming paperwork moves to the desk only when you pull it out.</small>
           </div>
           <button type="button" onClick={onClose} aria-label="Close Documents">×</button>
         </header>
@@ -571,6 +616,7 @@ export default function DocumentsWorkspace({
         onSelectDocument={onSelectDocument}
         onInspectDocument={onInspectDocument}
         onFileDocument={onFileDocument}
+        onMoveDocumentToDesk={onMoveDocumentToDesk}
         onNotice={handleNotice}
         onDropTargetChange={setDropTargetLoadRef}
       />
