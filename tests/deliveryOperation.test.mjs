@@ -10,6 +10,8 @@ import {
   buildTrailerStateForDelivery,
   commitDeliveryOperation,
   DELIVERY_STAGING_CAPACITY,
+  RECEIVER_STATUS,
+  receiverStatusForFreight,
   deliveryOperationPhase,
   evaluateDeliveryStaging,
   findDeliveryStagingPlacement,
@@ -171,6 +173,141 @@ test('a clean rear-accessible delivery plan is ready when facility protocol is s
   assert.equal(plan.unloadedCount, 3)
   assert.equal(plan.access.clear, true)
   assert.equal(plan.rehandleUnits, 0)
+})
+
+test('delivery shortage is a receiver discrepancy, not a hard blocker', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const expected = buildTutorialStagedFreight(pickup).filter((item) => item.expected)
+  const actual = expected.slice(0, 2)
+  const placements = {
+    [actual[0].id]: { anchorCell: 20, rotation: 0 },
+    [actual[1].id]: { anchorCell: 21, rotation: 0 },
+  }
+  const driverDay = {
+    driverId: driver.id,
+    timeline: [pickup, delivery],
+  }
+  const protocol = protocolPlan(delivery, actual)
+
+  const plan = evaluateDeliveryUnloadPlan({
+    board,
+    driverDay,
+    event: delivery,
+    freight: actual,
+    placements,
+    ...protocol,
+  })
+
+  assert.equal(plan.shortageFreight.length, 1)
+  assert.equal(plan.discrepancies.length, 1)
+  assert.equal(plan.discrepancies[0].code, 'DELIVERY_SHORTAGE')
+  assert.equal(plan.ready, true)
+
+  const operation = commitDeliveryOperation({
+    driverId: driver.id,
+    event: delivery,
+    trailerState: { freight: actual, placements, board },
+    unloadPlan: plan,
+    currentAbsoluteMinutes: 700,
+  })
+
+  assert.equal(operation.shortagePieces, 1)
+  assert.equal(operation.receiverResults.length, 2)
+})
+
+test('minor pickup damage reaches receiver as accepted-with-damage', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const expected = buildTutorialStagedFreight(pickup).filter((item) => item.expected)
+  const damaged = {
+    ...expected[0],
+    condition: 'DAMAGED',
+    damageSeverity: 'MINOR',
+    damageOrigin: 'PICKUP_FACILITY',
+    pickupDamageDocumented: true,
+  }
+  const freight = [damaged, expected[1], expected[2]]
+  const placements = {
+    [damaged.id]: { anchorCell: 20, rotation: 0 },
+    [expected[1].id]: { anchorCell: 21, rotation: 0 },
+    [expected[2].id]: { anchorCell: 22, rotation: 0 },
+  }
+  const driverDay = {
+    driverId: driver.id,
+    timeline: [pickup, delivery],
+  }
+  const plan = evaluateDeliveryUnloadPlan({
+    board,
+    driverDay,
+    event: delivery,
+    freight,
+    placements,
+    ...protocolPlan(delivery, freight),
+  })
+
+  assert.equal(receiverStatusForFreight(damaged), RECEIVER_STATUS.ACCEPTED_WITH_DAMAGE)
+
+  const operation = commitDeliveryOperation({
+    driverId: driver.id,
+    event: delivery,
+    trailerState: { freight, placements, board },
+    unloadPlan: plan,
+    currentAbsoluteMinutes: 700,
+  })
+  const result = operation.receiverResults.find((item) => item.freightId === damaged.id)
+
+  assert.equal(result.status, RECEIVER_STATUS.ACCEPTED_WITH_DAMAGE)
+  assert.equal(result.condition, 'DAMAGED')
+  assert.equal(result.pickupDamageDocumented, true)
+  assert.equal(operation.trailerAfter.freightManifest.length, 0)
+})
+
+test('major damaged freight can be refused and remains on the trailer after receiver handoff', () => {
+  const board = buildTrailerPuzzleBoard(driver.equipment)
+  const expected = buildTutorialStagedFreight(pickup).filter((item) => item.expected)
+  const damaged = {
+    ...expected[0],
+    condition: 'DAMAGED',
+    damageSeverity: 'MAJOR',
+    damageOrigin: 'PICKUP_FACILITY',
+    pickupDamageDocumented: false,
+  }
+  const freight = [damaged, expected[1], expected[2]]
+  const placements = {
+    [damaged.id]: { anchorCell: 20, rotation: 0 },
+    [expected[1].id]: { anchorCell: 21, rotation: 0 },
+    [expected[2].id]: { anchorCell: 22, rotation: 0 },
+  }
+  const driverDay = {
+    driverId: driver.id,
+    timeline: [pickup, delivery],
+  }
+  const plan = evaluateDeliveryUnloadPlan({
+    board,
+    driverDay,
+    event: delivery,
+    freight,
+    placements,
+    ...protocolPlan(delivery, freight),
+  })
+
+  const operation = commitDeliveryOperation({
+    driverId: driver.id,
+    event: delivery,
+    trailerState: { freight, placements, board },
+    unloadPlan: plan,
+    currentAbsoluteMinutes: 700,
+  })
+  const result = operation.receiverResults.find((item) => item.freightId === damaged.id)
+
+  assert.equal(result.status, RECEIVER_STATUS.REFUSED)
+  assert.equal(operation.trailerAfter.freightManifest.length, 1)
+  assert.equal(operation.trailerAfter.freightManifest[0].id, damaged.id)
+  assert.equal(operation.trailerAfter.freightManifest[0].status, 'REFUSED')
+  assert.ok(operation.trailerAfter.placements[damaged.id])
+  assert.ok(
+    operation.trailerAfter.freightManifest[0].freightHistory
+      .some((entry) => entry.event === 'RELOADED_AFTER_REFUSAL'),
+  )
 })
 
 test('later-stop freight can block delivery freight until it is temporarily staged', () => {
