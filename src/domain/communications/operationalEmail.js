@@ -3,6 +3,7 @@ import { OPERATIONAL_DOCUMENT_TYPE } from '../documents/operationalDocumentIndex
 export const OPERATIONAL_EMAIL_KIND = Object.freeze({
   RATE_CONFIRMATION_CORRECTION: 'RATE_CONFIRMATION_CORRECTION',
   POD_EXCEPTION: 'POD_EXCEPTION',
+  POD_CORRECTION: 'POD_CORRECTION',
 })
 
 export function emailIdForDocument(documentId) {
@@ -35,7 +36,7 @@ function correctedRateConMessage(document, { readEmailIds }) {
 }
 
 function podExceptionMessage(document, { readEmailIds }) {
-  if (document.status !== 'REVIEW_REQUIRED') return null
+  if (!document.hasException || document.corrected) return null
 
   const id = emailIdForDocument(document.id)
   const senderName = document.facilityLabel ?? 'Receiver'
@@ -50,12 +51,38 @@ function podExceptionMessage(document, { readEmailIds }) {
     recipientAddress: 'dispatch@metroline.example',
     subject: `Delivery exception · ${document.loadRef}`,
     preview: 'The receiver reported an exception on the Proof of Delivery.',
-    body: `The Proof of Delivery for ${document.loadRef} contains a delivery exception that needs your attention. The POD is waiting in the Documents Incoming tray.`,
+    body: `The Proof of Delivery for ${document.loadRef} contains a delivery exception that needs your attention. Review the receiver copy in Documents before accepting the packet.`,
     sourceLabel: senderName,
     statusLabel: document.statusLabel,
     relatedWorkLabel: 'Proof of Delivery',
     unread: !readEmailIds[id],
     issuedAtLabel: 'Receiver completed',
+    closingName: `${senderName} Receiving`,
+  }
+}
+
+function correctedPodMessage(document, { readEmailIds }) {
+  if (!document.corrected) return null
+
+  const id = emailIdForDocument(document.id)
+  const senderName = document.facilityLabel ?? 'Receiver'
+  return {
+    id,
+    kind: OPERATIONAL_EMAIL_KIND.POD_CORRECTION,
+    documentId: document.id,
+    loadRef: document.loadRef,
+    senderName,
+    senderAddress: 'receiving@operations.example',
+    recipientName: 'Metroline Operations',
+    recipientAddress: 'dispatch@metroline.example',
+    subject: `Corrected POD available · ${document.loadRef}`,
+    preview: 'The receiver reissued the Proof of Delivery you requested.',
+    body: `A corrected Proof of Delivery for ${document.loadRef} has been returned. Revision R${document.revision ?? 2} is waiting in Documents Incoming for your review.`,
+    sourceLabel: senderName,
+    statusLabel: document.statusLabel,
+    relatedWorkLabel: 'Corrected Proof of Delivery',
+    unread: !readEmailIds[id],
+    issuedAtLabel: 'Correction returned',
     closingName: `${senderName} Receiving`,
   }
 }
@@ -71,7 +98,8 @@ export function buildOperationalEmailInbox({
       }
 
       if (document.type === OPERATIONAL_DOCUMENT_TYPE.POD) {
-        return podExceptionMessage(document, { readEmailIds })
+        return correctedPodMessage(document, { readEmailIds })
+          ?? podExceptionMessage(document, { readEmailIds })
       }
 
       return null
