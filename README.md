@@ -57,15 +57,15 @@ Still pending:
 The critical flow is:
 
 1. request a Rate Con in FreightLink,
-2. FreightLink reports **RATE CON RECEIVED** and routes to **CHECK EMAIL**,
-3. Email shows an unread Rate Confirmation message that looks like a real email: subject, sender, recipient, date, body, and compact attachment,
-4. opening the email marks it read but does not create a physical paper,
-5. click **PRINT ATTACHMENT**,
-6. open Documents and confirm the Rate Con now appears as loose paper on the global desk,
-7. review/accept/file it through the existing Documents workflow,
-8. complete a Delivery and wait for receiver verification,
-9. confirm the POD arrives as Email rather than automatically appearing on the Documents desk,
-10. print the POD and confirm it enters the same global filing gameplay.
+2. FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
+3. Documents shows the Rate Con in the physical **Incoming** tray, not on the working desk,
+4. pull the Rate Con from Incoming onto the desk,
+5. review/accept/file it through the existing Documents workflow,
+6. complete a Delivery and wait for receiver verification,
+7. confirm the finalized POD appears in **Incoming**,
+8. leave it there and verify it does not clutter the working desk automatically,
+9. pull the POD onto the desk and file it into the matching load packet,
+10. trigger a correction or exception and verify Email is used for communication that points back to Documents.
 
 See the implementation packets:
 
