@@ -1,15 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import './emailWorkspace.css'
 
 const EMAIL_FILTERS = Object.freeze([
   { id: 'ALL', label: 'ALL' },
   { id: 'UNREAD', label: 'UNREAD' },
-  { id: 'ATTACHMENTS', label: 'ATTACHMENTS' },
+  { id: 'LOADS', label: 'LOADS' },
 ])
 
 function matchesFilter(message, filter) {
   if (filter === 'UNREAD') return message.unread
-  if (filter === 'ATTACHMENTS') return Boolean(message.documentId)
+  if (filter === 'LOADS') return Boolean(message.loadRef)
   return true
 }
 
@@ -22,39 +22,19 @@ function senderInitials(name = '') {
     .join('') || 'EM'
 }
 
-function attachmentTone(message) {
-  if (['ACCEPTED', 'RECEIVED'].includes(message?.statusLabel)) return 'complete'
-  if (String(message?.statusLabel ?? '').includes('CORRECTION')) return 'waiting'
-  return 'attention'
-}
-
 export default function EmailWorkspace({
   messages = [],
   selectedEmailId,
   onSelectEmail,
-  onPrintDocument,
   onOpenDocuments,
   onClose,
 }) {
-  const [filter, setFilter] = useState('ALL')
-  const [notice, setNotice] = useState(null)
-
-  const visibleMessages = useMemo(
-    () => messages.filter((message) => matchesFilter(message, filter)),
-    [filter, messages],
-  )
   const selectedMessage = messages.find((message) => message.id === selectedEmailId) ?? null
 
-  const printAttachment = () => {
-    if (!selectedMessage?.documentId) return
-    const result = onPrintDocument(selectedMessage.documentId)
-    if (result?.message) {
-      setNotice({
-        tone: result.ok ? 'success' : 'error',
-        message: result.message,
-      })
-    }
-  }
+  const visibleMessages = useMemo(
+    () => messages,
+    [messages],
+  )
 
   return (
     <div className="email-workspace">
@@ -63,7 +43,7 @@ export default function EmailWorkspace({
           <div>
             <span>COMMUNICATIONS</span>
             <strong>Email</strong>
-            <small>External paperwork and business notices arrive here first.</small>
+            <small>People contact you here about changes, exceptions, and work that needs attention.</small>
           </div>
           <button type="button" onClick={onClose} aria-label="Close Email">×</button>
         </header>
@@ -72,35 +52,19 @@ export default function EmailWorkspace({
           {EMAIL_FILTERS.map((item) => {
             const count = messages.filter((message) => matchesFilter(message, item.id)).length
             return (
-              <button
-                type="button"
-                key={item.id}
-                className={filter === item.id ? 'active' : ''}
-                onClick={() => setFilter(item.id)}
-              >
+              <div className="email-filter-summary" key={item.id}>
                 <span>{item.label}</span>
                 <b>{count}</b>
-              </button>
+              </div>
             )
           })}
         </div>
 
-        {notice && (
-          <button
-            type="button"
-            className={'email-notice ' + notice.tone}
-            onClick={() => setNotice(null)}
-            aria-label="Dismiss email notice"
-          >
-            {notice.message}
-          </button>
-        )}
-
         <div className="email-list">
           {visibleMessages.length === 0 ? (
             <div className="email-empty-list">
-              <strong>NO MESSAGES</strong>
-              <small>No email matches this filter.</small>
+              <strong>INBOX CLEAR</strong>
+              <small>Routine paperwork goes straight to Documents Incoming. Email is for communication and exceptions.</small>
             </div>
           ) : visibleMessages.map((message) => {
             const selected = message.id === selectedEmailId
@@ -122,9 +86,8 @@ export default function EmailWorkspace({
                 <strong>{message.subject}</strong>
                 <p>{message.preview}</p>
                 <div className="email-row-meta">
-                  <span>{message.documentId ? 'ATTACHMENT' : 'MESSAGE'}</span>
+                  <span>MESSAGE</span>
                   <i>{message.loadRef}</i>
-                  {message.printed && <em>PRINTED</em>}
                 </div>
               </button>
             )
@@ -161,7 +124,6 @@ export default function EmailWorkspace({
                 </div>
                 <div className="email-envelope-date">
                   <span>{selectedMessage.issuedAtLabel}</span>
-                  <small>1 attachment</small>
                 </div>
               </div>
 
@@ -175,67 +137,35 @@ export default function EmailWorkspace({
                 </div>
               </div>
 
-              <section className="email-attachments">
-                <header className="email-attachments-header">
-                  <div>
-                    <span>ATTACHMENTS</span>
-                    <strong>1 file</strong>
-                  </div>
-                  {selectedMessage.printed && <b>PRINTED TO DOCUMENTS</b>}
-                </header>
-
-                <article className={'email-attachment-row' + (selectedMessage.printed ? ' printed' : '')}>
-                  <div className="email-attachment-thumbnail" aria-hidden="true">
+              {selectedMessage.relatedDocumentId && (
+                <section className="email-related-work">
+                  <header>
                     <div>
-                      <span>PDF</span>
-                      <strong>{selectedMessage.loadRef}</strong>
+                      <span>RELATED PAPERWORK</span>
+                      <strong>{selectedMessage.relatedLabel}</strong>
                     </div>
+                    <b>{selectedMessage.statusLabel}</b>
+                  </header>
+                  <div>
+                    <p>
+                      <span>LOAD</span>
+                      <strong>{selectedMessage.loadRef}</strong>
+                    </p>
+                    <p>
+                      <span>LOCATION</span>
+                      <strong>DOCUMENTS · INCOMING</strong>
+                    </p>
+                    <button type="button" onClick={onOpenDocuments}>OPEN DOCUMENTS</button>
                   </div>
-
-                  <div className="email-attachment-info">
-                    <strong>{selectedMessage.attachmentFileName}</strong>
-                    <span>{selectedMessage.attachmentLabel}</span>
-                    <small>
-                      {selectedMessage.attachmentTypeLabel}
-                      {' · '}
-                      Load {selectedMessage.loadRef}
-                      {' · '}
-                      {selectedMessage.sourceLabel}
-                    </small>
-                  </div>
-
-                  <div className={'email-attachment-status ' + attachmentTone(selectedMessage)}>
-                    <span>{selectedMessage.statusLabel}</span>
-                    <small>{selectedMessage.printed ? 'Physical copy created' : 'Digital attachment'}</small>
-                  </div>
-
-                  <div className="email-attachment-actions">
-                    {selectedMessage.printed ? (
-                      <button type="button" onClick={onOpenDocuments}>OPEN DOCUMENTS</button>
-                    ) : (
-                      <button type="button" className="primary" onClick={printAttachment}>
-                        PRINT ATTACHMENT
-                      </button>
-                    )}
-                  </div>
-                </article>
-
-                <footer className="email-print-note">
-                  <span>{selectedMessage.printed ? 'PRINTED' : 'PRINT REQUIRED FOR PHYSICAL WORKFLOW'}</span>
-                  <strong>
-                    {selectedMessage.printed
-                      ? 'The physical copy is now available on the Documents desk.'
-                      : 'This attachment stays digital until you print it. Reading the email does not create a paper copy.'}
-                  </strong>
-                </footer>
-              </section>
+                </section>
+              )}
             </div>
           </article>
         ) : (
           <div className="email-empty-reading">
             <span>INBOX</span>
             <strong>Select a message to read.</strong>
-            <small>Paperwork does not enter Documents until you print its attachment.</small>
+            <small>Routine operational paperwork lives in Documents. Email is for people, changes, and exceptions.</small>
           </div>
         )}
       </section>
