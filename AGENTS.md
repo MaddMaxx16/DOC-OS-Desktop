@@ -32,7 +32,7 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.8.3 POD Focused Workflow
+## Current packet — V2.7.7 Freight Integrity & Exception Foundation
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
@@ -40,11 +40,13 @@ V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns 
 
 V2.9.1.6 is accepted and locked. Routine paperwork enters Documents Incoming, then the player deliberately moves it to the working desk before review/filing. Email is communication, not the universal document conveyor.
 
-V2.8.3 is the active document-depth packet.
+V2.8.3 POD Focused Workflow is implemented, but manual acceptance is paused because the freight simulation did not yet produce shortage/damage/refusal outcomes naturally.
+
+V2.7.7 is the active prerequisite packet.
 
 The active acceptance packet is:
 
-`docs/IMPLEMENTATION_V2.8.3.md`
+`docs/IMPLEMENTATION_V2.7.7.md`
 
 The durable build sequence lives in:
 
@@ -52,77 +54,88 @@ The durable build sequence lives in:
 
 ### Purpose
 
-Turn PODs into actual review gameplay rather than passive paperwork.
+Make freight itself the source of truth from Pickup through Delivery so downstream POD exceptions come from real gameplay.
 
-### Locked POD workflow
+### Locked freight-integrity chain
 
-**Delivery → Receiver Verification → Documents Incoming → Desk/File → Focused POD Review → Accept or Correct → File → Packet Complete**
+**Booked expectation → Pickup reality → actual trailer cargo → freight condition/history → receiver reconciliation → POD**
 
-- clean PODs still require player review,
-- exception PODs visibly surface refusal, shortage, and damage,
-- accepting an exception requires explicit confirmation,
-- correction requests create a waiting state,
-- corrected POD returns as a new revision through Incoming,
-- the original revision becomes superseded,
-- corrected-POD communication may appear in Email,
-- only an **ACCEPTED** POD can satisfy the packet requirement.
+The expected manifest and physical freight are not the same concept.
 
 ### Build
 
 Implement:
 
-- POD focused review workspace,
-- signature / delivered / refused / shortage / damage review facts,
-- clean POD acceptance,
-- exception acknowledgement,
-- request corrected POD action,
-- corrected POD R2+ generation,
-- superseded original revision,
-- corrected POD Incoming arrival,
-- corrected POD Email communication,
-- POD physical status/revision stamp,
-- load-packet requirement changed from RECEIVED to ACCEPTED,
-- regression coverage for clean, exception, correction, superseded, and accepted states.
+- authored pickup-reality metadata on selected market lanes,
+- full booked expected manifest independent from facility-staged freight,
+- pickup short tender,
+- visible pre-existing pickup damage,
+- damage documentation action,
+- wrong-load cargo allowed to become actual trailer cargo,
+- departure-with-discrepancy two-step confirmation,
+- safety blockers remain non-overridable,
+- committed trailer snapshot preserves actual identity/condition/history,
+- Delivery shortage becomes a receiver discrepancy rather than a deadlock,
+- receiver condition reconciliation,
+- minor damage → ACCEPTED_WITH_DAMAGE,
+- major damage → REFUSED,
+- refused cargo remains on trailer,
+- real receiver results feed the existing POD system.
+
+### Safety vs operational-error rule
+
+Keep physically impossible or safety-critical actions blocked:
+
+- overlap,
+- freight outside trailer bounds,
+- trailer overweight,
+- unsafe weight distribution,
+- hazmat segregation failure,
+- unreachable delivery-access layouts that cannot physically operate.
+
+Allow operational mistakes to persist:
+
+- facility short tender,
+- leaving available booked freight behind,
+- wrong-load freight onboard,
+- visible damage not documented,
+- carrying damaged freight to the receiver.
+
+### No random failure rule
+
+Do not add hidden RNG that damages freight or silently removes pallets.
+
+For this packet:
+
+- facility irregularities are authored/deterministic,
+- player choices determine whether the discrepancy is caught, documented, carried, or departed with,
+- receiver results are deterministic consequences of freight truth.
 
 ### Preserve
 
 Do not redesign:
 
-- Documents Incoming tray,
-- global working desk,
-- filing cabinet / load-file organization,
-- Rate Confirmation review,
-- booking lifecycle,
-- Delivery facility puzzle,
-- receiver verification timing,
-- Email mailbox presentation,
-- Driver Day / FreightLink fit logic,
-- V2.7 facility puzzles,
-- trailer state,
-- right-side operational HUDs.
-
-### State rule
-
-The Delivery domain remains the source of truth for what physically happened.
-
-A corrected POD is a **paperwork revision**, not a rewrite of the freight event:
-
-- refusal stays refusal,
-- shortage stays shortage,
-- damage stays damage,
-- correction reissues/clarifies the receiver copy,
-- player may still accept the corrected POD with the recorded exception.
+- Rate Confirmation / booking flow,
+- Daily Planning,
+- pickup trailer puzzle geometry,
+- Delivery receiver SOP / handling puzzle,
+- Documents Incoming / desk / filing,
+- V2.8.3 focused POD review,
+- Email presentation,
+- Driver Day / FreightLink fit logic.
 
 ### Explicit non-goals
 
-Do not add:
+Do not add yet:
 
-- Rate Con archive/history UI,
+- random accident rolls,
+- weather-caused damage,
+- en-route cargo shifts,
+- insurance/claims gameplay,
 - BOL gameplay,
 - invoice gameplay,
 - Messages,
 - Banking,
-- LedgerDesk,
 - RPG/XP,
 - Jordan tutorial,
 - Send Schedule UX changes,
@@ -148,6 +161,8 @@ V2.8.1.3 passed automated verification and manual acceptance.
 
 V2.9.1.6 passed implementation and visual acceptance.
 
-V2.8.3 must pass install, lint, tests, build, and manual playtest of clean POD review, exception acceptance, correction request, corrected Incoming arrival, superseded history, Email notice, and final packet completion.
+V2.8.3 automated implementation is complete; manual acceptance resumes after V2.7.7.
+
+V2.7.7 must pass install, lint, tests, build, and manual playtest of clean pickup, short tender, wrong-load departure, documented/undocumented pickup damage, Delivery shortage, receiver damage acceptance, receiver refusal, refused cargo persistence, and downstream POD exception creation.
 
 A green build does not equal visual acceptance.
