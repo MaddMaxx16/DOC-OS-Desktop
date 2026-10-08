@@ -2,7 +2,7 @@
 
 ## Status
 
-**IMPLEMENTED · V2.9.1.4 DOCUMENTS PANEL GUTTER FIX IN VERIFY**
+**IMPLEMENTED · V2.9.1.5 DOCUMENTS BROWSER CONTAINMENT IN VERIFY**
 
 Accepted base checkpoint:
 
@@ -321,6 +321,22 @@ Locked correction:
 - expanded folder content remains width-safe,
 - empty state sits inside the cabinet gutter instead of adding conflicting outer margins,
 - no Documents gameplay or filing behavior changes.
+
+---
+
+## V2.9.1.5 · Documents Browser Containment
+
+The previous gutter values were correct, but direct Documents browser children could still overflow the grid column.
+
+Locked correction:
+
+- all direct Documents browser children are `min-width: 0`,
+- all direct Documents browser children are `max-width: 100%`,
+- all direct Documents browser children use `box-sizing: border-box`,
+- header, filters, and load-file list are explicitly width-contained,
+- header description wraps instead of ellipsizing off-panel,
+- close button remains fixed inside the header,
+- no filing or document gameplay changes.
 
 ---
 
