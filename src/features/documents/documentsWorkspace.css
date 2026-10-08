@@ -1102,7 +1102,7 @@
   }
 
   .global-desk-empty {
-    inset-left: 238px;
+    inset: 0 0 0 238px;
   }
 
   .global-desk-paper {
