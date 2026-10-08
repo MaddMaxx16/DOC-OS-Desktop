@@ -82,9 +82,7 @@ test('Rate Con ready becomes an actionable document', () => {
 
   assert.equal(documents.length, 1)
   assert.equal(documents[0].type, OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION)
-  assert.equal(documents[0].status, 'POD_EXCEPTION_REVIEW')
-  assert.equal(documents[0].statusLabel, 'EXCEPTION REVIEW')
-  assert.equal(documents[0].hasException, true)
+  assert.equal(documents[0].status, 'REVIEW_REQUIRED')
   assert.equal(documents[0].attention, true)
   assert.equal(operationalDocumentAttentionCount(documents), 1)
 })
@@ -159,7 +157,9 @@ test('POD review required contributes to attention count', () => {
     documentRecords: { [record.id]: record },
   })
 
-  assert.equal(documents[0].status, 'REVIEW_REQUIRED')
+  assert.equal(documents[0].status, 'POD_EXCEPTION_REVIEW')
+  assert.equal(documents[0].statusLabel, 'EXCEPTION REVIEW')
+  assert.equal(documents[0].hasException, true)
   assert.equal(documents[0].attention, true)
   assert.equal(operationalDocumentAttentionCount(documents), 1)
 })
