@@ -9,6 +9,18 @@
   grid-template-rows: auto auto auto minmax(0, 1fr);
 }
 
+.documents-browser > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.documents-browser > .documents-browser-header,
+.documents-browser > .documents-filters,
+.documents-browser > .load-file-list {
+  width: 100%;
+}
+
 .documents-browser-header {
   min-height: 92px;
 }
@@ -18,9 +30,16 @@
   padding-right: var(--documents-browser-gutter-right);
 }
 
-.documents-browser-header small {
+.workstation-browser.documents-browser .documents-browser-header small {
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
   white-space: normal;
   line-height: 1.35;
+}
+
+.workstation-browser.documents-browser .documents-browser-header > button {
+  flex: 0 0 32px;
 }
 
 .documents-filters {
