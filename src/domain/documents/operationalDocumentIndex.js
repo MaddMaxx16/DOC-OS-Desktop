@@ -1,5 +1,8 @@
 import { BOOKING_STATUS } from '../booking/bookingLifecycle.js'
-import { DELIVERY_DOCUMENT_STATUS } from './deliveryPod.js'
+import {
+  DELIVERY_DOCUMENT_STATUS,
+  deliveryPodHasException,
+} from './deliveryPod.js'
 
 export const OPERATIONAL_DOCUMENT_TYPE = Object.freeze({
   RATE_CONFIRMATION: 'RATE_CONFIRMATION',
@@ -23,7 +26,7 @@ export const OPERATIONAL_LOAD_FILE_REQUIREMENTS = Object.freeze([
   Object.freeze({
     type: OPERATIONAL_DOCUMENT_TYPE.POD,
     label: 'Proof of Delivery',
-    acceptedStatuses: Object.freeze(['RECEIVED']),
+    acceptedStatuses: Object.freeze(['ACCEPTED']),
   }),
 ])
 
@@ -64,18 +67,47 @@ function podStatus(record = {}) {
         statusLabel: 'PENDING RECEIVER',
         attention: false,
       }
-    case DELIVERY_DOCUMENT_STATUS.REVIEW_REQUIRED:
+    case DELIVERY_DOCUMENT_STATUS.RECEIVED:
       return {
-        status: 'REVIEW_REQUIRED',
-        statusLabel: 'REVIEW REQUIRED',
+        status: 'POD_REVIEW_REQUIRED',
+        statusLabel: 'REVIEW POD',
         attention: true,
       }
-    case DELIVERY_DOCUMENT_STATUS.RECEIVED:
+    case DELIVERY_DOCUMENT_STATUS.REVIEW_REQUIRED:
+      return {
+        status: 'POD_EXCEPTION_REVIEW',
+        statusLabel: 'EXCEPTION REVIEW',
+        attention: true,
+      }
+    case DELIVERY_DOCUMENT_STATUS.CORRECTION_REQUESTED:
+      return {
+        status: 'CORRECTION_REQUESTED',
+        statusLabel: 'CORRECTION REQUESTED',
+        attention: false,
+      }
+    case DELIVERY_DOCUMENT_STATUS.CORRECTED_RECEIVED:
+      return {
+        status: 'CORRECTED_POD_REVIEW',
+        statusLabel: 'CORRECTED · REVIEW',
+        attention: true,
+      }
+    case DELIVERY_DOCUMENT_STATUS.ACCEPTED:
+      return {
+        status: 'ACCEPTED',
+        statusLabel: record.acceptedWithException ? 'ACCEPTED · EXCEPTION' : 'ACCEPTED',
+        attention: false,
+      }
+    case DELIVERY_DOCUMENT_STATUS.SUPERSEDED:
+      return {
+        status: 'SUPERSEDED',
+        statusLabel: 'SUPERSEDED',
+        attention: false,
+      }
     default:
       return {
-        status: 'RECEIVED',
-        statusLabel: 'RECEIVED',
-        attention: false,
+        status: 'POD_REVIEW_REQUIRED',
+        statusLabel: 'REVIEW POD',
+        attention: true,
       }
   }
 }
@@ -126,8 +158,8 @@ function buildPodDocuments(documentRecords = {}) {
         laneId: null,
         driverId: record.driverId ?? null,
         source: record.facilityLabel ?? 'Receiver',
-        revision: null,
-        corrected: false,
+        revision: Number(record.revision ?? 1),
+        corrected: Boolean(record.corrected),
         facilityId: record.facilityId ?? null,
         facilityLabel: record.facilityLabel ?? 'Receiver',
         availableAtMinutes: record.availableAtMinutes ?? null,
@@ -136,6 +168,12 @@ function buildPodDocuments(documentRecords = {}) {
         shortagePieces: Number(record.shortagePieces ?? 0),
         damageNoted: Boolean(record.damageNoted),
         signaturePresent: Boolean(record.signaturePresent),
+        hasException: deliveryPodHasException(record),
+        acceptedWithException: Boolean(record.acceptedWithException),
+        correctionCount: Number(record.correctionCount ?? 0),
+        correctionReason: record.correctionReason ?? null,
+        supersedesId: record.supersedesId ?? null,
+        receiverResults: (record.receiverResults ?? []).map((result) => ({ ...result })),
         ...status,
         sourceRecord: record,
         documentRecord: record,

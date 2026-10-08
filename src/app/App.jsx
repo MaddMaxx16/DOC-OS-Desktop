@@ -24,9 +24,14 @@ import {
 import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
 import { commitDeliveryOperation } from '../domain/facility/deliveryOperation.js'
 import {
+  acceptDeliveryPod,
   advanceDeliveryDocuments,
+  createCorrectedDeliveryPodRecord,
   createDeliveryPodRecord,
+  DELIVERY_DOCUMENT_STATUS,
   deliveryPodId,
+  requestDeliveryPodCorrection,
+  supersedeDeliveryPod,
 } from '../domain/documents/deliveryPod.js'
 import {
   buildOperationalDocumentIndex,
@@ -543,7 +548,69 @@ export default function App() {
       return
     }
 
+    if (
+      document.type === OPERATIONAL_DOCUMENT_TYPE.POD
+      && [
+        DELIVERY_DOCUMENT_STATUS.RECEIVED,
+        DELIVERY_DOCUMENT_STATUS.REVIEW_REQUIRED,
+        DELIVERY_DOCUMENT_STATUS.CORRECTED_RECEIVED,
+      ].includes(document.sourceRecord?.status)
+    ) {
+      setFocusedTask({ type: 'pod-review', documentId: document.id })
+      return
+    }
+
     setFocusedTask({ type: 'document-inspect', documentId: document.id })
+  }
+
+  const requestPodCorrection = (documentId, reason) => {
+    const record = documentRecords[documentId]
+    if (!record?.id) return
+
+    let requested
+    try {
+      requested = requestDeliveryPodCorrection(record, reason)
+    } catch {
+      return
+    }
+
+    setDocumentRecords((current) => ({
+      ...current,
+      [documentId]: requested,
+    }))
+    setFocusedTask(null)
+
+    setTimeout(() => {
+      setDocumentRecords((current) => {
+        const source = current[documentId]
+        if (!source || source.status !== DELIVERY_DOCUMENT_STATUS.CORRECTION_REQUESTED) {
+          return current
+        }
+
+        const corrected = createCorrectedDeliveryPodRecord(source)
+        return {
+          ...current,
+          [documentId]: supersedeDeliveryPod(source),
+          [corrected.id]: corrected,
+        }
+      })
+    }, 900)
+  }
+
+  const acceptPod = (documentId, options = {}) => {
+    const record = documentRecords[documentId]
+    if (!record?.id) return
+
+    try {
+      const accepted = acceptDeliveryPod(record, options)
+      setDocumentRecords((current) => ({
+        ...current,
+        [documentId]: accepted,
+      }))
+      setFocusedTask(null)
+    } catch {
+      // Focused POD review owns validation and confirmation messaging.
+    }
   }
 
   const fileDocument = (documentId, targetLoadRef) => {
@@ -844,6 +911,8 @@ export default function App() {
       onSubmitLoadFile={submitLoadFile}
       onRequestRateConCorrection={requestRateConCorrection}
       onConfirmBooking={confirmBooking}
+      onRequestPodCorrection={requestPodCorrection}
+      onAcceptPod={acceptPod}
       onOpenDockLoad={openDockLoad}
       onCommitDockLoad={commitDockLoad}
       onCommitDockDelivery={commitDockDelivery}

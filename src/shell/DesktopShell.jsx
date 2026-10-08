@@ -9,6 +9,7 @@ import DeliveryWorkspace from '../features/dock-delivery/DeliveryWorkspace.jsx'
 import DocumentsWorkspace from '../features/documents/DocumentsWorkspace.jsx'
 import EmailWorkspace from '../features/email/EmailWorkspace.jsx'
 import OperationalDocumentInspection from '../features/documents/OperationalDocumentInspection.jsx'
+import PodReview from '../features/documents/PodReview.jsx'
 import FreightLinkWorkspace from '../features/freightlink/FreightLinkWorkspace.jsx'
 import RateConfirmationReview from '../features/rate-confirmation/RateConfirmationReview.jsx'
 import OperationsMap from '../map/OperationsMap.jsx'
@@ -64,6 +65,8 @@ export default function DesktopShell({
   onSubmitLoadFile,
   onRequestRateConCorrection,
   onConfirmBooking,
+  onRequestPodCorrection,
+  onAcceptPod,
   onOpenDockLoad,
   onCommitDockLoad,
   onCommitDockDelivery,
@@ -178,6 +181,12 @@ export default function DesktopShell({
   const focusedInspectionDriver = focusedInspectionDocument?.driverId
     ? drivers.find((driver) => driver.id === focusedInspectionDocument.driverId) ?? null
     : null
+  const focusedPodDocument = focusedTask?.type === 'pod-review'
+    ? operationalDocuments.find((document) => document.id === focusedTask.documentId) ?? null
+    : null
+  const focusedPodDriver = focusedPodDocument?.driverId
+    ? drivers.find((driver) => driver.id === focusedPodDocument.driverId) ?? null
+    : null
 
   const selectedDriverIdentity = mapDriver ? getDriverIdentity(mapDriver.id) : null
   const selectedLiveState = selectedDriver
@@ -240,6 +249,20 @@ export default function DesktopShell({
             locations={locations}
             onRequestCorrection={(reason) => onRequestRateConCorrection(focusedLane.id, reason)}
             onConfirm={(options) => onConfirmBooking(focusedLane.id, options)}
+          />
+        </FocusedWorkspace>
+      ) : focusedTask?.type === 'pod-review' && focusedPodDocument ? (
+        <FocusedWorkspace
+          eyebrow="POD REVIEW"
+          title={`Proof of Delivery · ${focusedPodDocument.loadRef}`}
+          subtitle="FOCUSED · GAMEPLAY PAUSED"
+          onClose={onCloseFocusedTask}
+        >
+          <PodReview
+            document={focusedPodDocument}
+            driver={focusedPodDriver}
+            onRequestCorrection={(reason) => onRequestPodCorrection(focusedPodDocument.id, reason)}
+            onAccept={(options) => onAcceptPod(focusedPodDocument.id, options)}
           />
         </FocusedWorkspace>
       ) : focusedTask?.type === 'document-inspect' && focusedInspectionDocument ? (

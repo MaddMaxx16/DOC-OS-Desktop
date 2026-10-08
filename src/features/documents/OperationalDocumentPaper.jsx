@@ -15,6 +15,7 @@ function PodPaper({ document }) {
         <div className="pod-paper-status">
           <span>STATUS</span>
           <strong>{document.statusLabel}</strong>
+          <small>REV R{document.revision ?? 1}</small>
         </div>
       </header>
 
@@ -38,6 +39,12 @@ function PodPaper({ document }) {
         <div><span>DAMAGE</span><strong>{document.damageNoted ? 'YES' : 'NO'}</strong><small>noted</small></div>
       </section>
 
+      {document.statusLabel && (
+        <div className={'pod-paper-stamp ' + (document.status === 'ACCEPTED' ? 'accepted' : document.status === 'SUPERSEDED' ? 'superseded' : 'review')}>
+          {document.statusLabel}
+        </div>
+      )}
+
       <section className="pod-paper-receipt">
         <span>RECEIVER ACKNOWLEDGEMENT</span>
         <p>
@@ -58,6 +65,7 @@ function PodPaper({ document }) {
       </section>
 
       <footer>
+        {document.corrected ? 'Corrected receiver copy. ' : ''}
         Retain this POD with the Rate Confirmation, BOL, invoice, and supporting load paperwork.
       </footer>
     </article>

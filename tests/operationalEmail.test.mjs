@@ -24,8 +24,11 @@ const pod = {
   type: OPERATIONAL_DOCUMENT_TYPE.POD,
   loadRef: 'T-110',
   facilityLabel: 'Jersey City Crossdock',
-  status: 'RECEIVED',
-  statusLabel: 'RECEIVED',
+  status: 'POD_REVIEW_REQUIRED',
+  statusLabel: 'REVIEW POD',
+  hasException: false,
+  corrected: false,
+  revision: 1,
 }
 
 test('routine initial Rate Con does not create Email', () => {
@@ -53,16 +56,17 @@ test('corrected Rate Con creates communication pointing back to Documents', () =
   assert.equal(messages[0].unread, true)
 })
 
-test('clean received POD does not create Email', () => {
+test('clean POD does not create Email', () => {
   const messages = buildOperationalEmailInbox({ documents: [pod] })
   assert.deepEqual(messages, [])
 })
 
-test('POD exception creates Email communication and unread state can be cleared', () => {
+test('POD exception creates Email communication and remains available through review state changes', () => {
   const exceptionPod = {
     ...pod,
-    status: 'REVIEW_REQUIRED',
-    statusLabel: 'REVIEW REQUIRED',
+    hasException: true,
+    status: 'POD_EXCEPTION_REVIEW',
+    statusLabel: 'EXCEPTION REVIEW',
   }
   const id = emailIdForDocument(exceptionPod.id)
   const unreadMessages = buildOperationalEmailInbox({ documents: [exceptionPod] })
@@ -73,10 +77,35 @@ test('POD exception creates Email communication and unread state can be cleared'
   assert.equal(unreadMessages[0].relatedWorkLabel, 'Proof of Delivery')
   assert.equal(operationalEmailUnreadCount(unreadMessages), 1)
 
+  const acceptedException = {
+    ...exceptionPod,
+    status: 'ACCEPTED',
+    statusLabel: 'ACCEPTED · EXCEPTION',
+  }
   const readMessages = buildOperationalEmailInbox({
-    documents: [exceptionPod],
+    documents: [acceptedException],
     readEmailIds: { [id]: true },
   })
   assert.equal(readMessages[0].unread, false)
   assert.equal(operationalEmailUnreadCount(readMessages), 0)
+})
+
+test('corrected POD creates a new Email notice linked to the revised paperwork', () => {
+  const correctedPod = {
+    ...pod,
+    id: 'POD:T-110:delivery:R2',
+    corrected: true,
+    revision: 2,
+    hasException: true,
+    status: 'CORRECTED_POD_REVIEW',
+    statusLabel: 'CORRECTED · REVIEW',
+  }
+
+  const messages = buildOperationalEmailInbox({ documents: [correctedPod] })
+  assert.equal(messages.length, 1)
+  assert.equal(messages[0].subject, 'Corrected POD available · T-110')
+  assert.equal(messages[0].documentId, correctedPod.id)
+  assert.equal(messages[0].relatedWorkLabel, 'Corrected Proof of Delivery')
+  assert.match(messages[0].body, /Revision R2/)
+  assert.match(messages[0].body, /Documents Incoming/)
 })
