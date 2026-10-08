@@ -25,9 +25,9 @@ V2.8.1.3 is visually accepted.
 
 ### Current candidate
 
-**V2.9.1.5 · Documents Browser Containment**
+**V2.9.1.6 · Documents Incoming Tray**
 
-V2.9.1.4 increased the Documents safe area, but visual testing showed the browser blocks themselves could still overflow their grid column. V2.9.1.5 fixes width containment and header wrapping without changing gameplay.
+V2.9.1.5 fixed the Documents browser containment issue. V2.9.1.6 corrects the paperwork gameplay loop: routine operational paperwork enters Documents Incoming directly, the player pulls selected papers onto the desk, and Email becomes exception/communication-driven instead of a universal print gate.
 
 ### What that means
 
@@ -340,7 +340,7 @@ Do not build full owner-era receivables here.
 
 # V2.9 · Email + Messages
 
-## V2.9.1 · Email Inbox & Print-to-Documents — IMPLEMENTED / VISUAL CORRECTION ACTIVE
+## V2.9.1 · Communications + Documents Intake — ARCHITECTURE CORRECTED IN V2.9.1.6
 
 Goal:
 
