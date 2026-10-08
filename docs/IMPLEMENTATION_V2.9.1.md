@@ -1,4 +1,4 @@
-# V2.9.1 · Email Inbox & Print-to-Documents
+# V2.9.1 · Communications + Documents Intake
 
 ## Status
 
@@ -8,364 +8,255 @@ Accepted base checkpoint:
 
 `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-Accepted base commit:
-
-`0c809eed4d59bbd28d84d659aaba62e51f77031c`
-
 ---
 
 ## 1. Purpose
 
-V2.8.1.3 proved the physical paperwork workflow.
+Preserve paperwork organization as gameplay while removing unnecessary repetitive steps.
 
-The missing layer is digital intake.
+The player should make organizational decisions:
 
-External paperwork must no longer appear automatically on the Documents desk. It must arrive through a communication channel first.
+- what paperwork to pull out,
+- what to leave in Incoming,
+- what to review,
+- what to file,
+- what is still missing from the load packet.
 
-V2.9.1 makes Email the first real digital paperwork delivery system.
-
----
-
-## 2. Locked architecture rule
-
-> **FreightLink requests it → Email delivers the digital attachment → Player prints it → Documents owns the physical copy.**
-
-These states are intentionally different:
-
-**Received digitally ≠ read ≠ printed ≠ filed ≠ packet requirement satisfied**
-
-Do not collapse them.
+The player should not have to click Print for every routine document just to reach that gameplay.
 
 ---
 
-## 3. Scope
+## 2. Locked architecture
 
-### In scope
+> **Operational system → Documents Incoming → Working Desk → Load File → Submit**
 
-- enable Email on the command rail,
-- Email inbox,
-- read/unread state,
-- Email badge for unread messages,
-- message detail,
-- digital document attachment card,
-- Rate Confirmation arrival email,
-- corrected Rate Confirmation arrival email,
-- POD arrival email after receiver verification,
-- explicit PRINT ATTACHMENT action,
-- printed-document state,
-- Documents desk shows only printed physical papers,
-- FreightLink RATE CON READY routes to CHECK EMAIL,
-- printed paper continues through the accepted V2.8 filing workflow.
+These states are distinct:
 
-### Out of scope
+**Arrived ≠ on desk ≠ filed ≠ requirement satisfied ≠ submitted**
 
-- driver Messages,
-- sending arbitrary email,
-- reply/composer gameplay,
-- attachment downloads outside the game,
-- full Rate Con revision archive,
-- corrected POD request workflow,
-- BOL generation,
-- invoice generation,
-- payment/Banking,
-- Jordan tutorial.
+Email is not part of the required path for routine paperwork.
 
 ---
 
-## 4. Email ownership
+## 3. Documents ownership
 
-Email owns:
+Documents owns:
 
-- digital arrival,
-- sender / subject / body,
-- read/unread,
-- attachment availability,
-- whether the attachment has been printed.
-
-Email does not own:
-
-- booking acceptance,
-- physical filing,
-- packet completeness,
-- load submission.
-
----
-
-## 5. Documents ownership
-
-Documents owns physical copies only.
-
-A document may exist digitally while:
-
-- its load file exists,
-- the desk remains empty,
-- Documents has no attention badge for that paper.
-
-Only PRINT ATTACHMENT creates the physical copy that enters:
-
-- global desk clutter,
-- document inspection/review,
+- Incoming paperwork,
+- working-desk papers,
+- document inspection/review entry,
 - drag-to-file,
-- packet completeness.
+- load-file completeness,
+- packet submission.
+
+Routine documents enter Documents automatically when their source system produces a usable document.
+
+### Rate Confirmation
+
+When FreightLink returns a Rate Confirmation:
+
+- the document appears in **Incoming**,
+- FreightLink shows **RATE CON RECEIVED / CHECK DOCUMENTS**,
+- it does not automatically appear on the working desk,
+- the player must **PULL TO DESK** before working it.
+
+### POD
+
+While the receiver is processing:
+
+- POD status may exist as PENDING_RECEIVER,
+- no usable paper appears in Incoming yet.
+
+When receiver processing advances the POD to RECEIVED or REVIEW_REQUIRED:
+
+- the paper enters **Incoming**.
 
 ---
 
-## 6. Rate Confirmation flow
+## 4. Incoming tray
 
-1. player requests Rate Con in FreightLink,
-2. booking becomes RATE_CON_READY,
-3. Email receives unread Rate Con message,
-4. FreightLink says RATE CON RECEIVED / CHECK EMAIL,
-5. player opens Email,
-6. reading message clears unread state,
-7. player prints attachment,
-8. printed Rate Con appears loose on Documents desk,
-9. player double-clicks and performs MATCH / ISSUE review,
-10. accepted paper may be filed into the matching load file.
+Incoming is a physical tray inside the Documents desk workspace.
 
-Corrected Rate Cons repeat the same digital-arrival and print flow.
+Rules:
 
-Full old-revision email/document history remains later archive work.
+- all usable new operational paperwork across loads can accumulate there,
+- Incoming is independent from the selected load file,
+- papers in Incoming do not clutter the working desk,
+- **PULL TO DESK** moves one paper from Incoming to the global desk,
+- pulling a paper does not review, accept, or file it,
+- Documents command-rail badge counts papers currently waiting in Incoming.
 
 ---
 
-## 7. POD flow
+## 5. Working desk
 
-PENDING_RECEIVER is not yet an Email.
+The working desk remains the global paper surface from V2.8.1.3.
 
-When receiver verification advances the POD to:
+Rules:
 
-- RECEIVED, or
-- REVIEW_REQUIRED,
+- papers from multiple loads may coexist,
+- papers can overlap and be rearranged,
+- single click selects,
+- double click inspects/reviews,
+- only desk papers may be dragged into load files,
+- filing removes the paper from the working desk,
+- unfiling returns the paper to the working desk.
 
-Email receives the POD message.
-
-The POD does not appear on the physical Documents desk until the player prints it.
-
----
-
-## 8. Printing rule
-
-PRINT ATTACHMENT:
-
-- is deliberate,
-- is idempotent,
-- creates physical-paper eligibility,
-- does not auto-open Documents,
-- does not auto-file,
-- does not mutate booking/POD status,
-- does not satisfy a packet requirement by itself.
-
-After printing, Email may offer OPEN DOCUMENTS as navigation only.
+Selecting a folder never filters the desk.
 
 ---
 
-## 9. Attention rules
+## 6. Load files and submission
 
-Email badge counts unread Email.
+No change to the accepted filing rules.
 
-Documents badge counts only printed physical papers that need action.
+- each load owns one file,
+- paperwork may be filed before or after review,
+- filing does not imply validity,
+- only acceptable filed documents satisfy requirements,
+- packet submission stays disabled until all current requirements are satisfied,
+- submitted packets remain locked.
 
-Therefore:
+Current implemented required documents:
 
-- unread digital Rate Con → Email badge,
-- unprinted Rate Con → no Documents paper / no Documents action badge,
-- printed Rate Con needing review → Documents attention,
-- filed accepted Rate Con → no action badge.
+- accepted Rate Confirmation,
+- received clean POD.
+
+Future BOL/invoice/supporting-document requirements extend this same model.
 
 ---
 
-## 10. FreightLink correction
+## 7. Email ownership
 
-Replace:
+Email remains a real app, but it is communication-driven.
+
+Routine initial Rate Con:
+
+- no Email required.
+
+Routine clean POD:
+
+- no Email required.
+
+Email is appropriate when a person or system needs to communicate context, for example:
+
+- corrected Rate Confirmation returned,
+- POD exception requires attention,
+- future detention/accessorial approvals,
+- accounting questions,
+- customer/broker changes.
+
+Current implemented exception messages:
+
+- corrected Rate Con communication,
+- POD REVIEW_REQUIRED communication.
+
+These messages link back to Documents. They do not require printing.
+
+---
+
+## 8. FreightLink handoff
+
+RATE_CON_READY behavior:
 
 **RATE CON RECEIVED → CHECK DOCUMENTS**
 
-with:
+FreightLink may navigate to Documents.
 
-**RATE CON RECEIVED → CHECK EMAIL**
+FreightLink does not launch focused review directly.
 
-FreightLink may navigate to the matching Email message.
-
-FreightLink may not print the attachment or launch the paper review directly.
+The player must pull the Rate Con from Incoming before reviewing it.
 
 ---
 
-## 11. Tests
+## 9. Attention model
 
-Required domain tests:
+Documents badge:
 
-1. Rate Con becomes unread Email,
-2. corrected Rate Con Email is labeled corrected,
-3. PENDING_RECEIVER POD creates no Email,
-4. RECEIVED POD creates Email,
-5. read state clears unread count,
-6. printed state appears on the Email attachment,
-7. unprinted digital documents do not appear on Documents desk,
-8. printing allows physical desk presence,
-9. unprinted actionable paper does not create Documents attention.
+- counts papers waiting in Incoming.
 
-Required shell/static contracts:
+Email badge:
 
-- Email command-rail app enabled,
-- Email workspace rendered,
-- unread Email badge wired,
-- Email owns center workspace,
-- PRINT ATTACHMENT present,
-- OPEN DOCUMENTS after print,
-- FreightLink uses CHECK EMAIL,
-- old CHECK DOCUMENTS handoff removed,
-- Documents index consumes printed-document state.
+- counts unread communication messages.
+
+This keeps the two apps semantically different:
+
+- Documents badge = paperwork waiting to be organized,
+- Email badge = communication waiting to be read.
+
+---
+
+## 10. V2.9.1 correction history
+
+### V2.9.1.1 · Email Reader Polish
+
+Email presentation changed from document-centric to mailbox-centric.
+
+### V2.9.1.2 · Email Sidebar Spacing
+
+Email browser safe-area spacing corrected.
+
+### V2.9.1.3 · Shared Left-Panel Gutters
+
+Shared browser gutters established across workstation apps.
+
+### V2.9.1.4 · Documents Panel Gutter Fix
+
+Documents given stronger right-side breathing room.
+
+### V2.9.1.5 · Documents Browser Containment
+
+Documents header/filter/list overflow fixed.
+
+### V2.9.1.6 · Documents Incoming Tray
+
+Mandatory routine printing removed. Incoming becomes the operational paperwork intake surface.
+
+---
+
+## 11. Required tests
+
+Domain:
+
+1. new Rate Con enters Incoming,
+2. finalized POD enters Incoming,
+3. PENDING_RECEIVER POD does not enter Incoming,
+4. PULL TO DESK removes paper from Incoming and adds it to desk,
+5. filed paper is absent from Incoming and desk,
+6. packet completeness still depends on acceptable filed documents,
+7. Documents badge count equals Incoming count,
+8. routine Rate Con produces no Email,
+9. routine clean POD produces no Email,
+10. corrected Rate Con produces Email communication,
+11. POD exception produces Email communication.
+
+Shell/static:
+
+- Documents renders Incoming tray,
+- PULL TO DESK exists,
+- print-era state/actions are absent,
+- FreightLink uses CHECK DOCUMENTS,
+- Email has no PRINT ATTACHMENT action,
+- Email related-work card opens Documents.
 
 ---
 
 ## 12. Acceptance flow
 
 1. request Rate Con,
-2. wait for arrival,
-3. observe Email unread badge,
-4. verify Documents desk does not receive the paper automatically,
-5. open Email,
-6. select Rate Con message,
-7. print attachment,
-8. open Documents,
-9. verify printed Rate Con is now loose on desk,
-10. review/accept/file Rate Con,
-11. complete a Delivery,
-12. wait for receiver verification,
-13. observe POD Email arrival,
-14. verify POD still is not on Documents desk,
-15. print POD,
-16. verify POD enters global desk and existing filing gameplay.
-
----
-
-## V2.9.1.1 · Email Reader Polish
-
-The first V2.9.1 playtest accepted the workflow but rejected the reader presentation as too document-centric.
-
-Locked visual correction:
-
-- preserve the inbox/read/unread/print state model,
-- preserve Email → PRINT → Documents ownership,
-- opened email must use normal message structure:
-  - subject,
-  - From,
-  - To,
-  - date/time,
-  - body copy,
-  - signature,
-- attachment becomes a compact row/card beneath the message,
-- attachment shows filename, type, load reference, source, document status, and print state,
-- PRINT ATTACHMENT / OPEN DOCUMENTS remain file actions,
-- remove the giant hero-paper preview from Email,
-- Email must not visually compete with Documents as the paper workspace.
-
-Acceptance:
-
-A player looking at the screen should immediately read it as **an email client with an attachment**, not as **a document viewer with an email note above it**.
-
----
-
-## V2.9.1.2 · Email Sidebar Spacing
-
-The V2.9.1.1 reader layout is retained. This pass fixes the left inbox/browser panel only.
-
-Locked correction:
-
-- add visible inner gutters around inbox rows,
-- give the Email panel header slightly more breathing room,
-- keep inbox rows width-safe with `box-sizing: border-box`,
-- use a shrinking sender column plus fixed date column,
-- truncate long date labels safely,
-- allow metadata chips to wrap instead of clipping,
-- do not change Email intake, printing, unread state, or Documents handoff.
-
-Acceptance:
-
-No sender/date/subject/preview/metadata content should visually touch or clip against the left browser panel edge.
-
----
-
-## V2.9.1.3 · Shared Left-Panel Gutters
-
-The Email spacing fix is promoted into a shared workstation rule.
-
-Locked correction:
-
-- shared browser gutter token lives in the shell,
-- left gutter = 12px,
-- right gutter = 16px,
-- right side intentionally gets more breathing room for timestamps, badges, counts, and status pills,
-- Fleet, FreightLink, Email, and Documents all consume the same gutter token,
-- browser rows remain width-safe with `box-sizing: border-box`,
-- app-specific content may differ, but no left browser content should ride directly against the panel boundary,
-- right inspectors are not part of this correction.
-
-Acceptance:
-
-Switch through Fleet, FreightLink, Email, and Documents. Their left browser content should feel aligned and consistently inset, with noticeably safer spacing on the right edge.
-
----
-
-## V2.9.1.4 · Documents Panel Gutter Fix
-
-The shared gutter rule remains intact. Documents gets a larger effective right safe area because its filing-cabinet layout contains wider status chips and denser nested content than the other browsers.
-
-Locked correction:
-
-- Documents right gutter = 24px,
-- header, filters, notices, and load-file list all consume that gutter,
-- cabinet scrollbar reserves stable space,
-- file header status uses a shrink-safe two-column layout,
-- expanded folder content remains width-safe,
-- empty state sits inside the cabinet gutter instead of adding conflicting outer margins,
-- no Documents gameplay or filing behavior changes.
-
----
-
-## V2.9.1.5 · Documents Browser Containment
-
-The previous gutter values were correct, but direct Documents browser children could still overflow the grid column.
-
-Locked correction:
-
-- all direct Documents browser children are `min-width: 0`,
-- all direct Documents browser children are `max-width: 100%`,
-- all direct Documents browser children use `box-sizing: border-box`,
-- header, filters, and load-file list are explicitly width-contained,
-- header description wraps instead of ellipsizing off-panel,
-- close button remains fixed inside the header,
-- no filing or document gameplay changes.
-
----
-
-## V2.9.1.6 · Documents Incoming Tray
-
-The mandatory print step is removed from routine paperwork.
-
-Locked workflow:
-
-> **Operational system → Documents Incoming → Working Desk → Load File → Submit**
-
-Rules:
-
-- routine Rate Cons arrive in Documents Incoming when FreightLink returns them,
-- finalized PODs arrive in Documents Incoming after receiver processing,
-- PENDING_RECEIVER PODs do not appear in Incoming yet,
-- Incoming papers do not automatically clutter the working desk,
-- player action **PULL TO DESK** moves a paper into the global desk,
-- only desk papers can be drag-filed into load folders,
-- unfiling returns a paper to the desk,
-- Documents badge counts papers waiting in Incoming,
-- routine Rate Con / clean POD arrival does not generate Email,
-- corrected Rate Con and POD exception may generate Email communication,
-- Email messages link the player back to Documents rather than printing attachments,
-- no packet-completeness or filing rules change.
-
-Acceptance:
-
-Create multiple loads and let paperwork accumulate in Incoming. Pull only selected papers onto the desk, leave others waiting, then review/file/submit normally. The loop should feel like desk organization gameplay without repetitive printer clicks.
+2. wait for RATE CON RECEIVED,
+3. open Documents,
+4. verify Rate Con is in Incoming and not on desk,
+5. leave it there and verify desk stays clear,
+6. pull it onto the desk,
+7. review/accept/file it,
+8. complete delivery,
+9. while receiver processing is pending, verify no POD paper is available,
+10. after receiver processing completes, verify POD enters Incoming,
+11. pull POD onto desk and file it,
+12. create multiple loads and allow several papers to accumulate in Incoming,
+13. pull only some papers to the desk and confirm the others stay queued,
+14. trigger a correction/exception and verify Email communicates the issue and points back to Documents.
 
 ---
 
