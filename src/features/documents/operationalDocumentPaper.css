@@ -1,4 +1,5 @@
 .pod-paper {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -137,4 +138,42 @@
   border-top: 1px solid #aaa69b;
   font-size: 9px;
   font-weight: 750;
+}
+
+
+.pod-paper-status small {
+  margin-top: 2px;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.pod-paper-stamp {
+  position: absolute;
+  z-index: 4;
+  top: 108px;
+  right: 30px;
+  max-width: 190px;
+  padding: 7px 10px 6px;
+  border: 3px double #7d5732;
+  color: #7d5732;
+  background: rgba(242, 239, 229, .72);
+  font-size: 12px;
+  font-weight: 1000;
+  letter-spacing: .08em;
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(-5deg);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.pod-paper-stamp.accepted {
+  border-color: #41675d;
+  color: #41675d;
+}
+
+.pod-paper-stamp.superseded {
+  border-color: #6b5555;
+  color: #6b5555;
+  transform: rotate(4deg);
 }
