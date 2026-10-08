@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   buildOperationalDeskDocuments,
+  buildOperationalIncomingDocuments,
   OPERATIONAL_DOCUMENT_TYPE,
   OPERATIONAL_LOAD_FILE_STATUS,
 } from '../../domain/documents/operationalDocumentIndex.js'
@@ -76,7 +77,7 @@ function paperStartPosition(index) {
   const column = index % 4
   const row = Math.floor(index / 4)
   return {
-    x: 42 + (column * 58) + ((row % 2) * 16),
+    x: 282 + (column * 58) + ((row % 2) * 16),
     y: 82 + (row * 46) + ((column % 2) * 14),
   }
 }
@@ -94,6 +95,8 @@ function RateConInspector({
   document,
   driverLabel,
   filedLoadRef,
+  incoming,
+  onMoveDocumentToDesk,
   onInspectDocument,
 }) {
   const canReview = documentCanReview(document)
@@ -106,14 +109,20 @@ function RateConInspector({
         <div><span>LOAD</span><strong>{document.loadRef}</strong></div>
         <div><span>REVISION</span><strong>R{document.revision}</strong></div>
         <div><span>DRIVER</span><strong>{driverLabel}</strong></div>
-        <div><span>LOCATION</span><strong>{filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
+        <div><span>LOCATION</span><strong>{incoming ? 'INCOMING TRAY' : filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
         <div><span>SOURCE</span><strong>{document.brokerName}</strong></div>
         <div className="wide"><span>STATUS</span><strong className={documentTone(document)}>{document.statusLabel}</strong></div>
       </div>
 
       <section className="document-inspector-section">
         <header><span>WORKFLOW</span></header>
-        {canReview ? (
+        {incoming ? (
+          <div className="document-next-action waiting">
+            <span>INCOMING</span>
+            <strong>Move this Rate Confirmation onto the working desk before reviewing or filing it.</strong>
+            <small>Incoming is the intake queue. Pull the paper when you are ready to work it.</small>
+          </div>
+        ) : canReview ? (
           <div className="document-next-action attention">
             <span>NEXT ACTION</span>
             <strong>Inspect this Rate Confirmation before committing the freight.</strong>
@@ -123,7 +132,7 @@ function RateConInspector({
           <div className="document-next-action waiting">
             <span>WAITING</span>
             <strong>Correction requested from FreightLink Brokerage.</strong>
-            <small>The revised paper will arrive on the global desk when it is available.</small>
+            <small>The revised paper will arrive in the Incoming tray when it is available.</small>
           </div>
         ) : filed ? (
           <div className="document-next-action complete">
@@ -154,12 +163,18 @@ function RateConInspector({
 
       <footer className="documents-inspector-footer">
         <div>
-          <span>{filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
-          <strong>{canReview ? 'Review terms before accepting.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
+          <span>{incoming ? 'INCOMING PAPER' : filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
+          <strong>{incoming ? 'Pull this paper onto the desk to work it.' : canReview ? 'Review terms before accepting.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
         </div>
-        <button type="button" onClick={() => onInspectDocument(document.id)}>
-          {canReview ? 'REVIEW DOCUMENT' : 'INSPECT DOCUMENT'}
-        </button>
+        {incoming ? (
+          <button type="button" onClick={() => onMoveDocumentToDesk(document.id)}>
+            PULL TO DESK
+          </button>
+        ) : (
+          <button type="button" onClick={() => onInspectDocument(document.id)}>
+            {canReview ? 'REVIEW DOCUMENT' : 'INSPECT DOCUMENT'}
+          </button>
+        )}
       </footer>
     </>
   )
@@ -168,6 +183,8 @@ function RateConInspector({
 function PodInspector({
   document,
   filedLoadRef,
+  incoming,
+  onMoveDocumentToDesk,
   onInspectDocument,
 }) {
   const exceptionCount = (
@@ -184,7 +201,7 @@ function PodInspector({
         <div><span>LOAD</span><strong>{document.loadRef}</strong></div>
         <div><span>RECEIVER</span><strong>{document.facilityLabel}</strong></div>
         <div><span>SIGNATURE</span><strong>{document.signaturePresent ? 'PRESENT' : 'PENDING'}</strong></div>
-        <div><span>LOCATION</span><strong>{filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
+        <div><span>LOCATION</span><strong>{incoming ? 'INCOMING TRAY' : filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
         <div className="wide"><span>STATUS</span><strong className={documentTone(document)}>{document.statusLabel}</strong></div>
       </div>
 
@@ -200,11 +217,17 @@ function PodInspector({
 
       <section className="document-inspector-section">
         <header><span>DOCUMENT STATE</span></header>
-        {document.status === 'PENDING_RECEIVER' ? (
+        {incoming ? (
+          <div className="document-next-action waiting">
+            <span>INCOMING</span>
+            <strong>Move this Proof of Delivery onto the working desk before filing it.</strong>
+            <small>Use the desk to inspect, compare, and organize incoming paperwork.</small>
+          </div>
+        ) : document.status === 'PENDING_RECEIVER' ? (
           <div className="document-next-action waiting">
             <span>PENDING RECEIVER</span>
             <strong>The receiver is finalizing the Proof of Delivery.</strong>
-            <small>You may file the paper now, but it will not satisfy the POD requirement until receiver verification completes.</small>
+            <small>The POD will enter Incoming after receiver verification is complete.</small>
           </div>
         ) : document.status === 'REVIEW_REQUIRED' ? (
           <div className="document-next-action attention">
@@ -229,12 +252,18 @@ function PodInspector({
 
       <footer className="documents-inspector-footer">
         <div>
-          <span>{filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
-          <strong>{filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
+          <span>{incoming ? 'INCOMING PAPER' : filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
+          <strong>{incoming ? 'Pull this paper onto the desk to work it.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
         </div>
-        <button type="button" onClick={() => onInspectDocument(document.id)}>
-          INSPECT DOCUMENT
-        </button>
+        {incoming ? (
+          <button type="button" onClick={() => onMoveDocumentToDesk(document.id)}>
+            PULL TO DESK
+          </button>
+        ) : (
+          <button type="button" onClick={() => onInspectDocument(document.id)}>
+            INSPECT DOCUMENT
+          </button>
+        )}
       </footer>
     </>
   )
@@ -333,6 +362,58 @@ function LoadFileContents({
   )
 }
 
+function IncomingPaperTray({
+  documents,
+  selectedDocumentId,
+  onSelectDocument,
+  onMoveDocumentToDesk,
+  onNotice,
+}) {
+  const pullPaper = (documentId) => {
+    const result = onMoveDocumentToDesk(documentId)
+    onNotice(result)
+  }
+
+  return (
+    <aside className="incoming-paper-tray" aria-label="Incoming paperwork tray">
+      <header>
+        <div>
+          <span>INCOMING</span>
+          <strong>{documents.length}</strong>
+        </div>
+        <small>New operational paperwork lands here first.</small>
+      </header>
+
+      <div className="incoming-paper-stack">
+        {documents.length === 0 ? (
+          <div className="incoming-paper-empty">
+            <strong>TRAY CLEAR</strong>
+            <small>No new paperwork is waiting.</small>
+          </div>
+        ) : documents.map((document) => (
+          <article
+            key={document.id}
+            className={
+              'incoming-paper-slip '
+              + (selectedDocumentId === document.id ? 'selected ' : '')
+              + documentTone(document)
+            }
+          >
+            <button type="button" onClick={() => onSelectDocument(document.id)}>
+              <span>{documentLabel(document)}</span>
+              <strong>{document.loadRef}</strong>
+              <small>{document.statusLabel}</small>
+            </button>
+            <button type="button" onClick={() => pullPaper(document.id)}>
+              PULL TO DESK
+            </button>
+          </article>
+        ))}
+      </div>
+    </aside>
+  )
+}
+
 function GlobalPaperDesk({
   loadFiles,
   drivers,
@@ -340,9 +421,14 @@ function GlobalPaperDesk({
   onSelectDocument,
   onInspectDocument,
   onFileDocument,
+  onMoveDocumentToDesk,
   onNotice,
   onDropTargetChange,
 }) {
+  const incomingDocuments = useMemo(
+    () => buildOperationalIncomingDocuments(loadFiles),
+    [loadFiles],
+  )
   const deskDocuments = useMemo(
     () => buildOperationalDeskDocuments(loadFiles),
     [loadFiles],
@@ -365,22 +451,30 @@ function GlobalPaperDesk({
     <section className="documents-desk-workspace" aria-label="Unfiled paperwork desk">
       <header className="documents-desk-header">
         <div>
-          <span>UNFILED PAPER DESK</span>
-          <strong>{deskDocuments.length} loose paper{deskDocuments.length === 1 ? '' : 's'}</strong>
-          <small>Every unfiled document stays here regardless of which load file is open.</small>
+          <span>DOCUMENT WORKSPACE</span>
+          <strong>{incomingDocuments.length} incoming · {deskDocuments.length} on desk</strong>
+          <small>Pull new paperwork from Incoming, work it on the desk, then file it.</small>
         </div>
         <div className="desk-rule-card">
-          <span>FILING RULE</span>
-          <strong>Drag paper → matching load file</strong>
+          <span>WORKFLOW</span>
+          <strong>Incoming → Desk → Load File</strong>
         </div>
       </header>
 
       <DocumentDesk className="global-paper-desk">
+        <IncomingPaperTray
+          documents={incomingDocuments}
+          selectedDocumentId={selectedDocumentId}
+          onSelectDocument={onSelectDocument}
+          onMoveDocumentToDesk={onMoveDocumentToDesk}
+          onNotice={onNotice}
+        />
+
         {deskDocuments.length === 0 ? (
           <div className="global-desk-empty">
-            <span>DESK CLEAR</span>
-            <strong>All current paperwork is filed.</strong>
-            <small>New Rate Cons, PODs, and future paperwork will land here when they arrive.</small>
+            <span>WORKING DESK CLEAR</span>
+            <strong>{incomingDocuments.length ? 'Paperwork is waiting in Incoming.' : 'No loose paperwork is on the desk.'}</strong>
+            <small>{incomingDocuments.length ? 'Pull a paper from the Incoming tray to start working it.' : 'New operational paperwork will arrive through the Incoming tray.'}</small>
           </div>
         ) : (
           deskDocuments.map((document, index) => {
@@ -424,6 +518,7 @@ export default function DocumentsWorkspace({
   selectedDocumentId,
   onSelectDocument,
   onInspectDocument,
+  onMoveDocumentToDesk,
   onFileDocument,
   onUnfileDocument,
   onSubmitLoadFile,
@@ -443,6 +538,11 @@ export default function DocumentsWorkspace({
   const selectedDocumentFile = selectedDocument
     ? findDocumentFile(loadFiles, selectedDocument.id)
     : null
+  const selectedDocumentIncoming = selectedDocument
+    ? loadFiles.some((loadFile) => (
+        loadFile.incomingDocuments.some((document) => document.id === selectedDocument.id)
+      ))
+    : false
   const selectedDriver = selectedDocument?.driverId
     ? drivers.find((driver) => driver.id === selectedDocument.driverId) ?? null
     : null
@@ -571,6 +671,7 @@ export default function DocumentsWorkspace({
         onSelectDocument={onSelectDocument}
         onInspectDocument={onInspectDocument}
         onFileDocument={onFileDocument}
+        onMoveDocumentToDesk={onMoveDocumentToDesk}
         onNotice={handleNotice}
         onDropTargetChange={setDropTargetLoadRef}
       />
@@ -595,12 +696,16 @@ export default function DocumentsWorkspace({
                 document={selectedDocument}
                 driverLabel={selectedDriver?.name ?? selectedDocument.driverId ?? '—'}
                 filedLoadRef={selectedDocumentFile?.loadRef ?? null}
+                incoming={selectedDocumentIncoming}
+                onMoveDocumentToDesk={onMoveDocumentToDesk}
                 onInspectDocument={onInspectDocument}
               />
             ) : (
               <PodInspector
                 document={selectedDocument}
                 filedLoadRef={selectedDocumentFile?.loadRef ?? null}
+                incoming={selectedDocumentIncoming}
+                onMoveDocumentToDesk={onMoveDocumentToDesk}
                 onInspectDocument={onInspectDocument}
               />
             )}

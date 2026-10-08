@@ -19,7 +19,6 @@ import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import {
   buildOperationalEmailInbox,
-  emailIdForDocument,
   operationalEmailUnreadCount,
 } from '../domain/communications/operationalEmail.js'
 import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
@@ -32,7 +31,7 @@ import {
 import {
   buildOperationalDocumentIndex,
   buildOperationalLoadFiles,
-  operationalLoadFileAttentionCount,
+  operationalDocumentWorkspaceAttentionCount,
   OPERATIONAL_DOCUMENT_TYPE,
 } from '../domain/documents/operationalDocumentIndex.js'
 import { buildDriverDays } from '../domain/manifest/driverDayModel.js'
@@ -70,7 +69,7 @@ export default function App() {
   const [documentRecords, setDocumentRecords] = useState({})
   const [documentFileAssignments, setDocumentFileAssignments] = useState({})
   const [submittedLoadFiles, setSubmittedLoadFiles] = useState({})
-  const [printedDocumentIds, setPrintedDocumentIds] = useState({})
+  const [deskDocumentIds, setDeskDocumentIds] = useState({})
   const [readEmailIds, setReadEmailIds] = useState({})
   const [selectedEmailId, setSelectedEmailId] = useState(null)
   const [selectedDocumentId, setSelectedDocumentId] = useState(null)
@@ -155,13 +154,13 @@ export default function App() {
     () => buildOperationalLoadFiles(operationalDocuments, {
       fileAssignments: documentFileAssignments,
       submittedLoadFiles,
-      printedDocumentIds,
+      deskDocumentIds,
     }),
-    [documentFileAssignments, operationalDocuments, printedDocumentIds, submittedLoadFiles],
+    [deskDocumentIds, documentFileAssignments, operationalDocuments, submittedLoadFiles],
   )
 
   const documentAttentionCount = useMemo(
-    () => operationalLoadFileAttentionCount(operationalLoadFiles),
+    () => operationalDocumentWorkspaceAttentionCount(operationalLoadFiles),
     [operationalLoadFiles],
   )
 
@@ -169,9 +168,8 @@ export default function App() {
     () => buildOperationalEmailInbox({
       documents: operationalDocuments,
       readEmailIds,
-      printedDocumentIds,
     }),
-    [operationalDocuments, printedDocumentIds, readEmailIds],
+    [operationalDocuments, readEmailIds],
   )
 
   const emailUnreadCount = useMemo(
@@ -469,17 +467,15 @@ export default function App() {
     }, 650)
   }
 
-  const openEmailForRateCon = (laneId) => {
+  const openDocumentsForRateCon = (laneId) => {
     const record = bookingRecords[laneId]
     const documentId = record?.rateConfirmation?.id
     if (!documentId) return
 
-    const emailId = emailIdForDocument(documentId)
     setFreightRoutePreview(null)
     if (selection?.type === SELECTION_TYPES.LOAD) setSelection(null)
-    setSelectedEmailId(emailId)
-    setReadEmailIds((current) => ({ ...current, [emailId]: true }))
-    setActiveApp('email')
+    setSelectedDocumentId(documentId)
+    setActiveApp('documents')
   }
 
   const selectEmail = (emailId) => {
@@ -487,32 +483,43 @@ export default function App() {
     setReadEmailIds((current) => ({ ...current, [emailId]: true }))
   }
 
-  const printDocument = (documentId) => {
+  const moveDocumentToDesk = (documentId) => {
     const document = operationalDocuments.find((item) => item.id === documentId)
-    if (!document) return { ok: false, message: 'That attachment is no longer available.' }
-    if (printedDocumentIds[documentId]) {
-      return { ok: true, message: `${document.shortTypeLabel} is already printed.` }
+    if (!document) return { ok: false, message: 'That incoming paper is no longer available.' }
+    if (documentFileAssignments[documentId]) {
+      return { ok: false, message: `${document.shortTypeLabel} is already filed.` }
+    }
+    if (deskDocumentIds[documentId]) {
+      return { ok: true, message: `${document.shortTypeLabel} is already on the desk.` }
     }
 
-    setPrintedDocumentIds((current) => ({ ...current, [documentId]: true }))
+    setDeskDocumentIds((current) => ({
+      ...current,
+      [documentId]: true,
+    }))
+    setSelectedDocumentId(documentId)
     return {
       ok: true,
-      message: `${document.shortTypeLabel} printed to the Documents desk.`,
+      message: `${document.shortTypeLabel} moved from Incoming to the working desk.`,
     }
   }
 
-  const openDocuments = () => {
-    setSelectedDocumentId(null)
+  const openDocuments = (documentId = null) => {
+    if (documentId) setSelectedDocumentId(documentId)
     setActiveApp('documents')
   }
 
   const openRateCon = (laneId) => {
     const record = bookingRecords[laneId]
     const documentId = record?.rateConfirmation?.id
+    const availableToWork = Boolean(
+      documentId
+      && (deskDocumentIds[documentId] || documentFileAssignments[documentId])
+    )
     if (
       record?.status !== BOOKING_STATUS.RATE_CON_READY
       || !documentId
-      || !printedDocumentIds[documentId]
+      || !availableToWork
     ) return
     setSelectedDocumentId(documentId)
     setActiveApp('documents')
@@ -522,6 +529,7 @@ export default function App() {
   const inspectDocument = (documentId) => {
     const document = operationalDocuments.find((item) => item.id === documentId)
     if (!document) return
+    if (!deskDocumentIds[documentId] && !documentFileAssignments[documentId]) return
 
     setSelectedDocumentId(document.id)
     setActiveApp('documents')
@@ -544,8 +552,8 @@ export default function App() {
       return { ok: false, message: 'That paper is no longer available on the desk.' }
     }
 
-    if (!printedDocumentIds[documentId]) {
-      return { ok: false, message: 'Print this attachment before filing it.' }
+    if (!deskDocumentIds[documentId]) {
+      return { ok: false, message: 'Move this paper from Incoming to the desk before filing it.' }
     }
 
     const targetLoadFile = operationalLoadFiles.find((item) => item.loadRef === targetLoadRef)
@@ -584,6 +592,10 @@ export default function App() {
       return next
     })
 
+    setDeskDocumentIds((current) => ({
+      ...current,
+      [document.id]: true,
+    }))
     setSelectedDocumentId(document.id)
     return {
       ok: true,
@@ -821,10 +833,10 @@ export default function App() {
       onFreightCandidateDriverChange={setFreightCandidateDriverId}
       onSimulationModeChange={setSimulationClockMode}
       onRequestRateCon={requestRateCon}
-      onOpenEmailForRateCon={openEmailForRateCon}
+      onOpenDocumentsForRateCon={openDocumentsForRateCon}
       onSelectEmail={selectEmail}
-      onPrintDocument={printDocument}
       onOpenDocuments={openDocuments}
+      onMoveDocumentToDesk={moveDocumentToDesk}
       onInspectDocument={inspectDocument}
       onSelectDocument={setSelectedDocumentId}
       onFileDocument={fileDocument}

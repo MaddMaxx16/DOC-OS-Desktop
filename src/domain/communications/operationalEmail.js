@@ -1,78 +1,60 @@
 import { OPERATIONAL_DOCUMENT_TYPE } from '../documents/operationalDocumentIndex.js'
 
 export const OPERATIONAL_EMAIL_KIND = Object.freeze({
-  RATE_CONFIRMATION: 'RATE_CONFIRMATION',
-  POD: 'POD',
+  RATE_CONFIRMATION_CORRECTION: 'RATE_CONFIRMATION_CORRECTION',
+  POD_EXCEPTION: 'POD_EXCEPTION',
 })
 
 export function emailIdForDocument(documentId) {
   return `email:${documentId}`
 }
 
-function rateConMessage(document, { readEmailIds, printedDocumentIds }) {
-  const corrected = Boolean(document.corrected)
-  const subject = corrected
-    ? `Corrected Rate Confirmation · ${document.loadRef}`
-    : `Rate Confirmation · ${document.loadRef}`
+function correctedRateConMessage(document, { readEmailIds }) {
+  if (!document.corrected) return null
 
+  const id = emailIdForDocument(document.id)
   return {
-    id: emailIdForDocument(document.id),
-    kind: OPERATIONAL_EMAIL_KIND.RATE_CONFIRMATION,
+    id,
+    kind: OPERATIONAL_EMAIL_KIND.RATE_CONFIRMATION_CORRECTION,
     documentId: document.id,
     loadRef: document.loadRef,
     senderName: document.brokerName ?? 'FreightLink Brokerage',
     senderAddress: 'operations@freightlink.example',
     recipientName: 'Metroline Operations',
     recipientAddress: 'dispatch@metroline.example',
-    subject,
-    preview: corrected
-      ? 'The corrected Rate Confirmation is attached for review.'
-      : 'The Rate Confirmation you requested is attached.',
-    body: corrected
-      ? `The corrected Rate Confirmation for ${document.loadRef} is attached. Review the revised terms before confirming the freight.`
-      : `The Rate Confirmation for ${document.loadRef} is attached. Print the paper to your Documents desk, then review the terms before confirming the freight.`,
-    attachmentLabel: corrected ? 'Corrected Rate Confirmation' : 'Rate Confirmation',
-    attachmentFileName: corrected
-      ? `${document.loadRef}_Rate_Confirmation_R${document.revision ?? 1}.pdf`
-      : `${document.loadRef}_Rate_Confirmation.pdf`,
-    attachmentTypeLabel: 'PDF',
+    subject: `Corrected Rate Confirmation available · ${document.loadRef}`,
+    preview: 'FreightLink issued revised paperwork for this load.',
+    body: `We issued a corrected Rate Confirmation for ${document.loadRef}. The revised paperwork is waiting in the Documents Incoming tray for your review.`,
     sourceLabel: 'FreightLink',
     statusLabel: document.statusLabel,
-    unread: !readEmailIds[emailIdForDocument(document.id)],
-    printed: Boolean(printedDocumentIds[document.id]),
+    relatedWorkLabel: 'Corrected Rate Confirmation',
+    unread: !readEmailIds[id],
     issuedAtLabel: document.issuedAtLabel ?? 'Today',
     closingName: 'FreightLink Operations Desk',
   }
 }
 
-function podMessage(document, { readEmailIds, printedDocumentIds }) {
-  if (document.status === 'PENDING_RECEIVER') return null
+function podExceptionMessage(document, { readEmailIds }) {
+  if (document.status !== 'REVIEW_REQUIRED') return null
 
-  const hasException = document.status === 'REVIEW_REQUIRED'
+  const id = emailIdForDocument(document.id)
   const senderName = document.facilityLabel ?? 'Receiver'
   return {
-    id: emailIdForDocument(document.id),
-    kind: OPERATIONAL_EMAIL_KIND.POD,
+    id,
+    kind: OPERATIONAL_EMAIL_KIND.POD_EXCEPTION,
     documentId: document.id,
     loadRef: document.loadRef,
     senderName,
     senderAddress: 'receiving@operations.example',
     recipientName: 'Metroline Operations',
     recipientAddress: 'dispatch@metroline.example',
-    subject: `Proof of Delivery · ${document.loadRef}`,
-    preview: hasException
-      ? 'The POD is attached and requires review.'
-      : 'The signed POD is attached.',
-    body: hasException
-      ? `The Proof of Delivery for ${document.loadRef} is attached with an exception that requires your attention. Print the paper to Documents before working the load file.`
-      : `The signed Proof of Delivery for ${document.loadRef} is attached. Print the paper to Documents when you are ready to file the load packet.`,
-    attachmentLabel: 'Proof of Delivery',
-    attachmentFileName: `${document.loadRef}_Proof_of_Delivery.pdf`,
-    attachmentTypeLabel: 'PDF',
+    subject: `Delivery exception · ${document.loadRef}`,
+    preview: 'The receiver reported an exception on the Proof of Delivery.',
+    body: `The Proof of Delivery for ${document.loadRef} contains a delivery exception that needs your attention. The POD is waiting in the Documents Incoming tray.`,
     sourceLabel: senderName,
     statusLabel: document.statusLabel,
-    unread: !readEmailIds[emailIdForDocument(document.id)],
-    printed: Boolean(printedDocumentIds[document.id]),
+    relatedWorkLabel: 'Proof of Delivery',
+    unread: !readEmailIds[id],
     issuedAtLabel: 'Receiver completed',
     closingName: `${senderName} Receiving`,
   }
@@ -81,16 +63,15 @@ function podMessage(document, { readEmailIds, printedDocumentIds }) {
 export function buildOperationalEmailInbox({
   documents = [],
   readEmailIds = {},
-  printedDocumentIds = {},
 } = {}) {
   return documents
     .map((document) => {
       if (document.type === OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION) {
-        return rateConMessage(document, { readEmailIds, printedDocumentIds })
+        return correctedRateConMessage(document, { readEmailIds })
       }
 
       if (document.type === OPERATIONAL_DOCUMENT_TYPE.POD) {
-        return podMessage(document, { readEmailIds, printedDocumentIds })
+        return podExceptionMessage(document, { readEmailIds })
       }
 
       return null
@@ -98,7 +79,6 @@ export function buildOperationalEmailInbox({
     .filter(Boolean)
     .sort((left, right) => {
       if (left.unread !== right.unread) return left.unread ? -1 : 1
-      if (left.printed !== right.printed) return left.printed ? 1 : -1
       return String(left.id).localeCompare(String(right.id))
     })
 }

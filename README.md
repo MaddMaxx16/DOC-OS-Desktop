@@ -10,11 +10,11 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-**Current candidate:** `V2.9.1.5 · Documents Browser Containment`
+**Current candidate:** `V2.9.1.6 · Incoming Tray & Communication Split`
 
 V2.8.1.3 is visually accepted and locks the Documents interaction model: load folders live in the filing cabinet, every unfiled physical paper shares one persistent desk, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1.4 increased the Documents gutter, but the screenshot proved the real issue was overflow: the Documents header/filter/list blocks could still size beyond their grid column. V2.9.1.5 fixes containment so the gutter finally stays inside the panel.
+V2.9.1.5 fixed the Documents panel containment issue. V2.9.1.6 changes the paperwork loop itself: routine operational paperwork now enters a Documents **Incoming** tray, the player pulls it onto the working desk, and Email is reserved for meaningful communication such as corrections and exceptions.
 
 The operational freight loop is now substantially playable:
 
@@ -39,33 +39,33 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The physical Documents workflow is accepted. The next missing layer is how external paperwork reaches the player.
+The physical Documents workflow is accepted. V2.9.1.6 is correcting how paperwork enters that workflow.
 
 Still pending:
 
-- **V2.9.1.3 Shared Left-Panel Gutters** is the active acceptance correction,
+- **V2.9.1.6 Incoming Tray & Communication Split** is the active acceptance candidate,
 - Messages / driver communication remains V2.9.2,
-- accepted Rate Con revision/archive viewing returns after Email intake is accepted,
-- focused POD review/correction returns after Email intake is accepted,
+- accepted Rate Con revision/archive viewing returns after the Incoming workflow is accepted,
+- focused POD review/correction returns after the Incoming workflow is accepted,
 - Send Schedule is still too tightly coupled to Planning mode,
 - Live Operations has Play/Fast Forward but no **Advance to Next Operational Moment** control yet.
 
 ## Current acceptance gate
 
-### V2.9.1.3 · Shared Left-Panel Gutters
+### V2.9.1.6 · Incoming Tray & Communication Split
 
 The critical flow is:
 
 1. request a Rate Con in FreightLink,
-2. FreightLink reports **RATE CON RECEIVED** and routes to **CHECK EMAIL**,
-3. Email shows an unread Rate Confirmation message that looks like a real email: subject, sender, recipient, date, body, and compact attachment,
-4. opening the email marks it read but does not create a physical paper,
-5. click **PRINT ATTACHMENT**,
-6. open Documents and confirm the Rate Con now appears as loose paper on the global desk,
-7. review/accept/file it through the existing Documents workflow,
-8. complete a Delivery and wait for receiver verification,
-9. confirm the POD arrives as Email rather than automatically appearing on the Documents desk,
-10. print the POD and confirm it enters the same global filing gameplay.
+2. FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
+3. the Rate Con appears in the Documents **Incoming** tray, not directly on the desk,
+4. pull the Rate Con from Incoming onto the working desk,
+5. review/accept/file it through the existing Documents workflow,
+6. complete a Delivery and wait for receiver verification,
+7. a clean POD appears in Documents Incoming without creating routine Email,
+8. pull the POD to the desk and file it,
+9. request a Rate Con correction and confirm the revised paper returns to Incoming while Email provides the human-facing correction notice,
+10. create a POD exception and confirm Email notifies the player while the POD itself remains Documents work.
 
 See the implementation packets:
 
@@ -82,7 +82,7 @@ Use that file as the default answer to **"what are we building next?"** rather t
 
 High-level direction:
 
-**V2.8 Documents foundation → V2.9.1 Email intake → remaining document depth → V2.9 Messages → V2.10 Banking + Career Progression → V2.11 Onboarding → V2.12 Packaging**
+**V2.8 Documents foundation → V2.9.1 Incoming + communication split → remaining document depth → V2.9 Messages → V2.10 Banking + Career Progression → V2.11 Onboarding → V2.12 Packaging**
 
 ## Architecture / development contract
 

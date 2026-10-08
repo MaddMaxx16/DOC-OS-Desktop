@@ -267,8 +267,8 @@
 }
 
 .email-subject-bar span,
-.email-attachments-header span,
-.email-print-note span,
+.email-related-work header span,
+.email-related-work > div > span,
 .email-empty-reading span {
   color: #758995;
   font-size: 9px;
@@ -403,119 +403,40 @@
   font-size: 11px;
 }
 
-.email-attachments {
+.email-related-work {
   max-width: 940px;
   margin: 0 auto;
-  border-top: 1px solid #22333d;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0;
+  border: 1px solid #2d414d;
+  background: #0b171f;
 }
 
-.email-attachments-header {
+.email-related-work > header {
+  grid-column: 1 / -1;
   min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+  padding: 0 14px;
+  border-bottom: 1px solid #22343e;
 }
 
-.email-attachments-header > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.email-related-work > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
 }
 
-.email-attachments-header strong {
-  color: #b9c5cb;
-  font-size: 10px;
+.email-related-work > header strong {
+  color: #cdd8dd;
+  font-size: 11px;
 }
 
-.email-attachments-header b {
+.email-related-work > header b {
   padding: 4px 7px;
-  border: 1px solid #3b6258;
-  border-radius: 3px;
-  color: #89b9ab;
-  font-size: 8px;
-  font-weight: 950;
-  letter-spacing: .05em;
-}
-
-.email-attachment-row {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr) minmax(150px, .45fr) auto;
-  align-items: center;
-  gap: 14px;
-  min-height: 112px;
-  padding: 12px;
-  border: 1px solid #2d414d;
-  background: #0b171f;
-}
-
-.email-attachment-row.printed {
-  border-color: #385d54;
-  background: #0c1818;
-}
-
-.email-attachment-thumbnail {
-  width: 68px;
-  height: 86px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #746f64;
-  background: #ddd7ca;
-  color: #232724;
-  box-shadow: 0 6px 16px rgba(0,0,0,.24);
-}
-
-.email-attachment-thumbnail > div {
-  display: grid;
-  justify-items: center;
-  gap: 5px;
-}
-
-.email-attachment-thumbnail span {
-  padding: 3px 5px;
-  border: 1px solid #6a4d48;
-  color: #7a413a;
-  font-size: 8px;
-  font-weight: 1000;
-}
-
-.email-attachment-thumbnail strong {
-  font-size: 12px;
-}
-
-.email-attachment-info {
-  min-width: 0;
-  display: grid;
-  gap: 5px;
-}
-
-.email-attachment-info > strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #dbe4e8;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.email-attachment-info > span {
-  color: #a3b1b9;
-  font-size: 10px;
-}
-
-.email-attachment-info > small {
-  color: #718590;
-  font-size: 9px;
-}
-
-.email-attachment-status {
-  min-width: 0;
-  display: grid;
-  gap: 5px;
-  justify-items: start;
-}
-
-.email-attachment-status > span {
-  padding: 4px 6px;
   border: 1px solid #765f37;
   border-radius: 3px;
   color: #d5b26f;
@@ -524,30 +445,40 @@
   letter-spacing: .04em;
 }
 
-.email-attachment-status.complete > span {
-  border-color: #3c655b;
-  color: #8bb8ac;
-}
-
-.email-attachment-status.waiting > span {
+.email-related-work > header b.waiting {
   border-color: #4a545b;
   color: #a7b1b7;
 }
 
-.email-attachment-status > small {
+.email-related-work > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 5px 10px;
+  padding: 14px;
+}
+
+.email-related-work > div > span {
+  grid-column: 1;
+}
+
+.email-related-work > div > strong {
+  grid-column: 2;
+  color: #d8e2e7;
+  font-size: 12px;
+}
+
+.email-related-work > div > small {
+  grid-column: 1 / -1;
   color: #758995;
   font-size: 9px;
+  line-height: 1.45;
 }
 
-.email-attachment-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.email-attachment-actions button {
-  min-width: 150px;
-  height: 40px;
+.email-related-work > button {
+  min-width: 154px;
+  margin: 12px;
   border: 1px solid #4a5e69;
   background: #15232b;
   color: #cdd8de;
@@ -556,27 +487,8 @@
   cursor: pointer;
 }
 
-.email-attachment-actions button.primary {
-  border-color: #7c6685;
-  background: #2a2030;
-  color: #eee3f2;
-}
-
-.email-attachment-actions button:hover {
+.email-related-work > button:hover {
   filter: brightness(1.12);
-}
-
-.email-print-note {
-  display: grid;
-  gap: 4px;
-  padding: 12px 4px 0;
-}
-
-.email-print-note strong {
-  max-width: 760px;
-  color: #899ba5;
-  font-size: 9px;
-  line-height: 1.45;
 }
 
 .email-empty-reading {
@@ -609,16 +521,11 @@
     padding-left: 54px;
   }
 
-  .email-attachment-row {
-    grid-template-columns: 70px minmax(0, 1fr) auto;
+  .email-related-work {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .email-attachment-status {
-    grid-column: 2;
-  }
-
-  .email-attachment-actions {
-    grid-column: 3;
-    grid-row: 1 / span 2;
+  .email-related-work > button {
+    min-height: 40px;
   }
 }
