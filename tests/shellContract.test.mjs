@@ -747,7 +747,7 @@ test('V2.7.5.3.1 simplifies the trailer HUD with progressive rule disclosure', a
   assert.match(puzzle, /L\/R/)
   assert.match(puzzle, /dock-load-status-compact/)
   assert.match(puzzle, /dock-load-ready-strip/)
-  assert.match(puzzle, /All freight loaded · trailer rules clear/)
+  assert.match(puzzle, /Booked freight accounted for · trailer rules clear/)
   assert.match(puzzle, /dock-load-action-card pending/)
   assert.doesNotMatch(puzzle, /dock-load-balance-split/)
   assert.doesNotMatch(puzzle, /dock-load-fragile-rule-line/)
