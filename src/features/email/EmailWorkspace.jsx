@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import './emailWorkspace.css'
 
 const EMAIL_FILTERS = Object.freeze([
@@ -29,11 +29,12 @@ export default function EmailWorkspace({
   onOpenDocuments,
   onClose,
 }) {
+  const [filter, setFilter] = useState('ALL')
   const selectedMessage = messages.find((message) => message.id === selectedEmailId) ?? null
 
   const visibleMessages = useMemo(
-    () => messages,
-    [messages],
+    () => messages.filter((message) => matchesFilter(message, filter)),
+    [filter, messages],
   )
 
   return (
@@ -52,10 +53,15 @@ export default function EmailWorkspace({
           {EMAIL_FILTERS.map((item) => {
             const count = messages.filter((message) => matchesFilter(message, item.id)).length
             return (
-              <div className="email-filter-summary" key={item.id}>
+              <button
+                type="button"
+                className={filter === item.id ? 'active' : ''}
+                key={item.id}
+                onClick={() => setFilter(item.id)}
+              >
                 <span>{item.label}</span>
                 <b>{count}</b>
-              </div>
+              </button>
             )
           })}
         </div>
