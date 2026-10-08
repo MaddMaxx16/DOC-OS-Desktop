@@ -215,6 +215,7 @@ function buildRequirementState(filedDocuments = []) {
 }
 
 function loadFileStatus({
+  allDocuments = [],
   availableDocuments = [],
   filedDocuments = [],
   requirements = [],
@@ -236,10 +237,10 @@ function loadFileStatus({
     }
   }
 
-  const pod = availableDocuments.find((document) => document.type === OPERATIONAL_DOCUMENT_TYPE.POD)
-  const hasPendingPod = !pod && availableDocuments.length === 0
-    ? false
-    : false
+  const hasPendingPod = allDocuments.some((document) => (
+    document.type === OPERATIONAL_DOCUMENT_TYPE.POD
+    && document.status === 'PENDING_RECEIVER'
+  ))
 
   if (hasPendingPod) {
     return {
@@ -301,6 +302,7 @@ export function buildOperationalLoadFiles(
       const primary = documentsForFile[0] ?? null
       const submitted = Boolean(submittedLoadFiles[loadRef])
       const status = loadFileStatus({
+        allDocuments: documentsForFile,
         availableDocuments,
         filedDocuments,
         requirements,
