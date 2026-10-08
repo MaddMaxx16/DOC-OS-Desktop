@@ -62,6 +62,12 @@ function freightStop(load, role, locations) {
       : location?.label ?? spec.locationId,
     coordinates: location?.coordinates ?? null,
     freight: load.freight,
+    pickupReality: role === 'pickup' && load.pickupReality
+      ? {
+          missingUnitNumbers: [...(load.pickupReality.missingUnitNumbers ?? [])],
+          damagedUnits: (load.pickupReality.damagedUnits ?? []).map((item) => ({ ...item })),
+        }
+      : null,
   }
 }
 
