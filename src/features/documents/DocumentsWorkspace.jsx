@@ -227,7 +227,7 @@ function PodInspector({
           <div className="document-next-action waiting">
             <span>PENDING RECEIVER</span>
             <strong>The receiver is finalizing the Proof of Delivery.</strong>
-            <small>You may file the paper now, but it will not satisfy the POD requirement until receiver verification completes.</small>
+            <small>The POD will enter Incoming after receiver verification is complete.</small>
           </div>
         ) : document.status === 'REVIEW_REQUIRED' ? (
           <div className="document-next-action attention">
