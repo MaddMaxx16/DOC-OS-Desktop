@@ -53,10 +53,10 @@ export default function DesktopShell({
   onFreightCandidateDriverChange,
   onSimulationModeChange,
   onRequestRateCon,
-  onOpenEmailForRateCon,
+  onOpenDocumentsForRateCon,
   onSelectEmail,
-  onPrintDocument,
   onOpenDocuments,
+  onMoveDocumentToDesk,
   onInspectDocument,
   onSelectDocument,
   onFileDocument,
@@ -294,7 +294,6 @@ export default function DesktopShell({
               messages={emailMessages}
               selectedEmailId={selectedEmailId}
               onSelectEmail={onSelectEmail}
-              onPrintDocument={onPrintDocument}
               onOpenDocuments={onOpenDocuments}
               onClose={onCloseActiveApp}
             />
@@ -308,6 +307,7 @@ export default function DesktopShell({
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={onSelectDocument}
               onInspectDocument={onInspectDocument}
+              onMoveDocumentToDesk={onMoveDocumentToDesk}
               onFileDocument={onFileDocument}
               onUnfileDocument={onUnfileDocument}
               onSubmitLoadFile={onSubmitLoadFile}
@@ -326,7 +326,7 @@ export default function DesktopShell({
               candidateDriverId={freightCandidateDriverId}
               onCandidateDriverChange={onFreightCandidateDriverChange}
               onRequestRateCon={onRequestRateCon}
-              onOpenEmailForRateCon={onOpenEmailForRateCon}
+              onOpenDocumentsForRateCon={onOpenDocumentsForRateCon}
               onSelectSubject={onSelectSubject}
               onClose={onCloseActiveApp}
               onRoutePreviewChange={onRoutePreviewChange}
