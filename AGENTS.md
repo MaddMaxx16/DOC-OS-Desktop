@@ -32,17 +32,19 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.9.1.6 Incoming Tray & Communication Split
+## Current packet — V2.8.3 POD Focused Workflow
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
 V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1.5 is implemented. V2.9.1.6 changes the workflow model: routine paperwork enters Documents Incoming, then the player deliberately moves it to the working desk before review/filing. Email is communication, not the universal document conveyor.
+V2.9.1.6 is accepted and locked. Routine paperwork enters Documents Incoming, then the player deliberately moves it to the working desk before review/filing. Email is communication, not the universal document conveyor.
+
+V2.8.3 is the active document-depth packet.
 
 The active acceptance packet is:
 
-`docs/IMPLEMENTATION_V2.9.1.md`
+`docs/IMPLEMENTATION_V2.8.3.md`
 
 The durable build sequence lives in:
 
@@ -50,60 +52,50 @@ The durable build sequence lives in:
 
 ### Purpose
 
-Preserve the accepted paper-organization gameplay while removing the unnecessary print-everything chore.
+Turn PODs into actual review gameplay rather than passive paperwork.
 
-### Locked workflow invariant
+### Locked POD workflow
 
-**Operational system → Documents Incoming → Working Desk → Load File → Submit**
+**Delivery → Receiver Verification → Documents Incoming → Desk/File → Focused POD Review → Accept or Correct → File → Packet Complete**
 
-- routine Rate Cons go directly to Documents Incoming,
-- receiver-verified clean PODs go directly to Documents Incoming,
-- Incoming paperwork is not yet on the working desk,
-- the player deliberately uses **PULL TO DESK** before review/filing,
-- desk paperwork from every load still shares one global surface,
-- filing is still deliberate drag/drop organization gameplay,
-- packet completeness still gates submission.
-
-### Locked communication invariant
-
-**Email is for people talking about the operation, not for routine paper delivery.**
-
-- initial Rate Con arrival does not create Email,
-- clean POD arrival does not create Email,
-- corrected Rate Con may create an Email notice while the revised paper itself goes to Documents Incoming,
-- POD exceptions may create an Email notice while the POD itself remains Documents work,
-- Email can link the player to related work in Documents,
-- Email does not print, create, file, or approve paperwork.
+- clean PODs still require player review,
+- exception PODs visibly surface refusal, shortage, and damage,
+- accepting an exception requires explicit confirmation,
+- correction requests create a waiting state,
+- corrected POD returns as a new revision through Incoming,
+- the original revision becomes superseded,
+- corrected-POD communication may appear in Email,
+- only an **ACCEPTED** POD can satisfy the packet requirement.
 
 ### Build
 
 Implement:
 
-- Documents Incoming tray in the center workspace,
-- three document locations: Incoming, Desk, Filed,
-- PENDING_RECEIVER POD stays unavailable until receiver verification completes,
-- PULL TO DESK action,
-- Incoming-aware right inspector,
-- Rate Con review unavailable until the paper leaves Incoming,
-- file action requires the paper to be on the desk,
-- unfile returns paper to the desk,
-- Documents badge counts waiting Incoming work plus actionable desk/file work,
-- FreightLink RATE CON READY routes to **CHECK DOCUMENTS**,
-- Email removes attachment/printing gameplay,
-- Email inbox remains real communication UI,
-- corrected Rate Con and POD exception messages link to Documents.
+- POD focused review workspace,
+- signature / delivered / refused / shortage / damage review facts,
+- clean POD acceptance,
+- exception acknowledgement,
+- request corrected POD action,
+- corrected POD R2+ generation,
+- superseded original revision,
+- corrected POD Incoming arrival,
+- corrected POD Email communication,
+- POD physical status/revision stamp,
+- load-packet requirement changed from RECEIVED to ACCEPTED,
+- regression coverage for clean, exception, correction, superseded, and accepted states.
 
 ### Preserve
 
 Do not redesign:
 
-- `RateConfirmationReview`,
-- `DocumentDesk`,
-- booking lifecycle states,
-- Rate Con correction behavior,
-- accept-with-mismatch behavior,
-- Delivery POD generation,
-- POD simulation-time advancement,
+- Documents Incoming tray,
+- global working desk,
+- filing cabinet / load-file organization,
+- Rate Confirmation review,
+- booking lifecycle,
+- Delivery facility puzzle,
+- receiver verification timing,
+- Email mailbox presentation,
 - Driver Day / FreightLink fit logic,
 - V2.7 facility puzzles,
 - trailer state,
@@ -111,20 +103,24 @@ Do not redesign:
 
 ### State rule
 
-Do not create duplicate editable document truth.
+The Delivery domain remains the source of truth for what physically happened.
 
-Email messages may derive from the existing operational document index. Incoming/Desk/File placement is presentation/workflow state; it does not create a second booking or POD truth.
+A corrected POD is a **paperwork revision**, not a rewrite of the freight event:
 
-A broader storage migration is not required unless implementation proves it necessary.
+- refusal stays refusal,
+- shortage stays shortage,
+- damage stays damage,
+- correction reissues/clarifies the receiver copy,
+- player may still accept the corrected POD with the recorded exception.
 
 ### Explicit non-goals
 
 Do not add:
 
-- Messages,
-- focused POD review,
-- corrected POD workflow,
+- Rate Con archive/history UI,
+- BOL gameplay,
 - invoice gameplay,
+- Messages,
 - Banking,
 - LedgerDesk,
 - RPG/XP,
@@ -150,6 +146,8 @@ Before merging meaningful changes:
 
 V2.8.1.3 passed automated verification and manual acceptance.
 
-V2.9.1.6 must pass install, lint, tests, build, and manual playtest of Rate Con/POD Incoming arrival, Pull to Desk, review/filing, correction Email, and exception Email.
+V2.9.1.6 passed implementation and visual acceptance.
+
+V2.8.3 must pass install, lint, tests, build, and manual playtest of clean POD review, exception acceptance, correction request, corrected Incoming arrival, superseded history, Email notice, and final packet completion.
 
 A green build does not equal visual acceptance.
