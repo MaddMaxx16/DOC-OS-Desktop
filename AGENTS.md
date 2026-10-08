@@ -94,15 +94,15 @@ For this packet:
 
 - FreightLink keeps lane evaluation and REQUEST RATE CON,
 - FreightLink may display document/booking status,
-- FreightLink routes RATE CON READY to **CHECK EMAIL**,
-- Email owns digital arrival/read state and attachment printing,
-- Documents receives only printed physical copies,
-- Documents remains the entry point to focused Rate Confirmation review after printing,
-- reading an email must not auto-print or auto-file its attachment.
+- FreightLink routes RATE CON READY to **CHECK DOCUMENTS**,
+- routine operational paperwork enters Documents Incoming directly,
+- Documents owns Incoming, working-desk, filing, and packet states,
+- Email is reserved for corrections, exceptions, and human communication,
+- focused Rate Confirmation review begins from a paper the player has pulled onto the desk or already filed.
 
 Locked invariant:
 
-**FreightLink requests it → Email delivers it → player prints it → Documents owns the physical copy → Focused Document Mode reviews it.**
+**Operational system → Documents Incoming → Working Desk → Load File → Submit.**
 
 ### Build
 
@@ -137,7 +137,7 @@ Do not redesign:
 
 Do not create duplicate editable document truth.
 
-Email messages may derive from the existing operational document index. Printing is presentation/workflow state; it does not create a second booking or POD truth.
+Email messages may derive from operational document state when a correction or exception needs human-facing communication. Incoming/desk/file placement is presentation/workflow state; it does not create a second booking or POD truth.
 
 A broader storage migration is not required unless implementation proves it necessary.
 
