@@ -32,13 +32,13 @@ V2.1 Shell Reset
 → V2.11 Onboarding
 → V2.12 Packaging
 
-## Current packet — V2.9.1.5 Documents Browser Containment
+## Current packet — V2.9.1.6 Documents Incoming Tray
 
 V2.1 through V2.7.6.8 are accepted and locked.
 
 V2.8.1.3 is accepted. The filing model is locked: cabinet owns files, desk owns physical unfiled papers, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1.4 is implemented. V2.9.1.5 fixes the root cause discovered in playtest: Documents direct browser children could overflow the cabinet grid column, defeating the visible gutter.
+V2.9.1.5 is implemented. V2.9.1.6 changes the paperwork intake architecture: routine Rate Cons/PODs enter Documents Incoming directly, while Email is reserved for corrections, exceptions, and human communication.
 
 The active acceptance packet is:
 
@@ -72,16 +72,16 @@ V2.8.1.3 keeps the same underlying document truth but locks the gameplay contrac
 
 ### Locked communication/document invariant
 
-**FreightLink requests it → Email delivers it → player prints it → Documents owns the physical copy.**
+**Operational system → Documents Incoming → Working Desk → Load File → Submit.**
 
-- digital receipt does not create a Documents paper,
-- reading an email does not print it,
-- printing does not file it,
+- routine Rate Cons and completed PODs enter Documents Incoming directly,
+- Incoming is not the working desk,
+- the player deliberately pulls papers from Incoming onto the desk,
+- only desk papers can be filed,
 - filing does not satisfy a requirement unless document status is acceptable,
-- Email owns digital arrival/read state,
-- Documents owns physical paper/filing state,
-- do not auto-print external paperwork,
-- POD email appears only after receiver verification has completed.
+- Email is for corrections, exceptions, and human communication,
+- corrected Rate Cons and exception PODs may create Email messages that point back to Documents,
+- do not require a fake print step for routine paperwork.
 
 - paperwork may be filed at any time,
 - filing does not imply review/acceptance,
