@@ -24,7 +24,7 @@
   border-bottom: 1px solid #1f303b;
 }
 
-.email-filters button {
+.email-filter-summary {
   min-width: 0;
   min-height: 36px;
   display: flex;
@@ -35,13 +35,6 @@
   border: 1px solid #263a46;
   background: #0a151d;
   color: #758995;
-  cursor: pointer;
-}
-
-.email-filters button.active {
-  border-color: #657483;
-  background: #13222c;
-  color: #edf4f8;
 }
 
 .email-filters span,
@@ -621,4 +614,85 @@
     grid-column: 3;
     grid-row: 1 / span 2;
   }
+}
+
+
+.email-related-work {
+  max-width: 940px;
+  margin: 0 auto;
+  border-top: 1px solid #22333d;
+  padding-top: 18px;
+}
+
+.email-related-work > header {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 12px;
+  border: 1px solid #314550;
+  border-bottom: 0;
+  background: #0b171f;
+}
+
+.email-related-work > header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.email-related-work > header span {
+  color: #758995;
+  font-size: 8px;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.email-related-work > header strong {
+  color: #d8e2e7;
+  font-size: 11px;
+}
+
+.email-related-work > header b {
+  color: #d0aa68;
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.email-related-work > div {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid #314550;
+  background: #09141b;
+}
+
+.email-related-work p {
+  margin: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.email-related-work p span {
+  color: #708591;
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.email-related-work p strong {
+  color: #bcc9cf;
+  font-size: 9px;
+}
+
+.email-related-work button {
+  min-width: 142px;
+  height: 38px;
+  border: 1px solid #596c77;
+  background: #15232b;
+  color: #d2dde2;
+  font-size: 9px;
+  font-weight: 950;
+  cursor: pointer;
 }
