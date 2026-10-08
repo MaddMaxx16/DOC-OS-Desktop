@@ -26,6 +26,16 @@ export const RECEIVER_STATUS = Object.freeze({
   WRONG_DESTINATION: 'WRONG_DESTINATION',
 })
 
+export function receiverStatusForFreight(freight = {}) {
+  if (String(freight.condition ?? 'GOOD').toUpperCase() !== 'DAMAGED') {
+    return RECEIVER_STATUS.ACCEPTED
+  }
+
+  return String(freight.damageSeverity ?? 'MINOR').toUpperCase() === 'MAJOR'
+    ? RECEIVER_STATUS.REFUSED
+    : RECEIVER_STATUS.ACCEPTED_WITH_DAMAGE
+}
+
 const DEFAULT_RECEIVING_PHASES = Object.freeze([
   Object.freeze({
     id: 'controlled',
@@ -942,12 +952,17 @@ export function evaluateDeliveryUnloadPlan({
 
   const errors = []
   const warnings = []
+  const discrepancies = []
 
   if (shortageFreight.length > 0) {
-    errors.push({
+    const issue = {
       code: 'DELIVERY_SHORTAGE',
-      message: `${shortageFreight.length} expected freight unit${shortageFreight.length === 1 ? '' : 's'} are not physically on the trailer.`,
-    })
+      count: shortageFreight.length,
+      freightIds: shortageFreight.map((freight) => freight.id),
+      message: `${shortageFreight.length} expected freight unit${shortageFreight.length === 1 ? ' is' : 's are'} not physically on the trailer.`,
+    }
+    discrepancies.push(issue)
+    warnings.push(issue)
   }
 
   if (unexpectedFreight.length > 0) {
@@ -1011,6 +1026,7 @@ export function evaluateDeliveryUnloadPlan({
     ready: errors.length === 0,
     errors,
     warnings,
+    discrepancies,
     expectedFreight,
     expectedCount: expectedFreight.length,
     actualForStop,
@@ -1094,9 +1110,79 @@ export function commitDeliveryOperation({
       ?? [],
   )
   const operationTime = Number(currentAbsoluteMinutes ?? 0)
-  const remainingFreight = (trailerState?.freight ?? [])
-    .filter((freight) => !unloaded.has(freight.id))
+  const deliveredFreight = (trailerState?.freight ?? [])
+    .filter((freight) => unloaded.has(freight.id))
     .map((freight) => {
+      const wasRehandled = rehandled.has(freight.id)
+      const receiverStatus = receiverStatusForFreight(freight)
+      return {
+        ...freight,
+        currentLocation: receiverStatus === RECEIVER_STATUS.REFUSED ? 'TRAILER' : 'RECEIVER',
+        status: receiverStatus,
+        receiverStatus,
+        condition: freight.condition ?? 'GOOD',
+        conditionKnown: freight.conditionKnown ?? true,
+        freightHistory: [
+          ...(freight.freightHistory ?? []),
+          ...(unloadPlan.internalRepositionHistory ?? [])
+            .filter((move) => move.freightId === freight.id)
+            .map((move) => ({
+              event: 'REPOSITIONED_IN_TRAILER',
+              facilityId: event.locationId ?? null,
+              time: operationTime,
+              from: move.from ? { ...move.from } : null,
+              to: move.to ? { ...move.to } : null,
+            })),
+          ...(wasRehandled
+            ? [{
+                event: 'TEMP_STAGED',
+                facilityId: event.locationId ?? null,
+                time: operationTime,
+              }]
+            : []),
+          {
+            event: receiverStatus === RECEIVER_STATUS.REFUSED
+              ? 'RECEIVER_REFUSED'
+              : receiverStatus === RECEIVER_STATUS.ACCEPTED_WITH_DAMAGE
+                ? 'DELIVERED_WITH_DAMAGE'
+                : 'DELIVERED',
+            facilityId: event.locationId ?? null,
+            time: operationTime,
+            receiverStatus,
+            receivingZoneId: unloadPlan.receivingZoneByFreightId?.[freight.id] ?? null,
+          },
+          ...(receiverStatus === RECEIVER_STATUS.REFUSED
+            ? [{
+                event: 'RELOADED_AFTER_REFUSAL',
+                facilityId: event.locationId ?? null,
+                time: operationTime,
+                trailerPosition: trailerState?.placements?.[freight.id]
+                  ? { ...trailerState.placements[freight.id] }
+                  : null,
+              }]
+            : []),
+        ],
+      }
+    })
+
+  const refusedIds = new Set(
+    deliveredFreight
+      .filter((freight) => freight.receiverStatus === RECEIVER_STATUS.REFUSED)
+      .map((freight) => freight.id),
+  )
+  const remainingFreight = (trailerState?.freight ?? [])
+    .filter((freight) => !unloaded.has(freight.id) || refusedIds.has(freight.id))
+    .map((freight) => {
+      const processed = deliveredFreight.find((item) => item.id === freight.id)
+      if (processed?.receiverStatus === RECEIVER_STATUS.REFUSED) {
+        return {
+          ...processed,
+          carried: true,
+          currentLocation: 'TRAILER',
+          status: 'REFUSED',
+        }
+      }
+
       const wasRehandled = rehandled.has(freight.id)
       return {
         ...freight,
@@ -1136,48 +1222,9 @@ export function commitDeliveryOperation({
     })
   const remainingPlacements = Object.fromEntries(
     Object.entries(trailerState?.placements ?? {})
-      .filter(([freightId]) => !unloaded.has(freightId))
+      .filter(([freightId]) => !unloaded.has(freightId) || refusedIds.has(freightId))
       .map(([freightId, placement]) => [freightId, { ...placement }]),
   )
-  const deliveredFreight = (trailerState?.freight ?? [])
-    .filter((freight) => unloaded.has(freight.id))
-    .map((freight) => {
-      const wasRehandled = rehandled.has(freight.id)
-      return {
-        ...freight,
-        currentLocation: 'RECEIVER',
-        status: 'ACCEPTED',
-        receiverStatus: RECEIVER_STATUS.ACCEPTED,
-        condition: freight.condition ?? 'GOOD',
-        conditionKnown: freight.conditionKnown ?? true,
-        freightHistory: [
-          ...(freight.freightHistory ?? []),
-          ...(unloadPlan.internalRepositionHistory ?? [])
-            .filter((move) => move.freightId === freight.id)
-            .map((move) => ({
-              event: 'REPOSITIONED_IN_TRAILER',
-              facilityId: event.locationId ?? null,
-              time: operationTime,
-              from: move.from ? { ...move.from } : null,
-              to: move.to ? { ...move.to } : null,
-            })),
-          ...(wasRehandled
-            ? [{
-                event: 'TEMP_STAGED',
-                facilityId: event.locationId ?? null,
-                time: operationTime,
-              }]
-            : []),
-          {
-            event: 'DELIVERED',
-            facilityId: event.locationId ?? null,
-            time: operationTime,
-            receiverStatus: RECEIVER_STATUS.ACCEPTED,
-            receivingZoneId: unloadPlan.receivingZoneByFreightId?.[freight.id] ?? null,
-          },
-        ],
-      }
-    })
 
   const duration = deliveryServiceDuration({ event, unloadPlan })
   const unloadingStartMinutes = operationTime
@@ -1187,8 +1234,10 @@ export function commitDeliveryOperation({
   const receiverResults = deliveredFreight.map((freight) => ({
     freightId: freight.id,
     loadRef: freight.loadRef,
-    status: RECEIVER_STATUS.ACCEPTED,
+    status: freight.receiverStatus,
     condition: freight.condition ?? 'GOOD',
+    damageSeverity: freight.damageSeverity ?? null,
+    pickupDamageDocumented: Boolean(freight.pickupDamageDocumented),
   }))
 
   return {
