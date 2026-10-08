@@ -8,13 +8,13 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 ## Current status
 
-**Accepted checkpoint:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
+**Accepted checkpoint:** `V2.9.1.6 · Incoming Tray & Communication Split`
 
-**Current candidate:** `V2.9.1.6 · Incoming Tray & Communication Split`
+**Current candidate:** `V2.8.3 · POD Focused Workflow`
 
-V2.8.1.3 is visually accepted and locks the Documents interaction model: load folders live in the filing cabinet, every unfiled physical paper shares one persistent desk, filing is player-driven, and packet completeness gates submission.
+V2.9.1.6 is visually accepted and locks the paperwork intake model: routine operational paperwork enters Documents **Incoming**, the player deliberately pulls it to the working desk, and Email is reserved for meaningful communication such as corrections and exceptions.
 
-V2.9.1.5 fixed the Documents panel containment issue. V2.9.1.6 changes the paperwork loop itself: routine operational paperwork now enters a Documents **Incoming** tray, the player pulls it onto the working desk, and Email is reserved for meaningful communication such as corrections and exceptions.
+V2.8.3 builds document-depth gameplay on that accepted foundation: every usable POD must now be reviewed before it can satisfy a load packet, delivery exceptions can be accepted explicitly or sent back for correction, and corrected POD revisions return through Incoming.
 
 The operational freight loop is now substantially playable:
 
@@ -39,38 +39,41 @@ The operational freight loop is now substantially playable:
 
 ### Important current gaps
 
-The physical Documents workflow is accepted. V2.9.1.6 is correcting how paperwork enters that workflow.
+The Documents + Incoming architecture is accepted. V2.8.3 is now adding deeper POD gameplay.
 
 Still pending:
 
-- **V2.9.1.6 Incoming Tray & Communication Split** is the active acceptance candidate,
+- **V2.8.3 POD Focused Workflow** is the active acceptance candidate,
 - Messages / driver communication remains V2.9.2,
-- accepted Rate Con revision/archive viewing returns after the Incoming workflow is accepted,
-- focused POD review/correction returns after the Incoming workflow is accepted,
+- accepted Rate Con revision/archive viewing remains a later document-depth pass,
 - Send Schedule is still too tightly coupled to Planning mode,
 - Live Operations has Play/Fast Forward but no **Advance to Next Operational Moment** control yet.
 
 ## Current acceptance gate
 
-### V2.9.1.6 · Incoming Tray & Communication Split
+### V2.8.3 · POD Focused Workflow
 
 The critical flow is:
 
-1. request a Rate Con in FreightLink,
-2. FreightLink reports **RATE CON RECEIVED** and routes to **CHECK DOCUMENTS**,
-3. the Rate Con appears in the Documents **Incoming** tray, not directly on the desk,
-4. pull the Rate Con from Incoming onto the working desk,
-5. review/accept/file it through the existing Documents workflow,
-6. complete a Delivery and wait for receiver verification,
-7. a clean POD appears in Documents Incoming without creating routine Email,
-8. pull the POD to the desk and file it,
-9. request a Rate Con correction and confirm the revised paper returns to Incoming while Email provides the human-facing correction notice,
-10. create a POD exception and confirm Email notifies the player while the POD itself remains Documents work.
+1. complete a clean Delivery and wait for receiver verification,
+2. confirm the POD appears in Documents Incoming as **REVIEW POD** rather than counting as complete immediately,
+3. pull the POD to the desk and open **REVIEW POD**,
+4. verify receiver signature, delivered quantity, refused quantity, shortage, damage, and revision are visible,
+5. accept the clean POD and confirm its paper becomes **ACCEPTED**,
+6. file it and confirm only then does the POD requirement become complete,
+7. produce a Delivery with a refusal, shortage, or damage exception,
+8. open focused POD review and confirm the exception is visibly called out,
+9. test **ACCEPT WITH EXCEPTION** and its confirmation step,
+10. separately test **REQUEST CORRECTED POD**,
+11. confirm the original copy becomes superseded and revision R2 returns through Documents Incoming,
+12. confirm Email reports the corrected POD as communication while the paper itself remains Documents work,
+13. accept/file the corrected POD and complete the packet.
 
 See the implementation packets:
 
 - [V2.8.1 Accepted Documents Packet](docs/IMPLEMENTATION_V2.8.1.md)
-- [V2.9.1 Email Intake Packet](docs/IMPLEMENTATION_V2.9.1.md)
+- [V2.8.3 POD Focused Workflow](docs/IMPLEMENTATION_V2.8.3.md)
+- [V2.9.1 Accepted Incoming + Communication Packet](docs/IMPLEMENTATION_V2.9.1.md)
 
 ## Roadmap
 
