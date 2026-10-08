@@ -387,6 +387,10 @@ export default function DockLoadWorkspace({
   )
 
   useEffect(() => {
+    setDiscrepancyArmed(false)
+  }, [placements, pickupDamageNotes])
+
+  useEffect(() => {
     if (evaluation.ready && !wasReadyRef.current) {
       setReadyPulse(true)
       if (readyTimerRef.current) clearTimeout(readyTimerRef.current)
@@ -614,7 +618,9 @@ export default function DockLoadWorkspace({
           expectedFreightManifest: expectedFreight.map((freight) => ({ ...freight })),
           freightManifest: placedFreight.map((freight) => ({
             ...freight,
-            pickupDamageDocumented: Boolean(pickupDamageNotes[freight.id]),
+            pickupDamageDocumented: Boolean(
+              freight.pickupDamageDocumented || pickupDamageNotes[freight.id],
+            ),
           })),
           placements: { ...placements },
           board: { ...board },
