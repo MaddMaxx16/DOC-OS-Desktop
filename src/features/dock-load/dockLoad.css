@@ -4046,3 +4046,76 @@
 .loaded-freight-piece.hazmat-segregation-conflict .loaded-freight-label > span {
   color: #ffad86;
 }
+
+
+/* V2.7.7 · freight integrity / pickup discrepancy gameplay */
+.freight-manifest-row.pickup-damaged {
+  border-color: #785238;
+  background:
+    linear-gradient(90deg, rgba(120, 67, 38, .16), transparent 46%),
+    #0c151c;
+}
+
+.pickup-damage-copy {
+  color: #d59b70 !important;
+  font-weight: 850;
+}
+
+.pallet-piece-actions button.note-damage {
+  border-color: #765238;
+  background: #24170f;
+  color: #e0ae7d;
+}
+
+.pallet-piece-actions button.damage-noted {
+  border-color: #3d6258;
+  background: #102019;
+  color: #9bc7b8;
+}
+
+.dock-load-workspace.load-discrepancy .dock-load-trailer-panel {
+  box-shadow: inset 0 0 0 1px rgba(183, 132, 67, .16);
+}
+
+.dock-load-doors.discrepancy {
+  border-color: #8a6639;
+  background: #251d11;
+}
+
+.dock-load-doors.discrepancy b {
+  color: #e4bf7c;
+}
+
+.dock-load-actions.discrepancy {
+  border-color: #755a36;
+  background: #17140f;
+}
+
+.dock-load-actions.discrepancy > header,
+.dock-load-actions.discrepancy > footer {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.dock-load-actions.discrepancy > header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid #4d402c;
+}
+
+.dock-load-actions.discrepancy > header span,
+.dock-load-actions.discrepancy > footer small {
+  color: #9d8d70;
+  font-size: 9px;
+}
+
+.dock-load-actions.discrepancy > header strong,
+.dock-load-actions.discrepancy > footer strong {
+  color: #e0bd7b;
+  font-size: 10px;
+}
+
+.dock-load-actions.discrepancy > footer {
+  border-top: 1px solid #4d402c;
+}
