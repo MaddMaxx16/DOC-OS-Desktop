@@ -95,6 +95,8 @@ function RateConInspector({
   document,
   driverLabel,
   filedLoadRef,
+  incoming,
+  onMoveDocumentToDesk,
   onInspectDocument,
 }) {
   const canReview = documentCanReview(document)
@@ -107,14 +109,20 @@ function RateConInspector({
         <div><span>LOAD</span><strong>{document.loadRef}</strong></div>
         <div><span>REVISION</span><strong>R{document.revision}</strong></div>
         <div><span>DRIVER</span><strong>{driverLabel}</strong></div>
-        <div><span>LOCATION</span><strong>{filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
+        <div><span>LOCATION</span><strong>{incoming ? 'INCOMING TRAY' : filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
         <div><span>SOURCE</span><strong>{document.brokerName}</strong></div>
         <div className="wide"><span>STATUS</span><strong className={documentTone(document)}>{document.statusLabel}</strong></div>
       </div>
 
       <section className="document-inspector-section">
         <header><span>WORKFLOW</span></header>
-        {canReview ? (
+        {incoming ? (
+          <div className="document-next-action waiting">
+            <span>INCOMING</span>
+            <strong>Move this Rate Confirmation onto the working desk before reviewing or filing it.</strong>
+            <small>Incoming is the intake queue. Pull the paper when you are ready to work it.</small>
+          </div>
+        ) : canReview ? (
           <div className="document-next-action attention">
             <span>NEXT ACTION</span>
             <strong>Inspect this Rate Confirmation before committing the freight.</strong>
@@ -124,7 +132,7 @@ function RateConInspector({
           <div className="document-next-action waiting">
             <span>WAITING</span>
             <strong>Correction requested from FreightLink Brokerage.</strong>
-            <small>The revised paper will arrive on the global desk when it is available.</small>
+            <small>The revised paper will arrive in the Incoming tray when it is available.</small>
           </div>
         ) : filed ? (
           <div className="document-next-action complete">
@@ -155,12 +163,18 @@ function RateConInspector({
 
       <footer className="documents-inspector-footer">
         <div>
-          <span>{filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
-          <strong>{canReview ? 'Review terms before accepting.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
+          <span>{incoming ? 'INCOMING PAPER' : filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
+          <strong>{incoming ? 'Pull this paper onto the desk to work it.' : canReview ? 'Review terms before accepting.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
         </div>
-        <button type="button" onClick={() => onInspectDocument(document.id)}>
-          {canReview ? 'REVIEW DOCUMENT' : 'INSPECT DOCUMENT'}
-        </button>
+        {incoming ? (
+          <button type="button" onClick={() => onMoveDocumentToDesk(document.id)}>
+            PULL TO DESK
+          </button>
+        ) : (
+          <button type="button" onClick={() => onInspectDocument(document.id)}>
+            {canReview ? 'REVIEW DOCUMENT' : 'INSPECT DOCUMENT'}
+          </button>
+        )}
       </footer>
     </>
   )
@@ -169,6 +183,8 @@ function RateConInspector({
 function PodInspector({
   document,
   filedLoadRef,
+  incoming,
+  onMoveDocumentToDesk,
   onInspectDocument,
 }) {
   const exceptionCount = (
@@ -185,7 +201,7 @@ function PodInspector({
         <div><span>LOAD</span><strong>{document.loadRef}</strong></div>
         <div><span>RECEIVER</span><strong>{document.facilityLabel}</strong></div>
         <div><span>SIGNATURE</span><strong>{document.signaturePresent ? 'PRESENT' : 'PENDING'}</strong></div>
-        <div><span>LOCATION</span><strong>{filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
+        <div><span>LOCATION</span><strong>{incoming ? 'INCOMING TRAY' : filed ? `FILED · ${filedLoadRef}` : 'ON DESK'}</strong></div>
         <div className="wide"><span>STATUS</span><strong className={documentTone(document)}>{document.statusLabel}</strong></div>
       </div>
 
@@ -201,7 +217,13 @@ function PodInspector({
 
       <section className="document-inspector-section">
         <header><span>DOCUMENT STATE</span></header>
-        {document.status === 'PENDING_RECEIVER' ? (
+        {incoming ? (
+          <div className="document-next-action waiting">
+            <span>INCOMING</span>
+            <strong>Move this Proof of Delivery onto the working desk before filing it.</strong>
+            <small>Use the desk to inspect, compare, and organize incoming paperwork.</small>
+          </div>
+        ) : document.status === 'PENDING_RECEIVER' ? (
           <div className="document-next-action waiting">
             <span>PENDING RECEIVER</span>
             <strong>The receiver is finalizing the Proof of Delivery.</strong>
@@ -230,12 +252,18 @@ function PodInspector({
 
       <footer className="documents-inspector-footer">
         <div>
-          <span>{filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
-          <strong>{filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
+          <span>{incoming ? 'INCOMING PAPER' : filed ? 'FILED PAPER' : 'DESK PAPER'}</span>
+          <strong>{incoming ? 'Pull this paper onto the desk to work it.' : filed ? 'Paper is stored in the load file.' : 'Paper remains loose until you file it.'}</strong>
         </div>
-        <button type="button" onClick={() => onInspectDocument(document.id)}>
-          INSPECT DOCUMENT
-        </button>
+        {incoming ? (
+          <button type="button" onClick={() => onMoveDocumentToDesk(document.id)}>
+            PULL TO DESK
+          </button>
+        ) : (
+          <button type="button" onClick={() => onInspectDocument(document.id)}>
+            INSPECT DOCUMENT
+          </button>
+        )}
       </footer>
     </>
   )
@@ -490,6 +518,7 @@ export default function DocumentsWorkspace({
   selectedDocumentId,
   onSelectDocument,
   onInspectDocument,
+  onMoveDocumentToDesk,
   onFileDocument,
   onUnfileDocument,
   onSubmitLoadFile,
@@ -509,6 +538,11 @@ export default function DocumentsWorkspace({
   const selectedDocumentFile = selectedDocument
     ? findDocumentFile(loadFiles, selectedDocument.id)
     : null
+  const selectedDocumentIncoming = selectedDocument
+    ? loadFiles.some((loadFile) => (
+        loadFile.incomingDocuments.some((document) => document.id === selectedDocument.id)
+      ))
+    : false
   const selectedDriver = selectedDocument?.driverId
     ? drivers.find((driver) => driver.id === selectedDocument.driverId) ?? null
     : null
@@ -637,6 +671,7 @@ export default function DocumentsWorkspace({
         onSelectDocument={onSelectDocument}
         onInspectDocument={onInspectDocument}
         onFileDocument={onFileDocument}
+        onMoveDocumentToDesk={onMoveDocumentToDesk}
         onNotice={handleNotice}
         onDropTargetChange={setDropTargetLoadRef}
       />
@@ -661,12 +696,16 @@ export default function DocumentsWorkspace({
                 document={selectedDocument}
                 driverLabel={selectedDriver?.name ?? selectedDocument.driverId ?? '—'}
                 filedLoadRef={selectedDocumentFile?.loadRef ?? null}
+                incoming={selectedDocumentIncoming}
+                onMoveDocumentToDesk={onMoveDocumentToDesk}
                 onInspectDocument={onInspectDocument}
               />
             ) : (
               <PodInspector
                 document={selectedDocument}
                 filedLoadRef={selectedDocumentFile?.loadRef ?? null}
+                incoming={selectedDocumentIncoming}
+                onMoveDocumentToDesk={onMoveDocumentToDesk}
                 onInspectDocument={onInspectDocument}
               />
             )}
