@@ -186,6 +186,10 @@ function sortFileDocuments(documents = []) {
   })
 }
 
+function documentAvailableForWork(document) {
+  return document?.status !== 'PENDING_RECEIVER'
+}
+
 function buildRequirementState(filedDocuments = []) {
   return OPERATIONAL_LOAD_FILE_REQUIREMENTS.map((requirement) => {
     const matchingDocuments = filedDocuments.filter((document) => document.type === requirement.type)
@@ -204,7 +208,8 @@ function buildRequirementState(filedDocuments = []) {
 }
 
 function loadFileStatus({
-  printedDocuments = [],
+  documents = [],
+  workingDocuments = [],
   filedDocuments = [],
   requirements = [],
   submitted = false,
@@ -217,7 +222,7 @@ function loadFileStatus({
     }
   }
 
-  if (printedDocuments.some((document) => document?.attention)) {
+  if (workingDocuments.some((document) => document?.attention)) {
     return {
       status: OPERATIONAL_LOAD_FILE_STATUS.NEEDS_ACTION,
       statusLabel: 'NEEDS ACTION',
@@ -225,7 +230,7 @@ function loadFileStatus({
     }
   }
 
-  const pod = printedDocuments.find((document) => document.type === OPERATIONAL_DOCUMENT_TYPE.POD)
+  const pod = documents.find((document) => document.type === OPERATIONAL_DOCUMENT_TYPE.POD)
   if (pod?.status === 'PENDING_RECEIVER') {
     return {
       status: OPERATIONAL_LOAD_FILE_STATUS.RECEIVER_PROCESSING,
@@ -254,7 +259,7 @@ export function buildOperationalLoadFiles(
   {
     fileAssignments = {},
     submittedLoadFiles = {},
-    printedDocumentIds = {},
+    deskDocumentIds = {},
   } = {},
 ) {
   const grouped = new Map()
@@ -270,20 +275,24 @@ export function buildOperationalLoadFiles(
   return [...grouped.entries()]
     .map(([loadRef, fileDocuments]) => {
       const documentsForFile = sortFileDocuments(fileDocuments)
-      const printedDocuments = documentsForFile.filter((document) => (
-        Boolean(printedDocumentIds[document.id])
-      ))
-      const filedDocuments = printedDocuments.filter((document) => (
+      const workingDocuments = documentsForFile.filter(documentAvailableForWork)
+      const filedDocuments = workingDocuments.filter((document) => (
         fileAssignments[document.id] === loadRef
       ))
-      const deskDocuments = printedDocuments.filter((document) => (
+      const deskDocuments = workingDocuments.filter((document) => (
         fileAssignments[document.id] !== loadRef
+        && Boolean(deskDocumentIds[document.id])
+      ))
+      const incomingDocuments = workingDocuments.filter((document) => (
+        fileAssignments[document.id] !== loadRef
+        && !deskDocumentIds[document.id]
       ))
       const requirements = buildRequirementState(filedDocuments)
       const primary = documentsForFile[0] ?? null
       const submitted = Boolean(submittedLoadFiles[loadRef])
       const status = loadFileStatus({
-        printedDocuments,
+        documents: documentsForFile,
+        workingDocuments,
         filedDocuments,
         requirements,
         submitted,
@@ -295,14 +304,16 @@ export function buildOperationalLoadFiles(
         loadRef,
         driverId: primary?.driverId ?? null,
         documents: documentsForFile,
-        printedDocuments,
-        filedDocuments,
+        workingDocuments,
+        incomingDocuments,
         deskDocuments,
+        filedDocuments,
         documentCount: documentsForFile.length,
-        printedCount: printedDocuments.length,
-        filedCount: filedDocuments.length,
+        workingCount: workingDocuments.length,
+        incomingCount: incomingDocuments.length,
         deskCount: deskDocuments.length,
-        attentionCount: printedDocuments.filter((document) => document.attention).length,
+        filedCount: filedDocuments.length,
+        attentionCount: workingDocuments.filter((document) => document.attention).length,
         requirements,
         requiredCount: requirements.length,
         satisfiedRequirementCount: requirements.filter((requirement) => requirement.satisfied).length,
@@ -324,6 +335,28 @@ export function buildOperationalLoadFiles(
 
 export function operationalLoadFileAttentionCount(loadFiles = []) {
   return loadFiles.filter((loadFile) => loadFile?.attention).length
+}
+
+export function buildOperationalIncomingDocuments(loadFiles = []) {
+  const seen = new Set()
+  const incomingDocuments = []
+
+  for (const loadFile of loadFiles) {
+    for (const document of loadFile?.incomingDocuments ?? []) {
+      if (seen.has(document.id)) continue
+      seen.add(document.id)
+      incomingDocuments.push(document)
+    }
+  }
+
+  return incomingDocuments.sort((left, right) => {
+    if (left.attention !== right.attention) return left.attention ? -1 : 1
+    return String(left.id).localeCompare(String(right.id))
+  })
+}
+
+export function operationalIncomingDocumentCount(loadFiles = []) {
+  return buildOperationalIncomingDocuments(loadFiles).length
 }
 
 export function buildOperationalDeskDocuments(loadFiles = []) {
