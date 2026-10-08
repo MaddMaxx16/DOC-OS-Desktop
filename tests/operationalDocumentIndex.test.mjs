@@ -82,7 +82,9 @@ test('Rate Con ready becomes an actionable document', () => {
 
   assert.equal(documents.length, 1)
   assert.equal(documents[0].type, OPERATIONAL_DOCUMENT_TYPE.RATE_CONFIRMATION)
-  assert.equal(documents[0].status, 'REVIEW_REQUIRED')
+  assert.equal(documents[0].status, 'POD_EXCEPTION_REVIEW')
+  assert.equal(documents[0].statusLabel, 'EXCEPTION REVIEW')
+  assert.equal(documents[0].hasException, true)
   assert.equal(documents[0].attention, true)
   assert.equal(operationalDocumentAttentionCount(documents), 1)
 })
@@ -139,15 +141,16 @@ test('POD pending receiver is indexed without attention', () => {
   assert.equal(documents[0].attention, false)
 })
 
-test('POD received is indexed without attention', () => {
+test('clean received POD is indexed as focused review work', () => {
   const record = pod(DELIVERY_DOCUMENT_STATUS.RECEIVED)
   const documents = buildOperationalDocumentIndex({
     documentRecords: { [record.id]: record },
   })
 
-  assert.equal(documents[0].status, 'RECEIVED')
+  assert.equal(documents[0].status, 'POD_REVIEW_REQUIRED')
+  assert.equal(documents[0].statusLabel, 'REVIEW POD')
   assert.equal(documents[0].signaturePresent, true)
-  assert.equal(documents[0].attention, false)
+  assert.equal(documents[0].attention, true)
 })
 
 test('POD review required contributes to attention count', () => {
@@ -159,6 +162,41 @@ test('POD review required contributes to attention count', () => {
   assert.equal(documents[0].status, 'REVIEW_REQUIRED')
   assert.equal(documents[0].attention, true)
   assert.equal(operationalDocumentAttentionCount(documents), 1)
+})
+
+test('accepted POD becomes packet-eligible and no longer needs attention', () => {
+  const record = {
+    ...pod(DELIVERY_DOCUMENT_STATUS.ACCEPTED),
+    revision: 1,
+    acceptedWithException: false,
+  }
+  const documents = buildOperationalDocumentIndex({
+    documentRecords: { [record.id]: record },
+  })
+
+  assert.equal(documents[0].status, 'ACCEPTED')
+  assert.equal(documents[0].statusLabel, 'ACCEPTED')
+  assert.equal(documents[0].attention, false)
+})
+
+test('corrected POD returns as a new actionable revision', () => {
+  const record = {
+    ...pod(DELIVERY_DOCUMENT_STATUS.CORRECTED_RECEIVED),
+    id: 'POD:M-101:delivery:R2',
+    revision: 2,
+    corrected: true,
+    correctionCount: 1,
+    supersedesId: 'POD:M-101:delivery',
+  }
+  const documents = buildOperationalDocumentIndex({
+    documentRecords: { [record.id]: record },
+  })
+
+  assert.equal(documents[0].revision, 2)
+  assert.equal(documents[0].corrected, true)
+  assert.equal(documents[0].status, 'CORRECTED_POD_REVIEW')
+  assert.equal(documents[0].statusLabel, 'CORRECTED · REVIEW')
+  assert.equal(documents[0].attention, true)
 })
 
 test('waiting and accepted documents do not count as attention', () => {
@@ -269,7 +307,7 @@ test('pulling a paper moves it from Incoming to the global desk', () => {
 
 test('filing worked accepted paperwork advances packet completeness but does not submit automatically', () => {
   const podRecord = {
-    ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
+    ...pod(DELIVERY_DOCUMENT_STATUS.ACCEPTED),
     id: 'POD:M-403:delivery',
     loadId: 'M-403',
     loadRef: 'FL-403',
@@ -331,7 +369,7 @@ test('filed review-required paper does not satisfy packet requirement', () => {
 
 test('Documents attention counts Incoming work and actionable worked papers without double-counting', () => {
   const podRecord = {
-    ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
+    ...pod(DELIVERY_DOCUMENT_STATUS.ACCEPTED),
     id: 'POD:M-403:delivery',
     loadId: 'M-403',
     loadRef: 'FL-403',
@@ -361,7 +399,7 @@ test('Documents attention counts Incoming work and actionable worked papers with
 
 test('submitted load file is separate from Incoming and desk placement', () => {
   const podRecord = {
-    ...pod(DELIVERY_DOCUMENT_STATUS.RECEIVED),
+    ...pod(DELIVERY_DOCUMENT_STATUS.ACCEPTED),
     id: 'POD:M-403:delivery',
     loadId: 'M-403',
     loadRef: 'FL-403',
