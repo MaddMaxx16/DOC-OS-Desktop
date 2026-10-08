@@ -13,6 +13,7 @@ const rateCon = {
   loadRef: 'FL-402',
   brokerName: 'FreightLink Brokerage',
   corrected: false,
+  revision: 1,
   status: 'REVIEW_REQUIRED',
   statusLabel: 'REVIEW REQUIRED',
   issuedAtLabel: 'Sep 7, 2026 · 6:02 AM',
@@ -27,57 +28,55 @@ const pod = {
   statusLabel: 'RECEIVED',
 }
 
-test('Rate Con appears as an unread email with printable attachment', () => {
+test('routine initial Rate Con does not create Email', () => {
   const messages = buildOperationalEmailInbox({ documents: [rateCon] })
-
-  assert.equal(messages.length, 1)
-  assert.equal(messages[0].id, emailIdForDocument(rateCon.id))
-  assert.equal(messages[0].subject, 'Rate Confirmation · FL-402')
-  assert.equal(messages[0].recipientName, 'Metroline Operations')
-  assert.equal(messages[0].recipientAddress, 'dispatch@metroline.example')
-  assert.equal(messages[0].attachmentFileName, 'FL-402_Rate_Confirmation.pdf')
-  assert.equal(messages[0].closingName, 'FreightLink Operations Desk')
-  assert.equal(messages[0].unread, true)
-  assert.equal(messages[0].printed, false)
-  assert.equal(operationalEmailUnreadCount(messages), 1)
-})
-
-test('corrected Rate Con email is clearly labeled corrected', () => {
-  const messages = buildOperationalEmailInbox({
-    documents: [{
-      ...rateCon,
-      id: 'RC-FL-402-R2',
-      corrected: true,
-      status: 'CORRECTED_RATE_CON_READY',
-      statusLabel: 'CORRECTED · REVIEW REQUIRED',
-    }],
-  })
-
-  assert.match(messages[0].subject, /Corrected Rate Confirmation/)
-  assert.match(messages[0].attachmentFileName, /_R1\.pdf$/)
-  assert.match(messages[0].body, /corrected Rate Confirmation/)
-})
-
-test('pending receiver POD does not email before the receiver finishes', () => {
-  const messages = buildOperationalEmailInbox({
-    documents: [{ ...pod, status: 'PENDING_RECEIVER', statusLabel: 'PENDING RECEIVER' }],
-  })
-
   assert.deepEqual(messages, [])
 })
 
-test('received POD appears in Email and printing state follows attachment state', () => {
-  const id = emailIdForDocument(pod.id)
-  const messages = buildOperationalEmailInbox({
-    documents: [pod],
-    readEmailIds: { [id]: true },
-    printedDocumentIds: { [pod.id]: true },
-  })
+test('corrected Rate Con creates communication pointing back to Documents', () => {
+  const corrected = {
+    ...rateCon,
+    id: 'RC-FL-402-R2',
+    corrected: true,
+    revision: 2,
+    status: 'CORRECTED_RATE_CON_READY',
+    statusLabel: 'CORRECTED · REVIEW REQUIRED',
+  }
+  const messages = buildOperationalEmailInbox({ documents: [corrected] })
 
-  assert.equal(messages[0].subject, 'Proof of Delivery · T-110')
-  assert.equal(messages[0].attachmentFileName, 'T-110_Proof_of_Delivery.pdf')
-  assert.equal(messages[0].recipientName, 'Metroline Operations')
-  assert.equal(messages[0].unread, false)
-  assert.equal(messages[0].printed, true)
-  assert.equal(operationalEmailUnreadCount(messages), 0)
+  assert.equal(messages.length, 1)
+  assert.equal(messages[0].id, emailIdForDocument(corrected.id))
+  assert.equal(messages[0].subject, 'Corrected Rate Confirmation available · FL-402')
+  assert.equal(messages[0].documentId, corrected.id)
+  assert.equal(messages[0].relatedWorkLabel, 'Corrected Rate Confirmation')
+  assert.match(messages[0].body, /Documents Incoming tray/)
+  assert.equal(messages[0].unread, true)
+})
+
+test('clean received POD does not create Email', () => {
+  const messages = buildOperationalEmailInbox({ documents: [pod] })
+  assert.deepEqual(messages, [])
+})
+
+test('POD exception creates Email communication and unread state can be cleared', () => {
+  const exceptionPod = {
+    ...pod,
+    status: 'REVIEW_REQUIRED',
+    statusLabel: 'REVIEW REQUIRED',
+  }
+  const id = emailIdForDocument(exceptionPod.id)
+  const unreadMessages = buildOperationalEmailInbox({ documents: [exceptionPod] })
+
+  assert.equal(unreadMessages.length, 1)
+  assert.equal(unreadMessages[0].subject, 'Delivery exception · T-110')
+  assert.equal(unreadMessages[0].documentId, exceptionPod.id)
+  assert.equal(unreadMessages[0].relatedWorkLabel, 'Proof of Delivery')
+  assert.equal(operationalEmailUnreadCount(unreadMessages), 1)
+
+  const readMessages = buildOperationalEmailInbox({
+    documents: [exceptionPod],
+    readEmailIds: { [id]: true },
+  })
+  assert.equal(readMessages[0].unread, false)
+  assert.equal(operationalEmailUnreadCount(readMessages), 0)
 })
