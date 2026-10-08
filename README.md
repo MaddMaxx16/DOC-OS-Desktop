@@ -10,11 +10,11 @@ The original `MaddMaxx16/DOC-OS` repository remains a donor/reference for proven
 
 **Accepted checkpoint:** `V2.8.1.3 · Global Paper Desk & Filing Gameplay`
 
-**Current candidate:** `V2.9.1.5 · Documents Browser Containment`
+**Current candidate:** `V2.9.1.6 · Documents Incoming Tray`
 
 V2.8.1.3 is visually accepted and locks the Documents interaction model: load folders live in the filing cabinet, every unfiled physical paper shares one persistent desk, filing is player-driven, and packet completeness gates submission.
 
-V2.9.1.4 increased the Documents gutter, but the screenshot proved the real issue was overflow: the Documents header/filter/list blocks could still size beyond their grid column. V2.9.1.5 fixes containment so the gutter finally stays inside the panel.
+V2.9.1.5 fixed Documents containment. V2.9.1.6 simplifies the paperwork loop: routine operational documents now arrive directly in a physical Incoming tray inside Documents. The player pulls papers onto the working desk, then reviews/files them. Email is reserved for communication, corrections, and exceptions instead of mandatory printing.
 
 The operational freight loop is now substantially playable:
 
@@ -43,7 +43,7 @@ The physical Documents workflow is accepted. The next missing layer is how exter
 
 Still pending:
 
-- **V2.9.1.3 Shared Left-Panel Gutters** is the active acceptance correction,
+- **V2.9.1.6 Documents Incoming Tray** is the active acceptance correction,
 - Messages / driver communication remains V2.9.2,
 - accepted Rate Con revision/archive viewing returns after Email intake is accepted,
 - focused POD review/correction returns after Email intake is accepted,
