@@ -301,7 +301,7 @@ Acceptance:
 
 A confirmed load retains its Rate Confirmation history in Documents.
 
-## V2.8.3 · POD Focused Workflow — DEFERRED UNTIL V2.9.1.6 INCOMING FLOW IS ACCEPTED
+## V2.8.3 · POD Focused Workflow — ACTIVE
 
 Goal:
 
@@ -309,17 +309,22 @@ Connect the POD state already created by Delivery to actual player-facing paperw
 
 Build:
 
-- POD received notification state,
-- focused POD paper view,
-- clean vs issue review,
-- signature / shortage / damage visibility,
+- receiver-finalized POD enters Documents Incoming,
+- focused POD paper review,
+- clean POD review before packet eligibility,
+- signature / delivered / refused / shortage / damage visibility,
+- explicit accept-with-exception confirmation,
 - corrected POD request path,
-- corrected POD arrival,
-- accepted POD state.
+- correction-requested waiting state,
+- original POD superseded after correction returns,
+- corrected POD revision returns through Incoming,
+- corrected POD Email communication,
+- accepted POD state,
+- packet completeness requires accepted + filed POD.
 
 Acceptance:
 
-Delivery produces a POD the player can actually receive, inspect, correct if necessary, and retain in the load packet.
+Delivery produces a POD the player must actually review. Clean PODs require acceptance, exception PODs require explicit acknowledgement or correction, corrected revisions return through Incoming, and only an accepted filed POD satisfies the load packet.
 
 ## V2.8.4 · Load Packet / Invoice Support Foundation — AFTER INCOMING + DOCUMENT DEPTH
 
@@ -340,7 +345,7 @@ Do not build full owner-era receivables here.
 
 # V2.9 · Email + Messages
 
-## V2.9.1 · Documents Intake + Email Communication — ACTIVE REWORK
+## V2.9.1 · Documents Intake + Email Communication — ACCEPTED THROUGH V2.9.1.6
 
 Goal:
 
@@ -385,7 +390,7 @@ The Email reader remains a real mailbox with sender/recipient/date/body/signatur
 
 ### V2.9.1.5 · Documents Browser Containment — IMPLEMENTED
 
-### V2.9.1.6 · Incoming Tray & Communication Split — ACTIVE
+### V2.9.1.6 · Incoming Tray & Communication Split — ACCEPTED
 
 Build:
 
