@@ -19,7 +19,6 @@ import { buildRateConfirmation } from '../domain/booking/rateConfirmation.js'
 import { evaluateFreightLane } from '../domain/freight/freightFit.js'
 import {
   buildOperationalEmailInbox,
-  emailIdForDocument,
   operationalEmailUnreadCount,
 } from '../domain/communications/operationalEmail.js'
 import { commitPickupOperation } from '../domain/facility/pickupOperation.js'
